@@ -33,6 +33,14 @@ async def on_startup():
                     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'access_status_enum') THEN
                         CREATE TYPE access_status_enum AS ENUM ('no_access', 'trial_usage', 'subscription_active');
                     END IF;
+                    -- ensure all values exist in case type was created earlier without them
+                    BEGIN
+                        ALTER TYPE access_status_enum ADD VALUE IF NOT EXISTS 'no_access';
+                        ALTER TYPE access_status_enum ADD VALUE IF NOT EXISTS 'trial_usage';
+                        ALTER TYPE access_status_enum ADD VALUE IF NOT EXISTS 'subscription_active';
+                    EXCEPTION WHEN duplicate_object THEN
+                        NULL;
+                    END;
                 END$$;
                 """
             )
@@ -41,7 +49,7 @@ async def on_startup():
             text(
                 """
                 ALTER TABLE users
-                ADD COLUMN IF NOT EXISTS access_status access_status_enum NOT NULL DEFAULT 'trial_usage',
+                ADD COLUMN IF NOT EXISTS access_status access_status_enum NOT NULL DEFAULT 'trial_usage'::access_status_enum,
                 ADD COLUMN IF NOT EXISTS free_messages_used integer NOT NULL DEFAULT 0;
                 """
             )
