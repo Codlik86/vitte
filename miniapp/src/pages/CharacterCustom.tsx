@@ -5,8 +5,8 @@ import { createCustomPersona } from "../api/client";
 export function CharacterCustom() {
   const navigate = useNavigate();
   const [name, setName] = useState("");
-  const [shortTitle, setShortTitle] = useState("");
-  const [description, setDescription] = useState("");
+  const [shortDescription, setShortDescription] = useState("");
+  const [vibe, setVibe] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -15,7 +15,11 @@ export function CharacterCustom() {
     setError(null);
     try {
       setBusy(true);
-      await createCustomPersona(name, shortTitle, description);
+      await createCustomPersona({
+        name,
+        short_description: shortDescription,
+        vibe,
+      });
       navigate("/characters");
     } catch (e: any) {
       setError(e.message ?? "Не удалось создать персонажа");
@@ -55,21 +59,20 @@ export function CharacterCustom() {
             </label>
             <input
               className="w-full rounded-2xl bg-white/5 border border-white/10 px-3 py-2 text-sm outline-none"
-              value={shortTitle}
-              onChange={(e) => setShortTitle(e.target.value)}
+              value={shortDescription}
+              onChange={(e) => setShortDescription(e.target.value)}
               required
             />
           </div>
 
           <div>
             <label className="block text-xs text-white/60 mb-1">
-              Пара фраз о том, какой он/она
+              Доп. vibe (необязательно)
             </label>
             <textarea
               className="w-full rounded-2xl bg-white/5 border border-white/10 px-3 py-2 text-sm outline-none min-h-[80px]"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              required
+              value={vibe}
+              onChange={(e) => setVibe(e.target.value)}
             />
           </div>
 

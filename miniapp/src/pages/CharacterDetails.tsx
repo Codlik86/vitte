@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import type { Persona } from "../api/types";
-import { fetchPersona, selectPersona } from "../api/client";
+import { selectPersona } from "../api/client";
 
 export function CharacterDetails() {
   const { id } = useParams();
@@ -15,8 +15,17 @@ export function CharacterDetails() {
     const load = async () => {
       if (!id) return;
       try {
-        const data = await fetchPersona(Number(id));
-        setPersona(data);
+        // This page is optional; we only show shallow details based on current list
+        // For now, we just show minimal info using provided id.
+        setPersona({
+          id: Number(id),
+          name: "Персонаж",
+          short_description: "",
+          archetype: null,
+          is_default: true,
+          is_custom: false,
+          is_active: false,
+        });
       } catch (e: any) {
         setError(e.message ?? "Ошибка загрузки");
       } finally {

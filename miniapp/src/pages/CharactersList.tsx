@@ -1,26 +1,42 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import type { Persona } from "../api/types";
-import { fetchPersonas } from "../api/client";
+import { fetchPersonas, selectPersona } from "../api/client";
 
 export function CharactersList() {
   const [items, setItems] = useState<Persona[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [busyId, setBusyId] = useState<number | null>(null);
+
+  const load = async () => {
+    try {
+      setError(null);
+      setLoading(true);
+      const data = await fetchPersonas();
+      setItems(data.items);
+    } catch (e: any) {
+      setError(e.message ?? "Не удалось загрузить персонажей");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const load = async () => {
-      try {
-        const data = await fetchPersonas();
-        setItems(data.items);
-      } catch (e: any) {
-        setError(e.message ?? "Ошибка загрузки");
-      } finally {
-        setLoading(false);
-      }
-    };
     load();
   }, []);
+
+  const handleSelect = async (personaId: number) => {
+    try {
+      setBusyId(personaId);
+      await selectPersona(personaId);
+      await load();
+    } catch (e: any) {
+      setError(e.message ?? "Не удалось выбрать персонажа");
+    } finally {
+      setBusyId(null);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-950 text-white">
@@ -40,28 +56,39 @@ export function CharactersList() {
 
         <div className="space-y-3">
           {items.map((p) => (
-            <Link
+            <button
               key={p.id}
-              to={`/characters/${p.id}`}
-              className="block rounded-3xl border border-white/10 bg-white/5 px-4 py-3"
+              type="button"
+              onClick={() => handleSelect(p.id)}
+              className="w-full text-left rounded-3xl border border-white/10 bg-white/5 px-4 py-3 hover:border-white/20 transition"
+              disabled={busyId === p.id}
             >
               <div className="flex items-start justify-between gap-3">
-                <div>
-                  <div className="flex items-center gap-2">
+                <div className="space-y-1">
+                  <div className="flex items-center gap-2 flex-wrap">
                     <h2 className="text-base font-semibold">{p.name}</h2>
-                    <span className="text-xs text-white/50">{p.short_title}</span>
+                    <div className="flex items-center gap-1 text-[11px] text-white/60">
+                      {p.is_default && (
+                        <span className="px-2 py-0.5 rounded-full bg-white/10">
+                          По умолчанию
+                        </span>
+                      )}
+                      {p.is_custom && (
+                        <span className="px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-200">
+                          Мой персонаж
+                        </span>
+                      )}
+                    </div>
                   </div>
-                  <p className="mt-1 text-xs text-white/60">
-                    {p.description_short}
-                  </p>
+                  <p className="text-xs text-white/70">{p.short_description}</p>
                 </div>
-                {p.is_selected && (
+                {p.is_active && (
                   <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-400/10 text-emerald-300">
                     выбрано
                   </span>
                 )}
               </div>
-            </Link>
+            </button>
           ))}
         </div>
       </div>

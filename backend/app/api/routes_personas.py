@@ -3,79 +3,65 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..db import get_session
-from ..models import Persona, UserPersona, EventAnalytics, PersonaKind
+from ..models import Persona, UserPersona, EventAnalytics
 from ..users_service import get_or_create_user_by_telegram_id
+from ..schemas import (
+    PersonasListResponse,
+    PersonaSelectRequest,
+    PersonaCustomCreateRequest,
+)
 
 router = APIRouter(prefix="/api/personas", tags=["personas"])
 
 
-def persona_to_dict(persona: Persona, is_selected: bool = False) -> dict:
+def persona_to_dict(persona: Persona, is_active: bool = False) -> dict:
     return {
         "id": persona.id,
-        "key": persona.key,
         "name": persona.name,
-        "short_title": persona.short_title,
-        "gender": persona.gender,
-        "kind": persona.kind,
-        "description_short": persona.description_short,
-        "description_long": persona.description_long,
-        "style_tags": persona.style_tags or {},
-        "is_custom": persona.is_custom,
-        "is_selected": is_selected,
+        "short_description": persona.short_description,
+        "archetype": persona.archetype,
+        "is_default": bool(persona.is_default),
+        "is_custom": not bool(persona.is_default),
+        "is_active": is_active,
     }
 
 
-@router.get("")
+def _is_persona_owned_or_default(persona: Persona, user_id: int) -> bool:
+    return persona.is_default or persona.owner_user_id == user_id
+
+
+@router.get("", response_model=PersonasListResponse)
 async def list_personas(
-    telegram_id: int | None = Query(default=None),
+    telegram_id: int = Query(..., ge=1),
     session: AsyncSession = Depends(get_session),
 ):
+    user = await get_or_create_user_by_telegram_id(session, telegram_id)
+
     result = await session.execute(
-        select(Persona).where(Persona.is_active.is_(True)).order_by(Persona.id)
+        select(Persona).where(
+            (Persona.is_default.is_(True)) | (Persona.owner_user_id == user.id)
+        ).order_by(Persona.id)
     )
     personas = result.scalars().all()
 
-    user = None
-    active_id: int | None = None
-    if telegram_id is not None:
-        user = await get_or_create_user_by_telegram_id(session, telegram_id)
-        active_id = user.active_persona_id
-
-    data = [persona_to_dict(p, is_selected=(p.id == active_id)) for p in personas]
-    return {"items": data}
-
-
-@router.get("/{persona_id}")
-async def get_persona(
-    persona_id: int,
-    telegram_id: int | None = Query(default=None),
-    session: AsyncSession = Depends(get_session),
-):
-    result = await session.execute(select(Persona).where(Persona.id == persona_id, Persona.is_active.is_(True)))
-    persona = result.scalar_one_or_none()
-    if persona is None:
-        raise HTTPException(status_code=404, detail="Persona not found")
-
-    active_id: int | None = None
-    if telegram_id is not None:
-        user = await get_or_create_user_by_telegram_id(session, telegram_id)
-        active_id = user.active_persona_id
-
-    return persona_to_dict(persona, is_selected=(persona.id == active_id))
+    items = [persona_to_dict(p, is_active=(p.id == user.active_persona_id)) for p in personas]
+    return PersonasListResponse(items=items)
 
 
 @router.post("/select")
 async def select_persona(
-    telegram_id: int = Query(...),
-    persona_id: int = Query(...),
+    payload: PersonaSelectRequest,
     session: AsyncSession = Depends(get_session),
 ):
-    result = await session.execute(select(Persona).where(Persona.id == persona_id, Persona.is_active.is_(True)))
-    persona = result.scalar_one_or_none()
-    if persona is None:
+    user = await get_or_create_user_by_telegram_id(session, payload.telegram_id)
+
+    persona_result = await session.execute(
+        select(Persona).where(Persona.id == payload.persona_id)
+    )
+    persona = persona_result.scalar_one_or_none()
+    if persona is None or not _is_persona_owned_or_default(persona, user.id):
         raise HTTPException(status_code=404, detail="Persona not found")
 
-    user = await get_or_create_user_by_telegram_id(session, telegram_id)
     user.active_persona_id = persona.id
 
     up_result = await session.execute(
@@ -86,69 +72,55 @@ async def select_persona(
     )
     up = up_result.scalar_one_or_none()
     if up is None:
-        up = UserPersona(user_id=user.id, persona_id=persona.id, is_owner=False, is_favorite=True)
+        up = UserPersona(user_id=user.id, persona_id=persona.id, is_favorite=True)
         session.add(up)
 
     ev = EventAnalytics(
         user_id=user.id,
         event_type="persona_selected",
-        payload={"persona_id": persona.id, "persona_key": persona.key},
+        payload={"persona_id": persona.id, "archetype": persona.archetype},
     )
     session.add(ev)
 
     await session.commit()
-
-    return {"ok": True, "active_persona_id": persona.id}
+    return {"ok": True}
 
 
 @router.post("/custom")
 async def create_custom_persona(
-    telegram_id: int = Query(...),
-    name: str = Query(..., max_length=64),
-    short_title: str = Query(..., max_length=128),
-    description_short: str = Query(..., max_length=256),
-    style: str = Query("custom"),
+    payload: PersonaCustomCreateRequest,
     session: AsyncSession = Depends(get_session),
 ):
-    """
-    Простейший API для создания кастомного персонажа.
-    В следующих этапах можно будет заменить на полноценный body JSON.
-    """
-    user = await get_or_create_user_by_telegram_id(session, telegram_id)
+    user = await get_or_create_user_by_telegram_id(session, payload.telegram_id)
 
     persona = Persona(
-        key=f"custom_{user.id}",
-        name=name,
-        short_title=short_title,
-        gender="nb",
-        kind=PersonaKind.SOFT_EMPATH,
-        description_short=description_short,
-        description_long=description_short,
-        style_tags={"style": style, "custom": True},
-        is_active=True,
+        name=payload.name,
+        short_description=payload.short_description,
+        long_description=None,
+        archetype="custom",
+        system_prompt=(
+            "Ты романтический AI-компаньон. Вайб: "
+            f"{payload.short_description}. Ты говоришь по-русски, мягко, с флиртом и эмпатией."
+        ),
+        is_default=False,
         is_custom=True,
-        created_by_user_id=user.id,
+        is_active=True,
+        owner_user_id=user.id,
     )
     session.add(persona)
     await session.flush()
 
-    up = UserPersona(
-        user_id=user.id,
-        persona_id=persona.id,
-        is_owner=True,
-        is_favorite=True,
-    )
-    session.add(up)
+    link = UserPersona(user_id=user.id, persona_id=persona.id, is_favorite=True)
+    session.add(link)
 
     user.active_persona_id = persona.id
 
     ev = EventAnalytics(
         user_id=user.id,
         event_type="persona_custom_created",
-        payload={"persona_id": persona.id},
+        payload={"persona_id": persona.id, "name": persona.name},
     )
     session.add(ev)
 
     await session.commit()
-
-    return {"ok": True, "persona": persona_to_dict(persona, is_selected=True)}
+    return {"ok": True}
