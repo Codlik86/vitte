@@ -25,6 +25,8 @@ class Settings(BaseSettings):
 
     free_messages_limit: int = 15
 
+    miniapp_url: str = "https://vitte-pi.vercel.app"
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
 
