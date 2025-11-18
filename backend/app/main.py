@@ -24,7 +24,9 @@ async def on_startup():
     logger.info("Starting Vitte backend...")
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
-        # Ensure enum and new columns exist even on existing databases
+
+    # Separate transaction to ensure enum exists and has all values
+    async with engine.begin() as conn:
         await conn.execute(
             text(
                 """
@@ -33,7 +35,6 @@ async def on_startup():
                     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'access_status_enum') THEN
                         CREATE TYPE access_status_enum AS ENUM ('no_access', 'trial_usage', 'subscription_active');
                     END IF;
-                    -- ensure all values exist in case type was created earlier without them
                     BEGIN
                         ALTER TYPE access_status_enum ADD VALUE IF NOT EXISTS 'no_access';
                         ALTER TYPE access_status_enum ADD VALUE IF NOT EXISTS 'trial_usage';
@@ -45,6 +46,9 @@ async def on_startup():
                 """
             )
         )
+
+    # Separate transaction so new enum values are committed before use in defaults
+    async with engine.begin() as conn:
         await conn.execute(
             text(
                 """
