@@ -19,7 +19,7 @@ def persona_to_dict(persona: Persona, is_active: bool = False) -> dict:
     return {
         "id": persona.id,
         "name": persona.name,
-        "short_description": persona.short_description,
+        "short_description": persona.short_description or "",
         "archetype": persona.archetype,
         "is_default": bool(persona.is_default),
         "is_custom": not bool(persona.is_default),
