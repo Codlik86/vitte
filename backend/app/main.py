@@ -2,10 +2,11 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
-from .api import health_router, webhook_router, access_router
+from .api import health_router, webhook_router, access_router, personas_router
 from .db import engine, Base
 from .logging_config import logger
 from . import models  # noqa: F401 ensures models are imported for metadata
+from .personas_seed import ensure_default_personas
 
 
 app = FastAPI(title="Vitte Backend")
@@ -58,6 +59,16 @@ async def on_startup():
                 """
             )
         )
+        await conn.execute(
+            text(
+                """
+                ALTER TABLE users
+                ADD COLUMN IF NOT EXISTS active_persona_id integer REFERENCES personas(id) ON DELETE SET NULL;
+                """
+            )
+        )
+    await ensure_default_personas()
+    logger.info("Default personas ensured.")
     logger.info("DB tables ensured.")
 
 
@@ -69,3 +80,4 @@ async def root():
 app.include_router(health_router)
 app.include_router(webhook_router)
 app.include_router(access_router)
+app.include_router(personas_router)
