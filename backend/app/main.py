@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .api import health_router, webhook_router
+from .api import health_router, webhook_router, access_router
 from .db import engine, Base
 from .logging_config import logger
 from . import models  # noqa: F401 ensures models are imported for metadata
@@ -33,3 +33,4 @@ async def root():
 
 app.include_router(health_router)
 app.include_router(webhook_router)
+app.include_router(access_router)

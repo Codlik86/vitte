@@ -1,22 +1,38 @@
 from aiogram import Bot, Dispatcher, F
 from aiogram.client.default import DefaultBotProperties
+from aiogram.filters import CommandStart
 from aiogram.types import Message, Update
 
 from .config import settings
 from .logging_config import logger
+from .middlewares.access import AccessMiddleware
 
 bot = Bot(
     token=settings.telegram_bot_token,
     default=DefaultBotProperties(parse_mode="HTML"),
 )
 dp = Dispatcher()
+dp.update.middleware(AccessMiddleware())
 
 
-@dp.message(F.text == "/start")
+@dp.message(CommandStart())
 async def cmd_start(message: Message):
+    text = (
+        "Привет, я Vitte — романтический AI-компаньон 💌\n\n"
+        "Этот сервис предназначен только для людей старше 18 лет.\n"
+        "Продолжая пользоваться ботом, ты подтверждаешь, что тебе уже есть 18.\n\n"
+        f"У тебя будет {settings.free_messages_limit} бесплатных сообщений, чтобы попробовать общение. "
+        "После этого можно будет оформить подписку и продолжать без ограничений."
+    )
+    await message.answer(text)
+
+
+@dp.message(F.text == "/pay")
+async def cmd_pay(message: Message):
     await message.answer(
-        "Привет, я Vitte — романтический AI-компаньон. "
-        "Скоро здесь будет полноценный диалог ❤️"
+        "Чтобы оформить подписку и продолжить общение без лимитов, "
+        "открой мини-приложение Vitte в Telegram или вкладку Paywall.\n\n"
+        "Поддержка Stars и YooKassa появится чуть позже, а пока это заглушка.",
     )
 
 

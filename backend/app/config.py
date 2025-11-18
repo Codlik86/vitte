@@ -23,6 +23,8 @@ class Settings(BaseSettings):
 
     stars_provider_token: str | None = None
 
+    free_messages_limit: int = 15
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
 
