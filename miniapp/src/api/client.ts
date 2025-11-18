@@ -2,11 +2,20 @@ import type { PersonasListResponse, Persona } from "./types";
 
 const BASE_URL = import.meta.env.VITE_BACKEND_URL;
 
+if (!BASE_URL) {
+  console.warn("[Vitte] VITE_BACKEND_URL is not set");
+}
+
 const TELEGRAM_ID = 123456; // TODO: заменить на реальный ID из Telegram WebApp
 
 export async function fetchPersonas(): Promise<PersonasListResponse> {
-  const res = await fetch(`${BASE_URL}/api/personas?telegram_id=${TELEGRAM_ID}`);
-  if (!res.ok) throw new Error("Не удалось загрузить персонажей");
+  const url = `${BASE_URL}/api/personas?telegram_id=${TELEGRAM_ID}`;
+  console.log("[Vitte] fetchPersonas ->", url);
+  const res = await fetch(url);
+  if (!res.ok) {
+    console.error("[Vitte] fetchPersonas error status", res.status, res.statusText);
+    throw new Error("Не удалось загрузить персонажей");
+  }
   return (await res.json()) as PersonasListResponse;
 }
 

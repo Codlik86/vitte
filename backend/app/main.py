@@ -9,11 +9,17 @@ from . import models  # noqa: F401 ensures models are imported for metadata
 from .personas_seed import ensure_default_personas
 
 
-app = FastAPI(title="Vitte Backend")
+app = FastAPI(title="Vitte API")
+
+origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+    "https://vitte-pi.vercel.app",
+]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # позже сузим
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
