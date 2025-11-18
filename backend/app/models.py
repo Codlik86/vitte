@@ -1,6 +1,9 @@
 from datetime import datetime
 from enum import Enum as PyEnum
+import enum
+import sqlalchemy as sa
 from sqlalchemy import BigInteger, String, Text, ForeignKey, Integer, DateTime, Enum, Boolean
+from sqlalchemy.dialects import postgresql
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
@@ -100,3 +103,27 @@ class UserPersona(Base):
 
     user: Mapped["User"] = relationship("User")
     persona: Mapped["Persona"] = relationship("Persona")
+
+
+class PersonaEventType(enum.Enum):
+    CATALOG_OPENED = "persona_catalog_opened"
+    PERSONA_SELECTED = "persona_selected"
+    PERSONA_CUSTOMIZED = "persona_customized"
+
+
+class PersonaEvent(Base):
+    __tablename__ = "events_personas"
+
+    id = sa.Column(sa.Integer, primary_key=True, autoincrement=True)
+    user_id = sa.Column(sa.Integer, sa.ForeignKey("users.id"), nullable=False)
+    persona_id = sa.Column(sa.Integer, sa.ForeignKey("personas.id"), nullable=True)
+    event_type = sa.Column(
+        postgresql.ENUM(PersonaEventType, name="persona_event_type_enum"),
+        nullable=False,
+    )
+    created_at = sa.Column(
+        sa.DateTime(timezone=True), nullable=False, server_default=sa.func.now()
+    )
+
+    user = sa.orm.relationship("User", backref="persona_events")
+    persona = sa.orm.relationship("Persona", backref="persona_events")

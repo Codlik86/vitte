@@ -3,13 +3,14 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..db import get_session
-from ..models import Persona, UserPersona, EventAnalytics
+from ..models import Persona, UserPersona, EventAnalytics, PersonaEventType
 from ..users_service import get_or_create_user_by_telegram_id
 from ..schemas import (
     PersonasListResponse,
     PersonaSelectRequest,
     PersonaCustomCreateRequest,
 )
+from ..services.persona_events import log_persona_event
 
 router = APIRouter(prefix="/api/personas", tags=["personas"])
 
@@ -45,6 +46,13 @@ async def list_personas(
     personas = result.scalars().all()
 
     items = [persona_to_dict(p, is_active=(p.id == user.active_persona_id)) for p in personas]
+    await log_persona_event(
+        session,
+        user_id=user.id,
+        persona_id=None,
+        event_type=PersonaEventType.CATALOG_OPENED,
+    )
+    await session.commit()
     return PersonasListResponse(items=items)
 
 
@@ -81,6 +89,13 @@ async def select_persona(
         payload={"persona_id": persona.id, "archetype": persona.archetype},
     )
     session.add(ev)
+
+    await log_persona_event(
+        session,
+        user_id=user.id,
+        persona_id=persona.id,
+        event_type=PersonaEventType.PERSONA_SELECTED,
+    )
 
     await session.commit()
     return {"ok": True}
@@ -121,6 +136,13 @@ async def create_custom_persona(
         payload={"persona_id": persona.id, "name": persona.name},
     )
     session.add(ev)
+
+    await log_persona_event(
+        session,
+        user_id=user.id,
+        persona_id=persona.id,
+        event_type=PersonaEventType.PERSONA_CUSTOMIZED,
+    )
 
     await session.commit()
     return {"ok": True}
