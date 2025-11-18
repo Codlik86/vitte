@@ -9,6 +9,7 @@ from ..schemas import (
     PersonasListResponse,
     PersonaSelectRequest,
     PersonaCustomCreateRequest,
+    PersonaBase,
 )
 from ..services.persona_events import log_persona_event
 
@@ -54,6 +55,30 @@ async def list_personas(
     )
     await session.commit()
     return PersonasListResponse(items=items)
+
+
+@router.get("/{persona_id}", response_model=PersonaBase)
+async def get_persona(
+    persona_id: int,
+    telegram_id: int = Query(..., ge=1),
+    session: AsyncSession = Depends(get_session),
+):
+    # telegram_id currently not used for filtering, but kept for symmetry/logging
+    await get_or_create_user_by_telegram_id(session, telegram_id)
+    result = await session.execute(select(Persona).where(Persona.id == persona_id))
+    persona = result.scalar_one_or_none()
+    if persona is None:
+        raise HTTPException(status_code=404, detail="Persona not found")
+
+    return PersonaBase(
+        id=persona.id,
+        name=persona.name,
+        short_description=persona.short_description or "",
+        archetype=persona.archetype,
+        is_default=bool(persona.is_default),
+        is_custom=not bool(persona.is_default),
+        is_active=False,
+    )
 
 
 @router.post("/select")

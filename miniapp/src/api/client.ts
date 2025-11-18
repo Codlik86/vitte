@@ -1,4 +1,4 @@
-import type { PersonasListResponse } from "./types";
+import type { PersonasListResponse, Persona } from "./types";
 
 const BASE_URL = import.meta.env.VITE_BACKEND_URL;
 const TELEGRAM_ID = 53652078; // TODO: заменить на реальный ID из Telegram WebApp
@@ -45,4 +45,14 @@ export async function createCustomPersona(payload: {
   if (!res.ok) {
     throw new Error("Не удалось создать персонажа");
   }
+}
+
+export async function fetchPersona(id: number): Promise<Persona> {
+  const res = await fetch(
+    `${BASE_URL}/api/personas/${id}?telegram_id=${TELEGRAM_ID}`
+  );
+  if (!res.ok) {
+    throw new Error("Не удалось загрузить персонажа");
+  }
+  return (await res.json()) as Persona;
 }

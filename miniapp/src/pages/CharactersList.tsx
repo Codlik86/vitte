@@ -66,7 +66,7 @@ export function CharactersList() {
               <div className="flex items-start justify-between gap-3">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 flex-wrap">
-                    <h2 className="text-base font-semibold">{p.name}</h2>
+                    <h2 className="text-base font-semibold text-white">{p.name}</h2>
                     <div className="flex items-center gap-1 text-[11px] text-white/60">
                       {p.is_default && (
                         <span className="px-2 py-0.5 rounded-full bg-white/10">
@@ -80,7 +80,9 @@ export function CharactersList() {
                       )}
                     </div>
                   </div>
-                  <p className="text-xs text-white/70">{p.short_description}</p>
+                  {p.short_description && (
+                    <p className="text-sm text-white/60">{p.short_description}</p>
+                  )}
                 </div>
                 {p.is_active && (
                   <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-400/10 text-emerald-300">
