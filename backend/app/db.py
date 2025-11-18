@@ -11,11 +11,14 @@ class Base(DeclarativeBase):
 
 def _build_engine_url():
     url = make_url(settings.database_url)
-    # Ensure asyncpg driver and strip sslmode (not supported by asyncpg)
+    # Ensure asyncpg driver and strip unsupported params
     if url.drivername in ("postgresql", "postgres"):
         url = url.set(drivername="postgresql+asyncpg")
     query = dict(url.query)
     sslmode = query.pop("sslmode", None)
+    # Remove params asyncpg doesn't accept
+    query.pop("channel_binding", None)
+    query.pop("target_session_attrs", None)
     url = url.set(query=query)
     connect_args = {}
     if sslmode and sslmode.lower() in ("require", "verify-full"):
