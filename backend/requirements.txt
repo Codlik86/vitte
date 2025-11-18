@@ -1,0 +1,14 @@
+fastapi
+uvicorn[standard]
+aiogram==3.*
+httpx
+sqlalchemy[asyncio]
+asyncpg
+pydantic
+pydantic-settings
+python-dotenv
+loguru
+orjson
+openai>=1.0.0
+qdrant-client
+yookassa
