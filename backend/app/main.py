@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from sqlalchemy import text
 
 from .api import health_router, webhook_router, access_router
 from .db import engine, Base
@@ -23,6 +24,28 @@ async def on_startup():
     logger.info("Starting Vitte backend...")
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        # Ensure enum and new columns exist even on existing databases
+        await conn.execute(
+            text(
+                """
+                DO $$
+                BEGIN
+                    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'access_status_enum') THEN
+                        CREATE TYPE access_status_enum AS ENUM ('no_access', 'trial_usage', 'subscription_active');
+                    END IF;
+                END$$;
+                """
+            )
+        )
+        await conn.execute(
+            text(
+                """
+                ALTER TABLE users
+                ADD COLUMN IF NOT EXISTS access_status access_status_enum NOT NULL DEFAULT 'trial_usage',
+                ADD COLUMN IF NOT EXISTS free_messages_used integer NOT NULL DEFAULT 0;
+                """
+            )
+        )
     logger.info("DB tables ensured.")
 
 
