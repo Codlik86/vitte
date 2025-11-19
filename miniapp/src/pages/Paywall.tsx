@@ -8,8 +8,8 @@ export function Paywall() {
   const navigate = useNavigate();
   const headerStats = {
     gems: 0,
-    usedMessages: data?.free_messages_used,
-    limitMessages: data?.free_messages_limit,
+    usedMessages: data?.free_messages_used ?? null,
+    limitMessages: data?.free_messages_limit ?? null,
     hasUnlimited: data?.has_access,
   };
   return (
@@ -19,7 +19,7 @@ export function Paywall() {
           title="Подписка"
           showBack
           onBack={() => navigate(-1)}
-          stats={loading && !data ? undefined : headerStats}
+          stats={headerStats}
         />
 
         <DebugTelegramBanner />

@@ -14,8 +14,8 @@ export function CharacterCustom() {
   const [error, setError] = useState<string | null>(null);
   const headerStats = {
     gems: 0,
-    usedMessages: accessStatus?.free_messages_used,
-    limitMessages: accessStatus?.free_messages_limit,
+    usedMessages: accessStatus?.free_messages_used ?? null,
+    limitMessages: accessStatus?.free_messages_limit ?? null,
     hasUnlimited: accessStatus?.has_access,
   };
 
@@ -39,7 +39,7 @@ export function CharacterCustom() {
 
   return (
     <div className="min-h-dvh bg-bg-dark text-text-main">
-      <div className="mx-auto w-full max-w-screen-sm px-4 pb-12 pt-6">
+      <div className="mx-auto w-full max-w-screen-sm px-4 pb-12 pt-6 space-y-6">
         <PageHeader
           title="Свой персонаж"
           showBack
@@ -48,21 +48,21 @@ export function CharacterCustom() {
         />
 
         <section className="rounded-4xl border border-white/5 bg-card-elevated/80 p-6 shadow-card">
-          <div className="space-y-2">
-            <h1 className="text-3xl font-semibold">Свой персонаж</h1>
-            <p className="text-sm text-text-muted">
+          <div className="space-y-3">
+            <h1 className="text-3xl font-semibold text-white">Свой персонаж</h1>
+            <p className="text-base leading-relaxed text-white/70">
               Создай своего героя: задай имя, вайб и пару деталей, чтобы Vitte
               отвечала в нужном стиле.
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="mt-6 space-y-5">
+          <form onSubmit={handleSubmit} className="mt-6 space-y-6">
             <label className="block space-y-2">
-              <span className="text-xs uppercase tracking-[0.3em] text-text-muted">
+              <span className="text-sm font-medium text-white/80">
                 Имя персонажа
               </span>
               <input
-                className="w-full rounded-3xl border border-white/10 bg-card-dark px-4 py-3 text-base text-white outline-none focus:border-white/40"
+                className="w-full rounded-3xl border border-white/10 bg-card-dark px-4 py-3 text-base text-white outline-none transition focus:border-white/40 placeholder:text-sm placeholder:text-white/40"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 placeholder="Например, Серафина"
@@ -71,11 +71,11 @@ export function CharacterCustom() {
             </label>
 
             <label className="block space-y-2">
-              <span className="text-xs uppercase tracking-[0.3em] text-text-muted">
+              <span className="text-sm font-medium text-white/80">
                 Короткое описание / вайб
               </span>
               <input
-                className="w-full rounded-3xl border border-white/10 bg-card-dark px-4 py-3 text-base text-white outline-none focus:border-white/40"
+                className="w-full rounded-3xl border border-white/10 bg-card-dark px-4 py-3 text-base text-white outline-none transition focus:border-white/40 placeholder:text-sm placeholder:text-white/40"
                 value={shortDescription}
                 onChange={(e) => setShortDescription(e.target.value)}
                 placeholder="Например, дерзкая и заботливая подруга"
@@ -84,11 +84,11 @@ export function CharacterCustom() {
             </label>
 
             <label className="block space-y-2">
-              <span className="text-xs uppercase tracking-[0.3em] text-text-muted">
-                Доп. vibe (необязательно)
+              <span className="text-sm font-medium text-white/80">
+                Доп. вайб (необязательно)
               </span>
               <textarea
-                className="w-full min-h-[120px] rounded-3xl border border-white/10 bg-card-dark px-4 py-3 text-base text-white outline-none focus:border-white/40"
+                className="w-full min-h-[120px] rounded-3xl border border-white/10 bg-card-dark px-4 py-3 text-base text-white outline-none transition focus:border-white/40 placeholder:text-sm placeholder:text-white/40"
                 value={vibe}
                 onChange={(e) => setVibe(e.target.value)}
                 placeholder="Любимые темы, скорость переписки, триггеры"

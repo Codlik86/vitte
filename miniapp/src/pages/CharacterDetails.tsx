@@ -15,8 +15,8 @@ export function CharacterDetails() {
   const [busy, setBusy] = useState(false);
   const headerStats = {
     gems: 0,
-    usedMessages: accessStatus?.free_messages_used,
-    limitMessages: accessStatus?.free_messages_limit,
+    usedMessages: accessStatus?.free_messages_used ?? null,
+    limitMessages: accessStatus?.free_messages_limit ?? null,
     hasUnlimited: accessStatus?.has_access,
   };
 

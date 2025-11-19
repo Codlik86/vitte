@@ -1,10 +1,10 @@
-import type { ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
+import { GemChip } from "../GemChip";
 
 export type PageHeaderStats = {
-  gems: number;
-  usedMessages?: number;
-  limitMessages?: number;
+  gems: number | null;
+  usedMessages: number | null;
+  limitMessages: number | null;
   hasUnlimited?: boolean;
 };
 
@@ -45,51 +45,15 @@ export function PageHeader({
         )}
         <h1 className="truncate text-2xl font-semibold text-white">{title}</h1>
       </div>
-      <StatsChip stats={stats} />
+      {stats ? (
+        <GemChip
+          gems={stats.gems ?? null}
+          usedMessages={stats.usedMessages ?? null}
+          totalMessages={stats.limitMessages ?? null}
+          hasUnlimited={stats.hasUnlimited}
+          onPlusClick={() => navigate("/paywall")}
+        />
+      ) : null}
     </header>
-  );
-}
-
-type StatsChipProps = {
-  stats?: PageHeaderStats;
-};
-
-function StatsChip({ stats }: StatsChipProps) {
-  const navigate = useNavigate();
-  const gems = stats?.gems ?? 0;
-  const used = stats?.usedMessages;
-  const limit = stats?.limitMessages;
-  const hasUnlimited = stats?.hasUnlimited === true;
-  const hasCounters = used !== undefined && limit !== undefined;
-
-  let content: ReactNode;
-  if (hasUnlimited) {
-    content = (
-      <span className="text-sm font-semibold text-white">
-        💎 {gems}
-      </span>
-    );
-  } else if (hasCounters) {
-    content = (
-      <span className="text-sm font-semibold text-white">
-        💎 {gems} 💬 {used}/{limit}
-      </span>
-    );
-  } else {
-    content = <div className="h-4 w-24 animate-pulse rounded-full bg-white/40" />;
-  }
-
-  return (
-    <div className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-[#2D1747] via-[#5C2D83] to-[#D64CC1] px-4 py-1 shadow-card">
-      {content}
-      <button
-        type="button"
-        onClick={() => navigate("/paywall")}
-        className="flex h-7 w-7 items-center justify-center rounded-full bg-white/15 text-white transition hover:bg-white/25 active:scale-95"
-        aria-label="Открыть экран подписки"
-      >
-        <span className="text-lg leading-none">+</span>
-      </button>
-    </div>
   );
 }
