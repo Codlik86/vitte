@@ -152,15 +152,18 @@ async def create_custom_persona(
     session: AsyncSession = Depends(get_session),
 ):
     user = await get_or_create_user_by_telegram_id(session, payload.telegram_id)
+    vibe = (payload.vibe or "").strip()
+    vibe_sentence = f" Доп. детали: {vibe}." if vibe else ""
 
     persona = Persona(
         name=payload.name,
         short_description=payload.short_description,
-        long_description=None,
+        long_description=vibe or None,
         archetype="custom",
         system_prompt=(
             "Ты романтический AI-компаньон. Вайб: "
             f"{payload.short_description}. Ты говоришь по-русски, мягко, с флиртом и эмпатией."
+            f"{vibe_sentence}"
         ),
         is_default=False,
         is_custom=True,

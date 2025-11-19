@@ -1,18 +1,24 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAccessStatus } from "../hooks/useAccessStatus";
-import { InternalHeader } from "../components/InternalHeader";
+import { PageHeader } from "../components/layout/PageHeader";
 
 export function Paywall() {
   const { data, loading, error } = useAccessStatus();
   const navigate = useNavigate();
+  const headerStats = {
+    gems: 0,
+    usedMessages: data?.free_messages_used,
+    limitMessages: data?.free_messages_limit,
+    hasUnlimited: data?.has_access,
+  };
   return (
     <div className="min-h-dvh bg-bg-dark text-text-main">
       <div className="mx-auto flex min-h-dvh w-full max-w-screen-sm flex-col px-4 pb-12 pt-10">
-        <InternalHeader
+        <PageHeader
+          title="Подписка"
+          showBack
           onBack={() => navigate(-1)}
-          status={data}
-          loading={loading}
-          error={error}
+          stats={loading && !data ? undefined : headerStats}
         />
 
         <section className="w-full rounded-4xl border border-white/5 bg-card-elevated/85 px-6 py-8 shadow-card">
@@ -28,7 +34,7 @@ export function Paywall() {
             преград.
           </p>
 
-          {data && (
+          {!loading && data && (
             <p className="mt-4 text-xs uppercase tracking-[0.3em] text-text-muted">
               Использовано {data.free_messages_used} из{" "}
               {data.free_messages_limit}

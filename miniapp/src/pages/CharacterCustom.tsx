@@ -1,15 +1,23 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createCustomPersona } from "../api/client";
-import { InternalHeader } from "../components/InternalHeader";
+import { PageHeader } from "../components/layout/PageHeader";
+import { useAccessStatus } from "../hooks/useAccessStatus";
 
 export function CharacterCustom() {
   const navigate = useNavigate();
+  const { data: accessStatus } = useAccessStatus();
   const [name, setName] = useState("");
   const [shortDescription, setShortDescription] = useState("");
   const [vibe, setVibe] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const headerStats = {
+    gems: 0,
+    usedMessages: accessStatus?.free_messages_used,
+    limitMessages: accessStatus?.free_messages_limit,
+    hasUnlimited: accessStatus?.has_access,
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,7 +40,12 @@ export function CharacterCustom() {
   return (
     <div className="min-h-dvh bg-bg-dark text-text-main">
       <div className="mx-auto w-full max-w-screen-sm px-4 pb-12 pt-6">
-        <InternalHeader onBack={() => navigate(-1)} />
+        <PageHeader
+          title="Свой персонаж"
+          showBack
+          onBack={() => navigate(-1)}
+          stats={headerStats}
+        />
 
         <section className="rounded-4xl border border-white/5 bg-card-elevated/80 p-6 shadow-card">
           <div className="space-y-2">

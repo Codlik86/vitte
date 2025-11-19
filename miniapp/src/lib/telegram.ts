@@ -5,9 +5,18 @@ type TelegramBackButton = {
   offClick?: (callback: () => void) => void;
 };
 
+type TelegramUser = {
+  id?: number;
+};
+
+type TelegramInitData = {
+  user?: TelegramUser;
+};
+
 type TelegramWebApp = {
   ready: () => void;
   BackButton: TelegramBackButton;
+  initDataUnsafe?: TelegramInitData;
 };
 
 declare global {

@@ -2,15 +2,23 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import type { PersonaDetails } from "../api/types";
 import { selectPersona, fetchPersona } from "../api/client";
-import { InternalHeader } from "../components/InternalHeader";
+import { PageHeader } from "../components/layout/PageHeader";
+import { useAccessStatus } from "../hooks/useAccessStatus";
 
 export function CharacterDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { data: accessStatus } = useAccessStatus();
   const [persona, setPersona] = useState<PersonaDetails | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const headerStats = {
+    gems: 0,
+    usedMessages: accessStatus?.free_messages_used,
+    limitMessages: accessStatus?.free_messages_limit,
+    hasUnlimited: accessStatus?.has_access,
+  };
 
   useEffect(() => {
     const load = async () => {
@@ -43,7 +51,12 @@ export function CharacterDetails() {
   return (
     <div className="min-h-dvh bg-bg-dark text-text-main">
       <div className="mx-auto flex min-h-dvh w-full max-w-screen-sm flex-col px-4 pb-12 pt-6">
-        <InternalHeader onBack={() => navigate(-1)} />
+        <PageHeader
+          title={persona?.name ?? "Персонаж"}
+          showBack
+          onBack={() => navigate(-1)}
+          stats={headerStats}
+        />
 
         {loading ? (
           <div className="mt-6 space-y-4 rounded-4xl border border-white/5 bg-card-elevated/60 p-6 shadow-card animate-pulse">

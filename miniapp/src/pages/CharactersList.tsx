@@ -2,13 +2,29 @@ import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import type { PersonaListItem } from "../api/types";
 import { fetchPersonas } from "../api/client";
-import { MessageLimitChip } from "../components/MessageLimitChip";
+import { PageHeader } from "../components/layout/PageHeader";
+import { useAccessStatus } from "../hooks/useAccessStatus";
+import { PersonaCard } from "../components/PersonaCard";
+
+type CustomPersonaEntry = {
+  id: "custom";
+  name: string;
+  short_description: string;
+  isCustomEntry: true;
+};
 
 export function CharactersList() {
   const navigate = useNavigate();
+  const { data: accessStatus } = useAccessStatus();
   const [items, setItems] = useState<PersonaListItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const headerStats = {
+    gems: 0,
+    usedMessages: accessStatus?.free_messages_used,
+    limitMessages: accessStatus?.free_messages_limit,
+    hasUnlimited: accessStatus?.has_access,
+  };
 
   const load = async () => {
     try {
@@ -28,6 +44,16 @@ export function CharactersList() {
   }, []);
 
   const renderCards = () => {
+    const personasWithCustom: Array<PersonaListItem | CustomPersonaEntry> = [
+      {
+        id: "custom",
+        name: "Свой герой",
+        short_description: "Создай собственного персонажа",
+        isCustomEntry: true,
+      },
+      ...items,
+    ];
+
     if (loading) {
       return (
         <div className="grid grid-cols-2 gap-4">
@@ -53,43 +79,32 @@ export function CharactersList() {
       );
     }
 
-    if (!items.length) {
-      return (
-        <p className="text-sm text-text-muted">
-          Персонажи пока не найдены. Попробуй обновить позже.
-        </p>
-      );
-    }
-
     return (
       <div className="grid grid-cols-2 gap-4">
-        {items.map((p) => (
-          <button
-            key={p.id}
-            type="button"
-            onClick={() => navigate(`/characters/${p.id}`)}
-            className="group relative flex flex-col rounded-3xl border border-white/5 bg-card-elevated/70 p-3 text-left transition hover:border-white/20 hover:bg-card-elevated/90 active:scale-[0.98]"
-          >
-            <div className="relative">
-              <div className="aspect-square w-full rounded-2xl bg-gradient-to-br from-[#35164F] via-[#60317A] to-[#E24CBD] p-4">
-                <div className="h-full w-full rounded-2xl bg-white/10 blur-3xl" />
-              </div>
-              {p.is_selected && (
-                <span className="absolute right-2 top-2 rounded-full bg-emerald-500/90 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white shadow-card">
-                  выбрано
-                </span>
-              )}
-            </div>
-            <div className="mt-3 space-y-1">
-              <h2 className="text-base font-semibold text-white">{p.name}</h2>
-              {p.short_description && (
-                <p className="text-xs text-white/70 line-clamp-2">
-                  {p.short_description}
-                </p>
-              )}
-            </div>
-          </button>
-        ))}
+        {personasWithCustom.map((p) => {
+          if ("isCustomEntry" in p) {
+            return (
+              <PersonaCard
+                key="custom-persona"
+                title="Свой герой"
+                description="Создай собственного персонажа"
+                gradientVariant="custom"
+                onClick={() => navigate("/characters/custom")}
+              />
+            );
+          }
+
+          return (
+            <PersonaCard
+              key={p.id}
+              title={p.name}
+              description={p.short_description}
+              selected={p.is_selected}
+              gradientVariant="default"
+              onClick={() => navigate(`/characters/${p.id}`)}
+            />
+          );
+        })}
       </div>
     );
   };
@@ -97,24 +112,7 @@ export function CharactersList() {
   return (
     <div className="min-h-dvh bg-bg-dark text-text-main">
       <div className="mx-auto w-full max-w-screen-sm px-4 pb-12 pt-6 space-y-6">
-        <header className="flex items-start justify-between gap-3">
-          <div>
-            <p className="text-[11px] uppercase tracking-[0.3em] text-text-muted">
-              Галерея персонажей
-            </p>
-            <h1 className="text-3xl font-semibold tracking-tight">
-              Выбери персонажа
-            </h1>
-          </div>
-          <Link
-            to="/characters/custom"
-            className="rounded-full border border-white/10 bg-card-elevated/80 px-4 py-1.5 text-sm font-semibold text-white transition hover:bg-accent hover:text-white"
-          >
-            Свой герой
-          </Link>
-        </header>
-
-        <MessageLimitChip className="pt-1" />
+        <PageHeader title="Персонажи" showBack={false} stats={headerStats} />
 
         {renderCards()}
 
