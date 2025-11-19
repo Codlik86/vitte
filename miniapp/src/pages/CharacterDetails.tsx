@@ -41,51 +41,57 @@ export function CharacterDetails() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white">
-        <p className="text-sm text-white/60">Загружаем...</p>
+      <div className="min-h-dvh flex items-center justify-center bg-bg-dark text-text-main">
+        <p className="text-sm text-text-muted">Загружаем...</p>
       </div>
     );
   }
 
   if (error || !persona) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white">
-        <p className="text-sm text-red-300">{error ?? "Персонаж не найден"}</p>
+      <div className="min-h-dvh flex items-center justify-center bg-bg-dark text-text-main">
+        <p className="text-sm text-red-400">{error ?? "Персонаж не найден"}</p>
       </div>
     );
   }
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
-      <div className="max-w-xl mx-auto px-4 py-6 space-y-4">
+    <div className="min-h-dvh bg-bg-dark text-text-main">
+      <div className="mx-auto flex min-h-dvh w-full max-w-screen-sm flex-col px-4 pb-10 pt-6">
         <button
-          className="text-xs text-white/60 mb-2"
+          className="text-xs text-text-muted mb-4"
           onClick={() => navigate(-1)}
         >
           ← Назад
         </button>
 
-        <div className="rounded-3xl border border-white/10 bg-white/5 px-4 py-4 space-y-2">
-          <div className="flex flex-col gap-1">
-            <h1 className="text-2xl font-semibold">{persona.name}</h1>
-            {persona.short_description && (
-              <p className="text-sm text-white/70">
-                {persona.short_description}
+        <section className="rounded-3xl bg-card-elevated px-5 py-5 shadow-card flex-1">
+          <h1 className="text-3xl font-bold tracking-tight">{persona.name}</h1>
+          {persona.short_description && (
+            <p className="mt-3 text-sm leading-relaxed text-text-muted">
+              {persona.short_description}
+            </p>
+          )}
+          {persona.long_description && (
+            <>
+              <p className="mt-4 text-xs uppercase tracking-[0.3em] text-text-muted">
+                Вайб
               </p>
-            )}
-            {persona.long_description && (
-              <p className="text-sm text-white/60">{persona.long_description}</p>
-            )}
+              <p className="mt-2 text-sm text-text-main/80 leading-relaxed">
+                {persona.long_description}
+              </p>
+            </>
+          )}
+          <div className="mt-6">
+            <button
+              className="w-full rounded-full bg-white text-bg-dark font-semibold py-4 text-base active:scale-[0.98] transition-transform disabled:opacity-70"
+              onClick={handleSelect}
+              disabled={busy || persona.is_selected}
+            >
+              {persona.is_selected ? "Персонаж уже выбран" : "Выбрать персонажа"}
+            </button>
           </div>
-        </div>
-
-        <button
-          className="w-full mt-4 px-4 py-2 rounded-2xl bg-white text-slate-950 text-sm font-medium disabled:opacity-60"
-          onClick={handleSelect}
-          disabled={busy || persona.is_selected}
-        >
-          {persona.is_selected ? "Уже выбран" : "Выбрать персонажа"}
-        </button>
+        </section>
       </div>
     </div>
   );

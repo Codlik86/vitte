@@ -12,7 +12,6 @@ export function Paywall() {
   const [data, setData] = useState<AccessStatusResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
-  // Пока без Telegram WebApp — для теста можно подставить ID руками
   const telegramId = 123456; // TODO: заменить на реальный ID из WebApp initData
 
   useEffect(() => {
@@ -35,32 +34,47 @@ export function Paywall() {
   }, [telegramId]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center">
-      <div className="max-w-md w-full px-6 py-8 rounded-3xl border border-white/10 bg-white/5 backdrop-blur">
-        <h1 className="text-2xl font-semibold mb-3">Подписка Vitte</h1>
-
-        {error && <p className="text-sm text-red-300 mb-3">{error}</p>}
-
+    <div className="relative min-h-dvh bg-bg-dark text-text-main">
+      <div className="absolute top-4 right-4 rounded-full bg-accent-soft px-4 py-1 text-xs font-semibold flex items-center gap-2 text-white shadow-card">
+        <span>0 💎</span>
         {data && (
-          <p className="text-sm text-white/70 mb-4">
-            Ты использовал {data.free_messages_used} из {data.free_messages_limit} бесплатных сообщений.
-          </p>
+          <span className="opacity-90">
+            {data.free_messages_used} / {data.free_messages_limit} сообщений
+          </span>
         )}
+      </div>
+      <div className="mx-auto flex min-h-dvh w-full max-w-screen-sm items-start justify-center px-4 pb-12 pt-16">
+        <section className="w-full rounded-4xl bg-card-elevated px-6 py-7 shadow-card space-y-4">
+          <h1 className="text-3xl font-bold tracking-tight">Vitte</h1>
+          <p className="text-sm text-text-muted leading-relaxed">
+            Романтический AI-компаньон. Сейчас у тебя есть ограниченное число
+            бесплатных сообщений. Чтобы продолжать общение без лимитов, можно
+            оформить подписку.
+          </p>
 
-        <p className="text-sm text-white/70 mb-4">
-          Подписка откроет безлимитное общение, более глубокий флирт и
-          эмоциональные сцены. Пока это только демо-пейвол, логика оплаты будет
-          добавлена позже.
-        </p>
+          {error && <p className="text-sm text-red-400">{error}</p>}
+          {data && (
+            <p className="text-sm text-text-muted">
+              Использовано {data.free_messages_used} из{" "}
+              {data.free_messages_limit} бесплатных сообщений.
+            </p>
+          )}
 
-        <div className="space-y-2">
-          <button className="w-full px-4 py-2 rounded-2xl bg-white text-slate-950 text-sm font-medium">
-            Оформить подписку (YooKassa)
-          </button>
-          <button className="w-full px-4 py-2 rounded-2xl bg-white/10 text-white text-sm font-medium">
-            Оплатить через Stars
-          </button>
-        </div>
+          <ul className="space-y-1 text-sm text-text-muted pt-1">
+            <li>• Безлимитные сообщения</li>
+            <li>• Более глубокий флирт и эмоциональные сцены</li>
+            <li>• Приоритетные ответы модели</li>
+          </ul>
+
+          <div className="space-y-3 pt-4">
+            <button className="w-full rounded-full bg-accent text-white font-semibold py-4 text-base shadow-card active:scale-[0.98] transition-transform">
+              Перейти к подписке
+            </button>
+            <button className="w-full rounded-full bg-card-dark text-text-main font-medium py-4 text-base border border-white/10">
+              Выбрать персонажа
+            </button>
+          </div>
+        </section>
       </div>
     </div>
   );
