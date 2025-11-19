@@ -3,7 +3,7 @@ import type {
   PersonaDetails,
   AccessStatusResponse,
 } from "./types";
-import { resolveTelegramId } from "../lib/telegramId";
+import { requireTelegramId } from "../lib/telegramId";
 
 const BASE_URL = (import.meta.env.VITE_BACKEND_URL ?? "").replace(/\/$/, "");
 
@@ -12,10 +12,7 @@ if (!BASE_URL) {
 }
 
 export async function fetchPersonas(): Promise<PersonasListResponse> {
-  const telegramId = resolveTelegramId();
-  if (!telegramId) {
-    throw new Error("Не удалось определить Telegram ID. Добавь VITE_DEBUG_TELEGRAM_ID в .env для локального запуска.");
-  }
+  const telegramId = await requireTelegramId();
   const url = `${BASE_URL}/api/personas?telegram_id=${telegramId}`;
   const res = await fetch(url);
   if (!res.ok) {
@@ -25,10 +22,7 @@ export async function fetchPersonas(): Promise<PersonasListResponse> {
 }
 
 export async function selectPersona(personaId: number): Promise<PersonaDetails> {
-  const telegramId = resolveTelegramId();
-  if (!telegramId) {
-    throw new Error("Не удалось определить Telegram ID. Добавь VITE_DEBUG_TELEGRAM_ID в .env для локального запуска.");
-  }
+  const telegramId = await requireTelegramId();
   const res = await fetch(
     `${BASE_URL}/api/personas/${personaId}/select?telegram_id=${telegramId}`,
     {
@@ -46,10 +40,7 @@ export async function createCustomPersona(payload: {
   short_description: string;
   vibe?: string;
 }): Promise<PersonaDetails> {
-  const telegramId = resolveTelegramId();
-  if (!telegramId) {
-    throw new Error("Не удалось определить Telegram ID. Добавь VITE_DEBUG_TELEGRAM_ID в .env для локального запуска.");
-  }
+  const telegramId = await requireTelegramId();
   const res = await fetch(`${BASE_URL}/api/personas/custom`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -67,10 +58,7 @@ export async function createCustomPersona(payload: {
 }
 
 export async function fetchPersona(id: number): Promise<PersonaDetails> {
-  const telegramId = resolveTelegramId();
-  if (!telegramId) {
-    throw new Error("Не удалось определить Telegram ID. Добавь VITE_DEBUG_TELEGRAM_ID в .env для локального запуска.");
-  }
+  const telegramId = await requireTelegramId();
   const res = await fetch(
     `${BASE_URL}/api/personas/${id}?telegram_id=${telegramId}`
   );
@@ -81,10 +69,7 @@ export async function fetchPersona(id: number): Promise<PersonaDetails> {
 }
 
 export async function fetchAccessStatus(): Promise<AccessStatusResponse> {
-  const telegramId = resolveTelegramId();
-  if (!telegramId) {
-    throw new Error("Не удалось определить Telegram ID. Добавь VITE_DEBUG_TELEGRAM_ID в .env для локального запуска.");
-  }
+  const telegramId = await requireTelegramId();
   const res = await fetch(
     `${BASE_URL}/api/access/status?telegram_id=${telegramId}`
   );
