@@ -17,6 +17,7 @@ type TelegramWebApp = {
   ready: () => void;
   BackButton: TelegramBackButton;
   initDataUnsafe?: TelegramInitData;
+  initData?: TelegramInitData;
 };
 
 declare global {

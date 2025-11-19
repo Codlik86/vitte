@@ -1,7 +1,6 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAccessStatus } from "../hooks/useAccessStatus";
 import { PageHeader } from "../components/layout/PageHeader";
-import { DebugTelegramIdAlert } from "../components/DebugTelegramIdAlert";
 
 export function Paywall() {
   const { data, loading, error } = useAccessStatus();
@@ -21,8 +20,6 @@ export function Paywall() {
           onBack={() => navigate(-1)}
           stats={loading && !data ? undefined : headerStats}
         />
-
-        <DebugTelegramIdAlert />
 
         <section className="w-full rounded-4xl border border-white/5 bg-card-elevated/85 px-6 py-8 shadow-card">
           <p className="text-[11px] uppercase tracking-[0.4em] text-text-muted">

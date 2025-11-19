@@ -5,7 +5,6 @@ import { fetchPersonas } from "../api/client";
 import { PageHeader } from "../components/layout/PageHeader";
 import { useAccessStatus } from "../hooks/useAccessStatus";
 import { PersonaCard } from "../components/PersonaCard";
-import { DebugTelegramIdAlert } from "../components/DebugTelegramIdAlert";
 
 type CustomPersonaEntry = {
   id: "custom";
@@ -114,8 +113,6 @@ export function CharactersList() {
     <div className="min-h-dvh bg-bg-dark text-text-main">
       <div className="mx-auto w-full max-w-screen-sm px-4 pb-12 pt-6 space-y-6">
         <PageHeader title="Персонажи" showBack={false} stats={headerStats} />
-
-        <DebugTelegramIdAlert />
 
         {renderCards()}
 
