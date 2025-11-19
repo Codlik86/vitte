@@ -1,31 +1,34 @@
+export const TELEGRAM_ID_ERROR_MESSAGE =
+  "Не удалось определить Telegram ID. Добавь VITE_DEBUG_TELEGRAM_ID в .env для локального запуска.";
+
+function normalizeId(id: unknown): number | undefined {
+  if (typeof id === "number") {
+    return Number.isFinite(id) ? id : undefined;
+  }
+  if (typeof id === "string" && id.trim() !== "") {
+    const parsed = Number(id);
+    if (Number.isFinite(parsed)) {
+      return parsed;
+    }
+  }
+  return undefined;
+}
+
 export function resolveTelegramId(): number | undefined {
   if (typeof window === "undefined") {
     return undefined;
   }
 
   const tg = window.Telegram?.WebApp;
-  const webAppId =
-    tg?.initDataUnsafe?.user?.id ??
-    tg?.initData?.user?.id ??
-    undefined;
-
-  if (typeof webAppId === "number" && Number.isFinite(webAppId)) {
+  const webAppId = normalizeId(
+    tg?.initDataUnsafe?.user?.id ?? tg?.initData?.user?.id
+  );
+  if (webAppId !== undefined) {
     return webAppId;
   }
 
-  if (typeof webAppId === "string" && webAppId.trim() !== "") {
-    const parsed = Number(webAppId);
-    if (Number.isFinite(parsed)) {
-      return parsed;
-    }
-  }
-
   const debugEnv = import.meta.env.VITE_DEBUG_TELEGRAM_ID;
-  const debugId =
-    typeof debugEnv === "string" && debugEnv.trim() !== ""
-      ? normalizeId(debugEnv)
-      : undefined;
-
+  const debugId = normalizeId(debugEnv);
   if (import.meta.env.DEV && debugId !== undefined) {
     return debugId;
   }
