@@ -6,6 +6,7 @@ from sqlalchemy import BigInteger, String, Text, ForeignKey, Integer, DateTime, 
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.sql import expression
 
 from .db import Base
 
@@ -98,6 +99,12 @@ class UserPersona(Base):
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
     persona_id: Mapped[int] = mapped_column(ForeignKey("personas.id", ondelete="CASCADE"))
+    is_owner: Mapped[bool] = mapped_column(
+        Boolean,
+        nullable=False,
+        default=False,
+        server_default=expression.false(),
+    )
     is_favorite: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
