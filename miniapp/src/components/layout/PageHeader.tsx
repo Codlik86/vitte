@@ -31,22 +31,22 @@ export function PageHeader({
   };
 
   return (
-    <div className="flex w-full items-center justify-between gap-3">
+    <header className="flex w-full items-center justify-between gap-3">
       <div className="flex min-w-0 items-center gap-3">
         {showBack && (
           <button
             type="button"
             onClick={handleBack}
-            className="flex h-11 w-11 items-center justify-center rounded-full border border-white/10 bg-white/5 text-white transition hover:bg-white/10 active:scale-95"
+            className="inline-flex items-center text-2xl font-medium text-white/80 transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
             aria-label="Назад"
           >
-            <span className="text-lg leading-none">←</span>
+            <span className="leading-none">←</span>
           </button>
         )}
         <h1 className="truncate text-2xl font-semibold text-white">{title}</h1>
       </div>
       <StatsChip stats={stats} />
-    </div>
+    </header>
   );
 }
 
