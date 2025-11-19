@@ -6,7 +6,7 @@ type TelegramBackButton = {
 };
 
 type TelegramUser = {
-  id?: number;
+  id?: number | string;
 };
 
 type TelegramInitData = {
