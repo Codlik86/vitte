@@ -1,15 +1,15 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useAccessStatus } from "../hooks/useAccessStatus";
-import { MessageLimitChip } from "../components/MessageLimitChip";
+import { InternalHeader } from "../components/InternalHeader";
 
 export function Paywall() {
   const { data, loading, error } = useAccessStatus();
+  const navigate = useNavigate();
   return (
     <div className="min-h-dvh bg-bg-dark text-text-main">
       <div className="mx-auto flex min-h-dvh w-full max-w-screen-sm flex-col px-4 pb-12 pt-10">
-        <MessageLimitChip
-          className="mb-6"
-          align="end"
+        <InternalHeader
+          onBack={() => navigate(-1)}
           status={data}
           loading={loading}
           error={error}

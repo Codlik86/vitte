@@ -1,10 +1,38 @@
-import { Routes, Route, Link } from "react-router-dom";
+import { useEffect } from "react";
+import { Routes, Route, Link, useLocation, useNavigate } from "react-router-dom";
 import { Paywall } from "./pages/Paywall";
 import { CharactersList } from "./pages/CharactersList";
 import { CharacterDetails } from "./pages/CharacterDetails";
 import { CharacterCustom } from "./pages/CharacterCustom";
+import { tg } from "./lib/telegram";
 
 function App() {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const telegram = tg;
+    if (!telegram?.BackButton) return;
+
+    const handleBack = () => navigate(-1);
+    const backButton = telegram.BackButton;
+
+    const normalizedPath = location.pathname.toLowerCase();
+    const isGallery = normalizedPath === "/" || normalizedPath === "/characters";
+
+    if (isGallery) {
+      backButton.hide();
+      return;
+    }
+
+    backButton.show();
+    backButton.onClick(handleBack);
+
+    return () => {
+      backButton.offClick?.(handleBack);
+    };
+  }, [location.pathname, navigate]);
+
   return (
     <Routes>
       <Route path="/" element={<CharactersList />} />

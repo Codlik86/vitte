@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import type { PersonaDetails } from "../api/types";
 import { selectPersona, fetchPersona } from "../api/client";
-import { MessageLimitChip } from "../components/MessageLimitChip";
+import { InternalHeader } from "../components/InternalHeader";
 
 export function CharacterDetails() {
   const { id } = useParams();
@@ -43,14 +43,7 @@ export function CharacterDetails() {
   return (
     <div className="min-h-dvh bg-bg-dark text-text-main">
       <div className="mx-auto flex min-h-dvh w-full max-w-screen-sm flex-col px-4 pb-12 pt-6">
-        <button
-          className="text-xs text-text-muted transition hover:text-white/70"
-          onClick={() => navigate(-1)}
-        >
-          ← Назад
-        </button>
-
-        <MessageLimitChip className="mt-4" />
+        <InternalHeader onBack={() => navigate(-1)} />
 
         {loading ? (
           <div className="mt-6 space-y-4 rounded-4xl border border-white/5 bg-card-elevated/60 p-6 shadow-card animate-pulse">

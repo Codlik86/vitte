@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createCustomPersona } from "../api/client";
-import { MessageLimitChip } from "../components/MessageLimitChip";
+import { InternalHeader } from "../components/InternalHeader";
 
 export function CharacterCustom() {
   const navigate = useNavigate();
@@ -32,16 +32,9 @@ export function CharacterCustom() {
   return (
     <div className="min-h-dvh bg-bg-dark text-text-main">
       <div className="mx-auto w-full max-w-screen-sm px-4 pb-12 pt-6">
-        <button
-          className="text-xs text-text-muted transition hover:text-white/70"
-          onClick={() => navigate(-1)}
-        >
-          ← Назад
-        </button>
+        <InternalHeader onBack={() => navigate(-1)} />
 
-        <MessageLimitChip className="mt-4" />
-
-        <section className="mt-6 rounded-4xl border border-white/5 bg-card-elevated/80 p-6 shadow-card">
+        <section className="rounded-4xl border border-white/5 bg-card-elevated/80 p-6 shadow-card">
           <div className="space-y-2">
             <h1 className="text-3xl font-semibold">Свой персонаж</h1>
             <p className="text-sm text-text-muted">

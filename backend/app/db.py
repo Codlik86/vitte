@@ -1,6 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession, async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
 from sqlalchemy.engine.url import make_url
+from sqlalchemy.exc import InterfaceError
 
 from .config import settings
 
@@ -27,10 +28,24 @@ def _build_engine_url():
 
 
 url, connect_args = _build_engine_url()
-engine = create_async_engine(url, echo=False, future=True, connect_args=connect_args)
+engine = create_async_engine(
+    url,
+    echo=False,
+    future=True,
+    connect_args=connect_args,
+    pool_pre_ping=True,
+    pool_recycle=1800,
+    pool_size=5,
+    max_overflow=10,
+)
 async_session_factory = async_sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
 
 
 async def get_session() -> AsyncSession:
-    async with async_session_factory() as session:
-        yield session
+    try:
+        async with async_session_factory() as session:
+            yield session
+    except InterfaceError:
+        await engine.dispose()
+        async with async_session_factory() as session:
+            yield session
