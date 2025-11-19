@@ -32,12 +32,12 @@ DEFAULT_PERSONAS = [
     },
     {
         "name": "Аки",
-        "short_description": "Аниме-вайб, немного дерзкая",
+        "short_description": "Сдержанная и немного загадочная",
         "archetype": "anime_tsundere",
     },
     {
         "name": "Хана",
-        "short_description": "Нежная и мечтательная",
+        "short_description": "Чуткая мечтательница, любит долгие разговоры",
         "archetype": "anime_waifu_soft",
     },
 ]

@@ -1,78 +1,68 @@
-import { useEffect, useState } from "react";
-
-type AccessStatusResponse = {
-  telegram_id: number;
-  access_status: string;
-  free_messages_used: number;
-  free_messages_limit: number;
-  has_access: boolean;
-};
+import { Link } from "react-router-dom";
+import { useAccessStatus } from "../hooks/useAccessStatus";
+import { MessageLimitChip } from "../components/MessageLimitChip";
 
 export function Paywall() {
-  const [data, setData] = useState<AccessStatusResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  const telegramId = 123456; // TODO: заменить на реальный ID из WebApp initData
-
-  useEffect(() => {
-    const fetchStatus = async () => {
-      try {
-        const res = await fetch(
-          `${import.meta.env.VITE_BACKEND_URL ?? ""}/api/access/status?telegram_id=${telegramId}`
-        );
-        if (!res.ok) {
-          throw new Error("Failed to load access status");
-        }
-        const json = (await res.json()) as AccessStatusResponse;
-        setData(json);
-      } catch (e: any) {
-        setError(e.message || "Ошибка загрузки статуса доступа");
-      }
-    };
-
-    fetchStatus();
-  }, [telegramId]);
-
+  const { data, loading, error } = useAccessStatus();
   return (
-    <div className="relative min-h-dvh bg-bg-dark text-text-main">
-      <div className="absolute top-4 right-4 rounded-full bg-accent-soft px-4 py-1 text-xs font-semibold flex items-center gap-2 text-white shadow-card">
-        <span>0 💎</span>
-        {data && (
-          <span className="opacity-90">
-            {data.free_messages_used} / {data.free_messages_limit} сообщений
-          </span>
-        )}
-      </div>
-      <div className="mx-auto flex min-h-dvh w-full max-w-screen-sm items-start justify-center px-4 pb-12 pt-16">
-        <section className="w-full rounded-4xl bg-card-elevated px-6 py-7 shadow-card space-y-4">
-          <h1 className="text-3xl font-bold tracking-tight">Vitte</h1>
-          <p className="text-sm text-text-muted leading-relaxed">
-            Романтический AI-компаньон. Сейчас у тебя есть ограниченное число
-            бесплатных сообщений. Чтобы продолжать общение без лимитов, можно
-            оформить подписку.
+    <div className="min-h-dvh bg-bg-dark text-text-main">
+      <div className="mx-auto flex min-h-dvh w-full max-w-screen-sm flex-col px-4 pb-12 pt-10">
+        <MessageLimitChip
+          className="mb-6"
+          align="end"
+          status={data}
+          loading={loading}
+          error={error}
+        />
+
+        <section className="w-full rounded-4xl border border-white/5 bg-card-elevated/85 px-6 py-8 shadow-card">
+          <p className="text-[11px] uppercase tracking-[0.4em] text-text-muted">
+            Подписка Vitte+
+          </p>
+          <h1 className="mt-2 text-4xl font-semibold leading-tight tracking-tight">
+            Открой безлимит
+          </h1>
+          <p className="mt-3 text-sm leading-relaxed text-text-muted">
+            Сейчас у тебя есть ограниченное число бесплатных сообщений. Когда
+            лимит закончится, можно подключить подписку и продолжить общение без
+            преград.
           </p>
 
-          {error && <p className="text-sm text-red-400">{error}</p>}
           {data && (
-            <p className="text-sm text-text-muted">
+            <p className="mt-4 text-xs uppercase tracking-[0.3em] text-text-muted">
               Использовано {data.free_messages_used} из{" "}
-              {data.free_messages_limit} бесплатных сообщений.
+              {data.free_messages_limit}
             </p>
           )}
+          {error && !data && (
+            <p className="mt-4 text-sm text-red-300">{error}</p>
+          )}
 
-          <ul className="space-y-1 text-sm text-text-muted pt-1">
-            <li>• Безлимитные сообщения</li>
-            <li>• Более глубокий флирт и эмоциональные сцены</li>
-            <li>• Приоритетные ответы модели</li>
+          <ul className="mt-6 space-y-3 text-sm text-white/80">
+            <li className="flex items-start gap-3">
+              <span className="text-base leading-none text-pink-300">•</span>
+              <span>Безлимитные сообщения и свободный флирт.</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <span className="text-base leading-none text-pink-300">•</span>
+              <span>Более глубокие эмоции, длинные ветки и сцены.</span>
+            </li>
+            <li className="flex items-start gap-3">
+              <span className="text-base leading-none text-pink-300">•</span>
+              <span>Приоритетные ответы Vitte и быстрые обновления.</span>
+            </li>
           </ul>
 
-          <div className="space-y-3 pt-4">
-            <button className="w-full rounded-full bg-accent text-white font-semibold py-4 text-base shadow-card active:scale-[0.98] transition-transform">
+          <div className="mt-8 space-y-3">
+            <button className="w-full rounded-full bg-gradient-to-r from-[#7B4DF0] to-[#E44CC6] px-4 py-4 text-base font-semibold text-white shadow-card active:scale-[0.98]">
               Перейти к подписке
             </button>
-            <button className="w-full rounded-full bg-card-dark text-text-main font-medium py-4 text-base border border-white/10">
-              Выбрать персонажа
-            </button>
+            <Link
+              to="/"
+              className="block w-full rounded-full border border-white/10 bg-card-dark/80 px-4 py-4 text-center text-base font-medium text-white transition hover:bg-card-dark"
+            >
+              Вернуться к персонажам
+            </Link>
           </div>
         </section>
       </div>

@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { createCustomPersona } from "../api/client";
+import { MessageLimitChip } from "../components/MessageLimitChip";
 
 export function CharacterCustom() {
   const navigate = useNavigate();
@@ -20,7 +21,7 @@ export function CharacterCustom() {
         short_description: shortDescription,
         vibe,
       });
-      navigate("/characters");
+      navigate("/");
     } catch (e: any) {
       setError(e.message ?? "Не удалось создать персонажа");
     } finally {
@@ -29,63 +30,80 @@ export function CharacterCustom() {
   };
 
   return (
-    <div className="min-h-screen bg-slate-950 text-white">
-      <div className="max-w-xl mx-auto px-4 py-6">
+    <div className="min-h-dvh bg-bg-dark text-text-main">
+      <div className="mx-auto w-full max-w-screen-sm px-4 pb-12 pt-6">
         <button
-          className="text-xs text-white/60 mb-4"
+          className="text-xs text-text-muted transition hover:text-white/70"
           onClick={() => navigate(-1)}
         >
           ← Назад
         </button>
 
-        <h1 className="text-2xl font-semibold mb-3">Свой персонаж</h1>
+        <MessageLimitChip className="mt-4" />
 
-        <form onSubmit={handleSubmit} className="space-y-3">
-          <div>
-            <label className="block text-xs text-white/60 mb-1">
-              Имя персонажа
-            </label>
-            <input
-              className="w-full rounded-2xl bg-white/5 border border-white/10 px-3 py-2 text-sm outline-none"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              required
-            />
+        <section className="mt-6 rounded-4xl border border-white/5 bg-card-elevated/80 p-6 shadow-card">
+          <div className="space-y-2">
+            <h1 className="text-3xl font-semibold">Свой персонаж</h1>
+            <p className="text-sm text-text-muted">
+              Создай своего героя: задай имя, вайб и пару деталей, чтобы Vitte
+              отвечала в нужном стиле.
+            </p>
           </div>
 
-          <div>
-            <label className="block text-xs text-white/60 mb-1">
-              Короткое описание / вайб
+          <form onSubmit={handleSubmit} className="mt-6 space-y-5">
+            <label className="block space-y-2">
+              <span className="text-xs uppercase tracking-[0.3em] text-text-muted">
+                Имя персонажа
+              </span>
+              <input
+                className="w-full rounded-3xl border border-white/10 bg-card-dark px-4 py-3 text-base text-white outline-none focus:border-white/40"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="Например, Серафина"
+                required
+              />
             </label>
-            <input
-              className="w-full rounded-2xl bg-white/5 border border-white/10 px-3 py-2 text-sm outline-none"
-              value={shortDescription}
-              onChange={(e) => setShortDescription(e.target.value)}
-              required
-            />
-          </div>
 
-          <div>
-            <label className="block text-xs text-white/60 mb-1">
-              Доп. vibe (необязательно)
+            <label className="block space-y-2">
+              <span className="text-xs uppercase tracking-[0.3em] text-text-muted">
+                Короткое описание / вайб
+              </span>
+              <input
+                className="w-full rounded-3xl border border-white/10 bg-card-dark px-4 py-3 text-base text-white outline-none focus:border-white/40"
+                value={shortDescription}
+                onChange={(e) => setShortDescription(e.target.value)}
+                placeholder="Например, дерзкая и заботливая подруга"
+                required
+              />
             </label>
-            <textarea
-              className="w-full rounded-2xl bg-white/5 border border-white/10 px-3 py-2 text-sm outline-none min-h-[80px]"
-              value={vibe}
-              onChange={(e) => setVibe(e.target.value)}
-            />
-          </div>
 
-          {error && <p className="text-xs text-red-300">{error}</p>}
+            <label className="block space-y-2">
+              <span className="text-xs uppercase tracking-[0.3em] text-text-muted">
+                Доп. vibe (необязательно)
+              </span>
+              <textarea
+                className="w-full min-h-[120px] rounded-3xl border border-white/10 bg-card-dark px-4 py-3 text-base text-white outline-none focus:border-white/40"
+                value={vibe}
+                onChange={(e) => setVibe(e.target.value)}
+                placeholder="Любимые темы, скорость переписки, триггеры"
+              />
+            </label>
 
-          <button
-            type="submit"
-            className="w-full mt-2 px-4 py-2 rounded-2xl bg-white text-slate-950 text-sm font-medium disabled:opacity-60"
-            disabled={busy}
-          >
-            Создать и выбрать
-          </button>
-        </form>
+            {error && (
+              <p className="text-sm text-red-300">
+                {error}
+              </p>
+            )}
+
+            <button
+              type="submit"
+              className="w-full rounded-full bg-gradient-to-r from-[#7B4DF0] to-[#E44CC6] px-4 py-4 text-base font-semibold text-white shadow-card transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+              disabled={busy}
+            >
+              {busy ? "Создаём..." : "Создать и выбрать"}
+            </button>
+          </form>
+        </section>
       </div>
     </div>
   );

@@ -15,3 +15,11 @@ export type PersonaDetails = PersonaListItem & {
 export type PersonasListResponse = {
   items: PersonaListItem[];
 };
+
+export type AccessStatusResponse = {
+  telegram_id: number;
+  access_status: string;
+  free_messages_used: number;
+  free_messages_limit: number;
+  has_access: boolean;
+};

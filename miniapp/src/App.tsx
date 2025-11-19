@@ -1,5 +1,4 @@
 import { Routes, Route, Link } from "react-router-dom";
-import { Home } from "./pages/Home";
 import { Paywall } from "./pages/Paywall";
 import { CharactersList } from "./pages/CharactersList";
 import { CharacterDetails } from "./pages/CharacterDetails";
@@ -8,7 +7,7 @@ import { CharacterCustom } from "./pages/CharacterCustom";
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<Home />} />
+      <Route path="/" element={<CharactersList />} />
       <Route path="/paywall" element={<Paywall />} />
       <Route path="/characters" element={<CharactersList />} />
       <Route path="/characters/:id" element={<CharacterDetails />} />

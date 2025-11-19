@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import type { PersonaDetails } from "../api/types";
 import { selectPersona, fetchPersona } from "../api/client";
+import { MessageLimitChip } from "../components/MessageLimitChip";
 
 export function CharacterDetails() {
   const { id } = useParams();
@@ -31,7 +32,7 @@ export function CharacterDetails() {
     try {
       setBusy(true);
       await selectPersona(persona.id);
-      navigate("/characters");
+      navigate("/");
     } catch (e: any) {
       setError(e.message ?? "Не удалось выбрать персонажа");
     } finally {
@@ -39,59 +40,75 @@ export function CharacterDetails() {
     }
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-dvh flex items-center justify-center bg-bg-dark text-text-main">
-        <p className="text-sm text-text-muted">Загружаем...</p>
-      </div>
-    );
-  }
-
-  if (error || !persona) {
-    return (
-      <div className="min-h-dvh flex items-center justify-center bg-bg-dark text-text-main">
-        <p className="text-sm text-red-400">{error ?? "Персонаж не найден"}</p>
-      </div>
-    );
-  }
-
   return (
     <div className="min-h-dvh bg-bg-dark text-text-main">
-      <div className="mx-auto flex min-h-dvh w-full max-w-screen-sm flex-col px-4 pb-10 pt-6">
+      <div className="mx-auto flex min-h-dvh w-full max-w-screen-sm flex-col px-4 pb-12 pt-6">
         <button
-          className="text-xs text-text-muted mb-4"
+          className="text-xs text-text-muted transition hover:text-white/70"
           onClick={() => navigate(-1)}
         >
           ← Назад
         </button>
 
-        <section className="rounded-3xl bg-card-elevated px-5 py-5 shadow-card flex-1">
-          <h1 className="text-3xl font-bold tracking-tight">{persona.name}</h1>
-          {persona.short_description && (
-            <p className="mt-3 text-sm leading-relaxed text-text-muted">
-              {persona.short_description}
-            </p>
-          )}
-          {persona.long_description && (
-            <>
-              <p className="mt-4 text-xs uppercase tracking-[0.3em] text-text-muted">
-                Вайб
-              </p>
-              <p className="mt-2 text-sm text-text-main/80 leading-relaxed">
-                {persona.long_description}
-              </p>
-            </>
-          )}
-          <div className="mt-6">
-            <button
-              className="w-full rounded-full bg-white text-bg-dark font-semibold py-4 text-base active:scale-[0.98] transition-transform disabled:opacity-70"
-              onClick={handleSelect}
-              disabled={busy || persona.is_selected}
-            >
-              {persona.is_selected ? "Персонаж уже выбран" : "Выбрать персонажа"}
-            </button>
+        <MessageLimitChip className="mt-4" />
+
+        {loading ? (
+          <div className="mt-6 space-y-4 rounded-4xl border border-white/5 bg-card-elevated/60 p-6 shadow-card animate-pulse">
+            <div className="aspect-square w-full rounded-3xl bg-white/5" />
+            <div className="h-8 w-3/4 rounded-full bg-white/10" />
+            <div className="h-4 w-full rounded-full bg-white/5" />
+            <div className="h-4 w-5/6 rounded-full bg-white/5" />
           </div>
-        </section>
+        ) : error || !persona ? (
+          <div className="mt-6 rounded-3xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-100">
+            {error ?? "Персонаж не найден"}
+          </div>
+        ) : (
+          <section className="mt-6 flex flex-1 flex-col space-y-6 rounded-4xl border border-white/5 bg-card-elevated/80 p-6 shadow-card">
+            <div className="w-full overflow-hidden rounded-3xl bg-gradient-to-br from-[#2C0D3E] via-[#5D267C] to-[#F05BB7]">
+              <div className="relative aspect-square w-full">
+                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.4),_transparent_55%)] opacity-70" />
+                <div className="absolute inset-10 rounded-full bg-white/20 blur-3xl" />
+              </div>
+            </div>
+
+            <div>
+              <h1 className="text-4xl font-semibold tracking-tight">
+                {persona.name}
+              </h1>
+              {persona.short_description && (
+                <p className="mt-3 text-base text-white/70">
+                  {persona.short_description}
+                </p>
+              )}
+            </div>
+
+            {persona.long_description && (
+              <div className="space-y-2">
+                <p className="text-[11px] uppercase tracking-[0.4em] text-text-muted">
+                  Вайб
+                </p>
+                <p className="text-sm leading-relaxed text-white/80">
+                  {persona.long_description}
+                </p>
+              </div>
+            )}
+
+            <div className="mt-auto pt-2">
+              <button
+                className="w-full rounded-full bg-white px-4 py-4 text-base font-semibold text-bg-dark transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70"
+                onClick={handleSelect}
+                disabled={busy || persona.is_selected}
+              >
+                {persona.is_selected
+                  ? "Персонаж уже выбран"
+                  : busy
+                    ? "Выбираем..."
+                    : "Выбрать персонажа"}
+              </button>
+            </div>
+          </section>
+        )}
       </div>
     </div>
   );
