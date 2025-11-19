@@ -1,6 +1,7 @@
 import { Link, useNavigate } from "react-router-dom";
 import { useAccessStatus } from "../hooks/useAccessStatus";
 import { PageHeader } from "../components/layout/PageHeader";
+import { DebugTelegramIdAlert } from "../components/DebugTelegramIdAlert";
 
 export function Paywall() {
   const { data, loading, error } = useAccessStatus();
@@ -13,13 +14,15 @@ export function Paywall() {
   };
   return (
     <div className="min-h-dvh bg-bg-dark text-text-main">
-      <div className="mx-auto flex min-h-dvh w-full max-w-screen-sm flex-col px-4 pb-12 pt-10">
+      <div className="mx-auto w-full max-w-screen-sm px-4 pb-12 pt-6 space-y-6">
         <PageHeader
           title="Подписка"
           showBack
           onBack={() => navigate(-1)}
           stats={loading && !data ? undefined : headerStats}
         />
+
+        <DebugTelegramIdAlert />
 
         <section className="w-full rounded-4xl border border-white/5 bg-card-elevated/85 px-6 py-8 shadow-card">
           <p className="text-[11px] uppercase tracking-[0.4em] text-text-muted">
