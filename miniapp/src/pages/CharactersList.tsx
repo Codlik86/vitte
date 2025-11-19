@@ -54,18 +54,6 @@ export function CharactersList() {
                 <div className="space-y-1">
                   <div className="flex items-center gap-2 flex-wrap">
                     <h2 className="text-base font-semibold text-white">{p.name}</h2>
-                    <div className="flex items-center gap-1 text-[11px] text-white/60">
-                      {p.is_default && (
-                        <span className="px-2 py-0.5 rounded-full bg-white/10">
-                          По умолчанию
-                        </span>
-                      )}
-                      {p.is_owner && (
-                        <span className="px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-200">
-                          Мой персонаж
-                        </span>
-                      )}
-                    </div>
                   </div>
                   {p.short_description && (
                     <p className="text-sm text-white/60">{p.short_description}</p>

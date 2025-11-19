@@ -6,34 +6,39 @@ from .models import Persona
 
 DEFAULT_PERSONAS = [
     {
-        "name": "Нежная",
-        "short_description": "Тёплый, поддерживающий собеседник",
+        "name": "Лина",
+        "short_description": "Тёплая, поддерживающая подруга",
         "archetype": "gentle",
     },
     {
-        "name": "Дерзкая",
-        "short_description": "Ироничный, слегка дерзкий флирт",
+        "name": "Эва",
+        "short_description": "Более смелая и флиртующая",
         "archetype": "sassy",
     },
     {
-        "name": "Умная",
-        "short_description": "Рациональная, чуть отстранённая, но заботливая",
+        "name": "Мия",
+        "short_description": "Спокойная и рациональная собеседница",
         "archetype": "smart_cool",
     },
     {
-        "name": "Хаотичная",
-        "short_description": "Спонтанная, немного безбашенная",
+        "name": "Фэй",
+        "short_description": "Игривый характер с юмором",
         "archetype": "chaotic",
     },
     {
-        "name": "Терапевтичная",
-        "short_description": "Мягкая поддержка, рефлексия, вопросы",
+        "name": "Арина",
+        "short_description": "Заботливая и мягкая",
         "archetype": "therapeutic",
     },
     {
-        "name": "Аниме",
-        "short_description": "Аниме-вайб, эмоции, чуть цундере",
-        "archetype": "anime",
+        "name": "Аки",
+        "short_description": "Аниме-вайб, немного дерзкая",
+        "archetype": "anime_tsundere",
+    },
+    {
+        "name": "Хана",
+        "short_description": "Нежная и мечтательная",
+        "archetype": "anime_waifu_soft",
     },
 ]
 
@@ -47,23 +52,31 @@ def build_system_prompt(archetype: str, short_description: str) -> str:
 
 
 async def ensure_default_personas(session: AsyncSession):
-    result = await session.execute(select(Persona).where(Persona.is_default.is_(True)))
-    existing = result.scalars().first()
-    if existing:
-        return
-
     for p in DEFAULT_PERSONAS:
-        persona = Persona(
-            name=p["name"],
-            short_description=p["short_description"],
-            archetype=p["archetype"],
-            system_prompt=build_system_prompt(p["archetype"], p["short_description"]),
-            long_description=None,
-            is_default=True,
-            is_custom=False,
-            is_active=True,
-            owner_user_id=None,
+        result = await session.execute(
+            select(Persona).where(Persona.name == p["name"], Persona.is_default.is_(True))
         )
-        session.add(persona)
+        persona = result.scalar_one_or_none()
+        if persona:
+            persona.short_description = p["short_description"]
+            persona.archetype = p["archetype"]
+            persona.system_prompt = build_system_prompt(p["archetype"], p["short_description"])
+            persona.is_default = True
+            persona.is_custom = False
+            persona.owner_user_id = None
+            persona.is_active = True
+        else:
+            persona = Persona(
+                name=p["name"],
+                short_description=p["short_description"],
+                archetype=p["archetype"],
+                system_prompt=build_system_prompt(p["archetype"], p["short_description"]),
+                long_description=None,
+                is_default=True,
+                is_custom=False,
+                is_active=True,
+                owner_user_id=None,
+            )
+            session.add(persona)
 
     await session.commit()
