@@ -3,7 +3,7 @@ import type {
   PersonaDetails,
   AccessStatusResponse,
 } from "./types";
-import { resolveTelegramId } from "../lib/resolveTelegramId";
+import { resolveTelegramId } from "../lib/telegramId";
 
 const BASE_URL = (import.meta.env.VITE_BACKEND_URL ?? "").replace(/\/$/, "");
 
