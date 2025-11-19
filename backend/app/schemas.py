@@ -1,26 +1,25 @@
 from pydantic import BaseModel
 
 
-class PersonaBase(BaseModel):
+class PersonaListItem(BaseModel):
     id: int
     name: str
     short_description: str
-    archetype: str | None = None
     is_default: bool
-    is_custom: bool
-    is_active: bool
+    is_owner: bool
+    is_selected: bool
 
     class Config:
         orm_mode = True
 
 
+class PersonaDetails(PersonaListItem):
+    long_description: str | None = None
+    archetype: str | None = None
+
+
 class PersonasListResponse(BaseModel):
-    items: list[PersonaBase]
-
-
-class PersonaSelectRequest(BaseModel):
-    telegram_id: int
-    persona_id: int
+    items: list[PersonaListItem]
 
 
 class PersonaCustomCreateRequest(BaseModel):

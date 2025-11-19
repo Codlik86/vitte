@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import type { Persona } from "../api/types";
+import type { PersonaDetails } from "../api/types";
 import { selectPersona, fetchPersona } from "../api/client";
 
 export function CharacterDetails() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [persona, setPersona] = useState<Persona | null>(null);
+  const [persona, setPersona] = useState<PersonaDetails | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
@@ -66,25 +66,25 @@ export function CharacterDetails() {
         </button>
 
         <div className="rounded-3xl border border-white/10 bg-white/5 px-4 py-4 space-y-2">
-          <div className="flex items-center gap-2">
+          <div className="flex flex-col gap-1">
             <h1 className="text-2xl font-semibold">{persona.name}</h1>
             {persona.short_description && (
-              <span className="text-xs text-white/50">
+              <p className="text-sm text-white/70">
                 {persona.short_description}
-              </span>
+              </p>
+            )}
+            {persona.long_description && (
+              <p className="text-sm text-white/60">{persona.long_description}</p>
             )}
           </div>
-          {persona.short_description && (
-            <p className="text-sm text-white/70">{persona.short_description}</p>
-          )}
         </div>
 
         <button
           className="w-full mt-4 px-4 py-2 rounded-2xl bg-white text-slate-950 text-sm font-medium disabled:opacity-60"
           onClick={handleSelect}
-          disabled={busy || persona.is_active}
+          disabled={busy || persona.is_selected}
         >
-          {persona.is_active ? "Уже выбран" : "Выбрать персонажа"}
+          {persona.is_selected ? "Уже выбран" : "Выбрать персонажа"}
         </button>
       </div>
     </div>

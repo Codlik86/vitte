@@ -1,4 +1,4 @@
-import type { PersonasListResponse, Persona } from "./types";
+import type { PersonasListResponse, PersonaDetails } from "./types";
 
 const BASE_URL = import.meta.env.VITE_BACKEND_URL;
 const TELEGRAM_ID = 53652078; // TODO: заменить на реальный ID из Telegram WebApp
@@ -16,22 +16,24 @@ export async function fetchPersonas(): Promise<PersonasListResponse> {
   return (await res.json()) as PersonasListResponse;
 }
 
-export async function selectPersona(personaId: number): Promise<void> {
-  const res = await fetch(`${BASE_URL}/api/personas/select`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ telegram_id: TELEGRAM_ID, persona_id: personaId }),
-  });
+export async function selectPersona(personaId: number): Promise<PersonaDetails> {
+  const res = await fetch(
+    `${BASE_URL}/api/personas/${personaId}/select?telegram_id=${TELEGRAM_ID}`,
+    {
+      method: "POST",
+    }
+  );
   if (!res.ok) {
     throw new Error("Не удалось выбрать персонажа");
   }
+  return (await res.json()) as PersonaDetails;
 }
 
 export async function createCustomPersona(payload: {
   name: string;
   short_description: string;
   vibe?: string;
-}): Promise<void> {
+}): Promise<PersonaDetails> {
   const res = await fetch(`${BASE_URL}/api/personas/custom`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -45,14 +47,15 @@ export async function createCustomPersona(payload: {
   if (!res.ok) {
     throw new Error("Не удалось создать персонажа");
   }
+  return (await res.json()) as PersonaDetails;
 }
 
-export async function fetchPersona(id: number): Promise<Persona> {
+export async function fetchPersona(id: number): Promise<PersonaDetails> {
   const res = await fetch(
     `${BASE_URL}/api/personas/${id}?telegram_id=${TELEGRAM_ID}`
   );
   if (!res.ok) {
     throw new Error("Не удалось загрузить персонажа");
   }
-  return (await res.json()) as Persona;
+  return (await res.json()) as PersonaDetails;
 }

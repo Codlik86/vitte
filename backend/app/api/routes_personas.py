@@ -7,25 +7,39 @@ from ..models import Persona, UserPersona, EventAnalytics, PersonaEventType
 from ..users_service import get_or_create_user_by_telegram_id
 from ..schemas import (
     PersonasListResponse,
-    PersonaSelectRequest,
     PersonaCustomCreateRequest,
-    PersonaBase,
+    PersonaListItem,
+    PersonaDetails,
 )
 from ..services.persona_events import log_persona_event
 
 router = APIRouter(prefix="/api/personas", tags=["personas"])
 
+DEFAULT_SHORT_DESCRIPTION = "Базовый персонаж"
 
-def persona_to_dict(persona: Persona, is_active: bool = False) -> dict:
-    return {
-        "id": persona.id,
-        "name": persona.name,
-        "short_description": persona.short_description or "",
-        "archetype": persona.archetype,
-        "is_default": bool(persona.is_default),
-        "is_custom": not bool(persona.is_default),
-        "is_active": is_active,
-    }
+
+def _build_short_description(persona: Persona) -> str:
+    return persona.short_description or DEFAULT_SHORT_DESCRIPTION
+
+
+def _build_list_item(persona: Persona, user_id: int | None, active_id: int | None) -> PersonaListItem:
+    return PersonaListItem(
+        id=persona.id,
+        name=persona.name,
+        short_description=_build_short_description(persona),
+        is_default=bool(persona.is_default),
+        is_owner=bool(user_id is not None and persona.owner_user_id == user_id),
+        is_selected=bool(active_id is not None and persona.id == active_id),
+    )
+
+
+def _build_details(persona: Persona, user_id: int | None, active_id: int | None) -> PersonaDetails:
+    item = _build_list_item(persona, user_id, active_id)
+    return PersonaDetails(
+        **item.model_dump(),
+        long_description=persona.long_description,
+        archetype=persona.archetype,
+    )
 
 
 def _is_persona_owned_or_default(persona: Persona, user_id: int) -> bool:
@@ -46,7 +60,10 @@ async def list_personas(
     )
     personas = result.scalars().all()
 
-    items = [persona_to_dict(p, is_active=(p.id == user.active_persona_id)) for p in personas]
+    items = [
+        _build_list_item(p, user.id, user.active_persona_id)
+        for p in personas
+    ]
     await log_persona_event(
         session,
         user_id=user.id,
@@ -57,39 +74,35 @@ async def list_personas(
     return PersonasListResponse(items=items)
 
 
-@router.get("/{persona_id}", response_model=PersonaBase)
+@router.get("/{persona_id}", response_model=PersonaDetails)
 async def get_persona(
     persona_id: int,
-    telegram_id: int = Query(..., ge=1),
+    telegram_id: int | None = Query(default=None, ge=1),
     session: AsyncSession = Depends(get_session),
 ):
-    # telegram_id currently not used for filtering, but kept for symmetry/logging
-    await get_or_create_user_by_telegram_id(session, telegram_id)
+    user = None
+    if telegram_id:
+        user = await get_or_create_user_by_telegram_id(session, telegram_id)
     result = await session.execute(select(Persona).where(Persona.id == persona_id))
     persona = result.scalar_one_or_none()
     if persona is None:
         raise HTTPException(status_code=404, detail="Persona not found")
 
-    return PersonaBase(
-        id=persona.id,
-        name=persona.name,
-        short_description=persona.short_description or "",
-        archetype=persona.archetype,
-        is_default=bool(persona.is_default),
-        is_custom=not bool(persona.is_default),
-        is_active=False,
-    )
+    user_id = user.id if user else None
+    active_id = user.active_persona_id if user else None
+    return _build_details(persona, user_id, active_id)
 
 
-@router.post("/select")
+@router.post("/{persona_id}/select", response_model=PersonaDetails)
 async def select_persona(
-    payload: PersonaSelectRequest,
+    persona_id: int,
+    telegram_id: int = Query(..., ge=1),
     session: AsyncSession = Depends(get_session),
 ):
-    user = await get_or_create_user_by_telegram_id(session, payload.telegram_id)
+    user = await get_or_create_user_by_telegram_id(session, telegram_id)
 
     persona_result = await session.execute(
-        select(Persona).where(Persona.id == payload.persona_id)
+        select(Persona).where(Persona.id == persona_id)
     )
     persona = persona_result.scalar_one_or_none()
     if persona is None or not _is_persona_owned_or_default(persona, user.id):
@@ -105,8 +118,15 @@ async def select_persona(
     )
     up = up_result.scalar_one_or_none()
     if up is None:
-        up = UserPersona(user_id=user.id, persona_id=persona.id, is_favorite=True)
+        up = UserPersona(
+            user_id=user.id,
+            persona_id=persona.id,
+            is_owner=bool(persona.owner_user_id == user.id),
+            is_favorite=True,
+        )
         session.add(up)
+    else:
+        up.is_owner = bool(persona.owner_user_id == user.id)
 
     ev = EventAnalytics(
         user_id=user.id,
@@ -123,10 +143,10 @@ async def select_persona(
     )
 
     await session.commit()
-    return {"ok": True}
+    return _build_details(persona, user.id, user.active_persona_id)
 
 
-@router.post("/custom")
+@router.post("/custom", response_model=PersonaDetails)
 async def create_custom_persona(
     payload: PersonaCustomCreateRequest,
     session: AsyncSession = Depends(get_session),
@@ -150,7 +170,12 @@ async def create_custom_persona(
     session.add(persona)
     await session.flush()
 
-    link = UserPersona(user_id=user.id, persona_id=persona.id, is_favorite=True)
+    link = UserPersona(
+        user_id=user.id,
+        persona_id=persona.id,
+        is_owner=True,
+        is_favorite=True,
+    )
     session.add(link)
 
     user.active_persona_id = persona.id
@@ -170,4 +195,4 @@ async def create_custom_persona(
     )
 
     await session.commit()
-    return {"ok": True}
+    return _build_details(persona, user.id, user.active_persona_id)

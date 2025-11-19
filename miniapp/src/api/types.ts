@@ -1,13 +1,17 @@
-export type Persona = {
+export type PersonaListItem = {
   id: number;
   name: string;
   short_description: string;
-  archetype: string | null;
   is_default: boolean;
-  is_custom: boolean;
-  is_active: boolean;
+  is_owner: boolean;
+  is_selected: boolean;
+};
+
+export type PersonaDetails = PersonaListItem & {
+  long_description?: string | null;
+  archetype?: string | null;
 };
 
 export type PersonasListResponse = {
-  items: Persona[];
+  items: PersonaListItem[];
 };

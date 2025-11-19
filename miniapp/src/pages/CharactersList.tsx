@@ -1,13 +1,13 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
-import type { Persona } from "../api/types";
-import { fetchPersonas, selectPersona } from "../api/client";
+import { Link, useNavigate } from "react-router-dom";
+import type { PersonaListItem } from "../api/types";
+import { fetchPersonas } from "../api/client";
 
 export function CharactersList() {
-  const [items, setItems] = useState<Persona[]>([]);
+  const navigate = useNavigate();
+  const [items, setItems] = useState<PersonaListItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const [busyId, setBusyId] = useState<number | null>(null);
 
   const load = async () => {
     try {
@@ -25,18 +25,6 @@ export function CharactersList() {
   useEffect(() => {
     load();
   }, []);
-
-  const handleSelect = async (personaId: number) => {
-    try {
-      setBusyId(personaId);
-      await selectPersona(personaId);
-      await load();
-    } catch (e: any) {
-      setError(e.message ?? "Не удалось выбрать персонажа");
-    } finally {
-      setBusyId(null);
-    }
-  };
 
   return (
     <div className="min-h-screen bg-slate-950 text-white">
@@ -59,9 +47,8 @@ export function CharactersList() {
             <button
               key={p.id}
               type="button"
-              onClick={() => handleSelect(p.id)}
+              onClick={() => navigate(`/characters/${p.id}`)}
               className="w-full text-left rounded-3xl border border-white/10 bg-white/5 px-4 py-3 hover:border-white/20 transition"
-              disabled={busyId === p.id}
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="space-y-1">
@@ -73,7 +60,7 @@ export function CharactersList() {
                           По умолчанию
                         </span>
                       )}
-                      {p.is_custom && (
+                      {p.is_owner && (
                         <span className="px-2 py-0.5 rounded-full bg-amber-400/20 text-amber-200">
                           Мой персонаж
                         </span>
@@ -84,7 +71,7 @@ export function CharactersList() {
                     <p className="text-sm text-white/60">{p.short_description}</p>
                   )}
                 </div>
-                {p.is_active && (
+                {p.is_selected && (
                   <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-400/10 text-emerald-300">
                     выбрано
                   </span>
