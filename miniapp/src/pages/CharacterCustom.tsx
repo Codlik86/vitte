@@ -12,13 +12,13 @@ export function CharacterCustom() {
   const [vibe, setVibe] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const isPremium = Boolean(accessStatus?.is_premium);
+  const hasSubscription = Boolean(accessStatus?.has_subscription);
   const headerStats = {
     gems: 0,
     usedMessages: accessStatus?.free_messages_used ?? null,
     limitMessages: accessStatus?.free_messages_limit ?? null,
-    hasUnlimited: accessStatus?.has_access,
-    isPremium,
+    hasUnlimited: hasSubscription,
+    isPremium: hasSubscription,
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -58,7 +58,7 @@ export function CharacterCustom() {
             </p>
           </div>
 
-          {!isPremium ? (
+          {!hasSubscription ? (
             <div className="mt-6 space-y-4 rounded-3xl border border-white/10 bg-card-dark/60 p-5 text-center text-sm text-white/80">
               <p>Создание своего персонажа доступно в подписке Premium.</p>
               <Link

@@ -154,7 +154,7 @@ async def create_custom_persona(
 ):
     user = await get_or_create_user_by_telegram_id(session, payload.telegram_id)
     access = await build_access_status(session, user)
-    if not access.get("is_premium"):
+    if not access.get("has_subscription"):
         raise HTTPException(status_code=403, detail="Custom personas доступны в Premium")
     vibe = (payload.vibe or "").strip()
     vibe_sentence = f" Доп. детали: {vibe}." if vibe else ""

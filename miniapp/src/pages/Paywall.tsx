@@ -91,12 +91,13 @@ export function Paywall() {
     (data?.free_messages_limit ?? 15) - (data?.free_messages_used ?? 0),
   );
 
+  const hasSubscription = Boolean(data?.has_subscription);
   const headerStats = {
     gems: 0,
     usedMessages: data?.free_messages_used ?? null,
     limitMessages: data?.free_messages_limit ?? null,
-    hasUnlimited: data?.has_access,
-    isPremium: Boolean(data?.is_premium),
+    hasUnlimited: hasSubscription,
+    isPremium: hasSubscription,
   };
 
   useEffect(() => {
@@ -118,10 +119,10 @@ export function Paywall() {
   }, []);
 
   useEffect(() => {
-    if (!data?.is_premium) {
+    if (!hasSubscription) {
       logAnalyticsEvent("paywall_shown", { source: "miniapp" }).catch(() => {});
     }
-  }, [data?.is_premium]);
+  }, [hasSubscription]);
 
   const orderedPlans = useMemo(() => {
     if (!plans.length) {
@@ -303,7 +304,7 @@ export function Paywall() {
           </div>
         )}
 
-        {data?.is_premium ? renderPremiumState() : renderPaywall()}
+        {hasSubscription ? renderPremiumState() : renderPaywall()}
       </div>
     </div>
   );

@@ -8,7 +8,7 @@ from sqlalchemy import Select, select, or_
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..config import settings
-from ..models import Subscription, SubscriptionStatus, User
+from ..models import AccessStatus, Subscription, SubscriptionStatus, User
 from .store import list_store_products
 
 
@@ -41,13 +41,17 @@ async def build_access_status(session: AsyncSession, user: User) -> dict[str, An
     subscription = await get_active_subscription(session, user.id)
     paywall_variant = await ensure_paywall_variant(session, user)
 
-    is_premium = subscription is not None
+    has_subscription = bool(
+        user.access_status == AccessStatus.SUBSCRIPTION_ACTIVE or subscription is not None
+    )
+    if subscription and user.access_status != AccessStatus.SUBSCRIPTION_ACTIVE:
+        user.access_status = AccessStatus.SUBSCRIPTION_ACTIVE
+
     premium_until = subscription.valid_until if subscription else None
     plan_code = subscription.plan_code if subscription else None
 
-    can_send_message = bool(
-        is_premium or user.free_messages_used < limit
-    )
+    free_used = 0 if has_subscription else user.free_messages_used
+    can_send_message = has_subscription or free_used < limit
 
     store_products = [
         {
@@ -63,11 +67,12 @@ async def build_access_status(session: AsyncSession, user: User) -> dict[str, An
     return {
         "telegram_id": user.telegram_id,
         "access_status": user.access_status,
-        "free_messages_used": user.free_messages_used,
+        "free_messages_used": free_used,
         "free_messages_limit": limit,
-        "has_access": can_send_message,
         "can_send_message": can_send_message,
-        "is_premium": is_premium,
+        "has_access": can_send_message,
+        "has_subscription": has_subscription,
+        "is_premium": has_subscription,
         "plan_code": plan_code,
         "premium_until": premium_until,
         "paywall_variant": paywall_variant,

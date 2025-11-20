@@ -18,12 +18,13 @@ export function Store() {
   const [error, setError] = useState<string | null>(null);
   const [states, setStates] = useState<PurchaseState>({});
 
+  const hasSubscription = Boolean(accessStatus?.has_subscription);
   const headerStats = {
     gems: 0,
     usedMessages: accessStatus?.free_messages_used ?? null,
     limitMessages: accessStatus?.free_messages_limit ?? null,
-    hasUnlimited: accessStatus?.has_access,
-    isPremium: Boolean(accessStatus?.is_premium),
+    hasUnlimited: hasSubscription,
+    isPremium: hasSubscription,
   };
 
   useEffect(() => {

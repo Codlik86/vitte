@@ -37,7 +37,7 @@ async def chat(request: ChatRequest, session: AsyncSession = Depends(get_session
     access = await build_access_status(session, user)
     if not access["can_send_message"]:
         raise HTTPException(status_code=402, detail="Free limit reached")
-    should_update_limit = not access["is_premium"]
+    should_update_limit = not access["has_subscription"]
     if should_update_limit:
         user.free_messages_used += 1
 

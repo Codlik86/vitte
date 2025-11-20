@@ -31,6 +31,7 @@ export type AccessStatusResponse = {
   free_messages_limit: number;
   has_access: boolean;
   can_send_message: boolean;
+  has_subscription: boolean;
   is_premium: boolean;
   plan_code: string | null;
   premium_until: string | null;
