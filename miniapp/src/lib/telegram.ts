@@ -18,6 +18,8 @@ type TelegramWebApp = {
   BackButton: TelegramBackButton;
   initDataUnsafe?: TelegramInitData;
   initData?: TelegramInitData;
+  openTelegramLink?: (url: string) => void;
+  openInvoice?: (invoicePayload: string | Record<string, unknown>) => void;
 };
 
 declare global {

@@ -7,6 +7,7 @@ from ..config import settings
 from ..db import get_session, AsyncSession
 from ..models import User, AccessStatus, EventAnalytics
 from ..logging_config import logger
+from ..services.access import get_active_subscription
 
 
 class AccessMiddleware(BaseMiddleware):
@@ -44,8 +45,12 @@ class AccessMiddleware(BaseMiddleware):
             data["db_session"] = session
             data["current_user"] = user
 
+            subscription = await get_active_subscription(session, user.id)
+
             # Если подписка активна — ничего не ограничиваем
-            if user.access_status == AccessStatus.SUBSCRIPTION_ACTIVE:
+            if subscription or user.access_status == AccessStatus.SUBSCRIPTION_ACTIVE:
+                if subscription and user.access_status != AccessStatus.SUBSCRIPTION_ACTIVE:
+                    user.access_status = AccessStatus.SUBSCRIPTION_ACTIVE
                 await self._log_event(session, user, "message_allowed", {"reason": "subscription_active"})
                 await session.commit()
                 return await handler(event, data)

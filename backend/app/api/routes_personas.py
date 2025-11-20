@@ -12,6 +12,7 @@ from ..schemas import (
     PersonaDetails,
 )
 from ..services.persona_events import log_persona_event
+from ..services.access import build_access_status
 
 router = APIRouter(prefix="/api/personas", tags=["personas"])
 
@@ -152,6 +153,9 @@ async def create_custom_persona(
     session: AsyncSession = Depends(get_session),
 ):
     user = await get_or_create_user_by_telegram_id(session, payload.telegram_id)
+    access = await build_access_status(session, user)
+    if not access.get("is_premium"):
+        raise HTTPException(status_code=403, detail="Custom personas доступны в Premium")
     vibe = (payload.vibe or "").strip()
     vibe_sentence = f" Доп. детали: {vibe}." if vibe else ""
 

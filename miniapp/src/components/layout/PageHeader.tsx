@@ -6,6 +6,7 @@ export type PageHeaderStats = {
   usedMessages: number | null;
   limitMessages: number | null;
   hasUnlimited?: boolean;
+  isPremium?: boolean;
 };
 
 type PageHeaderProps = {
@@ -52,6 +53,7 @@ export function PageHeader({
             usedMessages={stats.usedMessages ?? null}
             totalMessages={stats.limitMessages ?? null}
             hasUnlimited={stats.hasUnlimited}
+            isPremium={stats.isPremium}
             onPlusClick={() => navigate("/paywall")}
           />
         </div>

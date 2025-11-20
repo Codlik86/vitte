@@ -25,6 +25,7 @@ export function CharactersList() {
     usedMessages: accessStatus?.free_messages_used ?? null,
     limitMessages: accessStatus?.free_messages_limit ?? null,
     hasUnlimited: accessStatus?.has_access,
+    isPremium: Boolean(accessStatus?.is_premium),
   };
 
   const load = async () => {
@@ -57,7 +58,7 @@ export function CharactersList() {
 
     if (loading) {
       return (
-        <div className="grid grid-cols-1 gap-4 min-[420px]:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 min-[420px]:grid-cols-2 lg:grid-cols-3">
           {Array.from({ length: 4 }).map((_, index) => (
             <div
               key={index}
@@ -81,7 +82,7 @@ export function CharactersList() {
     }
 
     return (
-      <div className="grid grid-cols-1 gap-4 min-[420px]:grid-cols-2">
+      <div className="grid grid-cols-1 gap-4 min-[420px]:grid-cols-2 lg:grid-cols-3">
         {personasWithCustom.map((p) => {
           if ("isCustomEntry" in p) {
             return (
@@ -112,19 +113,27 @@ export function CharactersList() {
 
   return (
     <div className="min-h-dvh bg-bg-dark text-text-main">
-      <div className="mx-auto w-full max-w-screen-sm px-4 pb-12 pt-6 space-y-6">
+      <div className="mx-auto w-full max-w-screen-sm px-4 pb-12 pt-6 space-y-6 lg:max-w-screen-md xl:max-w-screen-lg">
         <PageHeader title="Персонажи" showBack={false} stats={headerStats} />
 
         <DebugTelegramBanner />
 
         {renderCards()}
 
-        <Link
-          to="/paywall"
-          className="inline-flex w-full items-center justify-center rounded-full bg-gradient-to-r from-[#7B4DF0] to-[#E44CC6] px-4 py-4 text-base font-semibold text-white shadow-card active:scale-[0.99]"
-        >
-          Перейти к подписке
-        </Link>
+        <div className="space-y-3">
+          <Link
+            to="/paywall"
+            className="inline-flex w-full items-center justify-center rounded-full bg-gradient-to-r from-[#7B4DF0] to-[#E44CC6] px-4 py-4 text-base font-semibold text-white shadow-card active:scale-[0.99]"
+          >
+            Перейти к подписке
+          </Link>
+          <Link
+            to="/store"
+            className="inline-flex w-full items-center justify-center rounded-full border border-white/10 bg-card-dark/80 px-4 py-3 text-sm font-medium text-white/90 transition hover:bg-card-dark"
+          >
+            Магазин опций
+          </Link>
+        </div>
       </div>
     </div>
   );

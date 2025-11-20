@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { createCustomPersona } from "../api/client";
 import { PageHeader } from "../components/layout/PageHeader";
 import { useAccessStatus } from "../hooks/useAccessStatus";
@@ -12,11 +12,13 @@ export function CharacterCustom() {
   const [vibe, setVibe] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const isPremium = Boolean(accessStatus?.is_premium);
   const headerStats = {
     gems: 0,
     usedMessages: accessStatus?.free_messages_used ?? null,
     limitMessages: accessStatus?.free_messages_limit ?? null,
     hasUnlimited: accessStatus?.has_access,
+    isPremium,
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -56,7 +58,18 @@ export function CharacterCustom() {
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="mt-6 space-y-6">
+          {!isPremium ? (
+            <div className="mt-6 space-y-4 rounded-3xl border border-white/10 bg-card-dark/60 p-5 text-center text-sm text-white/80">
+              <p>Создание своего персонажа доступно в подписке Premium.</p>
+              <Link
+                to="/paywall"
+                className="inline-flex w-full items-center justify-center rounded-full bg-gradient-to-r from-[#7B4DF0] to-[#E44CC6] px-4 py-3 text-base font-semibold text-white shadow-card"
+              >
+                Оформить подписку
+              </Link>
+            </div>
+          ) : (
+            <form onSubmit={handleSubmit} className="mt-6 space-y-6">
             <label className="block space-y-2">
               <span className="text-sm font-medium text-white/80">
                 Имя персонажа
@@ -108,7 +121,8 @@ export function CharacterCustom() {
             >
               {busy ? "Создаём..." : "Создать и выбрать"}
             </button>
-          </form>
+            </form>
+          )}
         </section>
       </div>
     </div>

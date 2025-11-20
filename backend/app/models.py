@@ -2,7 +2,7 @@ from datetime import datetime
 from enum import Enum as PyEnum
 import enum
 import sqlalchemy as sa
-from sqlalchemy import BigInteger, String, Text, ForeignKey, Integer, DateTime, Enum, Boolean
+from sqlalchemy import BigInteger, String, Text, ForeignKey, Integer, DateTime, Enum, Boolean, Numeric
 from sqlalchemy.dialects import postgresql
 from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -29,6 +29,7 @@ class User(Base):
         nullable=False,
     )
     free_messages_used: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    paywall_variant: Mapped[str | None] = mapped_column(String(1), nullable=True)
     active_persona_id: Mapped[int | None] = mapped_column(
         ForeignKey("personas.id", ondelete="SET NULL"),
         nullable=True,
@@ -36,6 +37,8 @@ class User(Base):
     active_persona: Mapped["Persona | None"] = relationship("Persona", foreign_keys=[active_persona_id])
 
     dialogs: Mapped[list["Dialog"]] = relationship(back_populates="user")
+    subscriptions: Mapped[list["Subscription"]] = relationship(back_populates="user")
+    purchases: Mapped[list["Purchase"]] = relationship(back_populates="user")
 
 
 class Dialog(Base):
@@ -92,6 +95,79 @@ class Persona(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     owner_user: Mapped["User | None"] = relationship("User", foreign_keys=[owner_user_id])
+
+
+class PaywallVariant(str, PyEnum):
+    A = "A"
+    B = "B"
+
+
+class SubscriptionStatus(str, PyEnum):
+    PENDING = "pending"
+    ACTIVE = "active"
+    EXPIRED = "expired"
+    CANCELED = "canceled"
+
+
+class Subscription(Base):
+    __tablename__ = "subscriptions"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    provider: Mapped[str] = mapped_column(String(32))
+    plan_code: Mapped[str] = mapped_column(String(64))
+    status: Mapped[SubscriptionStatus] = mapped_column(
+        Enum(SubscriptionStatus, name="subscription_status_enum"),
+        default=SubscriptionStatus.PENDING,
+        nullable=False,
+    )
+    is_auto_renew: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    started_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    valid_until: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    external_payment_id: Mapped[str | None] = mapped_column(String(128), nullable=True, index=True)
+    confirmation_payload: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
+        nullable=False,
+    )
+
+    user: Mapped["User"] = relationship(back_populates="subscriptions")
+
+
+class PurchaseStatus(str, PyEnum):
+    PENDING = "pending"
+    SUCCESS = "success"
+    FAILED = "failed"
+
+
+class Purchase(Base):
+    __tablename__ = "purchases"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    product_code: Mapped[str] = mapped_column(String(64))
+    provider: Mapped[str] = mapped_column(String(32), nullable=False)
+    amount: Mapped[Numeric | None] = mapped_column(Numeric(10, 2), nullable=True)
+    currency: Mapped[str | None] = mapped_column(String(8), nullable=True)
+    status: Mapped[PurchaseStatus] = mapped_column(
+        Enum(PurchaseStatus, name="purchase_status_enum"),
+        default=PurchaseStatus.PENDING,
+        nullable=False,
+    )
+    meta: Mapped[dict | None] = mapped_column(JSONB, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
+        nullable=False,
+    )
+
+    user: Mapped["User"] = relationship(back_populates="purchases")
+
 
 class UserPersona(Base):
     __tablename__ = "user_personas"

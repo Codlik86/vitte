@@ -5,6 +5,7 @@ type GemChipProps = {
   usedMessages: number | null;
   totalMessages: number | null;
   hasUnlimited?: boolean;
+  isPremium?: boolean;
   onPlusClick?: () => void;
   className?: string;
 };
@@ -37,6 +38,7 @@ export function GemChip({
   usedMessages,
   totalMessages,
   hasUnlimited = false,
+  isPremium = false,
   onPlusClick,
   className = "",
 }: GemChipProps) {
@@ -51,7 +53,7 @@ export function GemChip({
   const resolvedUnlimited = (stableUnlimited ?? hasUnlimited) === true;
 
   const displayGems = formatCounter(resolvedGems ?? null);
-  const displayMessages = resolvedUnlimited
+  const displayMessages = resolvedUnlimited || isPremium
     ? "∞"
     : `${formatCounter(resolvedUsed ?? null)}/${formatCounter(resolvedTotal ?? null)}`;
 
@@ -69,6 +71,11 @@ export function GemChip({
           <span>{displayMessages}</span>
         </span>
       </div>
+      {isPremium && (
+        <span className="rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white/90">
+          Premium
+        </span>
+      )}
       <button
         type="button"
         onClick={onPlusClick}

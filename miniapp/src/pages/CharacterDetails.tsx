@@ -26,6 +26,7 @@ export function CharacterDetails() {
     usedMessages: accessStatus?.free_messages_used ?? null,
     limitMessages: accessStatus?.free_messages_limit ?? null,
     hasUnlimited: accessStatus?.has_access,
+    isPremium: Boolean(accessStatus?.is_premium),
   };
 
   useEffect(() => {

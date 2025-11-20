@@ -2,7 +2,16 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
 
-from .api import health_router, webhook_router, access_router, personas_router, chat_router
+from .api import (
+    health_router,
+    webhook_router,
+    access_router,
+    personas_router,
+    chat_router,
+    payments_router,
+    store_router,
+    analytics_router,
+)
 from .db import engine, Base, async_session_factory
 from .logging_config import logger
 from . import models  # noqa: F401 ensures models are imported for metadata
@@ -63,7 +72,8 @@ async def on_startup():
                 ALTER TABLE users
                 ADD COLUMN IF NOT EXISTS access_status access_status_enum NOT NULL DEFAULT 'trial_usage'::access_status_enum,
                 ADD COLUMN IF NOT EXISTS free_messages_used integer NOT NULL DEFAULT 0,
-                ADD COLUMN IF NOT EXISTS active_persona_id integer REFERENCES personas(id) ON DELETE SET NULL;
+                ADD COLUMN IF NOT EXISTS active_persona_id integer REFERENCES personas(id) ON DELETE SET NULL,
+                ADD COLUMN IF NOT EXISTS paywall_variant varchar(1);
                 """
             )
         )
@@ -102,3 +112,6 @@ app.include_router(webhook_router)
 app.include_router(access_router)
 app.include_router(personas_router)
 app.include_router(chat_router)
+app.include_router(payments_router)
+app.include_router(store_router)
+app.include_router(analytics_router)
