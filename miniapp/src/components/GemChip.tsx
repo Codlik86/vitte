@@ -1,3 +1,5 @@
+import { useRef } from "react";
+
 type GemChipProps = {
   gems: number | null;
   usedMessages: number | null;
@@ -6,6 +8,22 @@ type GemChipProps = {
   onPlusClick?: () => void;
   className?: string;
 };
+
+function useStableNumber(value: number | null) {
+  const ref = useRef<number | null>(null);
+  if (typeof value === "number" && Number.isFinite(value)) {
+    ref.current = value;
+  }
+  return ref.current;
+}
+
+function useStableBoolean(value: boolean | undefined) {
+  const ref = useRef<boolean | null>(null);
+  if (typeof value === "boolean") {
+    ref.current = value;
+  }
+  return ref.current;
+}
 
 function formatCounter(value: number | null): string {
   if (typeof value === "number" && Number.isFinite(value)) {
@@ -22,10 +40,20 @@ export function GemChip({
   onPlusClick,
   className = "",
 }: GemChipProps) {
-  const displayGems = formatCounter(gems);
-  const displayMessages = hasUnlimited
+  const stableGems = useStableNumber(gems);
+  const stableUsed = useStableNumber(usedMessages);
+  const stableTotal = useStableNumber(totalMessages);
+  const stableUnlimited = useStableBoolean(hasUnlimited);
+
+  const resolvedGems = stableGems ?? gems;
+  const resolvedUsed = stableUsed ?? usedMessages;
+  const resolvedTotal = stableTotal ?? totalMessages;
+  const resolvedUnlimited = (stableUnlimited ?? hasUnlimited) === true;
+
+  const displayGems = formatCounter(resolvedGems ?? null);
+  const displayMessages = resolvedUnlimited
     ? "∞"
-    : `${formatCounter(usedMessages)}/${formatCounter(totalMessages)}`;
+    : `${formatCounter(resolvedUsed ?? null)}/${formatCounter(resolvedTotal ?? null)}`;
 
   return (
     <div
@@ -36,7 +64,7 @@ export function GemChip({
           <span aria-hidden>💎</span>
           <span>{displayGems}</span>
         </span>
-        <span className="flex items-center gap-1">
+        <span className="flex min-w-[70px] items-center justify-end gap-1">
           <span aria-hidden>💬</span>
           <span>{displayMessages}</span>
         </span>
