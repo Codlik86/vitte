@@ -9,7 +9,7 @@ Vitte — романтический AI-компаньон. Репозитори
 
 - **Новые таблицы**: `subscriptions` и `purchases` (см. `backend/app/models.py`) описывают статусы подписок и покупок Store. События paywall/purchase логируются в `events_analytics`.
 - **API**:
-  - `/api/access/status` — расширен флагами `is_premium`, `premium_until`, `paywall_variant`, а также списком продуктов Store.
+  - `/api/access/status` — расширен флагами `has_subscription`, `premium_until`, `paywall_variant`, а также списком продуктов Store.
   - `/api/payments/plans`, `/api/payments/subscribe`, `/api/payments/yookassa/webhook` — работа с подписками и YooKassa/Stars.
   - `/api/store/products`, `/api/store/purchase` — магазин дополнительных продуктов (Stars).
   - `/api/analytics/events` — логирование событий (`paywall_shown`, `paywall_cta_click`, `purchase_*` и т.д.).

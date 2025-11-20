@@ -72,7 +72,6 @@ async def build_access_status(session: AsyncSession, user: User) -> dict[str, An
         "can_send_message": can_send_message,
         "has_access": can_send_message,
         "has_subscription": has_subscription,
-        "is_premium": has_subscription,
         "plan_code": plan_code,
         "premium_until": premium_until,
         "paywall_variant": paywall_variant,

@@ -24,7 +24,6 @@ class AccessStatusResponse(BaseModel):
     has_access: bool
     can_send_message: bool
     has_subscription: bool
-    is_premium: bool
     plan_code: str | None = None
     premium_until: datetime | None = None
     paywall_variant: str
