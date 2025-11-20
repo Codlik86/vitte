@@ -76,9 +76,19 @@ export function GemChip({
         aria-label="Открыть экран подписки"
         disabled={!onPlusClick}
       >
-        <span className="text-xl font-semibold leading-none tracking-tight translate-y-[0.5px]">
-          +
-        </span>
+        <svg
+          viewBox="0 0 24 24"
+          aria-hidden="true"
+          className="h-[18px] w-[18px] text-white"
+        >
+          <path
+            d="M12 5v14M5 12h14"
+            stroke="currentColor"
+            strokeWidth="2.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+          />
+        </svg>
       </button>
     </div>
   );
