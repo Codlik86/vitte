@@ -184,12 +184,20 @@ export function Paywall() {
         <li>• Более умная и внимательная модель для диалогов.</li>
         <li>• Доступ к кастомному персонажу и эмоциональным сценам.</li>
       </ul>
-      <Link
-        to="/characters"
-        className="inline-flex w-full items-center justify-center rounded-full border border-white/10 px-4 py-3 text-sm font-semibold text-white transition hover:bg-white/5"
-      >
-        Вернуться к персонажам
-      </Link>
+      <div className="space-y-3">
+        <Link
+          to="/characters"
+          className="inline-flex w-full items-center justify-center rounded-full border border-white/10 px-4 py-4 text-base font-semibold text-white transition hover:bg-white/5"
+        >
+          Вернуться к персонажам
+        </Link>
+        <Link
+          to="/store"
+          className="inline-flex w-full items-center justify-center rounded-full border border-white/10 bg-card-dark/80 px-4 py-4 text-base font-medium text-white/90 transition hover:bg-card-dark"
+        >
+          Магазин
+        </Link>
+      </div>
     </section>
   );
 
@@ -280,7 +288,7 @@ export function Paywall() {
         <button
           type="button"
           onClick={() => navigate("/characters")}
-          className="w-full rounded-full border border-white/10 px-4 py-3 text-sm text-white/80 transition hover:bg-white/5"
+          className="inline-flex w-full items-center justify-center rounded-full border border-white/10 bg-card-dark/60 px-4 py-4 text-base font-medium text-white/90 transition hover:bg-card-dark"
         >
           Продолжить бесплатно
         </button>
