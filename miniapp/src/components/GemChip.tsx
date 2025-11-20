@@ -29,7 +29,7 @@ export function GemChip({
 
   return (
     <div
-      className={`inline-flex min-h-10 min-w-[170px] items-center gap-3 rounded-full bg-gradient-to-r from-[#2D1747] via-[#5C2D83] to-[#D64CC1] px-4 py-1.5 shadow-card ${className}`}
+      className={`inline-flex min-h-10 min-w-[150px] flex-shrink-0 items-center gap-3 rounded-full bg-gradient-to-r from-[#2D1747] via-[#5C2D83] to-[#D64CC1] px-4 py-1.5 shadow-card sm:min-w-[170px] ${className}`}
     >
       <div className="flex flex-1 items-center justify-between gap-3 whitespace-nowrap text-sm font-semibold text-white/90 tabular-nums">
         <span className="flex items-center gap-1">

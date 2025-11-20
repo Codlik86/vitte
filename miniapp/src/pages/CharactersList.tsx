@@ -57,7 +57,7 @@ export function CharactersList() {
 
     if (loading) {
       return (
-        <div className="grid grid-cols-2 gap-4">
+        <div className="grid grid-cols-1 gap-4 min-[420px]:grid-cols-2">
           {Array.from({ length: 4 }).map((_, index) => (
             <div
               key={index}
@@ -81,7 +81,7 @@ export function CharactersList() {
     }
 
     return (
-      <div className="grid grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4 min-[420px]:grid-cols-2">
         {personasWithCustom.map((p) => {
           if ("isCustomEntry" in p) {
             return (

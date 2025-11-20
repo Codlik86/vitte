@@ -31,8 +31,8 @@ export function PageHeader({
   };
 
   return (
-    <header className="flex w-full items-center justify-between gap-3">
-      <div className="flex min-w-0 items-center gap-3">
+    <header className="flex w-full flex-wrap items-center gap-3 min-[420px]:flex-nowrap">
+      <div className="flex min-w-0 flex-1 items-center gap-3">
         {showBack && (
           <button
             type="button"
@@ -46,13 +46,15 @@ export function PageHeader({
         <h1 className="truncate text-2xl font-semibold text-white">{title}</h1>
       </div>
       {stats ? (
-        <GemChip
-          gems={stats.gems ?? null}
-          usedMessages={stats.usedMessages ?? null}
-          totalMessages={stats.limitMessages ?? null}
-          hasUnlimited={stats.hasUnlimited}
-          onPlusClick={() => navigate("/paywall")}
-        />
+        <div className="w-full min-[420px]:w-auto min-[420px]:justify-end flex justify-start">
+          <GemChip
+            gems={stats.gems ?? null}
+            usedMessages={stats.usedMessages ?? null}
+            totalMessages={stats.limitMessages ?? null}
+            hasUnlimited={stats.hasUnlimited}
+            onPlusClick={() => navigate("/paywall")}
+          />
+        </div>
       ) : null}
     </header>
   );

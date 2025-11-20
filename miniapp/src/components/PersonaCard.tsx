@@ -25,8 +25,16 @@ export function PersonaCard({
       className="group relative flex flex-col rounded-3xl border border-white/5 bg-card-elevated/70 p-3 text-left transition hover:border-white/20 hover:bg-card-elevated/90 active:scale-[0.98]"
     >
       <div className="relative">
-        <div className={`aspect-square w-full rounded-2xl bg-gradient-to-br ${gradientClass} p-4`}>
-          <div className="h-full w-full rounded-2xl bg-white/10 blur-3xl" />
+        <div className="relative w-full overflow-hidden rounded-2xl">
+          <div
+            className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${gradientClass}`}
+            aria-hidden
+          />
+          <div
+            className="pointer-events-none absolute inset-4 rounded-2xl bg-white/20 blur-3xl opacity-80"
+            aria-hidden
+          />
+          <div className="pt-[100%]" />
         </div>
         {selected && (
           <span className="absolute right-2 top-2 rounded-full bg-emerald-500/90 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white shadow-card">
