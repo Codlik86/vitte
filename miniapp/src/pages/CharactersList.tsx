@@ -102,7 +102,7 @@ export function CharactersList() {
               description={p.short_description}
               selected={p.is_selected}
               gradientVariant="default"
-              onClick={() => navigate(`/characters/${p.id}`)}
+              onClick={() => navigate(`/characters/${p.id}`, { state: { name: p.name } })}
             />
           );
         })}

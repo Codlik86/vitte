@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useLocation } from "react-router-dom";
 import type { PersonaDetails } from "../api/types";
 import { selectPersona, fetchPersona } from "../api/client";
 import { PageHeader } from "../components/layout/PageHeader";
@@ -7,12 +7,20 @@ import { useAccessStatus } from "../hooks/useAccessStatus";
 
 export function CharacterDetails() {
   const { id } = useParams();
+  const location = useLocation();
+  const locationState = (location.state as { name?: string } | null) ?? null;
+  const fallbackTitle = locationState?.name ?? "Персонаж";
   const navigate = useNavigate();
   const { data: accessStatus } = useAccessStatus();
   const [persona, setPersona] = useState<PersonaDetails | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
+  const [title, setTitle] = useState<string>(fallbackTitle);
+
+  useEffect(() => {
+    setTitle(fallbackTitle);
+  }, [fallbackTitle, id]);
   const headerStats = {
     gems: 0,
     usedMessages: accessStatus?.free_messages_used ?? null,
@@ -26,6 +34,7 @@ export function CharacterDetails() {
       try {
         const data = await fetchPersona(Number(id));
         setPersona(data);
+        setTitle(data.name);
       } catch (e: any) {
         setError(e.message ?? "Ошибка загрузки");
       } finally {
@@ -52,7 +61,7 @@ export function CharacterDetails() {
     <div className="min-h-dvh bg-bg-dark text-text-main">
       <div className="mx-auto flex min-h-dvh w-full max-w-screen-sm flex-col px-4 pb-12 pt-6">
         <PageHeader
-          title={persona?.name ?? "Персонаж"}
+          title={title}
           showBack
           onBack={() => navigate(-1)}
           stats={headerStats}

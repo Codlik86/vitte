@@ -59,7 +59,7 @@ export function GemChip({
     <div
       className={`inline-flex min-h-10 min-w-[140px] flex-shrink-0 items-center gap-2 rounded-full bg-gradient-to-r from-[#2D1747] via-[#5C2D83] to-[#D64CC1] px-4 py-1.5 shadow-card sm:min-w-[160px] ${className}`}
     >
-      <div className="flex flex-1 items-center justify-between gap-1 whitespace-nowrap text-sm font-semibold text-white/90 tabular-nums">
+      <div className="flex flex-1 items-center justify-between gap-0.5 whitespace-nowrap text-sm font-semibold text-white/90 tabular-nums">
         <span className="flex items-center gap-0.5">
           <span aria-hidden>💎</span>
           <span>{displayGems}</span>
