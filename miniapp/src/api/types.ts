@@ -46,7 +46,7 @@ export type PaymentPlan = {
   description: string;
   price: number;
   currency: string;
-  period: "week" | "month" | "quarter" | "year";
+  period: "day" | "week" | "month" | "quarter" | "year";
   provider: string;
   recommended?: boolean;
 };

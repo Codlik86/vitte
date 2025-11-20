@@ -12,22 +12,30 @@ class PaymentPlan:
     description: str
     price: int
     currency: str
-    period: Literal["week", "month", "quarter", "year"]
+    period: Literal["day", "week", "month", "quarter", "year"]
     provider: str = "yookassa"
     recommended: bool = False
 
 
 PAYMENT_PLANS: List[PaymentPlan] = [
     PaymentPlan(
-        code="premium_week",
+        code="premium_3d",
+        title="3 дня Premium",
+        description="Познакомься с безлимитом и улучшенными ответами на 3 дня.",
+        price=299,
+        currency="RUB",
+        period="day",
+    ),
+    PaymentPlan(
+        code="premium_1w",
         title="Неделя Premium",
-        description="Попробуй безлимит и улучшенные сцены на 7 дней.",
-        price=399,
+        description="Безлимит и глубокие сцены на 7 дней.",
+        price=599,
         currency="RUB",
         period="week",
     ),
     PaymentPlan(
-        code="premium_month",
+        code="premium_1m",
         title="Месяц Premium",
         description="Безлимитные сообщения и продвинутые эмоции на 30 дней.",
         price=999,
@@ -36,20 +44,12 @@ PAYMENT_PLANS: List[PaymentPlan] = [
         recommended=True,
     ),
     PaymentPlan(
-        code="premium_quarter",
-        title="Квартал Premium",
+        code="premium_3m",
+        title="3 месяца Premium",
         description="Экономия и длинные истории без ограничений.",
-        price=2390,
+        price=2199,
         currency="RUB",
         period="quarter",
-    ),
-    PaymentPlan(
-        code="premium_year",
-        title="Год Premium",
-        description="Максимальный срок и лучшие условия.",
-        price=7990,
-        currency="RUB",
-        period="year",
     ),
 ]
 
@@ -64,7 +64,9 @@ def get_payment_plan(plan_code: str) -> PaymentPlan | None:
 
 def estimate_valid_until(plan: PaymentPlan, started_at: datetime | None = None) -> datetime:
     started = started_at or datetime.utcnow()
-    if plan.period == "week":
+    if plan.period == "day":
+        delta = timedelta(days=3)
+    elif plan.period == "week":
         delta = timedelta(days=7)
     elif plan.period == "month":
         delta = timedelta(days=30)
