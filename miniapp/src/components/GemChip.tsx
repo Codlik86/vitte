@@ -76,7 +76,9 @@ export function GemChip({
         aria-label="Открыть экран подписки"
         disabled={!onPlusClick}
       >
-        <span className="text-lg leading-none">+</span>
+        <span className="text-xl font-semibold leading-none tracking-tight translate-y-[0.5px]">
+          +
+        </span>
       </button>
     </div>
   );
