@@ -9,9 +9,11 @@ type UseAccessStatusResult = {
   reload: () => Promise<void>;
 };
 
+let cachedAccessStatus: AccessStatusResponse | null = null;
+
 export function useAccessStatus(auto = true): UseAccessStatusResult {
-  const [data, setData] = useState<AccessStatusResponse | null>(null);
-  const [loading, setLoading] = useState<boolean>(auto);
+  const [data, setData] = useState<AccessStatusResponse | null>(() => cachedAccessStatus);
+  const [loading, setLoading] = useState<boolean>(auto && !cachedAccessStatus);
   const [error, setError] = useState<string | null>(null);
 
   const reload = useCallback(async () => {
@@ -19,6 +21,7 @@ export function useAccessStatus(auto = true): UseAccessStatusResult {
       setError(null);
       setLoading(true);
       const response = await fetchAccessStatus();
+      cachedAccessStatus = response;
       setData(response);
     } catch (e: any) {
       setError(e.message ?? "Не удалось получить статус доступа");
