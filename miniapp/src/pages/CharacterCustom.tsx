@@ -51,10 +51,12 @@ export function CharacterCustom() {
 
         <section className="rounded-4xl border border-white/5 bg-card-elevated/80 p-6 shadow-card">
           <div className="space-y-3">
-            <h1 className="text-3xl font-semibold text-white">Свой персонаж</h1>
+            <h1 className="text-3xl font-semibold text-white">Создай меня</h1>
             <p className="text-base leading-relaxed text-white/70">
-              Создай своего героя: задай имя, вайб и пару деталей, чтобы Vitte
-              отвечала в нужном стиле.
+              Придумай собеседника под любое желание: реального или вымышленного, популярного
+              артиста или близкого человека, старого друга или незнакомца, с которым хочется
+              поделиться чем-то важным или обсудить любую тему. Расскажи, каким он должен быть, и
+              Vitte подстроится под выбранный образ.
             </p>
           </div>
 
