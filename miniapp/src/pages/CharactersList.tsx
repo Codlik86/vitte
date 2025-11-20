@@ -130,9 +130,9 @@ export function CharactersList() {
           </Link>
           <Link
             to="/store"
-            className="inline-flex w-full items-center justify-center rounded-full border border-white/10 bg-card-dark/80 px-4 py-3 text-sm font-medium text-white/90 transition hover:bg-card-dark"
+            className="inline-flex w-full items-center justify-center rounded-full border border-white/10 bg-card-dark/80 px-4 py-4 text-base font-medium text-white/90 transition hover:bg-card-dark"
           >
-            Магазин опций
+            Магазин
           </Link>
         </div>
       </div>

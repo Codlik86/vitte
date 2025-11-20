@@ -284,6 +284,12 @@ export function Paywall() {
         >
           Продолжить бесплатно
         </button>
+        <Link
+          to="/store"
+          className="inline-flex w-full items-center justify-center rounded-full border border-white/10 bg-card-dark/80 px-4 py-4 text-base font-medium text-white/90 transition hover:bg-card-dark"
+        >
+          Магазин
+        </Link>
       </div>
     </section>
   );
