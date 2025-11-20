@@ -66,10 +66,12 @@ export function GemChip({
           <span aria-hidden>💎</span>
           <span>{displayGems}</span>
         </span>
-        <span className="flex min-w-[58px] items-center justify-end gap-0.5">
-          <span aria-hidden>💬</span>
-          <span>{displayMessages}</span>
-        </span>
+        {!isPremium && (
+          <span className="flex min-w-[58px] items-center justify-end gap-0.5">
+            <span aria-hidden>💬</span>
+            <span>{displayMessages}</span>
+          </span>
+        )}
       </div>
       {isPremium && (
         <span className="rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white/90">

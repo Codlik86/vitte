@@ -209,18 +209,20 @@ export function Paywall() {
                 key={plan.code}
                 type="button"
                 onClick={() => setSelectedPlan(plan.code)}
-                className={`flex w-full items-center justify-between rounded-3xl border px-4 py-3 text-left transition ${
+                className={`flex w-full items-start justify-between rounded-3xl border px-4 py-3 text-left transition min-h-[88px] ${
                   isSelected
                     ? "border-pink-400/60 bg-white/10"
                     : "border-white/10 bg-transparent hover:border-white/30"
                 }`}
               >
-                <div>
+                <div className="min-w-0 pr-3">
                   <p className="text-sm font-semibold text-white">{plan.title}</p>
-                  <p className="text-xs text-white/60">{plan.description}</p>
+                  <p className="text-xs text-white/60 leading-snug line-clamp-2">
+                    {plan.description}
+                  </p>
                 </div>
-                <div className="text-right">
-                  <p className="text-lg font-semibold text-white">
+                <div className="flex-shrink-0 text-right">
+                  <p className="text-lg font-semibold text-white whitespace-nowrap">
                     {plan.price.toLocaleString("ru-RU")} ₽
                   </p>
                   <p className="text-[11px] uppercase text-white/50">
