@@ -30,6 +30,7 @@ class User(Base):
     )
     free_messages_used: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     paywall_variant: Mapped[str | None] = mapped_column(String(1), nullable=True)
+    age_confirmed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     active_persona_id: Mapped[int | None] = mapped_column(
         ForeignKey("personas.id", ondelete="SET NULL"),
         nullable=True,
@@ -86,6 +87,13 @@ class Persona(Base):
     long_description: Mapped[str | None] = mapped_column(Text, nullable=True)
     archetype: Mapped[str | None] = mapped_column(String(64), nullable=True)
     system_prompt: Mapped[str] = mapped_column(Text)
+    short_lore: Mapped[str | None] = mapped_column(Text, nullable=True)
+    background: Mapped[str | None] = mapped_column(Text, nullable=True)
+    emotional_style: Mapped[str | None] = mapped_column(Text, nullable=True)
+    relationship_style: Mapped[str | None] = mapped_column(Text, nullable=True)
+    hooks: Mapped[list[str] | None] = mapped_column(JSONB, default=list, nullable=True)
+    triggers_positive: Mapped[list[str] | None] = mapped_column(JSONB, default=list, nullable=True)
+    triggers_negative: Mapped[list[str] | None] = mapped_column(JSONB, default=list, nullable=True)
 
     is_default: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
     is_custom: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)

@@ -73,7 +73,8 @@ async def on_startup():
                 ADD COLUMN IF NOT EXISTS access_status access_status_enum NOT NULL DEFAULT 'trial_usage'::access_status_enum,
                 ADD COLUMN IF NOT EXISTS free_messages_used integer NOT NULL DEFAULT 0,
                 ADD COLUMN IF NOT EXISTS active_persona_id integer REFERENCES personas(id) ON DELETE SET NULL,
-                ADD COLUMN IF NOT EXISTS paywall_variant varchar(1);
+                ADD COLUMN IF NOT EXISTS paywall_variant varchar(1),
+                ADD COLUMN IF NOT EXISTS age_confirmed boolean NOT NULL DEFAULT false;
                 """
             )
         )
@@ -90,7 +91,14 @@ async def on_startup():
                 ADD COLUMN IF NOT EXISTS is_custom boolean DEFAULT false,
                 ADD COLUMN IF NOT EXISTS is_active boolean DEFAULT true,
                 ADD COLUMN IF NOT EXISTS owner_user_id integer REFERENCES users(id) ON DELETE SET NULL,
-                ADD COLUMN IF NOT EXISTS created_at timestamp DEFAULT now();
+                ADD COLUMN IF NOT EXISTS created_at timestamp DEFAULT now(),
+                ADD COLUMN IF NOT EXISTS short_lore text,
+                ADD COLUMN IF NOT EXISTS background text,
+                ADD COLUMN IF NOT EXISTS emotional_style text,
+                ADD COLUMN IF NOT EXISTS relationship_style text,
+                ADD COLUMN IF NOT EXISTS hooks jsonb DEFAULT '[]'::jsonb,
+                ADD COLUMN IF NOT EXISTS triggers_positive jsonb DEFAULT '[]'::jsonb,
+                ADD COLUMN IF NOT EXISTS triggers_negative jsonb DEFAULT '[]'::jsonb;
                 """
             )
         )

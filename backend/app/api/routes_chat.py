@@ -1,13 +1,23 @@
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import select
+from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..db import get_session
-from ..models import Persona, User
+from ..models import Persona, User, Dialog, Message
 from ..users_service import get_or_create_user_by_telegram_id
 from ..integrations.openai_client import simple_chat_completion
-from ..schemas import ChatRequest
+from ..schemas import ChatRequest, ChatResponse
 from ..services.access import build_access_status
+from ..services.llm_adapter import (
+    compose_messages,
+    calculate_trust_level,
+    describe_mode,
+    build_story_context,
+    should_add_ritual,
+    format_memory,
+)
+from ..services.memory import collect_recent_memory
+from ..story_cards import get_story_cards_for_persona
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
 
@@ -37,24 +47,63 @@ async def chat(request: ChatRequest, session: AsyncSession = Depends(get_session
     access = await build_access_status(session, user)
     if not access["can_send_message"]:
         raise HTTPException(status_code=402, detail="Free limit reached")
-    should_update_limit = not access["has_subscription"]
-    if should_update_limit:
+    dialog = await _get_or_create_dialog(session, user, persona)
+    message_count_result = await session.execute(
+        select(func.count(Message.id)).where(Message.dialog_id == dialog.id)
+    )
+    message_count = message_count_result.scalar_one() or 0
+    trust_level = calculate_trust_level(message_count, access["has_subscription"])
+    memory_context = format_memory(await collect_recent_memory(session, dialog))
+    mode_instruction = describe_mode(request.mode, request.atmosphere)
+    story_prompt = None
+    if request.story_id:
+        for card in get_story_cards_for_persona(persona.archetype, persona.name):
+            if card.id == request.story_id:
+                story_prompt = card.prompt
+                break
+    story_instruction = build_story_context(story_prompt)
+    ritual_hint = should_add_ritual(message_count + 1)
+    messages, _ = compose_messages(
+        persona,
+        user,
+        user_message=request.message,
+        trust_level=trust_level,
+        has_subscription=access["has_subscription"],
+        age_confirmed=user.age_confirmed,
+        memory_context=memory_context,
+        mode_instruction=mode_instruction,
+        story_instruction=story_instruction,
+        ritual_hint=ritual_hint,
+    )
+
+    reply = await simple_chat_completion(messages)
+
+    session.add(Message(dialog_id=dialog.id, role="user", content=request.message))
+    session.add(Message(dialog_id=dialog.id, role="assistant", content=reply))
+    if not access["has_subscription"]:
         user.free_messages_used += 1
-
-    system_prompt = persona.system_prompt or ""
-    messages = [
-        {"role": "system", "content": system_prompt},
-        {"role": "user", "content": request.message},
-    ]
-
-    try:
-        reply = await simple_chat_completion(messages)
-    except Exception:
-        reply = (
-            f"[{persona.name}] {request.message}\n\n"
-            "(Это заглушка ответа без обращения к LLM)"
-        )
 
     await session.commit()
 
-    return {"reply": reply, "persona_id": persona.id}
+    return ChatResponse(
+        reply=reply,
+        persona_id=persona.id,
+        trust_level=trust_level,
+        ritual_hint=ritual_hint,
+    )
+
+
+async def _get_or_create_dialog(session: AsyncSession, user: User, persona: Persona) -> Dialog:
+    stmt = (
+        select(Dialog)
+        .where(Dialog.user_id == user.id, Dialog.character_id == persona.id)
+        .order_by(Dialog.created_at.desc())
+    )
+    result = await session.execute(stmt)
+    dialog = result.scalars().first()
+    if dialog:
+        return dialog
+    dialog = Dialog(user_id=user.id, character_id=persona.id)
+    session.add(dialog)
+    await session.flush()
+    return dialog

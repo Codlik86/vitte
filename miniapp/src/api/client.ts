@@ -6,6 +6,8 @@ import type {
   SubscribeResponse,
   StoreProductsResponse,
   StorePurchaseResponse,
+  ChatResponse,
+  PersonaSelectResponse,
 } from "./types";
 import { requireTelegramId } from "../lib/telegramId";
 
@@ -37,6 +39,32 @@ export async function selectPersona(personaId: number): Promise<PersonaDetails> 
     throw new Error("Не удалось выбрать персонажа");
   }
   return (await res.json()) as PersonaDetails;
+}
+
+export async function selectPersonaAndGreet({
+  personaId,
+  extraDescription,
+  sendGreeting = true,
+}: {
+  personaId: number;
+  extraDescription?: string | null;
+  sendGreeting?: boolean;
+}): Promise<PersonaSelectResponse> {
+  const telegramId = await requireTelegramId();
+  const res = await fetch(`${BASE_URL}/api/personas/select_and_greet?telegram_id=${telegramId}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      persona_id: personaId,
+      extra_description: extraDescription ?? undefined,
+      send_greeting: sendGreeting,
+    }),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || "Не удалось выбрать персонажа");
+  }
+  return (await res.json()) as PersonaSelectResponse;
 }
 
 export async function createCustomPersona(payload: {
@@ -149,4 +177,29 @@ export async function purchaseProduct(productCode: string): Promise<StorePurchas
     throw new Error(text || "Не удалось оформить покупку");
   }
   return (await res.json()) as StorePurchaseResponse;
+}
+
+export async function sendChatMessage(payload: {
+  message: string;
+  mode?: string;
+  atmosphere?: string;
+  story_id?: string;
+}): Promise<ChatResponse> {
+  const telegramId = await requireTelegramId();
+  const res = await fetch(`${BASE_URL}/api/chat`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      telegram_id: telegramId,
+      message: payload.message,
+      mode: payload.mode ?? "default",
+      atmosphere: payload.atmosphere,
+      story_id: payload.story_id,
+    }),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || "Не удалось отправить сообщение");
+  }
+  return (await res.json()) as ChatResponse;
 }

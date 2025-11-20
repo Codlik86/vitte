@@ -1,8 +1,9 @@
 import { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { createCustomPersona } from "../api/client";
+import { createCustomPersona, selectPersonaAndGreet } from "../api/client";
 import { PageHeader } from "../components/layout/PageHeader";
 import { useAccessStatus } from "../hooks/useAccessStatus";
+import { tg } from "../lib/telegram";
 
 export function CharacterCustom() {
   const navigate = useNavigate();
@@ -26,12 +27,20 @@ export function CharacterCustom() {
     setError(null);
     try {
       setBusy(true);
-      await createCustomPersona({
+      const created = await createCustomPersona({
         name,
         short_description: shortDescription,
         vibe,
       });
-      navigate("/");
+      await selectPersonaAndGreet({
+        personaId: created.id,
+        extraDescription: vibe || shortDescription,
+      });
+      if (tg?.close) {
+        tg.close();
+      } else {
+        navigate("/");
+      }
     } catch (e: any) {
       setError(e.message ?? "Не удалось создать персонажа");
     } finally {

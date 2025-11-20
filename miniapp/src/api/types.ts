@@ -10,6 +10,14 @@ export type PersonaListItem = {
 export type PersonaDetails = PersonaListItem & {
   long_description?: string | null;
   archetype?: string | null;
+  short_lore?: string | null;
+  background?: string | null;
+  emotional_style?: string | null;
+  relationship_style?: string | null;
+  hooks?: string[] | null;
+  triggers_positive?: string[] | null;
+  triggers_negative?: string[] | null;
+  story_cards?: StoryCard[] | null;
 };
 
 export type PersonasListResponse = {
@@ -40,6 +48,20 @@ export type AccessStatusResponse = {
   };
 };
 
+export type ChatResponse = {
+  reply: string;
+  persona_id: number;
+  trust_level: number;
+  ritual_hint?: string | null;
+};
+
+export type PersonaSelectResponse = {
+  ok: boolean;
+  persona_id: number;
+  dialog_id?: number | null;
+  greeting_sent: boolean;
+};
+
 export type PaymentPlan = {
   code: string;
   title: string;
@@ -67,4 +89,11 @@ export type StorePurchaseResponse = {
   provider: string;
   status: string;
   invoice?: Record<string, unknown> | null;
+};
+export type StoryCard = {
+  id: string;
+  title: string;
+  description: string;
+  atmosphere: string;
+  prompt: string;
 };

@@ -20,6 +20,7 @@ type TelegramWebApp = {
   initData?: TelegramInitData;
   openTelegramLink?: (url: string) => void;
   openInvoice?: (invoicePayload: string | Record<string, unknown>) => void;
+  close?: () => void;
 };
 
 declare global {

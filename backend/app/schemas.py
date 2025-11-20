@@ -29,6 +29,14 @@ class AccessStatusResponse(BaseModel):
     paywall_variant: str
     store: StoreInfoSchema
 
+
+class StoryCardSchema(BaseModel):
+    id: str
+    title: str
+    description: str
+    atmosphere: str
+    prompt: str
+
 class PersonaListItem(BaseModel):
     id: int
     name: str
@@ -44,6 +52,14 @@ class PersonaListItem(BaseModel):
 class PersonaDetails(PersonaListItem):
     long_description: str | None = None
     archetype: str | None = None
+    short_lore: str | None = None
+    background: str | None = None
+    emotional_style: str | None = None
+    relationship_style: str | None = None
+    hooks: list[str] | None = None
+    triggers_positive: list[str] | None = None
+    triggers_negative: list[str] | None = None
+    story_cards: list["StoryCardSchema"] | None = None
 
 
 class PersonasListResponse(BaseModel):
@@ -60,6 +76,29 @@ class PersonaCustomCreateRequest(BaseModel):
 class ChatRequest(BaseModel):
     telegram_id: int
     message: str
+    mode: str | None = None  # default | deep | atmosphere | story
+    atmosphere: str | None = None
+    story_id: str | None = None
+
+
+class ChatResponse(BaseModel):
+    reply: str
+    persona_id: int
+    trust_level: int
+    ritual_hint: str | None = None
+
+
+class PersonaSelectRequest(BaseModel):
+    persona_id: int
+    extra_description: str | None = None
+    send_greeting: bool = True
+
+
+class PersonaSelectResponse(BaseModel):
+    ok: bool
+    persona_id: int
+    dialog_id: int | None = None
+    greeting_sent: bool = False
 
 
 class PaymentPlanSchema(BaseModel):
