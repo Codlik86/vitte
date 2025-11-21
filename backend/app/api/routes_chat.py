@@ -5,19 +5,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..db import get_session
 from ..models import Persona, User, Dialog, Message
 from ..users_service import get_or_create_user_by_telegram_id
-from ..integrations.openai_client import simple_chat_completion
 from ..schemas import ChatRequest, ChatResponse
-from ..services.access import build_access_status
-from ..services.llm_adapter import (
-    compose_messages,
-    calculate_trust_level,
-    describe_mode,
-    build_story_context,
-    should_add_ritual,
-    format_memory,
-)
-from ..services.memory import collect_recent_memory
-from ..story_cards import get_story_cards_for_persona
+from ..services.chat_flow import generate_chat_reply
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
 
@@ -43,65 +32,28 @@ async def _get_active_persona(session: AsyncSession, user: User) -> Persona:
 @router.post("")
 async def chat(request: ChatRequest, session: AsyncSession = Depends(get_session)):
     user = await get_or_create_user_by_telegram_id(session, request.telegram_id)
-    persona = await _resolve_persona(session, user, request)
-    if persona is None:
-        raise HTTPException(status_code=404, detail="Persona not found")
-
-    preview_story = request.mode == "story" and request.persona_id is not None
-
-    access = await build_access_status(session, user)
-    if not preview_story and not access["can_send_message"]:
-        raise HTTPException(status_code=402, detail="Free limit reached")
-
-    dialog: Dialog | None = None
-    message_count = 0
-    memory_context = "Нет особых воспоминаний, но персонаж открыт к новым."
-
-    if not preview_story:
-        dialog = await _get_or_create_dialog(session, user, persona)
-        message_count_result = await session.execute(
-            select(func.count(Message.id)).where(Message.dialog_id == dialog.id)
+    try:
+        result = await generate_chat_reply(
+            session=session,
+            user=user,
+            input_text=request.message,
+            persona_id=request.persona_id,
+            mode=request.mode or "default",
+            atmosphere=request.atmosphere,
+            story_id=request.story_id,
+            skip_limits=False,
+            skip_increment=False,
         )
-        message_count = message_count_result.scalar_one() or 0
-        memory_context = format_memory(await collect_recent_memory(session, dialog))
-
-    trust_level = calculate_trust_level(message_count, access["has_subscription"])
-    mode_instruction = describe_mode(request.mode, request.atmosphere)
-    story_prompt = None
-    if request.story_id:
-        for card in get_story_cards_for_persona(persona.archetype, persona.name):
-            if card.id == request.story_id:
-                story_prompt = card.prompt
-                break
-    story_instruction = build_story_context(story_prompt)
-    ritual_hint = None if preview_story else should_add_ritual(message_count + 1)
-    messages, _ = compose_messages(
-        persona,
-        user,
-        user_message=request.message,
-        trust_level=trust_level,
-        has_subscription=access["has_subscription"],
-        age_confirmed=user.age_confirmed,
-        memory_context=memory_context,
-        mode_instruction=mode_instruction,
-        story_instruction=story_instruction,
-        ritual_hint=ritual_hint,
-    )
-
-    reply = await simple_chat_completion(messages)
-
-    if not preview_story and dialog:
-        session.add(Message(dialog_id=dialog.id, role="user", content=request.message))
-        session.add(Message(dialog_id=dialog.id, role="assistant", content=reply))
-        if not access["has_subscription"]:
-            user.free_messages_used += 1
-        await session.commit()
+    except PermissionError as exc:
+        raise HTTPException(status_code=402, detail=str(exc))
+    except ValueError as exc:
+        raise HTTPException(status_code=404, detail=str(exc))
 
     return ChatResponse(
-        reply=reply,
-        persona_id=persona.id,
-        trust_level=trust_level,
-        ritual_hint=ritual_hint,
+        reply=result.reply,
+        persona_id=result.persona_id,
+        trust_level=result.trust_level,
+        ritual_hint=result.ritual_hint,
     )
 
 
@@ -121,9 +73,9 @@ async def _get_or_create_dialog(session: AsyncSession, user: User, persona: Pers
     return dialog
 
 
-async def _resolve_persona(session: AsyncSession, user: User, request: ChatRequest) -> Persona | None:
-    if request.persona_id:
-        result = await session.execute(select(Persona).where(Persona.id == request.persona_id))
+async def _resolve_persona(session: AsyncSession, user: User, persona_id: int | None) -> Persona | None:
+    if persona_id:
+        result = await session.execute(select(Persona).where(Persona.id == persona_id))
         persona = result.scalar_one_or_none()
         if persona:
             return persona

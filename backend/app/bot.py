@@ -13,6 +13,9 @@ from aiogram.types import (
 from .config import settings
 from .logging_config import logger
 from .middlewares.access import AccessMiddleware
+from .services.chat_flow import generate_chat_reply
+from .db import get_session
+from .users_service import get_or_create_user_by_telegram_id
 
 bot = Bot(
     token=settings.telegram_bot_token,
@@ -74,6 +77,33 @@ async def cmd_pay(message: Message):
         "открой мини-приложение Vitte в Telegram или вкладку Paywall.\n\n"
         "Поддержка Stars и YooKassa появится чуть позже, а пока это заглушка.",
     )
+
+
+@dp.message(F.text & ~F.text.startswith("/"))
+async def on_user_message(message: Message):
+    if message.from_user is None:
+        return
+    telegram_id = message.from_user.id
+    async for session in get_session():
+        user = await get_or_create_user_by_telegram_id(session, telegram_id)
+        try:
+            result = await generate_chat_reply(
+                session=session,
+                user=user,
+                input_text=message.text or "",
+                mode="default",
+                skip_limits=True,  # AccessMiddleware уже ограничил
+                skip_increment=True,  # уже инкрементировано в middleware
+            )
+            await message.answer(result.reply)
+        except PermissionError:
+            await message.answer(
+                "Похоже, бесплатный лимит исчерпан. Открой мини-приложение Vitte, чтобы оформить подписку.",
+                reply_markup=build_miniapp_keyboard(),
+            )
+        except Exception as exc:
+            logger.error("Failed to handle user message: %s", exc)
+            await message.answer("Не получилось ответить, попробуй ещё раз или открой мини-приложение.")
 
 
 async def handle_update(update: dict):
