@@ -52,11 +52,8 @@ class PersonaListItem(BaseModel):
 class PersonaDetails(PersonaListItem):
     long_description: str | None = None
     archetype: str | None = None
-    short_lore: str | None = None
-    background: str | None = None
-    emotional_style: str | None = None
-    relationship_style: str | None = None
-    hooks: list[str] | None = None
+    legend_full: str | None = None
+    emotions_full: str | None = None
     triggers_positive: list[str] | None = None
     triggers_negative: list[str] | None = None
     story_cards: list["StoryCardSchema"] | None = None
@@ -71,6 +68,7 @@ class PersonaCustomCreateRequest(BaseModel):
     name: str
     short_description: str
     vibe: str | None = None  # текст из формы
+    replace_existing: bool = False
 
 
 class ChatRequest(BaseModel):
@@ -79,6 +77,7 @@ class ChatRequest(BaseModel):
     mode: str | None = None  # default | deep | atmosphere | story
     atmosphere: str | None = None
     story_id: str | None = None
+    persona_id: int | None = None
 
 
 class ChatResponse(BaseModel):

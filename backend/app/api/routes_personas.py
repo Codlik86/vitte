@@ -63,11 +63,8 @@ def _build_details(persona: Persona, user_id: int | None, active_id: int | None)
         **item.model_dump(),
         long_description=persona.long_description,
         archetype=persona.archetype,
-        short_lore=persona.short_lore,
-        background=persona.background,
-        emotional_style=persona.emotional_style,
-        relationship_style=persona.relationship_style,
-        hooks=persona.hooks,
+        legend_full=persona.legend_full or _combine_legend_response(persona),
+        emotions_full=persona.emotions_full or _combine_emotions_response(persona),
         triggers_positive=persona.triggers_positive,
         triggers_negative=persona.triggers_negative,
         story_cards=story_cards,
@@ -204,57 +201,89 @@ async def create_custom_persona(
     vibe = (payload.vibe or "").strip()
     vibe_sentence = f" Доп. детали: {vibe}." if vibe else ""
 
-    persona = Persona(
-        name=payload.name,
-        short_description=payload.short_description,
-        long_description=vibe or None,
-        archetype="custom",
-        system_prompt=(
-            "Ты романтический AI-компаньон. Вайб: "
-            f"{payload.short_description}. Ты говоришь по-русски, мягко, с флиртом и эмпатией."
-            f"{vibe_sentence}"
-        ),
-        is_default=False,
-        is_custom=True,
-        is_active=True,
-        owner_user_id=user.id,
-        short_lore=vibe or payload.short_description,
-        background=None,
-        emotional_style="Ты мягкая версия кастомного героя",
-        relationship_style="Ты подстраиваешься под автора образа",
-        hooks=None,
-        triggers_positive=None,
-        triggers_negative=None,
+    existing = await session.execute(
+        select(Persona).where(Persona.owner_user_id == user.id, Persona.is_custom.is_(True))
     )
-    session.add(persona)
+    existing_persona = existing.scalars().first()
+    if existing_persona and not payload.replace_existing:
+        raise HTTPException(status_code=409, detail="custom_persona_exists")
+
+    target_persona = existing_persona or Persona(owner_user_id=user.id)
+    target_persona.name = payload.name
+    target_persona.short_description = payload.short_description
+    target_persona.long_description = vibe or None
+    target_persona.archetype = "custom"
+    target_persona.system_prompt = (
+        "Ты романтический AI-компаньон. Вайб: "
+        f"{payload.short_description}. Ты говоришь по-русски, мягко, с флиртом и эмпатией."
+        f"{vibe_sentence}"
+    )
+    target_persona.is_default = False
+    target_persona.is_custom = True
+    target_persona.is_active = True
+    target_persona.short_lore = vibe or payload.short_description
+    target_persona.background = None
+    target_persona.legend_full = target_persona.short_lore
+    target_persona.emotional_style = "Ты мягкая версия кастомного героя"
+    target_persona.relationship_style = "Ты подстраиваешься под автора образа"
+    target_persona.emotions_full = (
+        f"{target_persona.emotional_style}. {target_persona.relationship_style}."
+    )
+    target_persona.hooks = None
+    target_persona.triggers_positive = None
+    target_persona.triggers_negative = None
+
+    session.add(target_persona)
     await session.flush()
 
-    link = UserPersona(
-        user_id=user.id,
-        persona_id=persona.id,
-        is_owner=True,
-        is_favorite=True,
+    link_result = await session.execute(
+        select(UserPersona).where(
+            UserPersona.user_id == user.id,
+            UserPersona.persona_id == target_persona.id,
+        )
     )
-    session.add(link)
+    link = link_result.scalar_one_or_none()
+    if link is None:
+        link = UserPersona(
+            user_id=user.id,
+            persona_id=target_persona.id,
+            is_owner=True,
+            is_favorite=True,
+        )
+        session.add(link)
+    else:
+        link.is_owner = True
 
-    user.active_persona_id = persona.id
+    user.active_persona_id = target_persona.id
 
     ev = EventAnalytics(
         user_id=user.id,
         event_type="persona_custom_created",
-        payload={"persona_id": persona.id, "name": persona.name},
+        payload={"persona_id": target_persona.id, "name": target_persona.name},
     )
     session.add(ev)
 
     await log_persona_event(
         session,
         user_id=user.id,
-        persona_id=persona.id,
+        persona_id=target_persona.id,
         event_type=PersonaEventType.PERSONA_CUSTOMIZED,
     )
 
     await session.commit()
-    return _build_details(persona, user.id, user.active_persona_id)
+    return _build_details(target_persona, user.id, user.active_persona_id)
+
+
+def _combine_legend_response(persona: Persona) -> str | None:
+    parts = [persona.short_lore, persona.background]
+    combined = " ".join([p.strip() for p in parts if p])
+    return combined or None
+
+
+def _combine_emotions_response(persona: Persona) -> str | None:
+    parts = [persona.emotional_style, persona.relationship_style]
+    combined = " ".join([p.strip() for p in parts if p])
+    return combined or None
 
 
 async def _apply_persona_selection(session: AsyncSession, user: User, persona: Persona) -> None:

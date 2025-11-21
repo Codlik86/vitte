@@ -121,8 +121,10 @@ async def ensure_default_personas(session: AsyncSession):
             persona.is_active = True
             persona.short_lore = p.get("short_lore")
             persona.background = p.get("background")
+            persona.legend_full = _combine_legend(p)
             persona.emotional_style = p.get("emotional_style")
             persona.relationship_style = p.get("relationship_style")
+            persona.emotions_full = _combine_emotions(p)
             persona.hooks = p.get("hooks")
             persona.triggers_positive = p.get("triggers_positive")
             persona.triggers_negative = p.get("triggers_negative")
@@ -143,8 +145,10 @@ async def ensure_default_personas(session: AsyncSession):
                 owner_user_id=None,
                 short_lore=p.get("short_lore"),
                 background=p.get("background"),
+                legend_full=_combine_legend(p),
                 emotional_style=p.get("emotional_style"),
                 relationship_style=p.get("relationship_style"),
+                emotions_full=_combine_emotions(p),
                 hooks=p.get("hooks"),
                 triggers_positive=p.get("triggers_positive"),
                 triggers_negative=p.get("triggers_negative"),
@@ -152,3 +156,15 @@ async def ensure_default_personas(session: AsyncSession):
             session.add(persona)
 
     await session.commit()
+
+
+def _combine_legend(p: dict) -> str | None:
+    parts = [p.get("short_lore"), p.get("background")]
+    combined = " ".join([part.strip() for part in parts if part])
+    return combined or None
+
+
+def _combine_emotions(p: dict) -> str | None:
+    parts = [p.get("emotional_style"), p.get("relationship_style")]
+    combined = " ".join([part.strip() for part in parts if part])
+    return combined or None

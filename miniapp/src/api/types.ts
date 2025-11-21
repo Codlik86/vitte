@@ -10,11 +10,8 @@ export type PersonaListItem = {
 export type PersonaDetails = PersonaListItem & {
   long_description?: string | null;
   archetype?: string | null;
-  short_lore?: string | null;
-  background?: string | null;
-  emotional_style?: string | null;
-  relationship_style?: string | null;
-  hooks?: string[] | null;
+  legend_full?: string | null;
+  emotions_full?: string | null;
   triggers_positive?: string[] | null;
   triggers_negative?: string[] | null;
   story_cards?: StoryCard[] | null;

@@ -86,10 +86,6 @@ export function CharacterDetails() {
 
   const handleLaunchStory = async (card: StoryCard) => {
     if (!persona) return;
-    if (!persona.is_selected) {
-      setStoryError("Сначала выбери персонажа, чтобы начать сцену.");
-      return;
-    }
     setStoryError(null);
     setStoryInFlight(card.id);
     try {
@@ -99,6 +95,7 @@ export function CharacterDetails() {
         mode,
         story_id: card.id,
         atmosphere: selectedAtmosphere ?? card.atmosphere,
+        persona_id: persona.id,
       });
       setStoryReply({ title: card.title, reply: res.reply });
     } catch (err: any) {
@@ -153,13 +150,12 @@ export function CharacterDetails() {
               )}
             </div>
 
-            <InfoBlock title="Легенда" text={persona.short_lore} />
-            <InfoBlock title="Бэкграунд" text={persona.background} />
-            <InfoBlock title="Эмоциональный стиль" text={persona.emotional_style} />
-            <InfoBlock title="Отношения" text={persona.relationship_style} />
-            <PillList title="Якоря" items={persona.hooks} />
-            <PillList title="Любимые триггеры" items={persona.triggers_positive} />
-            <PillList title="Что её ранит" items={persona.triggers_negative} />
+            <InfoBlock title="Легенда" text={persona.legend_full ?? persona.long_description} />
+            <InfoBlock title="Эмоции и отношения" text={persona.emotions_full} />
+            <TriggerBlock
+              positive={persona.triggers_positive}
+              negative={persona.triggers_negative}
+            />
 
             <div className="rounded-3xl border border-white/10 bg-card-dark/40 p-4 space-y-4">
               <div className="flex items-center justify-between">
@@ -211,7 +207,7 @@ export function CharacterDetails() {
 
             {storyCards && storyCards.length > 0 && (
               <div className="space-y-3">
-                <p className="text-sm font-semibold text-white">Story-карточки</p>
+                <p className="text-sm font-semibold text-white">Истории</p>
                 <div className="space-y-3">
                   {storyCards.map((card) => (
                     <div
@@ -228,7 +224,7 @@ export function CharacterDetails() {
                         onClick={() => handleLaunchStory(card)}
                         disabled={Boolean(storyInFlight)}
                       >
-                        {storyInFlight === card.id ? "Готовим сцену..." : "Начать сцену"}
+                        {storyInFlight === card.id ? "Готовимся…" : "Попробовать"}
                       </button>
                     </div>
                   ))}
@@ -284,21 +280,46 @@ function InfoBlock({ title, text }: { title: string; text?: string | null }) {
   );
 }
 
-function PillList({ title, items }: { title: string; items?: string[] | null }) {
-  if (!items || items.length === 0) return null;
+function TriggerBlock({
+  positive,
+  negative,
+}: {
+  positive?: string[] | null;
+  negative?: string[] | null;
+}) {
+  if ((!positive || positive.length === 0) && (!negative || negative.length === 0)) return null;
   return (
-    <div className="space-y-2">
-      <p className="text-[11px] uppercase tracking-[0.4em] text-text-muted">{title}</p>
-      <div className="flex flex-wrap gap-2">
-        {items.map((item) => (
-          <span
-            key={item}
-            className="rounded-full border border-white/10 px-3 py-1 text-xs text-white/80"
-          >
-            {item}
-          </span>
-        ))}
-      </div>
+    <div className="space-y-3 rounded-3xl border border-white/10 bg-card-dark/30 p-4">
+      {positive && positive.length > 0 && (
+        <div className="space-y-1">
+          <p className="text-[11px] uppercase tracking-[0.4em] text-text-muted">Что нравится</p>
+          <div className="flex flex-wrap gap-2">
+            {positive.map((item) => (
+              <span
+                key={item}
+                className="rounded-full border border-white/10 px-3 py-1 text-xs text-white/80"
+              >
+                {item}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+      {negative && negative.length > 0 && (
+        <div className="space-y-1">
+          <p className="text-[11px] uppercase tracking-[0.4em] text-text-muted">Что ранит</p>
+          <div className="flex flex-wrap gap-2">
+            {negative.map((item) => (
+              <span
+                key={item}
+                className="rounded-full border border-white/10 px-3 py-1 text-xs text-white/80"
+              >
+                {item}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -94,8 +94,10 @@ async def on_startup():
                 ADD COLUMN IF NOT EXISTS created_at timestamp DEFAULT now(),
                 ADD COLUMN IF NOT EXISTS short_lore text,
                 ADD COLUMN IF NOT EXISTS background text,
+                ADD COLUMN IF NOT EXISTS legend_full text,
                 ADD COLUMN IF NOT EXISTS emotional_style text,
                 ADD COLUMN IF NOT EXISTS relationship_style text,
+                ADD COLUMN IF NOT EXISTS emotions_full text,
                 ADD COLUMN IF NOT EXISTS hooks jsonb DEFAULT '[]'::jsonb,
                 ADD COLUMN IF NOT EXISTS triggers_positive jsonb DEFAULT '[]'::jsonb,
                 ADD COLUMN IF NOT EXISTS triggers_negative jsonb DEFAULT '[]'::jsonb;

@@ -71,6 +71,7 @@ export async function createCustomPersona(payload: {
   name: string;
   short_description: string;
   vibe?: string;
+  replace_existing?: boolean;
 }): Promise<PersonaDetails> {
   const telegramId = await requireTelegramId();
   const res = await fetch(`${BASE_URL}/api/personas/custom`, {
@@ -81,10 +82,17 @@ export async function createCustomPersona(payload: {
       name: payload.name,
       short_description: payload.short_description,
       vibe: payload.vibe ?? "",
+      replace_existing: Boolean(payload.replace_existing),
     }),
   });
   if (!res.ok) {
-    throw new Error("Не удалось создать персонажа");
+    const contentType = res.headers.get("Content-Type") || "";
+    if (contentType.includes("application/json")) {
+      const data = await res.json();
+      throw new Error(data.detail || "Не удалось создать персонажа");
+    }
+    const text = await res.text();
+    throw new Error(text || "Не удалось создать персонажа");
   }
   return (await res.json()) as PersonaDetails;
 }
@@ -184,6 +192,7 @@ export async function sendChatMessage(payload: {
   mode?: string;
   atmosphere?: string;
   story_id?: string;
+  persona_id?: number;
 }): Promise<ChatResponse> {
   const telegramId = await requireTelegramId();
   const res = await fetch(`${BASE_URL}/api/chat`, {
@@ -195,6 +204,7 @@ export async function sendChatMessage(payload: {
       mode: payload.mode ?? "default",
       atmosphere: payload.atmosphere,
       story_id: payload.story_id,
+      persona_id: payload.persona_id,
     }),
   });
   if (!res.ok) {

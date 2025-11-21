@@ -43,17 +43,29 @@ async def _get_active_persona(session: AsyncSession, user: User) -> Persona:
 @router.post("")
 async def chat(request: ChatRequest, session: AsyncSession = Depends(get_session)):
     user = await get_or_create_user_by_telegram_id(session, request.telegram_id)
-    persona = await _get_active_persona(session, user)
+    persona = await _resolve_persona(session, user, request)
+    if persona is None:
+        raise HTTPException(status_code=404, detail="Persona not found")
+
+    preview_story = request.mode == "story" and request.persona_id is not None
+
     access = await build_access_status(session, user)
-    if not access["can_send_message"]:
+    if not preview_story and not access["can_send_message"]:
         raise HTTPException(status_code=402, detail="Free limit reached")
-    dialog = await _get_or_create_dialog(session, user, persona)
-    message_count_result = await session.execute(
-        select(func.count(Message.id)).where(Message.dialog_id == dialog.id)
-    )
-    message_count = message_count_result.scalar_one() or 0
+
+    dialog: Dialog | None = None
+    message_count = 0
+    memory_context = "Нет особых воспоминаний, но персонаж открыт к новым."
+
+    if not preview_story:
+        dialog = await _get_or_create_dialog(session, user, persona)
+        message_count_result = await session.execute(
+            select(func.count(Message.id)).where(Message.dialog_id == dialog.id)
+        )
+        message_count = message_count_result.scalar_one() or 0
+        memory_context = format_memory(await collect_recent_memory(session, dialog))
+
     trust_level = calculate_trust_level(message_count, access["has_subscription"])
-    memory_context = format_memory(await collect_recent_memory(session, dialog))
     mode_instruction = describe_mode(request.mode, request.atmosphere)
     story_prompt = None
     if request.story_id:
@@ -62,7 +74,7 @@ async def chat(request: ChatRequest, session: AsyncSession = Depends(get_session
                 story_prompt = card.prompt
                 break
     story_instruction = build_story_context(story_prompt)
-    ritual_hint = should_add_ritual(message_count + 1)
+    ritual_hint = None if preview_story else should_add_ritual(message_count + 1)
     messages, _ = compose_messages(
         persona,
         user,
@@ -78,12 +90,12 @@ async def chat(request: ChatRequest, session: AsyncSession = Depends(get_session
 
     reply = await simple_chat_completion(messages)
 
-    session.add(Message(dialog_id=dialog.id, role="user", content=request.message))
-    session.add(Message(dialog_id=dialog.id, role="assistant", content=reply))
-    if not access["has_subscription"]:
-        user.free_messages_used += 1
-
-    await session.commit()
+    if not preview_story and dialog:
+        session.add(Message(dialog_id=dialog.id, role="user", content=request.message))
+        session.add(Message(dialog_id=dialog.id, role="assistant", content=reply))
+        if not access["has_subscription"]:
+            user.free_messages_used += 1
+        await session.commit()
 
     return ChatResponse(
         reply=reply,
@@ -107,3 +119,12 @@ async def _get_or_create_dialog(session: AsyncSession, user: User, persona: Pers
     session.add(dialog)
     await session.flush()
     return dialog
+
+
+async def _resolve_persona(session: AsyncSession, user: User, request: ChatRequest) -> Persona | None:
+    if request.persona_id:
+        result = await session.execute(select(Persona).where(Persona.id == request.persona_id))
+        persona = result.scalar_one_or_none()
+        if persona:
+            return persona
+    return await _get_active_persona(session, user)

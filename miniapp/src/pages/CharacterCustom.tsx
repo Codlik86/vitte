@@ -13,6 +13,7 @@ export function CharacterCustom() {
   const [vibe, setVibe] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [forceReplace, setForceReplace] = useState(false);
   const hasSubscription = Boolean(accessStatus?.has_subscription);
   const headerStats = {
     gems: 0,
@@ -31,6 +32,7 @@ export function CharacterCustom() {
         name,
         short_description: shortDescription,
         vibe,
+        replace_existing: forceReplace,
       });
       await selectPersonaAndGreet({
         personaId: created.id,
@@ -42,7 +44,13 @@ export function CharacterCustom() {
         navigate("/");
       }
     } catch (e: any) {
-      setError(e.message ?? "Не удалось создать персонажа");
+      const message = e.message ?? "Не удалось создать персонажа";
+      if (message === "custom_persona_exists") {
+        setForceReplace(true);
+        setError("У тебя уже есть кастомный герой. Нажми ещё раз, чтобы пересоздать.");
+      } else {
+        setError(message);
+      }
     } finally {
       setBusy(false);
     }

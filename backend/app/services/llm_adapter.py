@@ -128,10 +128,10 @@ def build_system_prompt(
     story_instruction: str,
     ritual_hint: str | None,
 ) -> str:
-    hooks = ", ".join(persona.hooks or [])
+    legend_text = persona.legend_full or persona.short_lore or persona.background or ""
+    emotions_text = persona.emotions_full or persona.emotional_style or persona.relationship_style or ""
     positive_triggers = ", ".join(persona.triggers_positive or [])
     negative_triggers = ", ".join(persona.triggers_negative or [])
-    relationship = persona.relationship_style or ""
     trust_text = describe_trust_layer(trust_level, has_subscription, age_confirmed)
     ritual_text = ritual_hint or ""
 
@@ -139,11 +139,8 @@ def build_system_prompt(
         part
         for part in [
             f"Ты — {persona.name}, {persona.short_description}.",
-            persona.short_lore or "",
-            persona.background or "",
-            f"Эмоциональный стиль: {persona.emotional_style}",
-            f"Стиль отношений: {relationship}",
-            f"Якоря и темы: {hooks}" if hooks else "",
+            legend_text,
+            f"Эмоции и отношения: {emotions_text}",
             f"Что персонаж обожает: {positive_triggers}" if positive_triggers else "",
             f"Что персонаж избегает: {negative_triggers}" if negative_triggers else "",
             f"Контекст памяти: {memory_context}",
