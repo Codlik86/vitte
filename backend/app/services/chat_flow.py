@@ -9,6 +9,7 @@ from fastapi import HTTPException
 from ..models import User, Persona, Dialog, Message
 from ..integrations.openai_client import simple_chat_completion
 from ..services.access import build_access_status
+from ..logging_config import logger
 from ..services.llm_adapter import (
     compose_messages,
     calculate_trust_level,
@@ -27,6 +28,15 @@ class ChatResult:
         self.persona_id = persona_id
         self.trust_level = trust_level
         self.ritual_hint = ritual_hint
+
+
+class GreetingResult:
+    def __init__(self, text: str, persona_id: int, dialog_id: int, mode: str, trust_level: int):
+        self.text = text
+        self.persona_id = persona_id
+        self.dialog_id = dialog_id
+        self.mode = mode
+        self.trust_level = trust_level
 
 
 async def _get_active_persona(session: AsyncSession, user: User) -> Persona:
@@ -65,6 +75,51 @@ async def _resolve_persona(session: AsyncSession, user: User, persona_id: int | 
         if persona:
             return persona
     return await _get_active_persona(session, user)
+
+
+def _resolve_story_prompt(persona: Persona, story_id: str | None) -> str | None:
+    if not story_id:
+        return None
+    for card in get_story_cards_for_persona(persona.archetype, persona.name):
+        if card.id == story_id:
+            return card.prompt
+    return None
+
+
+def _build_greeting_user_message(
+    mode: str,
+    extra_description: str | None,
+) -> str:
+    prompt_extra = (
+        f"Дополнительный контекст от пользователя: {extra_description.strip()}."
+        if extra_description
+        else ""
+    )
+
+    if mode == "greeting_return":
+        return (
+            "Сформируй короткое приветствие при повторном контакте. "
+            "Скажи, что рада его снова слышать, мягко напомни, что помнишь детали прошлых разговоров, "
+            "и задай один лёгкий вопрос, чтобы продолжить. "
+            "Говори естественно и не раскрывай, что получил инструкцию. "
+            f"{prompt_extra}"
+        ).strip()
+
+    if mode == "greeting_updated":
+        return (
+            "Сформируй приветствие после того, как собеседник обновил настройки. "
+            "Отметь, что чувствуешь новую атмосферу, но не вопросами про настройку — говори про ощущения, "
+            "пригласи продолжить диалог и задай один мягкий вопрос. "
+            f"{prompt_extra}"
+        ).strip()
+
+    # default to first
+    return (
+        "Сформируй первое приветствие для пользователя. Представься от имени персонажа, "
+        "поддержи тёплую атмосферу, задай один безопасный вопрос и пригласи продолжить диалог. "
+        "Не упоминай, что получил инструкцию. "
+        f"{prompt_extra}"
+    ).strip()
 
 
 async def generate_chat_reply(
@@ -110,13 +165,7 @@ async def generate_chat_reply(
 
     trust_level = calculate_trust_level(message_count, access.get("has_subscription", False))
     mode_instruction = describe_mode(mode, atmosphere)
-    story_prompt = None
-    if story_id:
-        for card in get_story_cards_for_persona(persona.archetype, persona.name):
-            if card.id == story_id:
-                story_prompt = card.prompt
-                break
-    story_instruction = build_story_context(story_prompt)
+    story_instruction = build_story_context(_resolve_story_prompt(persona, story_id))
     ritual_hint = None if preview_story else should_add_ritual(message_count + 1)
 
     messages, _ = compose_messages(
@@ -142,3 +191,72 @@ async def generate_chat_reply(
         await session.commit()
 
     return ChatResult(reply=reply, persona_id=persona.id, trust_level=trust_level, ritual_hint=ritual_hint)
+
+
+async def generate_greeting_reply(
+    *,
+    session: AsyncSession,
+    user: User,
+    persona: Persona,
+    dialog: Dialog,
+    message_count: int | None,
+    has_subscription: bool,
+    atmosphere: str | None = None,
+    story_id: str | None = None,
+    extra_description: str | None = None,
+    settings_changed: bool = False,
+) -> GreetingResult | None:
+    """
+    Генерация приветствия (первое, повторное или после обновления настроек),
+    сохранение его в диалог и возврат текста.
+    """
+    if message_count is None:
+        message_count_result = await session.execute(
+            select(func.count(Message.id)).where(Message.dialog_id == dialog.id)
+        )
+        message_count = message_count_result.scalar_one() or 0
+
+    if message_count == 0:
+        greeting_mode = "first"
+        llm_mode = "greeting_first"
+    elif settings_changed:
+        greeting_mode = "updated"
+        llm_mode = "greeting_updated"
+    else:
+        greeting_mode = "return"
+        llm_mode = "greeting_return"
+
+    memory_items = await collect_recent_memory(session, dialog, limit=5) if message_count > 0 else []
+    memory_context = format_memory(memory_items)
+    trust_level = calculate_trust_level(message_count, has_subscription)
+    mode_instruction = describe_mode(llm_mode, atmosphere)
+    story_instruction = build_story_context(_resolve_story_prompt(persona, story_id))
+    user_message = _build_greeting_user_message(llm_mode, extra_description)
+
+    messages, _ = compose_messages(
+        persona,
+        user,
+        user_message=user_message,
+        trust_level=trust_level,
+        has_subscription=has_subscription,
+        age_confirmed=user.age_confirmed,
+        memory_context=memory_context,
+        mode_instruction=mode_instruction,
+        story_instruction=story_instruction,
+        ritual_hint=None,
+    )
+
+    try:
+        greeting_text = await simple_chat_completion(messages)
+    except Exception as exc:
+        logger.error("Failed to generate greeting: %s", exc)
+        return None
+
+    session.add(Message(dialog_id=dialog.id, role="assistant", content=greeting_text))
+    return GreetingResult(
+        text=greeting_text,
+        persona_id=persona.id,
+        dialog_id=dialog.id,
+        mode=greeting_mode,
+        trust_level=trust_level,
+    )

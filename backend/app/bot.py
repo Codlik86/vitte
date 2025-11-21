@@ -86,6 +86,13 @@ async def on_user_message(message: Message):
     telegram_id = message.from_user.id
     async for session in get_session():
         user = await get_or_create_user_by_telegram_id(session, telegram_id)
+        if user.active_persona_id is None:
+            await message.answer(
+                "Выбери персонажа в мини-приложении, чтобы начать общение. "
+                "Это нужно, чтобы приветствие и ответы были в стиле выбранного героя.",
+                reply_markup=build_miniapp_keyboard(),
+            )
+            continue
         try:
             result = await generate_chat_reply(
                 session=session,

@@ -54,7 +54,7 @@ export function CharactersList() {
         short_description: "Создай собственного персонажа",
         isCustomEntry: true,
       },
-      ...items,
+      ...items.filter((p) => !p.is_custom),
     ];
 
     if (loading) {

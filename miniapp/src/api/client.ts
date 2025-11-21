@@ -45,10 +45,16 @@ export async function selectPersonaAndGreet({
   personaId,
   extraDescription,
   sendGreeting = true,
+  atmosphere,
+  storyId,
+  settingsChanged = false,
 }: {
   personaId: number;
   extraDescription?: string | null;
   sendGreeting?: boolean;
+  atmosphere?: string | null;
+  storyId?: string | null;
+  settingsChanged?: boolean;
 }): Promise<PersonaSelectResponse> {
   const telegramId = await requireTelegramId();
   const res = await fetch(`${BASE_URL}/api/personas/select_and_greet?telegram_id=${telegramId}`, {
@@ -58,6 +64,9 @@ export async function selectPersonaAndGreet({
       persona_id: personaId,
       extra_description: extraDescription ?? undefined,
       send_greeting: sendGreeting,
+      atmosphere: atmosphere ?? undefined,
+      story_id: storyId ?? undefined,
+      settings_changed: settingsChanged,
     }),
   });
   if (!res.ok) {

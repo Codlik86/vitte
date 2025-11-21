@@ -17,19 +17,22 @@ from ..services.persona_events import log_persona_event
 from ..services.access import build_access_status
 from ..story_cards import get_story_cards_for_persona
 from ..bot import bot
-from ..integrations.openai_client import simple_chat_completion
 from ..logging_config import logger
-from ..services.llm_adapter import (
-    compose_messages,
-    calculate_trust_level,
-    describe_mode,
-    build_story_context,
-    format_memory,
-)
+from ..services.chat_flow import generate_greeting_reply
 
 router = APIRouter(prefix="/api/personas", tags=["personas"])
 
 DEFAULT_SHORT_DESCRIPTION = "Базовый персонаж"
+DEFAULT_PERSONA_PHOTO = "https://picsum.photos/seed/vitte-soft/800/800"
+CUSTOM_PERSONA_PHOTO = "https://picsum.photos/seed/vitte-custom/800/800"
+
+
+def _resolve_persona_photo(persona: Persona) -> str:
+    if persona.is_custom:
+        return CUSTOM_PERSONA_PHOTO
+    # Немного разнообразия по archetype, если он указан
+    archetype_seed = persona.archetype or "vitte"
+    return f"https://picsum.photos/seed/{archetype_seed}-vitte/800/800"
 
 
 def _build_short_description(persona: Persona) -> str:
@@ -44,10 +47,16 @@ def _build_list_item(persona: Persona, user_id: int | None, active_id: int | Non
         is_default=bool(persona.is_default),
         is_owner=bool(user_id is not None and persona.owner_user_id == user_id),
         is_selected=bool(active_id is not None and persona.id == active_id),
+        is_custom=bool(persona.is_custom),
     )
 
 
-def _build_details(persona: Persona, user_id: int | None, active_id: int | None) -> PersonaDetails:
+def _build_details(
+    persona: Persona,
+    user_id: int | None,
+    active_id: int | None,
+    dialog_info: tuple[Dialog | None, int] | None = None,
+) -> PersonaDetails:
     item = _build_list_item(persona, user_id, active_id)
     story_cards = [
         {
@@ -59,6 +68,11 @@ def _build_details(persona: Persona, user_id: int | None, active_id: int | None)
         }
         for card in get_story_cards_for_persona(persona.archetype, persona.name)
     ]
+    dialog_obj = None
+    has_history = False
+    if dialog_info:
+        dialog_obj, message_count = dialog_info
+        has_history = bool(message_count > 0)
     return PersonaDetails(
         **item.model_dump(),
         long_description=persona.long_description,
@@ -68,11 +82,30 @@ def _build_details(persona: Persona, user_id: int | None, active_id: int | None)
         triggers_positive=persona.triggers_positive,
         triggers_negative=persona.triggers_negative,
         story_cards=story_cards,
+        has_history=has_history,
+        dialog_id=dialog_obj.id if dialog_obj else None,
     )
 
 
 def _is_persona_owned_or_default(persona: Persona, user_id: int) -> bool:
     return persona.is_default or persona.owner_user_id == user_id
+
+
+async def _get_dialog_info(
+    session: AsyncSession, user_id: int, persona_id: int
+) -> tuple[Dialog | None, int]:
+    stmt = (
+        select(Dialog)
+        .where(Dialog.user_id == user_id, Dialog.character_id == persona_id)
+        .order_by(Dialog.created_at.desc())
+    )
+    result = await session.execute(stmt)
+    dialog = result.scalars().first()
+    if dialog is None:
+        return None, 0
+    msg_count_stmt = select(func.count(Message.id)).where(Message.dialog_id == dialog.id)
+    msg_count_res = await session.execute(msg_count_stmt)
+    return dialog, msg_count_res.scalar_one() or 0
 
 
 @router.get("", response_model=PersonasListResponse)
@@ -119,7 +152,10 @@ async def get_persona(
 
     user_id = user.id if user else None
     active_id = user.active_persona_id if user else None
-    return _build_details(persona, user_id, active_id)
+    dialog_info = None
+    if user:
+        dialog_info = await _get_dialog_info(session, user.id, persona.id)
+    return _build_details(persona, user_id, active_id, dialog_info)
 
 
 @router.post("/{persona_id}/select", response_model=PersonaDetails)
@@ -139,7 +175,8 @@ async def select_persona(
 
     await _apply_persona_selection(session, user, persona)
     await session.commit()
-    return _build_details(persona, user.id, user.active_persona_id)
+    dialog_info = await _get_dialog_info(session, user.id, persona.id)
+    return _build_details(persona, user.id, user.active_persona_id, dialog_info)
 
 
 @router.post("/select_and_greet", response_model=PersonaSelectResponse)
@@ -161,24 +198,45 @@ async def select_persona_and_greet(
 
     greeting_sent = False
     dialog_id: int | None = None
+    greeting_mode: str | None = None
+    dialog_info = await _get_dialog_info(session, user.id, persona.id)
 
     if payload.send_greeting:
-        dialog = await _get_or_create_dialog(session, user, persona)
+        dialog, message_count = dialog_info
+        if dialog is None:
+            dialog = await _get_or_create_dialog(session, user, persona)
+            dialog_info = (dialog, 0)
+            message_count = 0
         dialog_id = dialog.id
-        greeting_text = await _prepare_greeting_message(
+        greeting = await generate_greeting_reply(
             session=session,
             user=user,
             persona=persona,
             dialog=dialog,
+            message_count=message_count,
             has_subscription=bool(access.get("has_subscription")),
+            atmosphere=payload.atmosphere,
+            story_id=payload.story_id,
             extra_description=payload.extra_description,
+            settings_changed=payload.settings_changed,
         )
-        if greeting_text:
+        if greeting:
+            greeting_mode = greeting.mode
+            photo = _resolve_persona_photo(persona)
             try:
-                await bot.send_message(chat_id=user.telegram_id, text=greeting_text)
+                await bot.send_photo(
+                    chat_id=user.telegram_id,
+                    photo=photo,
+                    caption=greeting.text,
+                )
                 greeting_sent = True
             except Exception as exc:
-                logger.error("Failed to send greeting message: %s", exc)
+                logger.error("Failed to send greeting photo: %s", exc)
+                try:
+                    await bot.send_message(chat_id=user.telegram_id, text=greeting.text)
+                    greeting_sent = True
+                except Exception as exc2:
+                    logger.error("Failed to send greeting fallback message: %s", exc2)
 
     await session.commit()
     return PersonaSelectResponse(
@@ -186,6 +244,7 @@ async def select_persona_and_greet(
         persona_id=persona.id,
         dialog_id=dialog_id,
         greeting_sent=greeting_sent,
+        greeting_mode=greeting_mode,
     )
 
 
@@ -271,7 +330,8 @@ async def create_custom_persona(
     )
 
     await session.commit()
-    return _build_details(target_persona, user.id, user.active_persona_id)
+    dialog_info = await _get_dialog_info(session, user.id, target_persona.id)
+    return _build_details(target_persona, user.id, user.active_persona_id, dialog_info)
 
 
 def _combine_legend_response(persona: Persona) -> str | None:
@@ -334,56 +394,3 @@ async def _get_or_create_dialog(session: AsyncSession, user: User, persona: Pers
     session.add(dialog)
     await session.flush()
     return dialog
-
-
-async def _prepare_greeting_message(
-    *,
-    session: AsyncSession,
-    user: User,
-    persona: Persona,
-    dialog: Dialog,
-    has_subscription: bool,
-    extra_description: str | None,
-) -> str | None:
-    count_stmt = select(func.count(Message.id)).where(Message.dialog_id == dialog.id)
-    count_result = await session.execute(count_stmt)
-    if (count_result.scalar_one() or 0) > 0:
-        return None
-
-    trust_level = calculate_trust_level(0, has_subscription)
-    memory_context = format_memory([])
-    mode_instruction = describe_mode("first_message", None)
-    story_instruction = ""
-    prompt_extra = (
-        f"Дополнительный контекст от пользователя: {extra_description.strip()}."
-        if extra_description
-        else ""
-    )
-    user_message = (
-        "Сформируй первое приветствие для пользователя. Представься от имени персонажа, "
-        "поддержи тёплую атмосферу, задай один безопасный вопрос и пригласи продолжить диалог. "
-        "Не упоминай, что получил инструкцию. "
-        f"{prompt_extra}"
-    ).strip()
-
-    messages, _ = compose_messages(
-        persona,
-        user,
-        user_message=user_message,
-        trust_level=trust_level,
-        has_subscription=has_subscription,
-        age_confirmed=user.age_confirmed,
-        memory_context=memory_context,
-        mode_instruction=mode_instruction,
-        story_instruction=story_instruction,
-        ritual_hint=None,
-    )
-
-    try:
-        greeting = await simple_chat_completion(messages)
-    except Exception as exc:
-        logger.error("Failed to generate greeting: %s", exc)
-        return None
-
-    session.add(Message(dialog_id=dialog.id, role="assistant", content=greeting))
-    return greeting

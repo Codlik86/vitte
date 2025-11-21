@@ -55,6 +55,11 @@ export function CharacterDetails() {
         const data = await fetchPersona(Number(id));
         setPersona(data);
         setTitle(data.name);
+        setSelectedAtmosphere(null);
+        setStoryReply(null);
+        setStoryError(null);
+        setDeepMode(false);
+        setStoryInFlight(null);
       } catch (e: any) {
         setError(e.message ?? "Ошибка загрузки");
       } finally {
@@ -66,11 +71,19 @@ export function CharacterDetails() {
 
   const handleSelect = async () => {
     if (!persona) return;
+    const hasHistory = Boolean(persona.has_history);
+    const hasChanges = Boolean(selectedAtmosphere);
+    const selectedAtmosphereLabel = ATMOSPHERE_OPTIONS.find((opt) => opt.id === selectedAtmosphere)?.label;
     try {
       setBusy(true);
       setSelectError(null);
       await selectPersonaAndGreet({
         personaId: persona.id,
+        atmosphere: selectedAtmosphere ?? undefined,
+        settingsChanged: hasHistory && hasChanges,
+        extraDescription: selectedAtmosphereLabel
+          ? `Выбранная атмосфера: ${selectedAtmosphereLabel}`
+          : undefined,
       });
       if (tg?.close) {
         tg.close();
@@ -108,6 +121,13 @@ export function CharacterDetails() {
   const canUseDeepMode = hasSubscription;
 
   const storyCards = useMemo(() => persona?.story_cards ?? [], [persona]);
+  const hasHistory = Boolean(persona?.has_history);
+  const hasChanges = Boolean(selectedAtmosphere);
+  const actionLabel = hasHistory
+    ? hasChanges
+      ? "Обновить и продолжить"
+      : "Продолжить разговор"
+    : "Начать разговор";
 
   return (
     <div className="min-h-dvh bg-bg-dark text-text-main">
@@ -249,13 +269,9 @@ export function CharacterDetails() {
               <button
                 className="w-full rounded-full bg-white px-4 py-4 text-base font-semibold text-bg-dark transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70"
                 onClick={handleSelect}
-                disabled={busy || persona.is_selected}
+                disabled={busy}
               >
-                {persona.is_selected
-                  ? "Персонаж уже выбран"
-                  : busy
-                    ? "Выбираем..."
-                    : "Выбрать персонажа"}
+                {busy ? "Отправляем приветствие..." : actionLabel}
               </button>
               {selectError && (
                 <p className="mt-2 rounded-2xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-100">

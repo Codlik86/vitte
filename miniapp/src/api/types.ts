@@ -5,6 +5,7 @@ export type PersonaListItem = {
   is_default: boolean;
   is_owner: boolean;
   is_selected: boolean;
+  is_custom: boolean;
 };
 
 export type PersonaDetails = PersonaListItem & {
@@ -15,6 +16,8 @@ export type PersonaDetails = PersonaListItem & {
   triggers_positive?: string[] | null;
   triggers_negative?: string[] | null;
   story_cards?: StoryCard[] | null;
+  has_history?: boolean;
+  dialog_id?: number | null;
 };
 
 export type PersonasListResponse = {
@@ -57,6 +60,7 @@ export type PersonaSelectResponse = {
   persona_id: number;
   dialog_id?: number | null;
   greeting_sent: boolean;
+  greeting_mode?: "first" | "return" | "updated" | string | null;
 };
 
 export type PaymentPlan = {

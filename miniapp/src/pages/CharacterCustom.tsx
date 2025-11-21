@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { createCustomPersona, selectPersonaAndGreet } from "../api/client";
+import { createCustomPersona, fetchPersona, fetchPersonas, selectPersonaAndGreet } from "../api/client";
 import { PageHeader } from "../components/layout/PageHeader";
 import { useAccessStatus } from "../hooks/useAccessStatus";
 import { tg } from "../lib/telegram";
@@ -8,12 +8,15 @@ import { tg } from "../lib/telegram";
 export function CharacterCustom() {
   const navigate = useNavigate();
   const { data: accessStatus } = useAccessStatus();
+  const [loading, setLoading] = useState(true);
   const [name, setName] = useState("");
   const [shortDescription, setShortDescription] = useState("");
   const [vibe, setVibe] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [forceReplace, setForceReplace] = useState(false);
+  const [existingPersonaId, setExistingPersonaId] = useState<number | null>(null);
+  const [initialForm, setInitialForm] = useState({ name: "", shortDescription: "", vibe: "" });
+  const [hasHistory, setHasHistory] = useState(false);
   const hasSubscription = Boolean(accessStatus?.has_subscription);
   const headerStats = {
     gems: 0,
@@ -23,20 +26,94 @@ export function CharacterCustom() {
     isPremium: hasSubscription,
   };
 
+  useEffect(() => {
+    const load = async () => {
+      try {
+        const personas = await fetchPersonas();
+        const customItem = personas.items.find((p) => p.is_custom);
+        if (customItem) {
+          const details = await fetchPersona(customItem.id);
+          setExistingPersonaId(details.id);
+          setName(details.name);
+          setShortDescription(details.short_description);
+          setVibe(details.long_description ?? details.legend_full ?? "");
+          setInitialForm({
+            name: details.name,
+            shortDescription: details.short_description,
+            vibe: details.long_description ?? details.legend_full ?? "",
+          });
+          setHasHistory(Boolean(details.has_history));
+        }
+      } catch (e: any) {
+        setError(e.message ?? "Не удалось загрузить кастомного героя");
+      } finally {
+        setLoading(false);
+      }
+    };
+    load();
+  }, []);
+
+  const isDirty =
+    name !== initialForm.name ||
+    shortDescription !== initialForm.shortDescription ||
+    vibe !== initialForm.vibe;
+
+  const buttonLabel = useMemo(() => {
+    if (!existingPersonaId) {
+      return "Создать и начать разговор";
+    }
+    if (!hasHistory) {
+      return "Начать разговор";
+    }
+    return isDirty ? "Сохранить и продолжить" : "Продолжить разговор";
+  }, [existingPersonaId, hasHistory, isDirty]);
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
     try {
       setBusy(true);
-      const created = await createCustomPersona({
-        name,
-        short_description: shortDescription,
-        vibe,
-        replace_existing: forceReplace,
-      });
+      let personaId = existingPersonaId;
+
+      if (!existingPersonaId) {
+        const created = await createCustomPersona({
+          name,
+          short_description: shortDescription,
+          vibe,
+          replace_existing: false,
+        });
+        personaId = created.id;
+        setExistingPersonaId(created.id);
+        setInitialForm({
+          name,
+          shortDescription,
+          vibe,
+        });
+        setHasHistory(Boolean(created.has_history));
+      } else if (isDirty) {
+        const updated = await createCustomPersona({
+          name,
+          short_description: shortDescription,
+          vibe,
+          replace_existing: true,
+        });
+        personaId = updated.id;
+        setInitialForm({
+          name,
+          shortDescription,
+          vibe,
+        });
+        setHasHistory(Boolean(updated.has_history));
+      }
+
+      if (!personaId) {
+        throw new Error("Не удалось определить персонажа");
+      }
+
       await selectPersonaAndGreet({
-        personaId: created.id,
+        personaId,
         extraDescription: vibe || shortDescription,
+        settingsChanged: Boolean(hasHistory && isDirty),
       });
       if (tg?.close) {
         tg.close();
@@ -44,13 +121,8 @@ export function CharacterCustom() {
         navigate("/");
       }
     } catch (e: any) {
-      const message = e.message ?? "Не удалось создать персонажа";
-      if (message === "custom_persona_exists") {
-        setForceReplace(true);
-        setError("У тебя уже есть кастомный герой. Нажми ещё раз, чтобы пересоздать.");
-      } else {
-        setError(message);
-      }
+      const message = e.message ?? "Не удалось сохранить персонажа";
+      setError(message);
     } finally {
       setBusy(false);
     }
@@ -89,57 +161,62 @@ export function CharacterCustom() {
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="mt-6 space-y-6">
-            <label className="block space-y-2">
-              <span className="text-sm font-medium text-white/80">
-                Имя персонажа
-              </span>
-              <input
-                className="w-full rounded-3xl border border-white/10 bg-card-dark px-4 py-3 text-base text-white outline-none transition focus:border-white/40 placeholder:text-sm placeholder:text-white/40"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                placeholder="Например, Серафина"
-                required
-              />
-            </label>
+              {loading && (
+                <div className="rounded-3xl border border-white/10 bg-card-dark/60 px-4 py-3 text-sm text-white/70">
+                  Загружаем твоего героя...
+                </div>
+              )}
+              <label className="block space-y-2">
+                <span className="text-sm font-medium text-white/80">
+                  Имя персонажа
+                </span>
+                <input
+                  className="w-full rounded-3xl border border-white/10 bg-card-dark px-4 py-3 text-base text-white outline-none transition focus:border-white/40 placeholder:text-sm placeholder:text-white/40"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  placeholder="Например, Серафина"
+                  required
+                />
+              </label>
 
-            <label className="block space-y-2">
-              <span className="text-sm font-medium text-white/80">
-                Короткое описание / вайб
-              </span>
-              <input
-                className="w-full rounded-3xl border border-white/10 bg-card-dark px-4 py-3 text-base text-white outline-none transition focus:border-white/40 placeholder:text-sm placeholder:text-white/40"
-                value={shortDescription}
-                onChange={(e) => setShortDescription(e.target.value)}
-                placeholder="Например, дерзкая и заботливая подруга"
-                required
-              />
-            </label>
+              <label className="block space-y-2">
+                <span className="text-sm font-medium text-white/80">
+                  Короткое описание / вайб
+                </span>
+                <input
+                  className="w-full rounded-3xl border border-white/10 bg-card-dark px-4 py-3 text-base text-white outline-none transition focus:border-white/40 placeholder:text-sm placeholder:text-white/40"
+                  value={shortDescription}
+                  onChange={(e) => setShortDescription(e.target.value)}
+                  placeholder="Например, дерзкая и заботливая подруга"
+                  required
+                />
+              </label>
 
-            <label className="block space-y-2">
-              <span className="text-sm font-medium text-white/80">
-                Доп. вайб (необязательно)
-              </span>
-              <textarea
-                className="w-full min-h-[120px] rounded-3xl border border-white/10 bg-card-dark px-4 py-3 text-base text-white outline-none transition focus:border-white/40 placeholder:text-sm placeholder:text-white/40"
-                value={vibe}
-                onChange={(e) => setVibe(e.target.value)}
-                placeholder="Любимые темы, скорость переписки, триггеры"
-              />
-            </label>
+              <label className="block space-y-2">
+                <span className="text-sm font-medium text-white/80">
+                  Доп. вайб (необязательно)
+                </span>
+                <textarea
+                  className="w-full min-h-[120px] rounded-3xl border border-white/10 bg-card-dark px-4 py-3 text-base text-white outline-none transition focus:border-white/40 placeholder:text-sm placeholder:text-white/40"
+                  value={vibe}
+                  onChange={(e) => setVibe(e.target.value)}
+                  placeholder="Любимые темы, скорость переписки, триггеры"
+                />
+              </label>
 
-            {error && (
-              <p className="text-sm text-red-300">
-                {error}
-              </p>
-            )}
+              {error && (
+                <p className="text-sm text-red-300">
+                  {error}
+                </p>
+              )}
 
-            <button
-              type="submit"
-              className="w-full rounded-full bg-gradient-to-r from-[#7B4DF0] to-[#E44CC6] px-4 py-4 text-base font-semibold text-white shadow-card transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
-              disabled={busy}
-            >
-              {busy ? "Создаём..." : "Создать и выбрать"}
-            </button>
+              <button
+                type="submit"
+                className="w-full rounded-full bg-gradient-to-r from-[#7B4DF0] to-[#E44CC6] px-4 py-4 text-base font-semibold text-white shadow-card transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
+                disabled={busy || loading}
+              >
+                {busy ? "Сохраняем..." : buttonLabel}
+              </button>
             </form>
           )}
         </section>

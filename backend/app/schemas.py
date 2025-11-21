@@ -44,6 +44,7 @@ class PersonaListItem(BaseModel):
     is_default: bool
     is_owner: bool
     is_selected: bool
+    is_custom: bool = False
 
     class Config:
         from_attributes = True
@@ -57,6 +58,8 @@ class PersonaDetails(PersonaListItem):
     triggers_positive: list[str] | None = None
     triggers_negative: list[str] | None = None
     story_cards: list["StoryCardSchema"] | None = None
+    has_history: bool = False
+    dialog_id: int | None = None
 
 
 class PersonasListResponse(BaseModel):
@@ -91,6 +94,9 @@ class PersonaSelectRequest(BaseModel):
     persona_id: int
     extra_description: str | None = None
     send_greeting: bool = True
+    atmosphere: str | None = None
+    story_id: str | None = None
+    settings_changed: bool = False
 
 
 class PersonaSelectResponse(BaseModel):
@@ -98,6 +104,7 @@ class PersonaSelectResponse(BaseModel):
     persona_id: int
     dialog_id: int | None = None
     greeting_sent: bool = False
+    greeting_mode: str | None = None
 
 
 class PaymentPlanSchema(BaseModel):
