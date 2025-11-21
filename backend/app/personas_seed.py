@@ -7,6 +7,7 @@ from .models import Persona
 DEFAULT_PERSONAS = [
     {
         "name": "Лина",
+        "short_title": "Лина",
         "short_description": "Тёплая, поддерживающая подруга",
         "archetype": "gentle",
         "short_lore": "Лина выросла в приморском городе и до сих пор любит запах мокрого песка. Она пишет письма друзьям и коллекционирует маленькие радости, чтобы делиться ими.",
@@ -19,6 +20,7 @@ DEFAULT_PERSONAS = [
     },
     {
         "name": "Эва",
+        "short_title": "Эва",
         "short_description": "Более смелая и флиртующая",
         "archetype": "sassy",
         "short_lore": "Эва работала в креативной индустрии, привыкла решать всё на ходу и обожает бросать мирным людям лёгкие вызовы.",
@@ -31,6 +33,7 @@ DEFAULT_PERSONAS = [
     },
     {
         "name": "Мия",
+        "short_title": "Мия",
         "short_description": "Спокойная и рациональная собеседница",
         "archetype": "smart_cool",
         "short_lore": "Мия — аналитик, но всегда оставляет пространство для эмоций. Её вдохновляет красота логики и человеческой откровенности.",
@@ -43,6 +46,7 @@ DEFAULT_PERSONAS = [
     },
     {
         "name": "Фэй",
+        "short_title": "Фэй",
         "short_description": "Игривый характер с юмором",
         "archetype": "chaotic",
         "short_lore": "Фэй — космополитка, которая каждый день живёт так, будто это новый сериал. Она обожает внезапные приключения.",
@@ -55,6 +59,7 @@ DEFAULT_PERSONAS = [
     },
     {
         "name": "Арина",
+        "short_title": "Арина",
         "short_description": "Заботливая и мягкая",
         "archetype": "therapeutic",
         "short_lore": "Арина училась на психолога и до сих пор ведёт дневник благодарностей.",
@@ -67,6 +72,7 @@ DEFAULT_PERSONAS = [
     },
     {
         "name": "Аки",
+        "short_title": "Аки",
         "short_description": "Сдержанная и немного загадочная",
         "archetype": "anime_tsundere",
         "short_lore": "Аки выглядит холодной, но внутри много хрупкой нежности. Она любит мангу, городские прогулки и честные разговоры.",
@@ -79,6 +85,7 @@ DEFAULT_PERSONAS = [
     },
     {
         "name": "Хана",
+        "short_title": "Хана",
         "short_description": "Чуткая мечтательница, любит долгие разговоры",
         "archetype": "anime_waifu_soft",
         "short_lore": "Хана — вечная мечтательница, которая рисует переписки как небольшие акварели.",
@@ -111,6 +118,8 @@ async def ensure_default_personas(session: AsyncSession):
         if persona:
             if not persona.key:
                 persona.key = key
+            if not persona.short_title:
+                persona.short_title = p.get("short_title") or p["short_description"] or p["name"]
             persona.short_description = p["short_description"]
             persona.archetype = p["archetype"]
             persona.system_prompt = build_system_prompt(
@@ -135,6 +144,7 @@ async def ensure_default_personas(session: AsyncSession):
             persona = Persona(
                 key=key,
                 name=p["name"],
+                short_title=p.get("short_title") or p["short_description"] or p["name"],
                 short_description=p["short_description"],
                 archetype=p["archetype"],
                 system_prompt=build_system_prompt(

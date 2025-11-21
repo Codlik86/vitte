@@ -83,6 +83,7 @@ async def on_startup():
                 """
                 ALTER TABLE personas
                 ADD COLUMN IF NOT EXISTS name varchar(100),
+                ADD COLUMN IF NOT EXISTS short_title varchar(255) NOT NULL DEFAULT '',
                 ADD COLUMN IF NOT EXISTS short_description varchar(255),
                 ADD COLUMN IF NOT EXISTS long_description text,
                 ADD COLUMN IF NOT EXISTS archetype varchar(64),
@@ -101,6 +102,15 @@ async def on_startup():
                 ADD COLUMN IF NOT EXISTS hooks jsonb DEFAULT '[]'::jsonb,
                 ADD COLUMN IF NOT EXISTS triggers_positive jsonb DEFAULT '[]'::jsonb,
                 ADD COLUMN IF NOT EXISTS triggers_negative jsonb DEFAULT '[]'::jsonb;
+                """
+            )
+        )
+        await conn.execute(
+            text(
+                """
+                UPDATE personas
+                SET short_title = COALESCE(short_title, short_description, name, '')
+                WHERE short_title IS NULL;
                 """
             )
         )

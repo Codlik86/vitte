@@ -40,6 +40,7 @@ class StoryCardSchema(BaseModel):
 class PersonaListItem(BaseModel):
     id: int
     name: str
+    short_title: str
     short_description: str
     is_default: bool
     is_owner: bool

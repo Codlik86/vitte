@@ -48,6 +48,7 @@ def _build_list_item(persona: Persona, user_id: int | None, active_id: int | Non
     return PersonaListItem(
         id=persona.id,
         name=persona.name,
+        short_title=persona.short_title or persona.short_description or persona.name,
         short_description=_build_short_description(persona),
         is_default=bool(persona.is_default),
         is_owner=bool(user_id is not None and persona.owner_user_id == user_id),
@@ -264,6 +265,7 @@ async def create_custom_persona(
         raise HTTPException(status_code=403, detail="Custom personas доступны в Premium")
     vibe = (payload.vibe or "").strip()
     vibe_sentence = f" Доп. детали: {vibe}." if vibe else ""
+    short_title = payload.short_description or payload.name
 
     existing = await session.execute(
         select(Persona).where(Persona.owner_user_id == user.id, Persona.is_custom.is_(True))
@@ -274,6 +276,7 @@ async def create_custom_persona(
 
     target_persona = existing_persona or Persona(owner_user_id=user.id)
     target_persona.name = payload.name
+    target_persona.short_title = short_title
     target_persona.short_description = payload.short_description
     target_persona.long_description = vibe or None
     target_persona.archetype = "custom"
