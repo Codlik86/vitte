@@ -82,6 +82,7 @@ class Persona(Base):
     __tablename__ = "personas"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    key: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
     name: Mapped[str] = mapped_column(String(100))
     short_description: Mapped[str] = mapped_column(String(255))
     long_description: Mapped[str | None] = mapped_column(Text, nullable=True)

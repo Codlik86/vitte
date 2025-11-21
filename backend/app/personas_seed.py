@@ -107,7 +107,10 @@ async def ensure_default_personas(session: AsyncSession):
             select(Persona).where(Persona.name == p["name"], Persona.is_default.is_(True))
         )
         persona = result.scalar_one_or_none()
+        key = f"default_{p['name']}".lower().replace(" ", "_")
         if persona:
+            if not persona.key:
+                persona.key = key
             persona.short_description = p["short_description"]
             persona.archetype = p["archetype"]
             persona.system_prompt = build_system_prompt(
@@ -130,6 +133,7 @@ async def ensure_default_personas(session: AsyncSession):
             persona.triggers_negative = p.get("triggers_negative")
         else:
             persona = Persona(
+                key=key,
                 name=p["name"],
                 short_description=p["short_description"],
                 archetype=p["archetype"],

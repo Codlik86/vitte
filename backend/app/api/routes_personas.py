@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
+from uuid import uuid4
 
 from ..db import get_session
 from ..models import Persona, UserPersona, EventAnalytics, PersonaEventType, Dialog, Message, User
@@ -33,6 +34,10 @@ def _resolve_persona_photo(persona: Persona) -> str:
     # Немного разнообразия по archetype, если он указан
     archetype_seed = persona.archetype or "vitte"
     return f"https://picsum.photos/seed/{archetype_seed}-vitte/800/800"
+
+
+def _build_custom_key(user_id: int) -> str:
+    return f"custom_{user_id}_{uuid4().hex[:8]}"
 
 
 def _build_short_description(persona: Persona) -> str:
@@ -277,6 +282,7 @@ async def create_custom_persona(
         f"{payload.short_description}. Ты говоришь по-русски, мягко, с флиртом и эмпатией."
         f"{vibe_sentence}"
     )
+    target_persona.key = target_persona.key or _build_custom_key(user.id)
     target_persona.is_default = False
     target_persona.is_custom = True
     target_persona.is_active = True
