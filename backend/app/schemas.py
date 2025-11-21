@@ -46,7 +46,7 @@ class PersonaListItem(BaseModel):
     is_selected: bool
 
     class Config:
-        orm_mode = True
+        from_attributes = True
 
 
 class PersonaDetails(PersonaListItem):

@@ -106,49 +106,49 @@ async def ensure_default_personas(session: AsyncSession):
         result = await session.execute(
             select(Persona).where(Persona.name == p["name"], Persona.is_default.is_(True))
         )
-            persona = result.scalar_one_or_none()
-            if persona:
-                persona.short_description = p["short_description"]
-                persona.archetype = p["archetype"]
-                persona.system_prompt = build_system_prompt(
+        persona = result.scalar_one_or_none()
+        if persona:
+            persona.short_description = p["short_description"]
+            persona.archetype = p["archetype"]
+            persona.system_prompt = build_system_prompt(
+                p["archetype"],
+                p["short_description"],
+                p.get("emotional_style"),
+            )
+            persona.is_default = True
+            persona.is_custom = False
+            persona.owner_user_id = None
+            persona.is_active = True
+            persona.short_lore = p.get("short_lore")
+            persona.background = p.get("background")
+            persona.emotional_style = p.get("emotional_style")
+            persona.relationship_style = p.get("relationship_style")
+            persona.hooks = p.get("hooks")
+            persona.triggers_positive = p.get("triggers_positive")
+            persona.triggers_negative = p.get("triggers_negative")
+        else:
+            persona = Persona(
+                name=p["name"],
+                short_description=p["short_description"],
+                archetype=p["archetype"],
+                system_prompt=build_system_prompt(
                     p["archetype"],
                     p["short_description"],
                     p.get("emotional_style"),
-                )
-                persona.is_default = True
-                persona.is_custom = False
-                persona.owner_user_id = None
-                persona.is_active = True
-                persona.short_lore = p.get("short_lore")
-                persona.background = p.get("background")
-                persona.emotional_style = p.get("emotional_style")
-                persona.relationship_style = p.get("relationship_style")
-                persona.hooks = p.get("hooks")
-                persona.triggers_positive = p.get("triggers_positive")
-                persona.triggers_negative = p.get("triggers_negative")
-            else:
-                persona = Persona(
-                    name=p["name"],
-                    short_description=p["short_description"],
-                    archetype=p["archetype"],
-                    system_prompt=build_system_prompt(
-                        p["archetype"],
-                        p["short_description"],
-                        p.get("emotional_style"),
-                    ),
-                    long_description=None,
-                    is_default=True,
-                    is_custom=False,
-                    is_active=True,
-                    owner_user_id=None,
-                    short_lore=p.get("short_lore"),
-                    background=p.get("background"),
-                    emotional_style=p.get("emotional_style"),
-                    relationship_style=p.get("relationship_style"),
-                    hooks=p.get("hooks"),
-                    triggers_positive=p.get("triggers_positive"),
-                    triggers_negative=p.get("triggers_negative"),
-                )
-                session.add(persona)
+                ),
+                long_description=None,
+                is_default=True,
+                is_custom=False,
+                is_active=True,
+                owner_user_id=None,
+                short_lore=p.get("short_lore"),
+                background=p.get("background"),
+                emotional_style=p.get("emotional_style"),
+                relationship_style=p.get("relationship_style"),
+                hooks=p.get("hooks"),
+                triggers_positive=p.get("triggers_positive"),
+                triggers_negative=p.get("triggers_negative"),
+            )
+            session.add(persona)
 
     await session.commit()
