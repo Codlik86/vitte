@@ -63,6 +63,25 @@ async def on_startup():
                 """
             )
         )
+        await conn.execute(
+            text(
+                """
+                DO $$
+                BEGIN
+                    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'persona_kind_enum') THEN
+                        CREATE TYPE persona_kind_enum AS ENUM ('default', 'custom');
+                    ELSE
+                        BEGIN
+                            ALTER TYPE persona_kind_enum ADD VALUE IF NOT EXISTS 'default';
+                            ALTER TYPE persona_kind_enum ADD VALUE IF NOT EXISTS 'custom';
+                        EXCEPTION WHEN duplicate_object THEN
+                            NULL;
+                        END;
+                    END IF;
+                END$$;
+                """
+            )
+        )
 
     # Separate transaction so new enum values are committed before use in defaults
     async with engine.begin() as conn:
