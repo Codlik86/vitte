@@ -85,6 +85,7 @@ class Persona(Base):
     key: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
     short_title: Mapped[str] = mapped_column(String(255), nullable=False, default="")
     gender: Mapped[str] = mapped_column(String(16), nullable=False, default="female", server_default="female")
+    kind: Mapped[str] = mapped_column(String(32), nullable=False, default="default", server_default="default")
     name: Mapped[str] = mapped_column(String(100))
     short_description: Mapped[str] = mapped_column(String(255))
     long_description: Mapped[str | None] = mapped_column(Text, nullable=True)

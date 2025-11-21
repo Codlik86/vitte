@@ -281,6 +281,7 @@ async def create_custom_persona(
     target_persona.short_title = short_title
     target_persona.short_description = payload.short_description
     target_persona.gender = gender
+    target_persona.kind = "custom"
     target_persona.long_description = vibe or None
     target_persona.archetype = "custom"
     target_persona.system_prompt = (
