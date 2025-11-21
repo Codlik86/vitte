@@ -49,6 +49,7 @@ def _build_list_item(persona: Persona, user_id: int | None, active_id: int | Non
         id=persona.id,
         name=persona.name,
         short_title=persona.short_title or persona.short_description or persona.name,
+        gender=getattr(persona, "gender", None),
         short_description=_build_short_description(persona),
         is_default=bool(persona.is_default),
         is_owner=bool(user_id is not None and persona.owner_user_id == user_id),
@@ -266,6 +267,7 @@ async def create_custom_persona(
     vibe = (payload.vibe or "").strip()
     vibe_sentence = f" Доп. детали: {vibe}." if vibe else ""
     short_title = payload.short_description or payload.name
+    gender = (payload.gender or "female").strip() or "female"
 
     existing = await session.execute(
         select(Persona).where(Persona.owner_user_id == user.id, Persona.is_custom.is_(True))
@@ -278,6 +280,7 @@ async def create_custom_persona(
     target_persona.name = payload.name
     target_persona.short_title = short_title
     target_persona.short_description = payload.short_description
+    target_persona.gender = gender
     target_persona.long_description = vibe or None
     target_persona.archetype = "custom"
     target_persona.system_prompt = (

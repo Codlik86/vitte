@@ -84,6 +84,7 @@ async def on_startup():
                 ALTER TABLE personas
                 ADD COLUMN IF NOT EXISTS name varchar(100),
                 ADD COLUMN IF NOT EXISTS short_title varchar(255) NOT NULL DEFAULT '',
+                ADD COLUMN IF NOT EXISTS gender varchar(16) NOT NULL DEFAULT 'female',
                 ADD COLUMN IF NOT EXISTS short_description varchar(255),
                 ADD COLUMN IF NOT EXISTS long_description text,
                 ADD COLUMN IF NOT EXISTS archetype varchar(64),
@@ -111,6 +112,15 @@ async def on_startup():
                 UPDATE personas
                 SET short_title = COALESCE(short_title, short_description, name, '')
                 WHERE short_title IS NULL;
+                """
+            )
+        )
+        await conn.execute(
+            text(
+                """
+                UPDATE personas
+                SET gender = COALESCE(gender, 'female')
+                WHERE gender IS NULL;
                 """
             )
         )

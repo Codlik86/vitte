@@ -41,6 +41,7 @@ class PersonaListItem(BaseModel):
     id: int
     name: str
     short_title: str
+    gender: str | None = None
     short_description: str
     is_default: bool
     is_owner: bool
@@ -72,6 +73,7 @@ class PersonaCustomCreateRequest(BaseModel):
     name: str
     short_description: str
     vibe: str | None = None  # текст из формы
+    gender: str | None = "female"
     replace_existing: bool = False
 
 
