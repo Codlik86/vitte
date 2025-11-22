@@ -1,10 +1,8 @@
 from datetime import datetime
 from enum import Enum as PyEnum
-import enum
 import sqlalchemy as sa
 from sqlalchemy import BigInteger, String, Text, ForeignKey, Integer, DateTime, Enum, Boolean, Numeric
-from sqlalchemy.dialects import postgresql
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import JSONB, ENUM as PG_ENUM
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import expression
 
@@ -78,9 +76,16 @@ class EventAnalytics(Base):
     user: Mapped["User"] = relationship()
 
 
-class PersonaKind(PyEnum):
-    DEFAULT = "default"
-    CUSTOM = "custom"
+class PersonaKind(str, PyEnum):
+    DEFAULT = "DEFAULT"
+    SOFT_EMPATH = "SOFT_EMPATH"
+    SASSY = "SASSY"
+    SMART_COOL = "SMART_COOL"
+    CHAOTIC = "CHAOTIC"
+    THERAPEUTIC = "THERAPEUTIC"
+    ANIME_TSUNDERE = "ANIME_TSUNDERE"
+    ANIME_WAIFU_SOFT = "ANIME_WAIFU_SOFT"
+    CUSTOM = "CUSTOM"
 
 
 class Persona(Base):
@@ -91,7 +96,7 @@ class Persona(Base):
     short_title: Mapped[str] = mapped_column(String(255), nullable=False, default="")
     gender: Mapped[str] = mapped_column(String(16), nullable=False, default="female", server_default="female")
     kind: Mapped[PersonaKind] = mapped_column(
-        sa.Enum(PersonaKind, name="persona_kind_enum", native_enum=True, create_type=False),
+        PG_ENUM(PersonaKind, name="persona_kind_enum", native_enum=True, create_type=False),
         nullable=False,
         default=PersonaKind.DEFAULT,
         server_default=PersonaKind.DEFAULT.value,
