@@ -34,7 +34,7 @@ export function PersonaCard({
             className="pointer-events-none absolute inset-4 rounded-2xl bg-white/20 blur-3xl opacity-80"
             aria-hidden
           />
-          <div className="pt-[100%]" />
+          <div className="aspect-square" />
         </div>
         {selected && (
           <span className="absolute right-2 top-2 rounded-full bg-emerald-500/90 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white shadow-card">

@@ -252,13 +252,13 @@ function StoriesBlock({
               }`}
             >
               <div className="space-y-2">
-                <span className="inline-flex rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-white/80">
-                  {mapAtmosphere(card.atmosphere)}
-                </span>
-                <div className="space-y-1">
+                <div className="flex items-start justify-between gap-3">
                   <p className="text-base font-semibold text-white sm:text-lg">{card.title}</p>
-                  <p className="text-sm text-white/70 sm:text-base">{card.description}</p>
+                  <span className="inline-flex rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-white/80">
+                    {mapAtmosphere(card.atmosphere)}
+                  </span>
                 </div>
+                <p className="text-sm text-white/70 sm:text-base">{card.description}</p>
               </div>
             </button>
           );
