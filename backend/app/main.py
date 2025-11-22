@@ -70,7 +70,7 @@ async def on_startup():
                 BEGIN
                     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'persona_kind_enum') THEN
                         CREATE TYPE persona_kind_enum AS ENUM (
-                            'DEFAULT','CUSTOM','SOFT_EMPATH','SASSY','SMART_COOL','CHAOTIC','THERAPEUTIC','ANIME_TSUNDERE','ANIME_WAIFU_SOFT'
+                            'DEFAULT','CUSTOM','SOFT_EMPATH','SASSY','SMART_COOL','CHAOTIC','THERAPEUTIC','ANIME_TSUNDERE','ANIME_WAIFU_SOFT','WITTY_BOLD'
                         );
                     ELSE
                         BEGIN
@@ -83,6 +83,7 @@ async def on_startup():
                             ALTER TYPE persona_kind_enum ADD VALUE IF NOT EXISTS 'THERAPEUTIC';
                             ALTER TYPE persona_kind_enum ADD VALUE IF NOT EXISTS 'ANIME_TSUNDERE';
                             ALTER TYPE persona_kind_enum ADD VALUE IF NOT EXISTS 'ANIME_WAIFU_SOFT';
+                            ALTER TYPE persona_kind_enum ADD VALUE IF NOT EXISTS 'WITTY_BOLD';
                         EXCEPTION WHEN duplicate_object THEN
                             NULL;
                         END;

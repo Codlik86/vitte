@@ -306,6 +306,7 @@ async def create_custom_persona(
     target_persona.is_default = False
     target_persona.is_custom = True
     target_persona.is_active = True
+    target_persona.owner_user_id = user.id
     target_persona.created_by_user_id = user.id
     target_persona.short_lore = vibe or payload.short_description
     target_persona.background = None
@@ -315,7 +316,7 @@ async def create_custom_persona(
     target_persona.emotions_full = (
         f"{target_persona.emotional_style}. {target_persona.relationship_style}."
     )
-    target_persona.style_tags = None
+    target_persona.style_tags = []
     target_persona.hooks = []
     target_persona.triggers_positive = []
     target_persona.triggers_negative = []
