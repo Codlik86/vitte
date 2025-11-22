@@ -87,7 +87,7 @@ export function CharacterDetails() {
 
   return (
     <div className="min-h-dvh bg-bg-dark text-text-main">
-      <div className="mx-auto flex min-h-dvh w-full max-w-screen-sm flex-col px-4 pb-12 pt-6">
+      <div className="mx-auto flex min-h-dvh w-full max-w-screen-md flex-col px-4 pb-12 pt-6 sm:px-5">
         <PageHeader
           title={title}
           showBack
@@ -164,7 +164,7 @@ function InfoBlock({ title, text }: { title: string; text?: string | null }) {
   return (
     <div className="space-y-1">
       <p className="text-[11px] uppercase tracking-[0.4em] text-text-muted">{title}</p>
-      <p className="text-sm leading-relaxed text-white/80">{text}</p>
+      <p className="text-sm leading-relaxed text-white/80 sm:text-base sm:leading-relaxed">{text}</p>
     </div>
   );
 }
@@ -183,7 +183,11 @@ function FeelBlock({
   return (
     <div className="space-y-3 rounded-3xl border border-white/10 bg-card-dark/30 p-4">
       <p className="text-[11px] uppercase tracking-[0.4em] text-text-muted">Как она чувствует и реагирует</p>
-      {emotions && <p className="text-sm leading-relaxed text-white/80">{emotions}</p>}
+      {emotions && (
+        <p className="text-sm leading-relaxed text-white/80 sm:text-base sm:leading-relaxed">
+          {emotions}
+        </p>
+      )}
       <div className="grid gap-3 sm:grid-cols-2">
         {hasLikes && (
           <div className="space-y-2">
@@ -192,7 +196,7 @@ function FeelBlock({
               {positive!.map((item) => (
                 <span
                   key={item}
-                  className="rounded-full border border-white/10 px-3 py-1 text-xs text-white/80"
+                  className="rounded-full border border-white/10 px-3 py-1 text-xs text-white/80 sm:text-sm"
                 >
                   {item}
                 </span>
@@ -207,7 +211,7 @@ function FeelBlock({
               {negative!.map((item) => (
                 <span
                   key={item}
-                  className="rounded-full border border-white/10 px-3 py-1 text-xs text-white/80"
+                  className="rounded-full border border-white/10 px-3 py-1 text-xs text-white/80 sm:text-sm"
                 >
                   {item}
                 </span>
@@ -241,7 +245,7 @@ function StoriesBlock({
               key={card.id}
               type="button"
               onClick={() => onSelect(active ? null : card.id)}
-              className={`w-full text-left rounded-3xl border px-4 py-4 transition ${
+              className={`w-full text-left rounded-3xl border px-4 py-4 transition sm:px-5 sm:py-5 ${
                 active
                   ? "border-pink-400/60 bg-white/10"
                   : "border-white/10 bg-card-dark/30 hover:border-white/20"
@@ -249,8 +253,8 @@ function StoriesBlock({
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="space-y-1">
-                  <p className="text-base font-semibold text-white">{card.title}</p>
-                  <p className="text-sm text-white/70">{card.description}</p>
+                  <p className="text-base font-semibold text-white sm:text-lg">{card.title}</p>
+                  <p className="text-sm text-white/70 sm:text-base">{card.description}</p>
                 </div>
                 <span className="rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-white/80">
                   {mapAtmosphere(card.atmosphere)}
