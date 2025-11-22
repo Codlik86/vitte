@@ -121,7 +121,7 @@ export function CharacterDetails() {
             {error ?? "Персонаж не найден"}
           </div>
         ) : (
-          <section className="mt-4 flex flex-1 flex-col space-y-6 rounded-4xl border border-white/5 bg-card-elevated/80 p-6 shadow-card">
+          <section className="mt-4 flex flex-1 flex-col space-y-6">
             <div className="w-full overflow-hidden rounded-3xl bg-gradient-to-br from-[#2C0D3E] via-[#5D267C] to-[#F05BB7]">
               <div className="relative aspect-square w-full">
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.4),_transparent_55%)] opacity-70" />
@@ -274,33 +274,26 @@ function StoriesBlock({
       <div className="space-y-3">
         {stories.map((card) => {
           const active = selectedId === card.id;
-          const highlight = card.atmosphere === "flirt_romance";
           return (
             <button
               key={card.id}
               type="button"
               onClick={() => onSelect(active ? null : card.id)}
               className={`relative w-full text-left rounded-3xl transition ${
-                highlight
-                  ? "bg-gradient-to-r from-[#7B4DF0] to-[#E44CC6] p-[1px]"
-                  : active
-                    ? "border border-pink-400/60 bg-white/10"
-                    : "border border-white/10 bg-card-dark/30 hover:border-white/20"
+                active
+                  ? "border border-pink-400/60 bg-white/10"
+                  : "border border-white/10 bg-card-dark/30 hover:border-white/20"
               }`}
             >
               <div
-                className={`flex w-full flex-col gap-2 rounded-[22px] text-left ${
-                  highlight ? "bg-card-dark/40 px-4 py-4 sm:px-5 sm:py-5" : "px-4 py-4 sm:px-5 sm:py-5"
-                }`}
+                className="flex w-full flex-col gap-2 rounded-[22px] text-left px-4 py-4 sm:px-5 sm:py-5"
               >
                 <div className="flex items-center justify-between gap-2">
                   <p className="flex-1 text-base font-semibold leading-tight text-white sm:text-lg">
                     {card.title}
                   </p>
                   <span
-                    className={`inline-flex items-center justify-center shrink-0 whitespace-nowrap rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-wide md:px-4 md:text-xs ${
-                      highlight ? "bg-white text-black" : "bg-white/10 text-white/80"
-                    }`}
+                    className="inline-flex items-center justify-center shrink-0 whitespace-nowrap rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-white/80 md:px-4 md:text-xs"
                   >
                     {mapAtmosphere(card.atmosphere)}
                   </span>

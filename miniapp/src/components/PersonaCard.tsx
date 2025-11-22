@@ -22,15 +22,15 @@ export function PersonaCard({
     <button
       type="button"
       onClick={onClick}
-      className="group relative flex h-full w-full flex-col rounded-3xl border border-white/5 bg-card-elevated/70 p-4 text-left transition hover:border-white/20 hover:bg-card-elevated/90 active:scale-[0.98]"
+      className="group relative flex h-full w-full flex-col text-left transition active:scale-[0.98]"
     >
-      <div className="relative w-full overflow-hidden rounded-2xl pb-[100%]">
+      <div className="relative w-full overflow-hidden rounded-3xl pb-[100%]">
         <div
-          className={`absolute inset-0 rounded-2xl bg-gradient-to-br ${gradientClass}`}
+          className={`absolute inset-0 rounded-3xl bg-gradient-to-br ${gradientClass}`}
           aria-hidden
         />
         <div
-          className="pointer-events-none absolute inset-3 rounded-2xl bg-white/20 blur-3xl opacity-80"
+          className="pointer-events-none absolute inset-3 rounded-3xl bg-white/20 blur-3xl opacity-80"
           aria-hidden
         />
         {selected && (
