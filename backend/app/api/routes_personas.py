@@ -222,7 +222,7 @@ async def select_persona_and_greet(
     if payload.send_greeting:
         dialog, message_count = dialog_info
         if dialog is None:
-            dialog = await _get_or_create_dialog(session, user, persona)
+            dialog = await _get_or_create_dialog(session, user, persona, payload.story_id)
             dialog_info = (dialog, 0)
             message_count = 0
         dialog_id = dialog.id
@@ -409,7 +409,9 @@ async def _apply_persona_selection(session: AsyncSession, user: User, persona: P
     )
 
 
-async def _get_or_create_dialog(session: AsyncSession, user: User, persona: Persona) -> Dialog:
+async def _get_or_create_dialog(
+    session: AsyncSession, user: User, persona: Persona, story_id: str | None = None
+) -> Dialog:
     stmt = (
         select(Dialog)
         .where(Dialog.user_id == user.id, Dialog.character_id == persona.id)
@@ -418,8 +420,10 @@ async def _get_or_create_dialog(session: AsyncSession, user: User, persona: Pers
     result = await session.execute(stmt)
     dialog = result.scalars().first()
     if dialog:
+        if story_id and not dialog.entry_story_id:
+            dialog.entry_story_id = story_id
         return dialog
-    dialog = Dialog(user_id=user.id, character_id=persona.id)
+    dialog = Dialog(user_id=user.id, character_id=persona.id, entry_story_id=story_id)
     session.add(dialog)
     await session.flush()
     return dialog

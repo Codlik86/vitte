@@ -19,7 +19,7 @@ from ..services.llm_adapter import (
     format_memory,
 )
 from ..services.memory import collect_recent_memory
-from ..story_cards import get_story_cards_for_persona
+from ..story_cards import get_story_cards_for_persona, StoryCard
 
 
 class ChatResult:
@@ -52,7 +52,12 @@ async def _get_active_persona(session: AsyncSession, user: User) -> Persona:
     raise HTTPException(status_code=404, detail="No personas available")
 
 
-async def _get_or_create_dialog(session: AsyncSession, user: User, persona: Persona) -> Dialog:
+async def _get_or_create_dialog(
+    session: AsyncSession,
+    user: User,
+    persona: Persona,
+    story_id: str | None = None,
+) -> Dialog:
     stmt = (
         select(Dialog)
         .where(Dialog.user_id == user.id, Dialog.character_id == persona.id)
@@ -61,8 +66,10 @@ async def _get_or_create_dialog(session: AsyncSession, user: User, persona: Pers
     result = await session.execute(stmt)
     dialog = result.scalars().first()
     if dialog:
+        if story_id and not dialog.entry_story_id:
+            dialog.entry_story_id = story_id
         return dialog
-    dialog = Dialog(user_id=user.id, character_id=persona.id)
+    dialog = Dialog(user_id=user.id, character_id=persona.id, entry_story_id=story_id)
     session.add(dialog)
     await session.flush()
     return dialog
@@ -77,18 +84,26 @@ async def _resolve_persona(session: AsyncSession, user: User, persona_id: int | 
     return await _get_active_persona(session, user)
 
 
-def _resolve_story_prompt(persona: Persona, story_id: str | None) -> str | None:
+def _find_story_card(persona: Persona, story_id: str | None) -> StoryCard | None:
     if not story_id:
         return None
     for card in get_story_cards_for_persona(persona.archetype, persona.name):
         if card.id == story_id:
-            return (
-                f"{card.title}: {card.description}. Атмосфера: {card.atmosphere}. "
-                f"{card.prompt} "
-                "В первые 5–7 сообщений держи фокус на этой сцене, затем к 10–15 сообщению ослабь её, "
-                "но время от времени возвращайся к общим воспоминаниям об этой истории."
-            )
+            return card
     return None
+
+
+def _story_prompt_with_meta(card: StoryCard | None) -> tuple[str | None, str | None]:
+    if not card:
+        return None, None
+    prompt = (
+        f"{card.title}: {card.description}. Атмосфера: {card.atmosphere}. "
+        f"{card.prompt} "
+        "В первые 5–10 сообщений держи фокус на этой сцене, затем к 10–15 сообщению ослабь её, "
+        "но время от времени возвращайся к общим воспоминаниям об этой истории и ощущениям пользователя."
+    )
+    meta = f"История входа: {card.title} ({card.atmosphere})."
+    return prompt, meta
 
 
 def _build_greeting_user_message(
@@ -161,16 +176,22 @@ async def generate_chat_reply(
     memory_context = "Нет особых воспоминаний, но персонаж открыт к новым."
 
     if not preview_story:
-        dialog = await _get_or_create_dialog(session, user, persona)
+        dialog = await _get_or_create_dialog(session, user, persona, story_id=story_id)
         message_count_result = await session.execute(
             select(func.count(Message.id)).where(Message.dialog_id == dialog.id)
         )
         message_count = message_count_result.scalar_one() or 0
         memory_context = format_memory(await collect_recent_memory(session, dialog))
+    # история диалога
+    effective_story_id = story_id or (dialog.entry_story_id if dialog else None)
+    story_card = _find_story_card(persona, effective_story_id)
+    story_prompt, story_meta = _story_prompt_with_meta(story_card)
 
     trust_level = calculate_trust_level(message_count, access.get("has_subscription", False))
     mode_instruction = describe_mode(mode, atmosphere)
-    story_instruction = build_story_context(_resolve_story_prompt(persona, story_id))
+    story_instruction = build_story_context(story_prompt)
+    if story_meta:
+        memory_context = f"{story_meta} {memory_context}"
     ritual_hint = None if preview_story else should_add_ritual(message_count + 1)
 
     messages, _ = compose_messages(
@@ -233,9 +254,15 @@ async def generate_greeting_reply(
 
     memory_items = await collect_recent_memory(session, dialog, limit=5) if message_count > 0 else []
     memory_context = format_memory(memory_items)
+    # история
+    effective_story_id = story_id or dialog.entry_story_id
+    story_card = _find_story_card(persona, effective_story_id)
+    story_prompt, story_meta = _story_prompt_with_meta(story_card)
+    if story_meta:
+        memory_context = f"{story_meta} {memory_context}"
     trust_level = calculate_trust_level(message_count, has_subscription)
     mode_instruction = describe_mode(llm_mode, atmosphere)
-    story_instruction = build_story_context(_resolve_story_prompt(persona, story_id))
+    story_instruction = build_story_context(story_prompt)
     user_message = _build_greeting_user_message(llm_mode, extra_description)
 
     messages, _ = compose_messages(

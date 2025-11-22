@@ -47,6 +47,8 @@ class Dialog(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
     character_id: Mapped[int | None] = mapped_column(nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
+    entry_story_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
+    # Необходимо создать колонку вручную (Neon): ALTER TABLE dialogs ADD COLUMN IF NOT EXISTS entry_story_id varchar(128);
 
     user: Mapped["User"] = relationship(back_populates="dialogs")
     messages: Mapped[list["Message"]] = relationship(back_populates="dialog")
