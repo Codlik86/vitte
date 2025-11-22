@@ -150,7 +150,7 @@ class Subscription(Base):
     provider: Mapped[str] = mapped_column(String(32))
     plan_code: Mapped[str] = mapped_column(String(64))
     status: Mapped[SubscriptionStatus] = mapped_column(
-        Enum(SubscriptionStatus, name="subscription_status_enum"),
+        SAEnum(SubscriptionStatus, name="subscription_status_enum"),
         default=SubscriptionStatus.PENDING,
         nullable=False,
     )
@@ -186,7 +186,7 @@ class Purchase(Base):
     amount: Mapped[Numeric | None] = mapped_column(Numeric(10, 2), nullable=True)
     currency: Mapped[str | None] = mapped_column(String(8), nullable=True)
     status: Mapped[PurchaseStatus] = mapped_column(
-        Enum(PurchaseStatus, name="purchase_status_enum"),
+        SAEnum(PurchaseStatus, name="purchase_status_enum"),
         default=PurchaseStatus.PENDING,
         nullable=False,
     )
