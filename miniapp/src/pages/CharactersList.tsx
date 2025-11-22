@@ -59,7 +59,7 @@ export function CharactersList() {
 
     if (loading) {
       return (
-        <div className="grid grid-cols-1 gap-4 min-[420px]:grid-cols-2 lg:grid-cols-3">
+        <div className="flex flex-col gap-4">
           {Array.from({ length: 4 }).map((_, index) => (
             <div
               key={index}
@@ -83,7 +83,7 @@ export function CharactersList() {
     }
 
     return (
-      <div className="grid grid-cols-1 gap-4 min-[420px]:grid-cols-2 lg:grid-cols-3">
+      <div className="flex flex-col gap-4">
         {personasWithCustom.map((p) => {
           if ("isCustomEntry" in p) {
             return (
@@ -114,7 +114,7 @@ export function CharactersList() {
 
   return (
     <div className="min-h-dvh bg-bg-dark text-text-main">
-      <div className="mx-auto w-full max-w-screen-sm px-4 pb-12 pt-6 space-y-6 lg:max-w-screen-md xl:max-w-screen-lg">
+      <div className="mx-auto w-full max-w-screen-sm px-4 pb-12 pt-6 space-y-6">
         <PageHeader title="Персонажи" showBack={false} stats={headerStats} />
 
         <DebugTelegramBanner />
