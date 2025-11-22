@@ -129,8 +129,8 @@ export function CharacterCustom() {
   };
 
   return (
-    <div className="min-h-dvh bg-bg-dark text-text-main">
-      <div className="mx-auto w-full max-w-screen-md px-4 pb-12 pt-6 space-y-6 sm:px-5">
+    <div className="min-h-dvh bg-bg-dark text-text-main pt-4">
+      <div className="mx-auto w-full max-w-screen-md px-4 pb-12 space-y-6 sm:px-5">
         <PageHeader
           title="Свой персонаж"
           showBack

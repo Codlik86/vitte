@@ -113,13 +113,13 @@ export function CharactersList() {
   };
 
   return (
-    <div className="min-h-dvh bg-bg-dark text-text-main">
-      <div className="mx-auto w-full max-w-[640px] px-4 pb-12 pt-6 space-y-6">
+    <div className="min-h-dvh bg-bg-dark text-text-main pt-4">
+      <div className="mx-auto w-full max-w-[640px] px-4 pb-12">
         <PageHeader title="Персонажи" showBack={false} stats={headerStats} />
-
-        <DebugTelegramBanner />
-
-        {renderCards()}
+        <div className="mt-4 space-y-6">
+          <DebugTelegramBanner />
+          {renderCards()}
+        </div>
 
         <div className="space-y-3">
           <Link

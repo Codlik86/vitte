@@ -42,7 +42,7 @@ export function PersonaCard({
       <div className="mt-3 flex flex-1 flex-col gap-1">
         <h2 className="text-base font-semibold text-white leading-tight">{title}</h2>
         {description && (
-          <p className="text-xs text-white/70 leading-snug line-clamp-2">
+          <p className="text-sm text-white/80 leading-snug line-clamp-2">
             {description}
           </p>
         )}
