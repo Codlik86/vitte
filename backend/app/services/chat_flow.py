@@ -82,7 +82,12 @@ def _resolve_story_prompt(persona: Persona, story_id: str | None) -> str | None:
         return None
     for card in get_story_cards_for_persona(persona.archetype, persona.name):
         if card.id == story_id:
-            return card.prompt
+            return (
+                f"{card.title}: {card.description}. Атмосфера: {card.atmosphere}. "
+                f"{card.prompt} "
+                "В первые 5–7 сообщений держи фокус на этой сцене, затем к 10–15 сообщению ослабь её, "
+                "но время от времени возвращайся к общим воспоминаниям об этой истории."
+            )
     return None
 
 

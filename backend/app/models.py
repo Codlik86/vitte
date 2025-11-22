@@ -1,8 +1,8 @@
 from datetime import datetime
 from enum import Enum as PyEnum
 import sqlalchemy as sa
-from sqlalchemy import BigInteger, String, Text, ForeignKey, Integer, DateTime, Boolean, Numeric
-from sqlalchemy.dialects.postgresql import JSONB, ENUM as PG_ENUM
+from sqlalchemy import BigInteger, String, Text, ForeignKey, Integer, DateTime, Boolean, Numeric, Enum as SAEnum
+from sqlalchemy.dialects.postgresql import JSONB
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import expression
 
@@ -22,7 +22,7 @@ class User(Base):
     telegram_id: Mapped[int] = mapped_column(BigInteger, unique=True, index=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     access_status: Mapped[AccessStatus] = mapped_column(
-        Enum(AccessStatus, name="access_status_enum"),
+        SAEnum(AccessStatus, name="access_status_enum"),
         default=AccessStatus.TRIAL_USAGE,
         nullable=False,
     )
@@ -97,7 +97,7 @@ class Persona(Base):
     short_title: Mapped[str] = mapped_column(String(128), nullable=False, default="")
     gender: Mapped[str] = mapped_column(String(16), nullable=False, default="female", server_default="female")
     kind: Mapped[PersonaKind] = mapped_column(
-        PG_ENUM(PersonaKind, name="persona_kind_enum", native_enum=True, create_type=False),
+        SAEnum(PersonaKind, name="persona_kind_enum"),
         nullable=False,
         default=PersonaKind.DEFAULT,
         server_default=PersonaKind.DEFAULT.value,

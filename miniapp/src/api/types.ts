@@ -98,6 +98,6 @@ export type StoryCard = {
   id: string;
   title: string;
   description: string;
-  atmosphere: string;
+  atmosphere: "flirt_romance" | "support" | "cozy_evening" | "serious_talk";
   prompt: string;
 };
