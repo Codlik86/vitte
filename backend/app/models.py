@@ -78,22 +78,23 @@ class EventAnalytics(Base):
     user: Mapped["User"] = relationship()
 
 
+class PersonaKind(PyEnum):
+    DEFAULT = "default"
+    CUSTOM = "custom"
+
+
 class Persona(Base):
     __tablename__ = "personas"
-
-    class Kind(PyEnum):
-        DEFAULT = "default"
-        CUSTOM = "custom"
 
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     key: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
     short_title: Mapped[str] = mapped_column(String(255), nullable=False, default="")
     gender: Mapped[str] = mapped_column(String(16), nullable=False, default="female", server_default="female")
-    kind: Mapped["Persona.Kind"] = mapped_column(
-        Enum(Kind, name="persona_kind_enum"),
+    kind: Mapped[PersonaKind] = mapped_column(
+        sa.Enum(PersonaKind, name="persona_kind_enum", native_enum=True, create_type=False),
         nullable=False,
-        default=Kind.DEFAULT,
-        server_default=Kind.DEFAULT.value,
+        default=PersonaKind.DEFAULT,
+        server_default=PersonaKind.DEFAULT.value,
     )
     name: Mapped[str] = mapped_column(String(100))
     short_description: Mapped[str] = mapped_column(String(255))

@@ -1,7 +1,7 @@
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from .models import Persona
+from .models import Persona, PersonaKind
 
 
 DEFAULT_PERSONAS = [
@@ -130,7 +130,7 @@ async def ensure_default_personas(session: AsyncSession):
             if getattr(persona, "gender", None) in (None, ""):
                 persona.gender = p.get("gender") or "female"
             if getattr(persona, "kind", None) in (None, ""):
-                persona.kind = Persona.Kind.DEFAULT
+                persona.kind = PersonaKind.DEFAULT
             persona.description_short = persona.short_title or persona.short_description or persona.name
             persona.description_long = persona.long_description or persona.legend_full or persona.short_lore or persona.short_description or ""
             persona.short_description = p["short_description"]
@@ -159,7 +159,7 @@ async def ensure_default_personas(session: AsyncSession):
                 name=p["name"],
                 short_title=p.get("short_title") or p["short_description"] or p["name"],
                 gender=p.get("gender") or "female",
-                kind=Persona.Kind.DEFAULT,
+                kind=PersonaKind.DEFAULT,
                 description_short=p.get("short_title") or p["short_description"] or p["name"],
                 description_long=p.get("short_lore") or p["short_description"] or p["name"],
                 short_description=p["short_description"],

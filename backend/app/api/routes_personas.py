@@ -4,7 +4,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import uuid4
 
 from ..db import get_session
-from ..models import Persona, UserPersona, EventAnalytics, PersonaEventType, Dialog, Message, User
+from ..models import Persona, PersonaKind, UserPersona, EventAnalytics, PersonaEventType, Dialog, Message, User
 from ..users_service import get_or_create_user_by_telegram_id
 from ..schemas import (
     PersonasListResponse,
@@ -281,7 +281,7 @@ async def create_custom_persona(
     target_persona.short_title = short_title
     target_persona.short_description = payload.short_description
     target_persona.gender = gender
-    target_persona.kind = Persona.Kind.CUSTOM
+    target_persona.kind = PersonaKind.CUSTOM
     target_persona.long_description = vibe or None
     target_persona.description_short = short_title
     target_persona.description_long = vibe or payload.short_description
