@@ -104,7 +104,9 @@ async def on_startup():
                 ADD COLUMN IF NOT EXISTS name varchar(100),
                 ADD COLUMN IF NOT EXISTS short_title varchar(255) NOT NULL DEFAULT '',
                 ADD COLUMN IF NOT EXISTS gender varchar(16) NOT NULL DEFAULT 'female',
-                ADD COLUMN IF NOT EXISTS kind varchar(32) NOT NULL DEFAULT 'default',
+                ADD COLUMN IF NOT EXISTS kind persona_kind_enum NOT NULL DEFAULT 'default',
+                ADD COLUMN IF NOT EXISTS description_short varchar(256) NOT NULL DEFAULT '',
+                ADD COLUMN IF NOT EXISTS description_long text NOT NULL DEFAULT '',
                 ADD COLUMN IF NOT EXISTS short_description varchar(255),
                 ADD COLUMN IF NOT EXISTS long_description text,
                 ADD COLUMN IF NOT EXISTS archetype varchar(64),
@@ -113,6 +115,7 @@ async def on_startup():
                 ADD COLUMN IF NOT EXISTS is_custom boolean DEFAULT false,
                 ADD COLUMN IF NOT EXISTS is_active boolean DEFAULT true,
                 ADD COLUMN IF NOT EXISTS owner_user_id integer REFERENCES users(id) ON DELETE SET NULL,
+                ADD COLUMN IF NOT EXISTS created_by_user_id integer REFERENCES users(id) ON DELETE SET NULL,
                 ADD COLUMN IF NOT EXISTS created_at timestamp DEFAULT now(),
                 ADD COLUMN IF NOT EXISTS short_lore text,
                 ADD COLUMN IF NOT EXISTS background text,
@@ -148,8 +151,18 @@ async def on_startup():
             text(
                 """
                 UPDATE personas
-                SET kind = COALESCE(kind, 'default')
+                SET kind = COALESCE(kind, 'default'::persona_kind_enum)
                 WHERE kind IS NULL;
+                """
+            )
+        )
+        await conn.execute(
+            text(
+                """
+                UPDATE personas
+                SET description_short = COALESCE(description_short, short_title, short_description, name, ''),
+                    description_long = COALESCE(description_long, long_description, legend_full, short_lore, short_description, '')
+                WHERE description_short = '' OR description_long = '';
                 """
             )
         )

@@ -281,8 +281,10 @@ async def create_custom_persona(
     target_persona.short_title = short_title
     target_persona.short_description = payload.short_description
     target_persona.gender = gender
-    target_persona.kind = "custom"
+    target_persona.kind = Persona.Kind.CUSTOM
     target_persona.long_description = vibe or None
+    target_persona.description_short = short_title
+    target_persona.description_long = vibe or payload.short_description
     target_persona.archetype = "custom"
     target_persona.system_prompt = (
         "Ты романтический AI-компаньон. Вайб: "
@@ -293,6 +295,7 @@ async def create_custom_persona(
     target_persona.is_default = False
     target_persona.is_custom = True
     target_persona.is_active = True
+    target_persona.created_by_user_id = user.id
     target_persona.short_lore = vibe or payload.short_description
     target_persona.background = None
     target_persona.legend_full = target_persona.short_lore

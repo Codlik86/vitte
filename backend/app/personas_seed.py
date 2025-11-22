@@ -130,7 +130,9 @@ async def ensure_default_personas(session: AsyncSession):
             if getattr(persona, "gender", None) in (None, ""):
                 persona.gender = p.get("gender") or "female"
             if getattr(persona, "kind", None) in (None, ""):
-                persona.kind = "default"
+                persona.kind = Persona.Kind.DEFAULT
+            persona.description_short = persona.short_title or persona.short_description or persona.name
+            persona.description_long = persona.long_description or persona.legend_full or persona.short_lore or persona.short_description or ""
             persona.short_description = p["short_description"]
             persona.archetype = p["archetype"]
             persona.system_prompt = build_system_prompt(
@@ -157,7 +159,9 @@ async def ensure_default_personas(session: AsyncSession):
                 name=p["name"],
                 short_title=p.get("short_title") or p["short_description"] or p["name"],
                 gender=p.get("gender") or "female",
-                kind="default",
+                kind=Persona.Kind.DEFAULT,
+                description_short=p.get("short_title") or p["short_description"] or p["name"],
+                description_long=p.get("short_lore") or p["short_description"] or p["name"],
                 short_description=p["short_description"],
                 archetype=p["archetype"],
                 system_prompt=build_system_prompt(

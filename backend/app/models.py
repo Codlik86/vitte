@@ -81,13 +81,24 @@ class EventAnalytics(Base):
 class Persona(Base):
     __tablename__ = "personas"
 
+    class Kind(PyEnum):
+        DEFAULT = "default"
+        CUSTOM = "custom"
+
     id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
     key: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
     short_title: Mapped[str] = mapped_column(String(255), nullable=False, default="")
     gender: Mapped[str] = mapped_column(String(16), nullable=False, default="female", server_default="female")
-    kind: Mapped[str] = mapped_column(String(32), nullable=False, default="default", server_default="default")
+    kind: Mapped["Persona.Kind"] = mapped_column(
+        Enum(Kind, name="persona_kind_enum"),
+        nullable=False,
+        default=Kind.DEFAULT,
+        server_default=Kind.DEFAULT.value,
+    )
     name: Mapped[str] = mapped_column(String(100))
     short_description: Mapped[str] = mapped_column(String(255))
+    description_short: Mapped[str] = mapped_column(String(256), nullable=False, default="", server_default="")
+    description_long: Mapped[str] = mapped_column(Text, nullable=False, default="", server_default="")
     long_description: Mapped[str | None] = mapped_column(Text, nullable=True)
     archetype: Mapped[str | None] = mapped_column(String(64), nullable=True)
     system_prompt: Mapped[str] = mapped_column(Text)
@@ -106,6 +117,7 @@ class Persona(Base):
     is_active: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
     owner_user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
+    created_by_user_id: Mapped[int | None] = mapped_column(ForeignKey("users.id", ondelete="SET NULL"), nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
 
     owner_user: Mapped["User | None"] = relationship("User", foreign_keys=[owner_user_id])
