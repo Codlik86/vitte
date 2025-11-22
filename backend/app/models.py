@@ -2,7 +2,7 @@ from datetime import datetime
 from enum import Enum as PyEnum
 import sqlalchemy as sa
 from sqlalchemy import BigInteger, String, Text, ForeignKey, Integer, DateTime, Boolean, Numeric, Enum as SAEnum
-from sqlalchemy.dialects.postgresql import JSONB
+from sqlalchemy.dialects.postgresql import JSONB, ENUM as PG_ENUM
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy.sql import expression
 
@@ -234,7 +234,7 @@ class PersonaEvent(Base):
     user_id = sa.Column(sa.Integer, sa.ForeignKey("users.id"), nullable=False)
     persona_id = sa.Column(sa.Integer, sa.ForeignKey("personas.id"), nullable=True)
     event_type = sa.Column(
-        postgresql.ENUM(PersonaEventType, name="persona_event_type_enum"),
+        PG_ENUM(PersonaEventType, name="persona_event_type_enum", create_type=False),
         nullable=False,
     )
     created_at = sa.Column(
