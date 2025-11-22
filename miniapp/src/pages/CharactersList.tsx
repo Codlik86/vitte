@@ -83,7 +83,7 @@ export function CharactersList() {
     }
 
     return (
-      <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 sm:gap-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4">
         {personasWithCustom.map((p) => {
           if ("isCustomEntry" in p) {
             return (
@@ -114,7 +114,7 @@ export function CharactersList() {
 
   return (
     <div className="min-h-dvh bg-bg-dark text-text-main">
-      <div className="mx-auto w-full max-w-screen-md px-4 pb-12 pt-6 space-y-6">
+      <div className="mx-auto w-full max-w-[640px] px-4 pb-12 pt-6 space-y-6">
         <PageHeader title="Персонажи" showBack={false} stats={headerStats} />
 
         <DebugTelegramBanner />
