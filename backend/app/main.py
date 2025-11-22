@@ -69,11 +69,20 @@ async def on_startup():
                 DO $$
                 BEGIN
                     IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'persona_kind_enum') THEN
-                        CREATE TYPE persona_kind_enum AS ENUM ('default', 'custom');
+                        CREATE TYPE persona_kind_enum AS ENUM (
+                            'DEFAULT','CUSTOM','SOFT_EMPATH','SASSY','SMART_COOL','CHAOTIC','THERAPEUTIC','ANIME_TSUNDERE','ANIME_WAIFU_SOFT'
+                        );
                     ELSE
                         BEGIN
-                            ALTER TYPE persona_kind_enum ADD VALUE IF NOT EXISTS 'default';
-                            ALTER TYPE persona_kind_enum ADD VALUE IF NOT EXISTS 'custom';
+                            ALTER TYPE persona_kind_enum ADD VALUE IF NOT EXISTS 'DEFAULT';
+                            ALTER TYPE persona_kind_enum ADD VALUE IF NOT EXISTS 'CUSTOM';
+                            ALTER TYPE persona_kind_enum ADD VALUE IF NOT EXISTS 'SOFT_EMPATH';
+                            ALTER TYPE persona_kind_enum ADD VALUE IF NOT EXISTS 'SASSY';
+                            ALTER TYPE persona_kind_enum ADD VALUE IF NOT EXISTS 'SMART_COOL';
+                            ALTER TYPE persona_kind_enum ADD VALUE IF NOT EXISTS 'CHAOTIC';
+                            ALTER TYPE persona_kind_enum ADD VALUE IF NOT EXISTS 'THERAPEUTIC';
+                            ALTER TYPE persona_kind_enum ADD VALUE IF NOT EXISTS 'ANIME_TSUNDERE';
+                            ALTER TYPE persona_kind_enum ADD VALUE IF NOT EXISTS 'ANIME_WAIFU_SOFT';
                         EXCEPTION WHEN duplicate_object THEN
                             NULL;
                         END;
@@ -104,7 +113,7 @@ async def on_startup():
                 ADD COLUMN IF NOT EXISTS name varchar(100),
                 ADD COLUMN IF NOT EXISTS short_title varchar(255) NOT NULL DEFAULT '',
                 ADD COLUMN IF NOT EXISTS gender varchar(16) NOT NULL DEFAULT 'female',
-                ADD COLUMN IF NOT EXISTS kind persona_kind_enum NOT NULL DEFAULT 'default',
+                ADD COLUMN IF NOT EXISTS kind persona_kind_enum NOT NULL DEFAULT 'DEFAULT',
                 ADD COLUMN IF NOT EXISTS description_short varchar(256) NOT NULL DEFAULT '',
                 ADD COLUMN IF NOT EXISTS description_long text NOT NULL DEFAULT '',
                 ADD COLUMN IF NOT EXISTS short_description varchar(255),
@@ -151,7 +160,7 @@ async def on_startup():
             text(
                 """
                 UPDATE personas
-                SET kind = COALESCE(kind, 'default'::persona_kind_enum)
+                SET kind = COALESCE(kind, 'DEFAULT'::persona_kind_enum)
                 WHERE kind IS NULL;
                 """
             )

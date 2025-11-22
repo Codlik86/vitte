@@ -45,11 +45,22 @@ def _build_short_description(persona: Persona) -> str:
 
 
 def _build_list_item(persona: Persona, user_id: int | None, active_id: int | None) -> PersonaListItem:
+    kind_value = None
+    if hasattr(persona, "kind"):
+        kind_raw = persona.kind
+        if isinstance(kind_raw, str):
+            kind_value = kind_raw
+        else:
+            try:
+                kind_value = kind_raw.value  # type: ignore[attr-defined]
+            except Exception:
+                kind_value = None
     return PersonaListItem(
         id=persona.id,
         name=persona.name,
         short_title=persona.short_title or persona.short_description or persona.name,
         gender=getattr(persona, "gender", None),
+        kind=kind_value,
         short_description=_build_short_description(persona),
         is_default=bool(persona.is_default),
         is_owner=bool(user_id is not None and persona.owner_user_id == user_id),
@@ -304,9 +315,10 @@ async def create_custom_persona(
     target_persona.emotions_full = (
         f"{target_persona.emotional_style}. {target_persona.relationship_style}."
     )
-    target_persona.hooks = None
-    target_persona.triggers_positive = None
-    target_persona.triggers_negative = None
+    target_persona.style_tags = None
+    target_persona.hooks = []
+    target_persona.triggers_positive = []
+    target_persona.triggers_negative = []
 
     session.add(target_persona)
     await session.flush()

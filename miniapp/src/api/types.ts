@@ -1,11 +1,14 @@
 export type PersonaListItem = {
   id: number;
   name: string;
+  short_title: string;
   short_description: string;
   is_default: boolean;
   is_owner: boolean;
   is_selected: boolean;
   is_custom: boolean;
+  gender?: string | null;
+  kind?: string | null;
 };
 
 export type PersonaDetails = PersonaListItem & {

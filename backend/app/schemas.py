@@ -42,6 +42,7 @@ class PersonaListItem(BaseModel):
     name: str
     short_title: str
     gender: str | None = None
+    kind: str | None = None
     short_description: str
     is_default: bool
     is_owner: bool
