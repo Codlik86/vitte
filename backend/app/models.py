@@ -221,7 +221,7 @@ class UserPersona(Base):
     persona: Mapped["Persona"] = relationship("Persona")
 
 
-class PersonaEventType(enum.Enum):
+class PersonaEventType(PyEnum):
     CATALOG_OPENED = "persona_catalog_opened"
     PERSONA_SELECTED = "persona_selected"
     PERSONA_CUSTOMIZED = "persona_customized"
