@@ -3,6 +3,7 @@ type PersonaCardProps = {
   description?: string | null;
   gradientVariant?: "default" | "custom";
   selected?: boolean;
+  avatarUrl?: string;
   onClick: () => void;
 };
 
@@ -11,6 +12,7 @@ export function PersonaCard({
   description,
   gradientVariant = "default",
   selected = false,
+  avatarUrl,
   onClick,
 }: PersonaCardProps) {
   const gradientClass =
@@ -25,14 +27,24 @@ export function PersonaCard({
       className="group relative flex h-full w-full flex-col text-left transition active:scale-[0.98]"
     >
       <div className="relative w-full overflow-hidden rounded-3xl pb-[100%]">
-        <div
-          className={`absolute inset-0 rounded-3xl bg-gradient-to-br ${gradientClass}`}
-          aria-hidden
-        />
-        <div
-          className="pointer-events-none absolute inset-3 rounded-3xl bg-white/20 blur-3xl opacity-80"
-          aria-hidden
-        />
+        {avatarUrl ? (
+          <img
+            src={avatarUrl}
+            alt={title}
+            className="absolute inset-0 h-full w-full rounded-3xl object-cover"
+          />
+        ) : (
+          <>
+            <div
+              className={`absolute inset-0 rounded-3xl bg-gradient-to-br ${gradientClass}`}
+              aria-hidden
+            />
+            <div
+              className="pointer-events-none absolute inset-3 rounded-3xl bg-white/20 blur-3xl opacity-80"
+              aria-hidden
+            />
+          </>
+        )}
         {selected && (
           <span className="absolute right-2 top-2 rounded-full bg-emerald-500/90 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white shadow-card">
             выбрано

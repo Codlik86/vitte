@@ -5,6 +5,7 @@ import { fetchPersona, selectPersonaAndGreet } from "../api/client";
 import { PageHeader } from "../components/layout/PageHeader";
 import { useAccessStatus } from "../hooks/useAccessStatus";
 import { tg } from "../lib/telegram";
+import { getAvatarPaths } from "../lib/avatars";
 
 export function CharacterDetails() {
   const { id } = useParams();
@@ -100,8 +101,8 @@ export function CharacterDetails() {
     : "Начать разговор";
 
   return (
-    <div className="min-h-dvh bg-bg-dark text-text-main pt-4">
-      <div className="mx-auto flex min-h-dvh w-full max-w-screen-md flex-col px-4 pb-12 sm:px-5">
+    <div className="min-h-dvh bg-bg-dark text-text-main pt-6">
+      <div className="mx-auto flex min-h-dvh w-full max-w-screen-md flex-col px-4 pb-16 sm:px-5">
         <PageHeader
           title={title}
           showBack
@@ -121,12 +122,13 @@ export function CharacterDetails() {
             {error ?? "Персонаж не найден"}
           </div>
         ) : (
-          <section className="mt-4 flex flex-1 flex-col space-y-6">
-            <div className="w-full overflow-hidden rounded-3xl bg-gradient-to-br from-[#2C0D3E] via-[#5D267C] to-[#F05BB7]">
-              <div className="relative aspect-square w-full">
-                <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(255,255,255,0.4),_transparent_55%)] opacity-70" />
-                <div className="absolute inset-10 rounded-full bg-white/20 blur-3xl" />
-              </div>
+          <section className="mt-6 flex flex-1 flex-col space-y-6">
+            <div className="relative w-full overflow-hidden rounded-3xl pb-[100%]">
+              <img
+                src={getAvatarPaths(persona.name, persona.is_custom).chat}
+                alt={persona.name}
+                className="absolute inset-0 h-full w-full rounded-3xl object-cover"
+              />
             </div>
 
             <div>

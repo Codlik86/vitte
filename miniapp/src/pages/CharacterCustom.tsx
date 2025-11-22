@@ -129,8 +129,8 @@ export function CharacterCustom() {
   };
 
   return (
-    <div className="min-h-dvh bg-bg-dark text-text-main pt-4">
-      <div className="mx-auto w-full max-w-screen-md px-4 pb-12 space-y-6 sm:px-5">
+    <div className="min-h-dvh bg-bg-dark text-text-main pt-6">
+      <div className="mx-auto w-full max-w-screen-md px-4 pb-16 space-y-6 sm:px-5">
         <PageHeader
           title="Свой персонаж"
           showBack
@@ -138,7 +138,7 @@ export function CharacterCustom() {
           stats={headerStats}
         />
 
-        <section className="rounded-4xl border border-white/5 bg-card-elevated/80 p-6 shadow-card">
+        <section className="mt-4 rounded-4xl border border-white/5 bg-card-elevated/80 p-6 shadow-card">
           <div className="space-y-3">
             <h1 className="text-3xl font-semibold text-white">Создай меня</h1>
             <p className="text-sm leading-relaxed text-white/80 sm:text-base">

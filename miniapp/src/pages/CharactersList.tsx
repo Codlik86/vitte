@@ -6,6 +6,7 @@ import { PageHeader } from "../components/layout/PageHeader";
 import { useAccessStatus } from "../hooks/useAccessStatus";
 import { PersonaCard } from "../components/PersonaCard";
 import { DebugTelegramBanner } from "../components/DebugTelegramBanner";
+import { getAvatarPaths } from "../lib/avatars";
 
 type CustomPersonaEntry = {
   id: "custom";
@@ -59,7 +60,7 @@ export function CharactersList() {
 
     if (loading) {
       return (
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3 sm:gap-4">
+        <div className="grid grid-cols-2 gap-4 sm:gap-5">
           {Array.from({ length: 4 }).map((_, index) => (
             <div
               key={index}
@@ -83,7 +84,7 @@ export function CharactersList() {
     }
 
     return (
-      <div className="grid grid-cols-2 gap-3 sm:gap-4">
+      <div className="grid grid-cols-2 gap-4 sm:gap-5">
         {personasWithCustom.map((p) => {
           if ("isCustomEntry" in p) {
             return (
@@ -92,11 +93,13 @@ export function CharactersList() {
                 title="Свой герой"
                 description="Создай собственного персонажа"
                 gradientVariant="custom"
+                avatarUrl={getAvatarPaths("custom", true).card}
                 onClick={() => navigate("/characters/custom")}
               />
             );
           }
 
+          const avatar = getAvatarPaths(p.name, p.is_custom);
           return (
             <PersonaCard
               key={p.id}
@@ -104,6 +107,7 @@ export function CharactersList() {
               description={p.short_description}
               selected={p.is_selected}
               gradientVariant="default"
+              avatarUrl={avatar.card}
               onClick={() => navigate(`/characters/${p.id}`, { state: { name: p.name } })}
             />
           );
@@ -113,15 +117,15 @@ export function CharactersList() {
   };
 
   return (
-    <div className="min-h-dvh bg-bg-dark text-text-main pt-4">
-      <div className="mx-auto w-full max-w-[640px] px-4 pb-12">
+    <div className="min-h-dvh bg-bg-dark text-text-main pt-6">
+      <div className="mx-auto w-full max-w-[640px] px-4 pb-16 space-y-6">
         <PageHeader title="Персонажи" showBack={false} stats={headerStats} />
-        <div className="mt-4 space-y-6">
+        <div className="space-y-6">
           <DebugTelegramBanner />
           {renderCards()}
         </div>
 
-        <div className="space-y-3">
+        <div className="mt-6 space-y-4">
           <Link
             to="/paywall"
             className="inline-flex w-full items-center justify-center rounded-full bg-gradient-to-r from-[#7B4DF0] to-[#E44CC6] px-4 py-4 text-base font-semibold text-white shadow-card active:scale-[0.99]"

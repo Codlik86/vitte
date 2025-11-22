@@ -303,8 +303,8 @@ export function Paywall() {
   );
 
   return (
-    <div className="min-h-dvh bg-bg-dark text-text-main pt-4">
-      <div className="mx-auto w-full max-w-screen-sm space-y-6 px-4 pb-12">
+    <div className="min-h-dvh bg-bg-dark text-text-main pt-6">
+      <div className="mx-auto w-full max-w-screen-sm space-y-6 px-4 pb-16">
         <PageHeader
           title="Подписка"
           showBack
