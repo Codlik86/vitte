@@ -47,8 +47,8 @@ class Dialog(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"))
     character_id: Mapped[int | None] = mapped_column(nullable=True)
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
-    entry_story_id: Mapped[str | None] = mapped_column(String(128), nullable=True)
-    # Необходимо создать колонку вручную (Neon): ALTER TABLE dialogs ADD COLUMN IF NOT EXISTS entry_story_id varchar(128);
+    entry_story_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
+    # Необходимо создать колонку вручную (Neon): ALTER TABLE dialogs ADD COLUMN IF NOT EXISTS entry_story_id varchar(64);
 
     user: Mapped["User"] = relationship(back_populates="dialogs")
     messages: Mapped[list["Message"]] = relationship(back_populates="dialog")
@@ -101,7 +101,12 @@ class Persona(Base):
     short_title: Mapped[str] = mapped_column(String(128), nullable=False, default="")
     gender: Mapped[str] = mapped_column(String(16), nullable=False, default="female", server_default="female")
     kind: Mapped[PersonaKind] = mapped_column(
-        SAEnum(PersonaKind, name="persona_kind_enum"),
+        SAEnum(
+            PersonaKind,
+            name="persona_kind_enum",
+            native_enum=True,
+            create_type=False,
+        ),
         nullable=False,
         default=PersonaKind.DEFAULT,
         server_default=PersonaKind.DEFAULT.value,

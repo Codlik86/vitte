@@ -287,19 +287,15 @@ function StoriesBlock({
                   : "border border-white/10 bg-card-dark/30 hover:border-white/20"
               }`}
             >
-              <div
-                className="flex w-full flex-col gap-2 rounded-[22px] text-left px-4 py-4 sm:px-5 sm:py-5"
-              >
-                <div className="flex items-center justify-between gap-2">
-                  <p className="flex-1 text-base font-semibold leading-tight text-white sm:text-lg">
-                    {card.title}
-                  </p>
-                  <span
-                    className="inline-flex items-center justify-center shrink-0 whitespace-nowrap rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-white/80 md:px-4 md:text-xs"
-                  >
-                    {mapAtmosphere(card.atmosphere)}
-                  </span>
-                </div>
+              <div className="flex w-full flex-col gap-2 rounded-[22px] text-left px-4 py-4 sm:px-5 sm:py-5">
+                <span
+                  className="inline-flex max-w-full items-center justify-start truncate rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-white/80 md:px-4 md:text-xs"
+                >
+                  {mapAtmosphere(card.atmosphere)}
+                </span>
+                <p className="w-full text-base font-semibold leading-tight text-white sm:text-lg">
+                  {card.title}
+                </p>
                 <p className="w-full text-sm text-white/70 sm:text-base">{card.description}</p>
               </div>
             </button>
