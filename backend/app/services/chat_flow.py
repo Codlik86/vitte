@@ -20,14 +20,30 @@ from ..services.llm_adapter import (
 )
 from ..services.memory import collect_recent_memory
 from ..story_cards import get_story_cards_for_persona, StoryCard
+from ..services.features import collect_feature_states, build_feature_instruction
+from ..integrations.tts_client import synthesize_voice
 
 
 class ChatResult:
-    def __init__(self, reply: str, persona_id: int, trust_level: int, ritual_hint: Optional[str]):
+    def __init__(
+        self,
+        reply: str,
+        persona_id: int,
+        trust_level: int,
+        ritual_hint: Optional[str],
+        reply_kind: str = "text",
+        voice_id: str | None = None,
+        voice_url: str | None = None,
+        feature_mode: str | None = None,
+    ):
         self.reply = reply
         self.persona_id = persona_id
         self.trust_level = trust_level
         self.ritual_hint = ritual_hint
+        self.reply_kind = reply_kind
+        self.voice_id = voice_id
+        self.voice_url = voice_url
+        self.feature_mode = feature_mode
 
 
 class GreetingResult:
@@ -193,6 +209,8 @@ async def generate_chat_reply(
     if story_meta:
         memory_context = f"{story_meta} {memory_context}"
     ritual_hint = None if preview_story else should_add_ritual(message_count + 1)
+    feature_states = collect_feature_states(user)
+    feature_instruction, feature_mode, feature_max_tokens = build_feature_instruction(feature_states)
 
     messages, _ = compose_messages(
         persona,
@@ -205,9 +223,22 @@ async def generate_chat_reply(
         mode_instruction=mode_instruction,
         story_instruction=story_instruction,
         ritual_hint=ritual_hint,
+        feature_instruction=feature_instruction,
+        feature_mode=feature_mode,
     )
 
-    reply = await simple_chat_completion(messages)
+    reply = await simple_chat_completion(messages, max_tokens=feature_max_tokens)
+    voice_id: str | None = None
+    voice_url: str | None = None
+    reply_kind = "text"
+    if feature_states.get("voice") and feature_states["voice"].active:
+        try:
+            voice_result = await synthesize_voice(reply, persona.name)
+            voice_url = voice_result.get("url") if isinstance(voice_result, dict) else None
+            voice_id = voice_result.get("placeholder") if isinstance(voice_result, dict) else None
+            reply_kind = "voice" if (voice_url or voice_id) else "text"
+        except Exception as exc:
+            logger.error("Voice synthesis failed: %s", exc)
 
     if not preview_story and dialog:
         session.add(Message(dialog_id=dialog.id, role="user", content=input_text))
@@ -216,7 +247,16 @@ async def generate_chat_reply(
             user.free_messages_used += 1
         await session.commit()
 
-    return ChatResult(reply=reply, persona_id=persona.id, trust_level=trust_level, ritual_hint=ritual_hint)
+    return ChatResult(
+        reply=reply,
+        persona_id=persona.id,
+        trust_level=trust_level,
+        ritual_hint=ritual_hint,
+        reply_kind=reply_kind,
+        voice_id=voice_id,
+        voice_url=voice_url,
+        feature_mode=feature_mode,
+    )
 
 
 async def generate_greeting_reply(
@@ -263,6 +303,8 @@ async def generate_greeting_reply(
     trust_level = calculate_trust_level(message_count, has_subscription)
     mode_instruction = describe_mode(llm_mode, atmosphere)
     story_instruction = build_story_context(story_prompt)
+    feature_states = collect_feature_states(user)
+    feature_instruction, feature_mode, feature_max_tokens = build_feature_instruction(feature_states)
     user_message = _build_greeting_user_message(llm_mode, extra_description)
 
     messages, _ = compose_messages(
@@ -276,10 +318,12 @@ async def generate_greeting_reply(
         mode_instruction=mode_instruction,
         story_instruction=story_instruction,
         ritual_hint=None,
+        feature_instruction=feature_instruction,
+        feature_mode=feature_mode,
     )
 
     try:
-        greeting_text = await simple_chat_completion(messages)
+        greeting_text = await simple_chat_completion(messages, max_tokens=feature_max_tokens)
     except Exception as exc:
         logger.error("Failed to generate greeting: %s", exc)
         return None

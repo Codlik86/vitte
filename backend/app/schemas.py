@@ -28,6 +28,7 @@ class AccessStatusResponse(BaseModel):
     premium_until: datetime | None = None
     paywall_variant: str
     store: StoreInfoSchema
+    features: "FeatureStatusResponse | None" = None
 
 
 class StoryCardSchema(BaseModel):
@@ -92,6 +93,10 @@ class ChatResponse(BaseModel):
     persona_id: int
     trust_level: int
     ritual_hint: str | None = None
+    reply_kind: str = "text"
+    voice_id: str | None = None
+    voice_url: str | None = None
+    feature_mode: str | None = None
 
 
 class PersonaSelectRequest(BaseModel):
@@ -151,7 +156,51 @@ class StorePurchaseResponse(BaseModel):
     invoice: dict[str, Any] | None = None
 
 
+class StoreBuyRequest(BaseModel):
+    telegram_id: int
+
+
+class StoreBuyResponse(BaseModel):
+    ok: bool
+    product_code: str
+    activated_until: datetime | None = None
+    features: list[str] | None = None
+
+
 class AnalyticsEventRequest(BaseModel):
     telegram_id: int | None = None
     event_type: str
     payload: dict[str, Any] | None = None
+
+
+class FeatureStatusItem(BaseModel):
+    code: str
+    title: str
+    description: str
+    active: bool
+    enabled: bool
+    until: datetime | None = None
+    product_code: str
+    toggleable: bool = True
+
+
+class FeatureStatusResponse(BaseModel):
+    features: list[FeatureStatusItem]
+
+
+class FeatureToggleRequest(BaseModel):
+    telegram_id: int
+    feature_code: str
+    enabled: bool
+
+
+class FeatureToggleResponse(BaseModel):
+    feature: FeatureStatusItem
+    ok: bool = True
+
+
+class SimpleOkResponse(BaseModel):
+    ok: bool = True
+
+
+AccessStatusResponse.model_rebuild()

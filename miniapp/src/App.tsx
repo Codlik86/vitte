@@ -5,6 +5,7 @@ import { CharactersList } from "./pages/CharactersList";
 import { CharacterDetails } from "./pages/CharacterDetails";
 import { CharacterCustom } from "./pages/CharacterCustom";
 import { Store } from "./pages/Store";
+import { Settings } from "./pages/Settings";
 import { tg } from "./lib/telegram";
 
 function App() {
@@ -42,6 +43,7 @@ function App() {
       <Route path="/characters/:id" element={<CharacterDetails />} />
       <Route path="/characters/custom" element={<CharacterCustom />} />
       <Route path="/store" element={<Store />} />
+      <Route path="/settings" element={<Settings />} />
       <Route
         path="*"
         element={

@@ -5,9 +5,10 @@ import type {
   PaymentPlan,
   SubscribeResponse,
   StoreProductsResponse,
-  StorePurchaseResponse,
   ChatResponse,
   PersonaSelectResponse,
+  FeatureStatusResponse,
+  StoreBuyResponse,
 } from "./types";
 import { requireTelegramId } from "../lib/telegramId";
 
@@ -179,21 +180,20 @@ export async function fetchStoreProducts(): Promise<StoreProductsResponse> {
   return (await res.json()) as StoreProductsResponse;
 }
 
-export async function purchaseProduct(productCode: string): Promise<StorePurchaseResponse> {
+export async function purchaseProduct(productCode: string): Promise<StoreBuyResponse> {
   const telegramId = await requireTelegramId();
-  const res = await fetch(`${BASE_URL}/api/store/purchase`, {
+  const res = await fetch(`${BASE_URL}/api/store/buy/${productCode}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
       telegram_id: telegramId,
-      product_code: productCode,
     }),
   });
   if (!res.ok) {
     const text = await res.text();
     throw new Error(text || "Не удалось оформить покупку");
   }
-  return (await res.json()) as StorePurchaseResponse;
+  return (await res.json()) as StoreBuyResponse;
 }
 
 export async function sendChatMessage(payload: {
@@ -221,4 +221,52 @@ export async function sendChatMessage(payload: {
     throw new Error(text || "Не удалось отправить сообщение");
   }
   return (await res.json()) as ChatResponse;
+}
+
+export async function fetchFeaturesStatus(): Promise<FeatureStatusResponse> {
+  const telegramId = await requireTelegramId();
+  const res = await fetch(`${BASE_URL}/api/features/status?telegram_id=${telegramId}`);
+  if (!res.ok) {
+    throw new Error("Не удалось загрузить статус улучшений");
+  }
+  return (await res.json()) as FeatureStatusResponse;
+}
+
+export async function toggleFeature(featureCode: string, enabled: boolean): Promise<FeatureStatusResponse> {
+  const telegramId = await requireTelegramId();
+  const res = await fetch(`${BASE_URL}/api/features/toggle`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      telegram_id: telegramId,
+      feature_code: featureCode,
+      enabled,
+    }),
+  });
+  if (!res.ok) {
+    throw new Error("Не удалось обновить настройку");
+  }
+  const data = await res.json();
+  return { features: [data.feature] };
+}
+
+export async function clearDialogs(): Promise<void> {
+  const telegramId = await requireTelegramId();
+  await fetch(`${BASE_URL}/api/features/clear-dialogs?telegram_id=${telegramId}`, {
+    method: "POST",
+  });
+}
+
+export async function clearLongMemory(): Promise<void> {
+  const telegramId = await requireTelegramId();
+  await fetch(`${BASE_URL}/api/features/clear-long-memory?telegram_id=${telegramId}`, {
+    method: "POST",
+  });
+}
+
+export async function deleteAccount(): Promise<void> {
+  const telegramId = await requireTelegramId();
+  await fetch(`${BASE_URL}/api/features/delete-account?telegram_id=${telegramId}`, {
+    method: "POST",
+  });
 }

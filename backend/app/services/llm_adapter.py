@@ -142,6 +142,8 @@ def build_system_prompt(
     mode_instruction: str,
     story_instruction: str,
     ritual_hint: str | None,
+    feature_instruction: str | None = None,
+    feature_mode: str | None = None,
 ) -> str:
     legend_text = persona.legend_full or persona.short_lore or persona.background or ""
     emotions_text = persona.emotions_full or persona.emotional_style or persona.relationship_style or ""
@@ -149,6 +151,8 @@ def build_system_prompt(
     negative_triggers = ", ".join(persona.triggers_negative or [])
     trust_text = describe_trust_layer(trust_level, has_subscription, age_confirmed)
     ritual_text = ritual_hint or ""
+    feature_block = feature_instruction or ""
+    feature_mode_text = f"Режим улучшений: {feature_mode}." if feature_mode else ""
 
     return "\n".join(
         part
@@ -162,6 +166,8 @@ def build_system_prompt(
             f"Trust level {trust_level}: {trust_text}",
             mode_instruction,
             story_instruction,
+            feature_mode_text,
+            feature_block,
             SAFE_RULES,
             "Если разговор подходит к финалу и уместно — оставь мягкий клиффхэнгер: " + ritual_text if ritual_text else "",
         ]
@@ -181,6 +187,8 @@ def compose_messages(
     mode_instruction: str,
     story_instruction: str,
     ritual_hint: str | None,
+    feature_instruction: str | None = None,
+    feature_mode: str | None = None,
 ) -> tuple[list[dict], str]:
     system_prompt = build_system_prompt(
         persona,
@@ -192,6 +200,8 @@ def compose_messages(
         mode_instruction=mode_instruction,
         story_instruction=story_instruction,
         ritual_hint=ritual_hint,
+        feature_instruction=feature_instruction,
+        feature_mode=feature_mode,
     )
     messages = [
         {"role": "system", "content": system_prompt},

@@ -35,6 +35,21 @@ export type StoreProduct = {
   type: string;
 };
 
+export type FeatureStatusItem = {
+  code: string;
+  title: string;
+  description: string;
+  active: boolean;
+  enabled: boolean;
+  until?: string | null;
+  product_code: string;
+  toggleable: boolean;
+};
+
+export type FeatureStatusResponse = {
+  features: FeatureStatusItem[];
+};
+
 export type AccessStatusResponse = {
   telegram_id: number;
   access_status: string;
@@ -49,6 +64,7 @@ export type AccessStatusResponse = {
   store: {
     available_products: StoreProduct[];
   };
+  features?: FeatureStatusResponse | null;
 };
 
 export type ChatResponse = {
@@ -56,6 +72,10 @@ export type ChatResponse = {
   persona_id: number;
   trust_level: number;
   ritual_hint?: string | null;
+  reply_kind?: string;
+  voice_id?: string | null;
+  voice_url?: string | null;
+  feature_mode?: string | null;
 };
 
 export type PersonaSelectResponse = {
@@ -93,6 +113,13 @@ export type StorePurchaseResponse = {
   provider: string;
   status: string;
   invoice?: Record<string, unknown> | null;
+};
+
+export type StoreBuyResponse = {
+  ok: boolean;
+  product_code: string;
+  activated_until?: string | null;
+  features?: string[] | null;
 };
 export type StoryCard = {
   id: string;

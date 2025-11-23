@@ -6,6 +6,7 @@ from .routes_chat import router as chat_router
 from .routes_payments import router as payments_router
 from .routes_store import router as store_router
 from .routes_analytics import router as analytics_router
+from .routes_features import router as features_router
 
 __all__ = [
     "health_router",
@@ -16,4 +17,5 @@ __all__ = [
     "payments_router",
     "store_router",
     "analytics_router",
+    "features_router",
 ]

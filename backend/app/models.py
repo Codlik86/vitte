@@ -29,6 +29,20 @@ class User(Base):
     free_messages_used: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     paywall_variant: Mapped[str | None] = mapped_column(String(1), nullable=True)
     age_confirmed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    feature_long_letters_until: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    feature_long_letters_enabled: Mapped[bool | None] = mapped_column(Boolean, default=True, nullable=True)
+    feature_voice_until: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    feature_voice_enabled: Mapped[bool | None] = mapped_column(Boolean, default=True, nullable=True)
+    feature_deep_mode_until: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    feature_deep_mode_enabled: Mapped[bool | None] = mapped_column(Boolean, default=True, nullable=True)
+    feature_images_until: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    last_surprise_sent_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    updated_at: Mapped[datetime | None] = mapped_column(
+        DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
+        nullable=True,
+    )
     active_persona_id: Mapped[int | None] = mapped_column(
         ForeignKey("personas.id", ondelete="SET NULL"),
         nullable=True,
@@ -49,6 +63,11 @@ class Dialog(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow)
     entry_story_id: Mapped[str | None] = mapped_column(String(64), nullable=True)
     # Необходимо создать колонку вручную (Neon): ALTER TABLE dialogs ADD COLUMN IF NOT EXISTS entry_story_id varchar(64);
+    last_followup_sent_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    remind_1h_sent: Mapped[bool | None] = mapped_column(Boolean, default=False, nullable=True)
+    remind_1d_sent: Mapped[bool | None] = mapped_column(Boolean, default=False, nullable=True)
+    remind_7d_sent: Mapped[bool | None] = mapped_column(Boolean, default=False, nullable=True)
+    last_reminder_sent_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
 
     user: Mapped["User"] = relationship(back_populates="dialogs")
     messages: Mapped[list["Message"]] = relationship(back_populates="dialog")

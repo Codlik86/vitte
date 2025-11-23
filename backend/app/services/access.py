@@ -10,6 +10,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..config import settings
 from ..models import AccessStatus, Subscription, SubscriptionStatus, User
 from .store import list_store_products
+from .features import collect_feature_states
 
 
 async def get_active_subscription(session: AsyncSession, user_id: int) -> Subscription | None:
@@ -63,6 +64,7 @@ async def build_access_status(session: AsyncSession, user: User) -> dict[str, An
         }
         for product in list_store_products()
     ]
+    feature_states = collect_feature_states(user)
 
     return {
         "telegram_id": user.telegram_id,
@@ -77,5 +79,20 @@ async def build_access_status(session: AsyncSession, user: User) -> dict[str, An
         "paywall_variant": paywall_variant,
         "store": {
             "available_products": store_products,
+        },
+        "features": {
+            "features": [
+                {
+                    "code": feature.code,
+                    "title": feature.title,
+                    "description": feature.description,
+                    "active": feature.active,
+                    "enabled": feature.enabled,
+                    "until": feature.until,
+                    "product_code": feature.product_code,
+                    "toggleable": feature.toggleable,
+                }
+                for feature in feature_states.values()
+            ]
         },
     }

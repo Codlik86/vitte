@@ -138,6 +138,12 @@ export function CharactersList() {
           >
             Магазин
           </Link>
+          <Link
+            to="/settings"
+            className="inline-flex w-full items-center justify-center rounded-full border border-white/5 bg-white/5 px-4 py-3 text-base font-medium text-white/80 transition hover:bg-white/10"
+          >
+            Настройки и улучшения
+          </Link>
         </div>
       </div>
     </div>

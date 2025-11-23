@@ -2,18 +2,26 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "../components/layout/PageHeader";
 import { DebugTelegramBanner } from "../components/DebugTelegramBanner";
-import { fetchStoreProducts, purchaseProduct } from "../api/client";
-import type { StoreProduct } from "../api/types";
+import { fetchStoreProducts, fetchFeaturesStatus, purchaseProduct } from "../api/client";
+import type { StoreProduct, FeatureStatusItem } from "../api/types";
 import { useAccessStatus } from "../hooks/useAccessStatus";
 
 type PurchaseState = {
   [code: string]: "idle" | "loading" | "success" | "error";
 };
 
+const RUB_PRICE: Record<string, number> = {
+  long_letters_month: 249,
+  voice_month: 279,
+  deep_mode_month: 259,
+  fantasy_pack_month: 199,
+};
+
 export function Store() {
   const navigate = useNavigate();
   const { data: accessStatus } = useAccessStatus();
   const [products, setProducts] = useState<StoreProduct[]>([]);
+  const [features, setFeatures] = useState<FeatureStatusItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [states, setStates] = useState<PurchaseState>({});
@@ -32,8 +40,9 @@ export function Store() {
       try {
         setError(null);
         setLoading(true);
-        const res = await fetchStoreProducts();
-        setProducts(res.products);
+        const [storeRes, featuresRes] = await Promise.all([fetchStoreProducts(), fetchFeaturesStatus()]);
+        setProducts(storeRes.products);
+        setFeatures(featuresRes.features);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Не удалось загрузить магазин");
       } finally {
@@ -47,11 +56,21 @@ export function Store() {
     setStates((prev) => ({ ...prev, [productCode]: "loading" }));
     try {
       await purchaseProduct(productCode);
+      const latestFeatures = await fetchFeaturesStatus();
+      setFeatures(latestFeatures.features);
       setStates((prev) => ({ ...prev, [productCode]: "success" }));
     } catch (err) {
       setStates((prev) => ({ ...prev, [productCode]: "error" }));
       console.error(err);
     }
+  };
+  const getFeatureByProduct = (productCode: string) =>
+    features.find((f) => f.product_code === productCode);
+
+  const formatDate = (value?: string | null) => {
+    if (!value) return null;
+    const date = new Date(value);
+    return date.toLocaleDateString("ru-RU", { day: "2-digit", month: "short" });
   };
 
   return (
@@ -80,30 +99,48 @@ export function Store() {
               ))
             : products.map((product) => {
                 const state = states[product.product_code] ?? "idle";
+                const feature = getFeatureByProduct(product.product_code);
+                const activeLabel =
+                  feature && feature.until
+                    ? `Активно до ${formatDate(feature.until) ?? "∞"}`
+                    : null;
                 return (
                   <div
                     key={product.product_code}
-                    className="rounded-4xl border border-white/5 bg-card-elevated/80 px-5 py-5 shadow-card"
+                    className="rounded-4xl border border-white/5 bg-gradient-to-br from-white/5 to-[#0B1224] px-5 py-5 shadow-card"
                   >
-                    <p className="text-base font-semibold text-white">{product.title}</p>
-                    <p className="mt-1 text-sm text-white/70">{product.description}</p>
-                    <div className="mt-4 flex items-center justify-between">
+                    <div className="flex items-start justify-between gap-3">
+                      <div>
+                        <p className="text-base font-semibold text-white">{product.title}</p>
+                        <p className="mt-1 text-sm text-white/70">{product.description}</p>
+                      </div>
+                      {activeLabel && (
+                        <span className="inline-flex rounded-full bg-emerald-400/10 px-3 py-1 text-xs font-semibold text-emerald-200">
+                          {activeLabel}
+                        </span>
+                      )}
+                    </div>
+                    <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
                       <span className="text-sm text-white/80">
-                        {product.price_stars} ⭐ · {product.type}
+                        {product.price_stars} ⭐
+                        {RUB_PRICE[product.product_code] ? ` · ≈ ${RUB_PRICE[product.product_code]} ₽` : ""} ·{" "}
+                        {product.type}
                       </span>
                       <button
-                        className="rounded-full bg-gradient-to-r from-[#7B4DF0] to-[#E44CC6] px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-60"
+                        className="rounded-full bg-gradient-to-r from-[#ff9c4a] via-[#ff6b2c] to-[#ff3f3f] px-4 py-2 text-sm font-semibold text-white shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
                         onClick={() => handlePurchase(product.product_code)}
                         disabled={state === "loading"}
                       >
                         {state === "loading"
                           ? "Покупаем..."
-                          : `Купить за ${product.price_stars} ⭐`}
+                          : activeLabel
+                          ? "Продлить"
+                          : `Активировать за ${product.price_stars} ⭐`}
                       </button>
                     </div>
                     {state === "success" && (
                       <p className="mt-3 text-xs text-emerald-300">
-                        Покупка оформлена, ожидаем подтверждения Telegram.
+                        Активировано. Проверь «Мои улучшения».
                       </p>
                     )}
                     {state === "error" && (

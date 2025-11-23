@@ -27,6 +27,10 @@ export function CharacterDetails() {
   }, [fallbackTitle, id]);
 
   const hasSubscription = Boolean(accessStatus?.has_subscription);
+  const activeFeatures = accessStatus?.features?.features ?? [];
+  const hasVoice = activeFeatures.some((f) => f.code === "voice" && f.active);
+  const hasLongLetters = activeFeatures.some((f) => f.code === "long_letters" && f.active);
+  const hasDeepMode = activeFeatures.some((f) => f.code === "deep_mode" && f.active);
   const headerStats = {
     gems: 0,
     usedMessages: accessStatus?.free_messages_used ?? null,
@@ -135,6 +139,13 @@ export function CharacterDetails() {
               <h1 className="text-4xl font-semibold tracking-tight">
                 {persona.name}
               </h1>
+              {(hasVoice || hasLongLetters || hasDeepMode) && (
+                <div className="mt-3 flex flex-wrap gap-2">
+                  {hasVoice && <Badge label="Голос персонажа" />}
+                  {hasLongLetters && <Badge label="Большие письма" />}
+                  {hasDeepMode && <Badge label="Глубокие отношения" />}
+                </div>
+              )}
               {persona.short_description && (
                 <p className="mt-3 text-base text-white/70">
                   {persona.short_description}
@@ -161,6 +172,12 @@ export function CharacterDetails() {
                 disabled={busy}
               >
                 {busy ? "Отправляем приветствие..." : actionLabel}
+              </button>
+              <button
+                className="mt-3 w-full rounded-full bg-gradient-to-r from-amber-400 via-orange-500 to-amber-500 px-4 py-4 text-base font-semibold text-white shadow-card transition active:scale-[0.98]"
+                onClick={() => navigate("/store")}
+              >
+                Сделать общение лучше
               </button>
               {selectError && (
                 <p className="mt-2 rounded-2xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-100">
@@ -303,6 +320,14 @@ function StoriesBlock({
         })}
       </div>
     </div>
+  );
+}
+
+function Badge({ label }: { label: string }) {
+  return (
+    <span className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white/80">
+      {label}
+    </span>
   );
 }
 

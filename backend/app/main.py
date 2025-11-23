@@ -1,3 +1,5 @@
+import asyncio
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from sqlalchemy import text
@@ -11,15 +13,18 @@ from .api import (
     payments_router,
     store_router,
     analytics_router,
+    features_router,
 )
 from .db import engine, Base, async_session_factory
 from .logging_config import logger
 from . import models  # noqa: F401 ensures models are imported for metadata
 from .personas_seed import ensure_default_personas
 from .bot import bot, setup_bot_commands
+from .services.retention import start_retention_worker
 
 
 app = FastAPI(title="Vitte API")
+retention_task: asyncio.Task | None = None
 
 origins = [
     "http://localhost:5173",
@@ -104,7 +109,16 @@ async def on_startup():
                 ADD COLUMN IF NOT EXISTS free_messages_used integer NOT NULL DEFAULT 0,
                 ADD COLUMN IF NOT EXISTS active_persona_id integer REFERENCES personas(id) ON DELETE SET NULL,
                 ADD COLUMN IF NOT EXISTS paywall_variant varchar(1),
-                ADD COLUMN IF NOT EXISTS age_confirmed boolean NOT NULL DEFAULT false;
+                ADD COLUMN IF NOT EXISTS age_confirmed boolean NOT NULL DEFAULT false,
+                ADD COLUMN IF NOT EXISTS feature_long_letters_until timestamp NULL,
+                ADD COLUMN IF NOT EXISTS feature_long_letters_enabled boolean NULL DEFAULT true,
+                ADD COLUMN IF NOT EXISTS feature_voice_until timestamp NULL,
+                ADD COLUMN IF NOT EXISTS feature_voice_enabled boolean NULL DEFAULT true,
+                ADD COLUMN IF NOT EXISTS feature_deep_mode_until timestamp NULL,
+                ADD COLUMN IF NOT EXISTS feature_deep_mode_enabled boolean NULL DEFAULT true,
+                ADD COLUMN IF NOT EXISTS feature_images_until timestamp NULL,
+                ADD COLUMN IF NOT EXISTS last_surprise_sent_at timestamp NULL,
+                ADD COLUMN IF NOT EXISTS updated_at timestamp NULL DEFAULT now();
                 """
             )
         )
@@ -137,6 +151,18 @@ async def on_startup():
                 ADD COLUMN IF NOT EXISTS hooks jsonb DEFAULT '[]'::jsonb,
                 ADD COLUMN IF NOT EXISTS triggers_positive jsonb DEFAULT '[]'::jsonb,
                 ADD COLUMN IF NOT EXISTS triggers_negative jsonb DEFAULT '[]'::jsonb;
+                """
+            )
+        )
+        await conn.execute(
+            text(
+                """
+                ALTER TABLE dialogs
+                ADD COLUMN IF NOT EXISTS last_followup_sent_at timestamp NULL,
+                ADD COLUMN IF NOT EXISTS remind_1h_sent boolean NULL DEFAULT false,
+                ADD COLUMN IF NOT EXISTS remind_1d_sent boolean NULL DEFAULT false,
+                ADD COLUMN IF NOT EXISTS remind_7d_sent boolean NULL DEFAULT false,
+                ADD COLUMN IF NOT EXISTS last_reminder_sent_at timestamp NULL;
                 """
             )
         )
@@ -183,6 +209,8 @@ async def on_startup():
     await setup_bot_commands(bot)
     logger.info("Bot commands set up.")
     logger.info("DB tables ensured.")
+    global retention_task
+    retention_task = await start_retention_worker()
 
 
 @app.get("/", include_in_schema=False)
@@ -198,3 +226,4 @@ app.include_router(chat_router)
 app.include_router(payments_router)
 app.include_router(store_router)
 app.include_router(analytics_router)
+app.include_router(features_router)

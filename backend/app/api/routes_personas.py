@@ -20,20 +20,39 @@ from ..story_cards import get_story_cards_for_persona
 from ..bot import bot
 from ..logging_config import logger
 from ..services.chat_flow import generate_greeting_reply
+from ..config import settings
 
 router = APIRouter(prefix="/api/personas", tags=["personas"])
 
 DEFAULT_SHORT_DESCRIPTION = "Базовый персонаж"
-DEFAULT_PERSONA_PHOTO = "https://picsum.photos/seed/vitte-soft/800/800"
-CUSTOM_PERSONA_PHOTO = "https://picsum.photos/seed/vitte-custom/800/800"
+DEFAULT_PERSONA_PHOTO = "/personas/custom-chat.jpg"
+CUSTOM_PERSONA_PHOTO = "/personas/custom-chat.jpg"
+PERSONA_PHOTO_SLUGS = {
+    "лина": "lina",
+    "эва": "eva",
+    "мия": "mia",
+    "фэй": "fey",
+    "арина": "arina",
+    "аки": "aki",
+    "хана": "hana",
+    "свой герой": "custom",
+    "custom": "custom",
+}
+
+
+def _build_asset_url(path: str) -> str:
+    base = settings.miniapp_url.rstrip("/") if settings.miniapp_url else ""
+    return f"{base}{path}"
 
 
 def _resolve_persona_photo(persona: Persona) -> str:
     if persona.is_custom:
-        return CUSTOM_PERSONA_PHOTO
-    # Немного разнообразия по archetype, если он указан
-    archetype_seed = persona.archetype or "vitte"
-    return f"https://picsum.photos/seed/{archetype_seed}-vitte/800/800"
+        return _build_asset_url(CUSTOM_PERSONA_PHOTO)
+    key = (persona.name or "").strip().lower()
+    slug = PERSONA_PHOTO_SLUGS.get(key)
+    if slug:
+        return _build_asset_url(f"/personas/{slug}-chat.jpg")
+    return _build_asset_url(DEFAULT_PERSONA_PHOTO)
 
 
 def _build_custom_key(user_id: int) -> str:

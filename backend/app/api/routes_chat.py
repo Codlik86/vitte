@@ -54,6 +54,10 @@ async def chat(request: ChatRequest, session: AsyncSession = Depends(get_session
         persona_id=result.persona_id,
         trust_level=result.trust_level,
         ritual_hint=result.ritual_hint,
+        reply_kind=result.reply_kind,
+        voice_id=result.voice_id,
+        voice_url=result.voice_url,
+        feature_mode=result.feature_mode,
     )
 
 
