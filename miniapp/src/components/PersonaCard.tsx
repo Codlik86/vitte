@@ -1,9 +1,12 @@
+import { CustomHeroAvatar } from "./CustomHeroAvatar";
+
 type PersonaCardProps = {
   title: string;
   description?: string | null;
   gradientVariant?: "default" | "custom";
   selected?: boolean;
   avatarUrl?: string;
+  showCustomAvatar?: boolean;
   onClick: () => void;
 };
 
@@ -13,6 +16,7 @@ export function PersonaCard({
   gradientVariant = "default",
   selected = false,
   avatarUrl,
+  showCustomAvatar = false,
   onClick,
 }: PersonaCardProps) {
   const gradientClass =
@@ -27,7 +31,15 @@ export function PersonaCard({
       className="group relative flex h-full w-full flex-col text-left transition active:scale-[0.98]"
     >
       <div className="relative w-full overflow-hidden rounded-3xl pb-[100%]">
-        {avatarUrl ? (
+        {showCustomAvatar ? (
+          <div className="absolute inset-0">
+            <div className={`absolute inset-0 rounded-3xl bg-gradient-to-br ${gradientClass}`} aria-hidden />
+            <div className="pointer-events-none absolute inset-3 rounded-3xl bg-white/20 blur-3xl opacity-80" aria-hidden />
+            <div className="absolute inset-0">
+              <CustomHeroAvatar />
+            </div>
+          </div>
+        ) : avatarUrl ? (
           <img
             src={avatarUrl}
             alt={title}

@@ -93,7 +93,7 @@ export function CharactersList() {
                 title="Свой герой"
                 description="Создай собственного персонажа"
                 gradientVariant="custom"
-                avatarUrl={getAvatarPaths("custom", true).card}
+                showCustomAvatar
                 onClick={() => navigate("/characters/custom")}
               />
             );
