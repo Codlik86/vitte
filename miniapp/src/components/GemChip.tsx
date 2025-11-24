@@ -72,7 +72,7 @@ export function GemChip({
       type="button"
       onClick={onPrimaryClick}
       disabled={!onPrimaryClick}
-      className={`inline-flex min-h-10 min-w-[200px] flex-shrink-0 items-center gap-2 rounded-full bg-gradient-to-r from-[#2D1747] via-[#5C2D83] to-[#D64CC1] px-4 py-1.5 text-white shadow-card transition hover:opacity-95 active:scale-95 disabled:opacity-60 ${className}`}
+      className={`inline-flex min-h-9 min-w-[200px] flex-shrink-0 items-center gap-2 rounded-full bg-gradient-to-r from-[#2D1747] via-[#5C2D83] to-[#D64CC1] px-4 py-1 text-white shadow-card transition hover:opacity-95 active:scale-95 disabled:opacity-60 ${className}`}
     >
       <span className="flex flex-1 items-center justify-start gap-1 whitespace-nowrap text-sm font-semibold text-white/90 tabular-nums">
         <span aria-hidden>💎</span>
@@ -88,21 +88,21 @@ export function GemChip({
           onSettingsClick?.();
         }}
         disabled={!onSettingsClick}
-        className="flex h-9 w-9 items-center justify-center rounded-full bg-white/18 text-white transition hover:bg-white/28 active:scale-95 disabled:opacity-60"
+        className="flex h-8 w-8 items-center justify-center rounded-full bg-white/18 text-white transition hover:bg-white/28 active:scale-95 disabled:opacity-60"
         aria-label="Открыть настройки"
       >
-        <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5">
+        <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5.5 w-5.5">
           <path
-            d="M12 9.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5Z"
+            d="M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z"
             fill="none"
             stroke="currentColor"
-            strokeWidth="1.8"
+            strokeWidth="2"
           />
           <path
-            d="M20 12.93v-1.86a1 1 0 0 0-.68-.95l-1.24-.42a6.5 6.5 0 0 0-.54-1.29l.53-1.22a1 1 0 0 0-.18-1.07l-1.31-1.3a1 1 0 0 0-1.06-.19l-1.22.53a6.5 6.5 0 0 0-1.3-.54L12.88 4a1 1 0 0 0-.95-.68h-1.86a1 1 0 0 0-.95.68l-.42 1.24c-.45.13-.88.3-1.3.54l-1.22-.53a1 1 0 0 0-1.07.18l-1.3 1.31a1 1 0 0 0-.19 1.06l.53 1.22c-.23.42-.41.85-.54 1.3L4 11.07a1 1 0 0 0-.68.95v1.86a1 1 0 0 0 .68.95l1.24.42c.13.45.3.88.54 1.3l-.53 1.22a1 1 0 0 0 .18 1.07l1.31 1.3a1 1 0 0 0 1.06.19l1.22-.53c.42.23.85.41 1.3.54L11.07 20a1 1 0 0 0 .95.68h1.86a1 1 0 0 0 .95-.68l.42-1.24c.45-.13.88-.3 1.3-.54l1.22.53a1 1 0 0 0 1.07-.18l1.3-1.31a1 1 0 0 0 .19-1.06l-.53-1.22c.23-.42.41-.85.54-1.3l1.24-.42a1 1 0 0 0 .68-.95Z"
+            d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06A1.65 1.65 0 0 0 15 19.4a1.65 1.65 0 0 0-1.5 1V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 8 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.6 15a1.65 1.65 0 0 0-1-1.5H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 8a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.6a1.65 1.65 0 0 0 1.5-1V3a2 2 0 1 1 4 0v.09A1.65 1.65 0 0 0 15 4.6a1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9c.69 0 1.3.41 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1Z"
             fill="none"
             stroke="currentColor"
-            strokeWidth="1.5"
+            strokeWidth="2"
             strokeLinecap="round"
             strokeLinejoin="round"
           />
