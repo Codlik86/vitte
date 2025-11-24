@@ -17,6 +17,7 @@ from ..services.analytics import log_event
 from ..services.features import apply_product_purchase
 from ..services.store import get_store_product, list_store_products
 from ..users_service import get_or_create_user_by_telegram_id
+from ..logging_config import logger
 
 router = APIRouter(prefix="/api/store", tags=["store"])
 
@@ -48,13 +49,17 @@ async def purchase_product(
 
     user = await get_or_create_user_by_telegram_id(session, payload.telegram_id)
 
-    invoice = create_stars_invoice(
-        user_id=user.id,
-        product_code=product.product_code,
-        amount_stars=product.price_stars,
-        description=product.description,
-        metadata={"product_code": product.product_code},
-    )
+    try:
+        invoice = create_stars_invoice(
+            user_id=user.id,
+            product_code=product.product_code,
+            amount_stars=product.price_stars,
+            description=product.description,
+            metadata={"product_code": product.product_code},
+        )
+    except Exception as exc:  # noqa: BLE001
+        logger.error("Failed to create invoice for user %s product %s: %s", user.id, product.product_code, exc)
+        raise HTTPException(status_code=502, detail="Invoice creation failed")
 
     purchase = Purchase(
         user_id=user.id,
@@ -112,6 +117,7 @@ async def buy_product(
     try:
         activated_features = apply_product_purchase(user, product.product_code)
     except ValueError:
+        logger.error("Feature mapping missing for product %s", product.product_code)
         raise HTTPException(status_code=400, detail="Feature mapping missing")
 
     event_overrides = {"images": "feature_image_pack_activated"}

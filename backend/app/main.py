@@ -21,10 +21,12 @@ from . import models  # noqa: F401 ensures models are imported for metadata
 from .personas_seed import ensure_default_personas
 from .bot import bot, setup_bot_commands
 from .services.retention import start_retention_worker
+from .services.cleanup import start_cleanup_worker
 
 
 app = FastAPI(title="Vitte API")
 retention_task: asyncio.Task | None = None
+cleanup_task: asyncio.Task | None = None
 
 origins = [
     "http://localhost:5173",
@@ -211,6 +213,8 @@ async def on_startup():
     logger.info("DB tables ensured.")
     global retention_task
     retention_task = await start_retention_worker()
+    global cleanup_task
+    cleanup_task = await start_cleanup_worker()
 
 
 @app.get("/", include_in_schema=False)

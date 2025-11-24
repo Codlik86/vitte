@@ -49,6 +49,14 @@ async def start_retention_worker() -> asyncio.Task:
     return asyncio.create_task(_retention_loop(), name="retention-loop")
 
 
+def retention_status() -> str:
+    # Simple helper for health check; relies on task name search
+    for task in asyncio.all_tasks():
+        if task.get_name() == "retention-loop":
+            return "running" if not task.cancelled() else "stopped"
+    return "stopped"
+
+
 async def _retention_loop():
     while True:
         try:
@@ -193,6 +201,7 @@ async def _try_followup(session: AsyncSession, snapshot: DialogSnapshot, now: da
     await _send_retention_message(session, dialog, text)
     dialog.last_followup_sent_at = now
     await log_event(session, dialog.user_id, "retention_fup_sent", {"dialog_id": dialog.id})
+    logger.info("Retention followup sent user=%s dialog=%s", dialog.user_id, dialog.id)
     return True
 
 
@@ -227,6 +236,7 @@ async def _try_reminders(session: AsyncSession, snapshot: DialogSnapshot, now: d
             setattr(dialog, flag_name, True)
             dialog.last_reminder_sent_at = now
             await log_event(session, dialog.user_id, event_name, {"dialog_id": dialog.id})
+            logger.info("Retention reminder %s sent user=%s dialog=%s", event_name, dialog.user_id, dialog.id)
             return True
 
     return False
@@ -248,4 +258,5 @@ async def _try_surprise(session: AsyncSession, user: User, snapshot: DialogSnaps
     user.last_surprise_sent_at = now
     snapshot.dialog.last_reminder_sent_at = now
     await log_event(session, user.id, "mini_surprise_sent", {"dialog_id": snapshot.dialog.id})
+    logger.info("Retention surprise sent user=%s dialog=%s", user.id, snapshot.dialog.id)
     return True

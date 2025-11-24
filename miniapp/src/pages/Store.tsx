@@ -127,7 +127,7 @@ export function Store() {
                         {product.type}
                       </span>
                       <button
-                        className="rounded-full bg-gradient-to-r from-[#ff9c4a] via-[#ff6b2c] to-[#ff3f3f] px-4 py-2 text-sm font-semibold text-white shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
+                        className="rounded-full bg-gradient-to-r from-[#2c1a52] via-[#5a2b80] to-[#c23ba7] px-4 py-2 text-sm font-semibold text-white shadow-lg disabled:cursor-not-allowed disabled:opacity-60"
                         onClick={() => handlePurchase(product.product_code)}
                         disabled={state === "loading"}
                       >

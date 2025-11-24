@@ -7,6 +7,8 @@ type GemChipProps = {
   hasUnlimited?: boolean;
   isPremium?: boolean;
   onPlusClick?: () => void;
+  hidePlus?: boolean;
+  showMessages?: boolean;
   className?: string;
 };
 
@@ -40,6 +42,8 @@ export function GemChip({
   hasUnlimited = false,
   isPremium = false,
   onPlusClick,
+  hidePlus = false,
+  showMessages = true,
   className = "",
 }: GemChipProps) {
   const stableGems = useStableNumber(gems);
@@ -66,7 +70,7 @@ export function GemChip({
           <span aria-hidden>💎</span>
           <span>{displayGems}</span>
         </span>
-        {!isPremium && (
+        {!isPremium && showMessages && (
           <span className="flex min-w-[58px] items-center justify-end gap-0.5">
             <span aria-hidden>💬</span>
             <span>{displayMessages}</span>
@@ -78,27 +82,29 @@ export function GemChip({
           Premium
         </span>
       )}
-      <button
-        type="button"
-        onClick={onPlusClick}
-        className="flex h-7 w-7 items-center justify-center rounded-full bg-white/20 text-white transition hover:bg-white/30 active:scale-95 disabled:opacity-50"
-        aria-label="Открыть экран подписки"
-        disabled={!onPlusClick}
-      >
-        <svg
-          viewBox="0 0 24 24"
-          aria-hidden="true"
-          className="h-[18px] w-[18px] text-white"
+      {!hidePlus && (
+        <button
+          type="button"
+          onClick={onPlusClick}
+          className="flex h-7 w-7 items-center justify-center rounded-full bg-white/20 text-white transition hover:bg-white/30 active:scale-95 disabled:opacity-50"
+          aria-label="Открыть экран подписки"
+          disabled={!onPlusClick}
         >
-          <path
-            d="M12 5v14M5 12h14"
-            stroke="currentColor"
-            strokeWidth="2.5"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-          />
-        </svg>
-      </button>
+          <svg
+            viewBox="0 0 24 24"
+            aria-hidden="true"
+            className="h-[18px] w-[18px] text-white"
+          >
+            <path
+              d="M12 5v14M5 12h14"
+              stroke="currentColor"
+              strokeWidth="2.5"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            />
+          </svg>
+        </button>
+      )}
     </div>
   );
 }

@@ -209,6 +209,24 @@ export function Settings() {
         <PageHeader title="Настройки" showBack onBack={() => navigate(-1)} stats={headerStats} />
         <DebugTelegramBanner />
 
+        {!accessStatus?.has_subscription && (
+          <div className="rounded-3xl bg-gradient-to-r from-[#2c1a52] via-[#5a2b80] to-[#c23ba7] px-4 py-4 text-white shadow-card">
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <div className="space-y-1">
+                <p className="text-base font-semibold">Открой полный доступ</p>
+                <p className="text-sm text-white/80">Неограниченные диалоги и все персонажи без ограничений.</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => navigate("/paywall")}
+                className="rounded-full bg-white/15 px-4 py-2 text-sm font-semibold text-white transition hover:bg-white/25 active:scale-95"
+              >
+                Перейти к подписке
+              </button>
+            </div>
+          </div>
+        )}
+
         {error && (
           <div className="rounded-3xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-100">
             {error}

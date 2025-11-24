@@ -11,7 +11,6 @@ from ..integrations.openai_client import simple_chat_completion
 from ..services.access import build_access_status
 from ..logging_config import logger
 from ..services.llm_adapter import (
-    compose_messages,
     calculate_trust_level,
     describe_mode,
     build_story_context,
@@ -22,6 +21,9 @@ from ..services.memory import collect_recent_memory
 from ..story_cards import get_story_cards_for_persona, StoryCard
 from ..services.features import collect_feature_states, build_feature_instruction
 from ..integrations.tts_client import synthesize_voice
+from ..services.safety import run_safety_check, SafetyContext, supportive_reply
+from ..services.intimacy import evaluate_intimacy
+from ..services.prompt_builder import ChatPromptContext, build_chat_messages
 
 
 class ChatResult:
@@ -212,22 +214,48 @@ async def generate_chat_reply(
     feature_states = collect_feature_states(user)
     feature_instruction, feature_mode, feature_max_tokens = build_feature_instruction(feature_states)
 
-    messages, _ = compose_messages(
-        persona,
-        user,
-        user_message=input_text,
+    feature_flags = {
+        "has_subscription": access.get("has_subscription", False),
+        "deep_mode": bool(feature_states.get("deep_mode", {}).get("active")),
+    }
+    safety_result = run_safety_check(
+        input_text,
+        SafetyContext(persona=persona, trust_level=trust_level, message_count=message_count, user_flags=feature_flags),
+    )
+    intimacy = evaluate_intimacy(
         trust_level=trust_level,
-        has_subscription=access.get("has_subscription", False),
-        age_confirmed=user.age_confirmed,
-        memory_context=memory_context,
-        mode_instruction=mode_instruction,
-        story_instruction=story_instruction,
-        ritual_hint=ritual_hint,
-        feature_instruction=feature_instruction,
-        feature_mode=feature_mode,
+        message_count=message_count,
+        user_flags=feature_flags,
     )
 
-    reply = await simple_chat_completion(messages, max_tokens=feature_max_tokens)
+    prompt_ctx = ChatPromptContext(
+        persona=persona,
+        user=user,
+        trust_level=trust_level,
+        mode_instruction=mode_instruction,
+        memory_short=memory_context,
+        memory_long=None,
+        story_context=story_instruction,
+        feature_instruction=feature_instruction,
+        feature_mode=feature_mode,
+        voice_enabled=bool(feature_states.get("voice", {}).get("active")),
+        intimacy_level=intimacy.level,
+        intimacy_label=intimacy.label,
+        can_engage_intimately=intimacy.can_engage_intimately,
+        safety_needs_warmup=safety_result.needs_warmup,
+    )
+    messages, _ = build_chat_messages(prompt_ctx, input_text)
+
+    if safety_result.is_harm or safety_result.is_illegal:
+        reply = supportive_reply(persona)
+        logger.info(
+            "Safety triggered for user %s persona %s reason=%s",
+            user.id,
+            persona.id,
+            safety_result.reason,
+        )
+    else:
+        reply = await simple_chat_completion(messages, max_tokens=feature_max_tokens)
     voice_id: str | None = None
     voice_url: str | None = None
     reply_kind = "text"
@@ -239,6 +267,9 @@ async def generate_chat_reply(
             reply_kind = "voice" if (voice_url or voice_id) else "text"
         except Exception as exc:
             logger.error("Voice synthesis failed: %s", exc)
+            reply_kind = "text"
+        if reply_kind == "text":
+            logger.info("Voice synthesis unavailable, sending text fallback for user %s dialog %s", user.id, dialog.id if dialog else None)
 
     if not preview_story and dialog:
         session.add(Message(dialog_id=dialog.id, role="user", content=input_text))
@@ -307,20 +338,28 @@ async def generate_greeting_reply(
     feature_instruction, feature_mode, feature_max_tokens = build_feature_instruction(feature_states)
     user_message = _build_greeting_user_message(llm_mode, extra_description)
 
-    messages, _ = compose_messages(
-        persona,
-        user,
-        user_message=user_message,
+    intimacy = evaluate_intimacy(
         trust_level=trust_level,
-        has_subscription=has_subscription,
-        age_confirmed=user.age_confirmed,
-        memory_context=memory_context,
+        message_count=message_count,
+        user_flags={"has_subscription": has_subscription, "deep_mode": bool(feature_states.get("deep_mode", {}).get("active"))},
+    )
+    prompt_ctx = ChatPromptContext(
+        persona=persona,
+        user=user,
+        trust_level=trust_level,
         mode_instruction=mode_instruction,
-        story_instruction=story_instruction,
-        ritual_hint=None,
+        memory_short=memory_context,
+        memory_long=None,
+        story_context=story_instruction,
         feature_instruction=feature_instruction,
         feature_mode=feature_mode,
+        voice_enabled=bool(feature_states.get("voice", {}).get("active")),
+        intimacy_level=intimacy.level,
+        intimacy_label=intimacy.label,
+        can_engage_intimately=intimacy.can_engage_intimately,
+        safety_needs_warmup=False,
     )
+    messages, _ = build_chat_messages(prompt_ctx, user_message)
 
     try:
         greeting_text = await simple_chat_completion(messages, max_tokens=feature_max_tokens)

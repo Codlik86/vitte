@@ -174,7 +174,7 @@ export function CharacterDetails() {
                 {busy ? "Отправляем приветствие..." : actionLabel}
               </button>
               <button
-                className="mt-3 w-full rounded-full bg-gradient-to-r from-amber-400 via-orange-500 to-amber-500 px-4 py-4 text-base font-semibold text-white shadow-card transition active:scale-[0.98]"
+                className="mt-3 w-full rounded-full bg-gradient-to-r from-[#2c1a52] via-[#5a2b80] to-[#c23ba7] px-4 py-4 text-base font-semibold text-white shadow-card transition active:scale-[0.98]"
                 onClick={() => navigate("/store")}
               >
                 Сделать общение лучше
