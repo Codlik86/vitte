@@ -31,16 +31,6 @@ export function PageHeader({
     }
   };
 
-  const remainingMessages =
-    stats?.limitMessages != null && stats?.usedMessages != null
-      ? Math.max(stats.limitMessages - stats.usedMessages, 0)
-      : null;
-  const premiumLabel = stats?.isPremium
-    ? "Premium"
-    : remainingMessages != null
-    ? `Осталось ${remainingMessages} сообщений`
-    : "Осталось сообщений";
-
   return (
     <header className="flex w-full flex-wrap items-center gap-3 min-[420px]:flex-nowrap">
       <div className="flex min-w-0 flex-1 items-center gap-3">
@@ -57,31 +47,16 @@ export function PageHeader({
         <h1 className="truncate text-2xl font-semibold text-white">{title}</h1>
       </div>
       {stats ? (
-        <div className="w-full min-[420px]:w-auto min-[420px]:justify-end flex flex-wrap items-center justify-start gap-2">
+        <div className="w-full min-[420px]:w-auto min-[420px]:justify-end flex justify-start">
           <GemChip
             gems={stats.gems ?? null}
             usedMessages={stats.usedMessages ?? null}
             totalMessages={stats.limitMessages ?? null}
             hasUnlimited={stats.hasUnlimited}
             isPremium={stats.isPremium}
-            hidePlus
-            showMessages={false}
+            onPrimaryClick={() => navigate("/paywall")}
+            onSettingsClick={() => navigate("/settings")}
           />
-          <button
-            type="button"
-            onClick={() => navigate("/paywall")}
-            className="inline-flex min-h-10 min-w-[140px] flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-r from-[#2c1a52] via-[#5a2b80] to-[#c23ba7] px-4 py-1.5 text-sm font-semibold text-white shadow-card transition hover:opacity-95 active:scale-95"
-          >
-            {premiumLabel}
-          </button>
-          <button
-            type="button"
-            onClick={() => navigate("/settings")}
-            className="flex h-10 w-10 items-center justify-center rounded-full bg-white/15 text-white transition hover:bg-white/25 active:scale-95"
-            aria-label="Настройки"
-          >
-            <span aria-hidden>⚙</span>
-          </button>
         </div>
       ) : null}
     </header>

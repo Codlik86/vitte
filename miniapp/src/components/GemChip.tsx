@@ -6,9 +6,8 @@ type GemChipProps = {
   totalMessages: number | null;
   hasUnlimited?: boolean;
   isPremium?: boolean;
-  onPlusClick?: () => void;
-  hidePlus?: boolean;
-  showMessages?: boolean;
+  onPrimaryClick?: () => void;
+  onSettingsClick?: () => void;
   className?: string;
 };
 
@@ -41,9 +40,8 @@ export function GemChip({
   totalMessages,
   hasUnlimited = false,
   isPremium = false,
-  onPlusClick,
-  hidePlus = false,
-  showMessages = true,
+  onPrimaryClick,
+  onSettingsClick,
   className = "",
 }: GemChipProps) {
   const stableGems = useStableNumber(gems);
@@ -57,54 +55,43 @@ export function GemChip({
   const resolvedUnlimited = (stableUnlimited ?? hasUnlimited) === true;
 
   const displayGems = formatCounter(resolvedGems ?? null);
-  const displayMessages = resolvedUnlimited || isPremium
-    ? "∞"
-    : `${formatCounter(resolvedUsed ?? null)}/${formatCounter(resolvedTotal ?? null)}`;
+  const remaining =
+    resolvedUnlimited || isPremium
+      ? "∞"
+      : resolvedUsed != null && resolvedTotal != null
+      ? Math.max(resolvedTotal - resolvedUsed, 0)
+      : null;
+  const labelText = isPremium
+    ? "Premium"
+    : remaining != null
+    ? `Осталось ${remaining}`
+    : "Осталось сообщений";
 
   return (
-    <div
-      className={`inline-flex min-h-10 min-w-[140px] flex-shrink-0 items-center gap-2 rounded-full bg-gradient-to-r from-[#2D1747] via-[#5C2D83] to-[#D64CC1] px-4 py-1.5 shadow-card sm:min-w-[160px] ${className}`}
-    >
-      <div className="flex flex-1 items-center justify-between gap-0.5 whitespace-nowrap text-sm font-semibold text-white/90 tabular-nums">
-        <span className="flex items-center gap-0.5">
+    <div className={`inline-flex items-center gap-2 ${className}`}>
+      <button
+        type="button"
+        onClick={onPrimaryClick}
+        disabled={!onPrimaryClick}
+        className="inline-flex min-h-10 min-w-[180px] flex-shrink-0 items-center gap-2 rounded-full bg-gradient-to-r from-[#2D1747] via-[#5C2D83] to-[#D64CC1] px-4 py-1.5 text-white shadow-card transition hover:opacity-95 active:scale-95 disabled:opacity-60"
+      >
+        <span className="flex flex-1 items-center justify-start gap-1 whitespace-nowrap text-sm font-semibold text-white/90 tabular-nums">
           <span aria-hidden>💎</span>
           <span>{displayGems}</span>
         </span>
-        {!isPremium && showMessages && (
-          <span className="flex min-w-[58px] items-center justify-end gap-0.5">
-            <span aria-hidden>💬</span>
-            <span>{displayMessages}</span>
-          </span>
-        )}
-      </div>
-      {isPremium && (
-        <span className="rounded-full bg-white/20 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white/90">
-          Premium
+        <span className="rounded-full bg-white/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-white/90">
+          {labelText}
         </span>
-      )}
-      {!hidePlus && (
-        <button
-          type="button"
-          onClick={onPlusClick}
-          className="flex h-7 w-7 items-center justify-center rounded-full bg-white/20 text-white transition hover:bg-white/30 active:scale-95 disabled:opacity-50"
-          aria-label="Открыть экран подписки"
-          disabled={!onPlusClick}
-        >
-          <svg
-            viewBox="0 0 24 24"
-            aria-hidden="true"
-            className="h-[18px] w-[18px] text-white"
-          >
-            <path
-              d="M12 5v14M5 12h14"
-              stroke="currentColor"
-              strokeWidth="2.5"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-            />
-          </svg>
-        </button>
-      )}
+      </button>
+      <button
+        type="button"
+        onClick={onSettingsClick}
+        disabled={!onSettingsClick}
+        className="flex h-10 w-10 items-center justify-center rounded-full bg-white/15 text-white transition hover:bg-white/25 active:scale-95 disabled:opacity-60"
+        aria-label="Открыть настройки"
+      >
+        <span aria-hidden>⚙</span>
+      </button>
     </div>
   );
 }
