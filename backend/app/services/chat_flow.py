@@ -214,9 +214,11 @@ async def generate_chat_reply(
     feature_states = collect_feature_states(user)
     feature_instruction, feature_mode, feature_max_tokens = build_feature_instruction(feature_states)
 
+    deep_state = feature_states.get("deep_mode") if feature_states else None
+    voice_state = feature_states.get("voice") if feature_states else None
     feature_flags = {
         "has_subscription": access.get("has_subscription", False),
-        "deep_mode": bool(feature_states.get("deep_mode", {}).get("active")),
+        "deep_mode": bool(getattr(deep_state, "active", False)),
     }
     safety_result = run_safety_check(
         input_text,
@@ -238,7 +240,7 @@ async def generate_chat_reply(
         story_context=story_instruction,
         feature_instruction=feature_instruction,
         feature_mode=feature_mode,
-        voice_enabled=bool(feature_states.get("voice", {}).get("active")),
+        voice_enabled=bool(getattr(voice_state, "active", False)),
         intimacy_level=intimacy.level,
         intimacy_label=intimacy.label,
         can_engage_intimately=intimacy.can_engage_intimately,
@@ -259,7 +261,7 @@ async def generate_chat_reply(
     voice_id: str | None = None
     voice_url: str | None = None
     reply_kind = "text"
-    if feature_states.get("voice") and feature_states["voice"].active:
+    if voice_state and getattr(voice_state, "active", False):
         try:
             voice_result = await synthesize_voice(reply, persona.name)
             voice_url = voice_result.get("url") if isinstance(voice_result, dict) else None
@@ -338,10 +340,15 @@ async def generate_greeting_reply(
     feature_instruction, feature_mode, feature_max_tokens = build_feature_instruction(feature_states)
     user_message = _build_greeting_user_message(llm_mode, extra_description)
 
+    deep_state = feature_states.get("deep_mode") if feature_states else None
+    voice_state = feature_states.get("voice") if feature_states else None
     intimacy = evaluate_intimacy(
         trust_level=trust_level,
         message_count=message_count,
-        user_flags={"has_subscription": has_subscription, "deep_mode": bool(feature_states.get("deep_mode", {}).get("active"))},
+        user_flags={
+          "has_subscription": has_subscription,
+          "deep_mode": bool(getattr(deep_state, "active", False)),
+        },
     )
     prompt_ctx = ChatPromptContext(
         persona=persona,
@@ -353,7 +360,7 @@ async def generate_greeting_reply(
         story_context=story_instruction,
         feature_instruction=feature_instruction,
         feature_mode=feature_mode,
-        voice_enabled=bool(feature_states.get("voice", {}).get("active")),
+        voice_enabled=bool(getattr(voice_state, "active", False)),
         intimacy_level=intimacy.level,
         intimacy_label=intimacy.label,
         can_engage_intimately=intimacy.can_engage_intimately,

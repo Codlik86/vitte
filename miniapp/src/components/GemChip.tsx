@@ -88,17 +88,23 @@ export function GemChip({
           onSettingsClick?.();
         }}
         disabled={!onSettingsClick}
-        className="flex h-7 w-7 items-center justify-center rounded-full bg-white/15 text-white transition hover:bg-white/25 active:scale-95 disabled:opacity-60"
+        className="flex h-9 w-9 items-center justify-center rounded-full bg-white/18 text-white transition hover:bg-white/28 active:scale-95 disabled:opacity-60"
         aria-label="Открыть настройки"
       >
-        <svg viewBox="0 0 24 24" aria-hidden="true" className="h-4 w-4">
+        <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5">
           <path
-            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 0 0 2.573 1.066c1.543-.89 3.31.876 2.42 2.42a1.724 1.724 0 0 0 1.065 2.572c1.757.426 1.757 2.924 0 3.35a1.724 1.724 0 0 0-1.066 2.573c.89 1.543-.876 3.31-2.42 2.42a1.724 1.724 0 0 0-2.572 1.065c-.426 1.757-2.924 1.757-3.35 0a1.724 1.724 0 0 0-2.573-1.066c-1.543.89-3.31-.876-2.42-2.42a1.724 1.724 0 0 0-1.065-2.572c-1.757-.426-1.757-2.924 0-3.35a1.724 1.724 0 0 0 1.066-2.573c-.89-1.543.876-3.31 2.42-2.42.986.569 2.234.03 2.572-1.065Z"
-            fill="currentColor"
+            d="M12 9.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5Z"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.8"
           />
           <path
-            d="M12 15a3 3 0 1 0 0-6 3 3 0 0 0 0 6Z"
-            fill="currentColor"
+            d="M20 12.93v-1.86a1 1 0 0 0-.68-.95l-1.24-.42a6.5 6.5 0 0 0-.54-1.29l.53-1.22a1 1 0 0 0-.18-1.07l-1.31-1.3a1 1 0 0 0-1.06-.19l-1.22.53a6.5 6.5 0 0 0-1.3-.54L12.88 4a1 1 0 0 0-.95-.68h-1.86a1 1 0 0 0-.95.68l-.42 1.24c-.45.13-.88.3-1.3.54l-1.22-.53a1 1 0 0 0-1.07.18l-1.3 1.31a1 1 0 0 0-.19 1.06l.53 1.22c-.23.42-.41.85-.54 1.3L4 11.07a1 1 0 0 0-.68.95v1.86a1 1 0 0 0 .68.95l1.24.42c.13.45.3.88.54 1.3l-.53 1.22a1 1 0 0 0 .18 1.07l1.31 1.3a1 1 0 0 0 1.06.19l1.22-.53c.42.23.85.41 1.3.54L11.07 20a1 1 0 0 0 .95.68h1.86a1 1 0 0 0 .95-.68l.42-1.24c.45-.13.88-.3 1.3-.54l1.22.53a1 1 0 0 0 1.07-.18l1.3-1.31a1 1 0 0 0 .19-1.06l-.53-1.22c.23-.42.41-.85.54-1.3l1.24-.42a1 1 0 0 0 .68-.95Z"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="1.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           />
         </svg>
       </button>
