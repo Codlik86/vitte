@@ -9,6 +9,7 @@ TELEGRAM_DEBUG_ID_ENV_KEYS = [
     "VITTE_DEBUG_TELEGRAM_ID",
     "VITTE_DEBUG_ID",
     "vite_debug_id",
+    "VITE_DEBUG_TELEGRAM_ID",
 ]
 
 
@@ -64,7 +65,8 @@ async def get_or_raise_telegram_id(
 
     if allow_debug:
         debug_id = get_debug_telegram_id()
-        debug_flag = os.getenv("VITTE_DEBUG_MODE") == "1" or os.getenv("ENV") in {"dev", "local"}
+        env_flag = (os.getenv("ENV") or "").lower()
+        debug_flag = os.getenv("VITTE_DEBUG_MODE") == "1" or env_flag in {"dev", "local", "development"}
         if debug_id and debug_flag:
             return debug_id
 
