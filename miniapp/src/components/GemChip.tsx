@@ -91,7 +91,7 @@ export function GemChip({
         className="flex h-8 w-8 items-center justify-center rounded-full bg-white/18 text-white transition hover:bg-white/28 active:scale-95 disabled:opacity-60"
         aria-label="Открыть настройки"
       >
-        <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5.5 w-5.5">
+        <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5 shrink-0">
           <path
             d="M12 9a3 3 0 1 0 0 6 3 3 0 0 0 0-6Z"
             fill="none"
