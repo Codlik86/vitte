@@ -270,16 +270,22 @@ function ToggleSwitch({
     <button
       type="button"
       onClick={() => onChange(!enabled)}
-      className={`relative inline-flex items-center rounded-full px-1 py-1 text-xs font-semibold transition ${
-        enabled ? "bg-emerald-400/20 text-emerald-100" : "bg-white/10 text-white/70"
+      className={`inline-flex items-center gap-2 text-xs font-semibold transition ${
+        enabled ? "text-emerald-100" : "text-white/70"
       }`}
     >
       <span
-        className={`inline-block h-6 w-6 rounded-full bg-white transition ${
-          enabled ? "translate-x-5" : "translate-x-0"
+        className={`relative flex h-7 w-12 items-center rounded-full px-1 transition ${
+          enabled ? "bg-emerald-400/60" : "bg-white/15"
         }`}
-      />
-      <span className="ml-2 pr-2">{label ?? (enabled ? "On" : "Off")}</span>
+      >
+        <span
+          className={`h-5 w-5 rounded-full bg-white shadow transition-transform ${
+            enabled ? "translate-x-5" : "translate-x-0"
+          }`}
+        />
+      </span>
+      <span className="pr-1">{label ?? (enabled ? "On" : "Off")}</span>
     </button>
   );
 }
