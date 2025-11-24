@@ -29,6 +29,8 @@ class User(Base):
     free_messages_used: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
     paywall_variant: Mapped[str | None] = mapped_column(String(1), nullable=True)
     age_confirmed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    is_adult_confirmed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
+    accepted_terms_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     feature_long_letters_until: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     feature_long_letters_enabled: Mapped[bool | None] = mapped_column(Boolean, default=True, nullable=True)
     feature_voice_until: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)

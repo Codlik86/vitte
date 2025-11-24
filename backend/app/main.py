@@ -124,6 +124,8 @@ async def on_startup():
                 ADD COLUMN IF NOT EXISTS active_persona_id integer REFERENCES personas(id) ON DELETE SET NULL,
                 ADD COLUMN IF NOT EXISTS paywall_variant varchar(1),
                 ADD COLUMN IF NOT EXISTS age_confirmed boolean NOT NULL DEFAULT false,
+                ADD COLUMN IF NOT EXISTS is_adult_confirmed boolean NOT NULL DEFAULT false,
+                ADD COLUMN IF NOT EXISTS accepted_terms_at timestamp NULL,
                 ADD COLUMN IF NOT EXISTS feature_long_letters_until timestamp NULL,
                 ADD COLUMN IF NOT EXISTS feature_long_letters_enabled boolean NULL DEFAULT true,
                 ADD COLUMN IF NOT EXISTS feature_voice_until timestamp NULL,
