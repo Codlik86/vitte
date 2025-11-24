@@ -1,7 +1,9 @@
 import asyncio
+from pathlib import Path
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
 from sqlalchemy import text
 
 from .api import (
@@ -27,6 +29,16 @@ from .services.cleanup import start_cleanup_worker
 app = FastAPI(title="Vitte API")
 retention_task: asyncio.Task | None = None
 cleanup_task: asyncio.Task | None = None
+
+BASE_DIR = Path(__file__).resolve().parent.parent
+LANDING_DIR = BASE_DIR / "landing"
+
+if LANDING_DIR.exists():
+    app.mount(
+        "/vitte",
+        StaticFiles(directory=str(LANDING_DIR), html=True),
+        name="vitte_landing",
+    )
 
 origins = [
     "http://localhost:5173",
