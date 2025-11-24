@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..db import get_session
@@ -18,6 +18,7 @@ from ..services.features import apply_product_purchase
 from ..services.store import get_store_product, list_store_products
 from ..users_service import get_or_create_user_by_telegram_id
 from ..logging_config import logger
+from ..services.telegram_id import get_or_raise_telegram_id
 
 router = APIRouter(prefix="/api/store", tags=["store"])
 
@@ -41,13 +42,15 @@ async def store_products():
 @router.post("/purchase", response_model=StorePurchaseResponse)
 async def purchase_product(
     payload: StorePurchaseRequest,
+    request: Request,
     session: AsyncSession = Depends(get_session),
 ):
     product = get_store_product(payload.product_code)
     if product is None:
         raise HTTPException(status_code=404, detail="Product not found")
 
-    user = await get_or_create_user_by_telegram_id(session, payload.telegram_id)
+    telegram_id = await get_or_raise_telegram_id(request, explicit=payload.telegram_id)
+    user = await get_or_create_user_by_telegram_id(session, telegram_id)
 
     try:
         invoice = create_stars_invoice(
@@ -94,13 +97,15 @@ async def purchase_product(
 async def buy_product(
     product_code: str,
     payload: StoreBuyRequest,
+    request: Request,
     session: AsyncSession = Depends(get_session),
 ):
     product = get_store_product(product_code)
     if product is None:
         raise HTTPException(status_code=404, detail="Product not found")
 
-    user = await get_or_create_user_by_telegram_id(session, payload.telegram_id)
+    telegram_id = await get_or_raise_telegram_id(request, explicit=payload.telegram_id)
+    user = await get_or_create_user_by_telegram_id(session, telegram_id)
 
     purchase = Purchase(
         user_id=user.id,

@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -15,6 +15,7 @@ from ..schemas import (
 from ..services.analytics import log_event
 from ..services.features import collect_feature_states, toggle_feature
 from ..users_service import get_or_create_user_by_telegram_id
+from ..services.telegram_id import get_or_raise_telegram_id
 
 router = APIRouter(prefix="/api/features", tags=["features"])
 
@@ -37,9 +38,11 @@ def _serialize_features(states):
 
 @router.get("/status", response_model=FeatureStatusResponse)
 async def feature_status(
-    telegram_id: int = Query(..., description="Telegram user id"),
+    request: Request,
+    telegram_id: int | None = Query(default=None, description="Telegram user id"),
     session: AsyncSession = Depends(get_session),
 ):
+    telegram_id = await get_or_raise_telegram_id(request, explicit=telegram_id)
     user = await get_or_create_user_by_telegram_id(session, telegram_id)
     states = collect_feature_states(user)
     await session.commit()
@@ -49,9 +52,11 @@ async def feature_status(
 @router.post("/toggle", response_model=FeatureToggleResponse)
 async def feature_toggle(
     payload: FeatureToggleRequest,
+    request: Request,
     session: AsyncSession = Depends(get_session),
 ):
-    user = await get_or_create_user_by_telegram_id(session, payload.telegram_id)
+    telegram_id = await get_or_raise_telegram_id(request, explicit=payload.telegram_id)
+    user = await get_or_create_user_by_telegram_id(session, telegram_id)
     try:
         state = toggle_feature(user, payload.feature_code, payload.enabled)
     except ValueError:
@@ -80,9 +85,11 @@ async def feature_toggle(
 
 @router.post("/clear-dialogs", response_model=SimpleOkResponse)
 async def clear_dialogs(
-    telegram_id: int = Query(..., description="Telegram user id"),
+    request: Request,
+    telegram_id: int | None = Query(default=None, description="Telegram user id"),
     session: AsyncSession = Depends(get_session),
 ):
+    telegram_id = await get_or_raise_telegram_id(request, explicit=telegram_id)
     user = await get_or_create_user_by_telegram_id(session, telegram_id)
     dialog_ids_result = await session.execute(select(Dialog.id).where(Dialog.user_id == user.id))
     dialog_ids = [row[0] for row in dialog_ids_result.all()]
@@ -103,9 +110,11 @@ async def clear_dialogs(
 
 @router.post("/clear-long-memory", response_model=SimpleOkResponse)
 async def clear_long_memory(
-    telegram_id: int = Query(..., description="Telegram user id"),
+    request: Request,
+    telegram_id: int | None = Query(default=None, description="Telegram user id"),
     session: AsyncSession = Depends(get_session),
 ):
+    telegram_id = await get_or_raise_telegram_id(request, explicit=telegram_id)
     user = await get_or_create_user_by_telegram_id(session, telegram_id)
     await log_event(session, user.id, "long_memory_cleared", {})
     await session.commit()
@@ -114,9 +123,11 @@ async def clear_long_memory(
 
 @router.post("/delete-account", response_model=SimpleOkResponse)
 async def delete_account(
-    telegram_id: int = Query(..., description="Telegram user id"),
+    request: Request,
+    telegram_id: int | None = Query(default=None, description="Telegram user id"),
     session: AsyncSession = Depends(get_session),
 ):
+    telegram_id = await get_or_raise_telegram_id(request, explicit=telegram_id)
     result = await session.execute(select(User).where(User.telegram_id == telegram_id))
     user = result.scalar_one_or_none()
     if user:

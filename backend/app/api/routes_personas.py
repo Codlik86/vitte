@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
+from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
 from uuid import uuid4
@@ -21,6 +21,7 @@ from ..bot import bot
 from ..logging_config import logger
 from ..services.chat_flow import generate_greeting_reply
 from ..config import settings
+from ..services.telegram_id import get_or_raise_telegram_id
 
 router = APIRouter(prefix="/api/personas", tags=["personas"])
 
@@ -147,9 +148,11 @@ async def _get_dialog_info(
 
 @router.get("", response_model=PersonasListResponse)
 async def list_personas(
-    telegram_id: int = Query(..., ge=1),
+    request: Request,
+    telegram_id: int | None = Query(default=None, ge=1),
     session: AsyncSession = Depends(get_session),
 ):
+    telegram_id = await get_or_raise_telegram_id(request, explicit=telegram_id)
     user = await get_or_create_user_by_telegram_id(session, telegram_id)
 
     result = await session.execute(
@@ -176,9 +179,11 @@ async def list_personas(
 @router.get("/{persona_id}", response_model=PersonaDetails)
 async def get_persona(
     persona_id: int,
+    request: Request,
     telegram_id: int | None = Query(default=None, ge=1),
     session: AsyncSession = Depends(get_session),
 ):
+    telegram_id = await get_or_raise_telegram_id(request, explicit=telegram_id, allow_debug=False)
     user = None
     if telegram_id:
         user = await get_or_create_user_by_telegram_id(session, telegram_id)
@@ -198,9 +203,11 @@ async def get_persona(
 @router.post("/{persona_id}/select", response_model=PersonaDetails)
 async def select_persona(
     persona_id: int,
-    telegram_id: int = Query(..., ge=1),
+    request: Request,
+    telegram_id: int | None = Query(default=None, ge=1),
     session: AsyncSession = Depends(get_session),
 ):
+    telegram_id = await get_or_raise_telegram_id(request, explicit=telegram_id)
     user = await get_or_create_user_by_telegram_id(session, telegram_id)
 
     persona_result = await session.execute(
@@ -219,9 +226,11 @@ async def select_persona(
 @router.post("/select_and_greet", response_model=PersonaSelectResponse)
 async def select_persona_and_greet(
     payload: PersonaSelectRequest,
-    telegram_id: int = Query(..., ge=1),
+    request: Request,
+    telegram_id: int | None = Query(default=None, ge=1),
     session: AsyncSession = Depends(get_session),
 ):
+    telegram_id = await get_or_raise_telegram_id(request, explicit=telegram_id)
     user = await get_or_create_user_by_telegram_id(session, telegram_id)
     persona_result = await session.execute(
         select(Persona).where(Persona.id == payload.persona_id)
@@ -288,9 +297,11 @@ async def select_persona_and_greet(
 @router.post("/custom", response_model=PersonaDetails)
 async def create_custom_persona(
     payload: PersonaCustomCreateRequest,
+    request: Request,
     session: AsyncSession = Depends(get_session),
 ):
-    user = await get_or_create_user_by_telegram_id(session, payload.telegram_id)
+    telegram_id = await get_or_raise_telegram_id(request, explicit=payload.telegram_id)
+    user = await get_or_create_user_by_telegram_id(session, telegram_id)
     access = await build_access_status(session, user)
     if not access.get("has_subscription"):
         raise HTTPException(status_code=403, detail="Custom personas доступны в Premium")

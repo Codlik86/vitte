@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -7,6 +7,7 @@ from ..models import Persona, User, Dialog, Message
 from ..users_service import get_or_create_user_by_telegram_id
 from ..schemas import ChatRequest, ChatResponse
 from ..services.chat_flow import generate_chat_reply
+from ..services.telegram_id import get_or_raise_telegram_id
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
 
@@ -30,17 +31,18 @@ async def _get_active_persona(session: AsyncSession, user: User) -> Persona:
 
 
 @router.post("")
-async def chat(request: ChatRequest, session: AsyncSession = Depends(get_session)):
-    user = await get_or_create_user_by_telegram_id(session, request.telegram_id)
+async def chat(payload: ChatRequest, request: Request, session: AsyncSession = Depends(get_session)):
+    telegram_id = await get_or_raise_telegram_id(request, explicit=payload.telegram_id)
+    user = await get_or_create_user_by_telegram_id(session, telegram_id)
     try:
         result = await generate_chat_reply(
             session=session,
             user=user,
-            input_text=request.message,
-            persona_id=request.persona_id,
-            mode=request.mode or "default",
-            atmosphere=request.atmosphere,
-            story_id=request.story_id,
+            input_text=payload.message,
+            persona_id=payload.persona_id,
+            mode=payload.mode or "default",
+            atmosphere=payload.atmosphere,
+            story_id=payload.story_id,
             skip_limits=False,
             skip_increment=False,
         )

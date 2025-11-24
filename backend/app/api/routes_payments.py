@@ -20,6 +20,7 @@ from ..services.payments import (
     list_payment_plans,
 )
 from ..users_service import get_or_create_user_by_telegram_id
+from ..services.telegram_id import get_or_raise_telegram_id
 
 router = APIRouter(prefix="/api/payments", tags=["payments"])
 
@@ -44,6 +45,7 @@ async def get_plans():
 @router.post("/subscribe", response_model=SubscribeResponse)
 async def subscribe(
     payload: SubscribeRequest,
+    request: Request,
     session: AsyncSession = Depends(get_session),
 ):
     plan = get_payment_plan(payload.plan_code)
@@ -54,7 +56,8 @@ async def subscribe(
     if provider not in {"yookassa", "stars"}:
         raise HTTPException(status_code=400, detail="Unsupported provider")
 
-    user = await get_or_create_user_by_telegram_id(session, payload.telegram_id)
+    telegram_id = await get_or_raise_telegram_id(request, explicit=payload.telegram_id)
+    user = await get_or_create_user_by_telegram_id(session, telegram_id)
 
     subscription = Subscription(
         user_id=user.id,
