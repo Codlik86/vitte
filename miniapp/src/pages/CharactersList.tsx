@@ -140,7 +140,7 @@ export function CharactersList() {
           </Link>
           <Link
             to="/settings"
-            className="inline-flex w-full items-center justify-center rounded-full border border-white/5 bg-white/5 px-4 py-3 text-base font-medium text-white/80 transition hover:bg-white/10"
+            className="inline-flex w-full items-center justify-center rounded-full border border-white/10 bg-card-dark/80 px-4 py-4 text-base font-medium text-white/90 transition hover:bg-card-dark"
           >
             Настройки и улучшения
           </Link>

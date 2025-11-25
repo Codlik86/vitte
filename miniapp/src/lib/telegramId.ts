@@ -21,12 +21,37 @@ export function resolveTelegramId(): number | undefined {
     return undefined;
   }
 
+  // 1) явный query-параметр (удобно для отладки)
+  const urlParamId = normalizeId(new URLSearchParams(window.location.search).get("telegram_id"));
+  if (urlParamId !== undefined) {
+    return urlParamId;
+  }
+
   const tg = window.Telegram?.WebApp;
   const webAppId = normalizeId(
     tg?.initDataUnsafe?.user?.id ?? tg?.initData?.user?.id
   );
   if (webAppId !== undefined) {
     return webAppId;
+  }
+
+  // 2) попробуем распарсить initData как строку
+  const initDataStr: string | null =
+    typeof (tg as any)?.initData === "string" ? (tg as any).initData : null;
+  if (initDataStr && initDataStr.length > 0) {
+    try {
+      const params = new URLSearchParams(initDataStr);
+      const rawUser = params.get("user");
+      if (rawUser) {
+        const parsedUser = JSON.parse(rawUser);
+        const parsedId = normalizeId(parsedUser?.id);
+        if (parsedId !== undefined) {
+          return parsedId;
+        }
+      }
+    } catch {
+      // ignore parse errors
+    }
   }
 
   if (import.meta.env.DEV) {
