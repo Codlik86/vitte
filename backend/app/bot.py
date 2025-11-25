@@ -10,6 +10,7 @@ from aiogram.types import (
     BotCommand,
     CallbackQuery,
     MenuButtonWebApp,
+    MenuButtonCommands,
 )
 from datetime import datetime
 
@@ -65,12 +66,7 @@ async def setup_bot_commands(bot: Bot) -> None:
 
 async def setup_menu_button(bot: Bot) -> None:
     try:
-        await bot.set_chat_menu_button(
-            menu_button=MenuButtonWebApp(
-                text="Открыть Vitte 💌",
-                web_app=WebAppInfo(url=settings.miniapp_url),
-            )
-        )
+        await bot.set_chat_menu_button(menu_button=MenuButtonCommands())
     except Exception as exc:
         logger.error("Failed to set menu button: %s", exc)
 
