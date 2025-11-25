@@ -93,7 +93,9 @@ PAYMENT_PLANS: List[PaymentPlan] = [
 
 
 def list_payment_plans() -> List[PaymentPlan]:
-    return PAYMENT_PLANS
+    # Возвращаем только новые коды sub_*, чтобы не дублировать планы в UI.
+    filtered = [plan for plan in PAYMENT_PLANS if plan.code.startswith("sub_")]
+    return filtered or PAYMENT_PLANS
 
 
 def get_payment_plan(plan_code: str) -> PaymentPlan | None:

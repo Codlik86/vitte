@@ -24,15 +24,17 @@ class AccessMiddleware(BaseMiddleware):
     ) -> Any:
         # Нас интересуют только апдейты с message или callback_query
         message: Message | None = getattr(event, "message", None)
-        if message is None:
-            callback: CallbackQuery | None = getattr(event, "callback_query", None)
-            if callback:
-                message = callback.message
+        callback: CallbackQuery | None = getattr(event, "callback_query", None)
 
-        if message is None or message.from_user is None:
+        # Для callback берём пользователя из callback.from_user, иначе message.from_user.
+        actor = callback.from_user if callback else (message.from_user if message else None)
+        if callback and callback.message:
+            message = callback.message
+
+        if message is None or actor is None:
             return await handler(event, data)
 
-        telegram_id = message.from_user.id
+        telegram_id = actor.id
 
         # Не блокируем команды /health и подобные системные вещи (на будущее)
         text = (message.text or "").strip() if message.text else ""

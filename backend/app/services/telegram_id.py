@@ -29,6 +29,7 @@ async def extract_telegram_id_from_request(request: Request) -> Optional[int]:
     Пытается достать telegram_id из запроса:
     - query-параметры: telegram_id, telegramId
     - заголовки: X-Telegram-Id, X-Telegram-User-Id
+    - тело JSON: telegram_id / telegramId
     """
     candidates = []
 
@@ -41,6 +42,17 @@ async def extract_telegram_id_from_request(request: Request) -> Optional[int]:
     for key in ("x-telegram-id", "x-telegram-user-id"):
         if headers.get(key):
             candidates.append(headers.get(key))
+
+    # Попробуем достать из JSON-тела, если оно есть
+    try:
+        body = await request.json()
+        if isinstance(body, dict):
+            for key in ("telegram_id", "telegramId"):
+                if body.get(key) is not None:
+                    candidates.append(body.get(key))
+    except Exception:
+        # тело не JSON или не читается — игнорируем
+        pass
 
     for raw in candidates:
         try:
