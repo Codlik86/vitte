@@ -24,6 +24,7 @@ from ..integrations.tts_client import synthesize_voice
 from ..services.safety import run_safety_check, SafetyContext, supportive_reply
 from ..services.intimacy import evaluate_intimacy
 from ..services.prompt_builder import ChatPromptContext, build_chat_messages
+from ..services.subscriptions import get_user_subscription_status
 
 
 class ChatResult:

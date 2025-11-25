@@ -2,9 +2,10 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "../components/layout/PageHeader";
 import { DebugTelegramBanner } from "../components/DebugTelegramBanner";
-import { fetchStoreProducts, fetchFeaturesStatus, purchaseProduct } from "../api/client";
+import { fetchStoreProducts, fetchFeaturesStatus, createFeatureInvoice } from "../api/client";
 import type { StoreProduct, FeatureStatusItem } from "../api/types";
 import { useAccessStatus } from "../hooks/useAccessStatus";
+import { tg } from "../lib/telegram";
 
 type PurchaseState = {
   [code: string]: "idle" | "loading" | "success" | "error";
@@ -55,10 +56,18 @@ export function Store() {
   const handlePurchase = async (productCode: string) => {
     setStates((prev) => ({ ...prev, [productCode]: "loading" }));
     try {
-      await purchaseProduct(productCode);
-      const latestFeatures = await fetchFeaturesStatus();
-      setFeatures(latestFeatures.features);
-      setStates((prev) => ({ ...prev, [productCode]: "success" }));
+      const link = await createFeatureInvoice(productCode);
+      if (tg?.openInvoice) {
+        tg.openInvoice(link);
+        // Не узнаем статус напрямую: обновим фичи чуть позже
+        setTimeout(() => {
+          fetchFeaturesStatus().then((latest) => setFeatures(latest.features));
+        }, 2000);
+        setStates((prev) => ({ ...prev, [productCode]: "idle" }));
+      } else {
+        window.open(link, "_blank");
+        setStates((prev) => ({ ...prev, [productCode]: "idle" }));
+      }
     } catch (err) {
       setStates((prev) => ({ ...prev, [productCode]: "error" }));
       console.error(err);

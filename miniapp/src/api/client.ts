@@ -155,6 +155,34 @@ export async function subscribeToPlan(planCode: string, provider?: string): Prom
   return (await res.json()) as SubscribeResponse;
 }
 
+export async function triggerBotPay(): Promise<void> {
+  const telegramId = await requireTelegramId();
+  const res = await fetch(`${BASE_URL}/api/bot/pay_from_miniapp`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ telegram_id: telegramId }),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || "Не удалось открыть оплату");
+  }
+}
+
+export async function createFeatureInvoice(productCode: string): Promise<string> {
+  const telegramId = await requireTelegramId();
+  const res = await fetch(`${BASE_URL}/api/store/invoice?product_code=${productCode}`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ telegram_id: telegramId }),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || "Не удалось создать счёт");
+  }
+  const data = (await res.json()) as { invoice_link: string };
+  return data.invoice_link;
+}
+
 export async function logAnalyticsEvent(eventType: string, payload?: Record<string, unknown>): Promise<void> {
   try {
     const telegramId = await requireTelegramId().catch(() => null);

@@ -18,6 +18,11 @@ from .logging_config import logger
 from .middlewares.access import AccessMiddleware
 from .middlewares.terms_gate import TermsGateMiddleware
 from .services.chat_flow import generate_chat_reply
+from .services.subscriptions import get_user_subscription_status, ensure_premium_for_user
+from .billing.prices import SUBSCRIPTION_PLANS, FEATURE_PRICES_STARS
+from .services.features import apply_product_purchase
+from .services.telegram_id import get_debug_telegram_id
+from .services.payments import create_yookassa_payment_link
 from .db import get_session
 from .users_service import get_or_create_user_by_telegram_id
 from .services.onboarding import (
@@ -28,6 +33,8 @@ from .services.onboarding import (
     help_text,
 )
 from .models import User
+from aiogram.types import LabeledPrice, PreCheckoutQuery
+import json
 
 bot = Bot(
     token=settings.telegram_bot_token,
@@ -36,6 +43,14 @@ bot = Bot(
 dp = Dispatcher()
 dp.update.middleware(TermsGateMiddleware())
 dp.update.middleware(AccessMiddleware())
+
+STAR_MULTIPLIER = 1_000_000_000  # 1 XTR minimal units
+PLAN_DURATIONS = {
+    "sub_3d": 3,
+    "sub_week": 7,
+    "sub_month": 30,
+    "sub_quarter": 90,
+}
 
 
 async def setup_bot_commands(bot: Bot) -> None:
@@ -73,6 +88,91 @@ def build_miniapp_keyboard() -> InlineKeyboardMarkup:
     )
 
 
+def _format_plan_button(plan_code: str) -> InlineKeyboardButton:
+    plan = SUBSCRIPTION_PLANS[plan_code]
+    price_rub = plan.price_rub
+    price_stars = plan.price_stars
+    text = f"{plan.title} — {price_rub}₽ · {price_stars}⭐"
+    return InlineKeyboardButton(text=text, callback_data=f"pay_plan:{plan_code}")
+
+
+def pay_plans_keyboard() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [_format_plan_button("sub_3d")],
+            [_format_plan_button("sub_week")],
+            [_format_plan_button("sub_month")],
+            [_format_plan_button("sub_quarter")],
+        ]
+    )
+
+
+def pay_methods_keyboard(plan_code: str) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text="Оплатить звёздами ⭐",
+                    callback_data=f"pay_stars:{plan_code}",
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    text="Оплатить через YooKassa",
+                    callback_data=f"pay_yk:{plan_code}",
+                )
+            ],
+        ]
+    )
+
+
+async def send_pay_intro(message: Message, user: User, status: dict):
+    text = ""
+    if status.get("has_subscription"):
+        until = status.get("until")
+        until_text = until.strftime("%d.%m.%Y") if until else "без срока"
+        text = (
+            f"Премиум Vitte активен до {until_text}.\n\n"
+            "Премиум даёт:\n"
+            "— безлимитные сообщения,\n"
+            "— полный доступ к персонажам и историям,\n"
+            "— улучшенные ответы.\n\n"
+            "Хочешь продлить подписку?"
+        )
+    else:
+        text = (
+            "Премиум Vitte открывает:\n"
+            "— общение без лимитов,\n"
+            "— полный доступ к персонажам и улучшениям,\n"
+            "— более глубокие и тёплые ответы.\n\n"
+            "Выбери тариф:"
+        )
+    await message.answer(text, reply_markup=pay_plans_keyboard())
+
+
+async def send_pay_intro_to_user(user: User, status: dict):
+    if status.get("has_subscription"):
+        until = status.get("until")
+        until_text = until.strftime("%d.%m.%Y") if until else "без срока"
+        text = (
+            f"Премиум Vitte активен до {until_text}.\n\n"
+            "Премиум даёт:\n"
+            "— безлимитные сообщения,\n"
+            "— полный доступ к персонажам и историям,\n"
+            "— улучшенные ответы.\n\n"
+            "Хочешь продлить подписку?"
+        )
+    else:
+        text = (
+            "Премиум Vitte открывает:\n"
+            "— общение без лимитов,\n"
+            "— полный доступ к персонажам и улучшениям,\n"
+            "— более глубокие и тёплые ответы.\n\n"
+            "Выбери тариф:"
+        )
+    await bot.send_message(user.telegram_id, text, reply_markup=pay_plans_keyboard())
+
+
 @dp.message(CommandStart())
 async def cmd_start(message: Message):
     if message.from_user is None:
@@ -98,12 +198,13 @@ async def cmd_app(message: Message):
 
 @dp.message(F.text == "/pay")
 async def cmd_pay(message: Message):
-    await message.answer(
-        "Чтобы оформить подписку и продолжить общение без лимитов, "
-        "открой мини-приложение Vitte в Telegram или вкладку Paywall.\n\n"
-        "Поддержка Stars и YooKassa появится чуть позже, а пока это заглушка.",
-        reply_markup=build_main_reply_keyboard(),
-    )
+    if message.from_user is None:
+        return
+    async for session in get_session():
+        user = await get_or_create_user_by_telegram_id(session, message.from_user.id)
+        status = await get_user_subscription_status(session, user)
+        await session.commit()
+    await send_pay_intro(message, user, status)
 
 
 @dp.message(Command("help"))
@@ -192,6 +293,114 @@ async def on_user_message(message: Message, current_user: User | None = None, db
         except Exception as exc:
             logger.error("Failed to handle user message: %s", exc)
             await message.answer("Не получилось ответить, попробуй ещё раз или открой мини-приложение.")
+
+
+@dp.callback_query(F.data.startswith("pay_plan:"))
+async def pay_plan_selected(cb: CallbackQuery):
+    if cb.from_user is None or cb.message is None:
+        return
+    plan_code = cb.data.split(":", 1)[1]
+    plan = SUBSCRIPTION_PLANS.get(plan_code)
+    if not plan:
+        await cb.answer("Тариф не найден", show_alert=True)
+        return
+    text = (
+        f"Тариф «{plan.title}»\n"
+        f"Цена: {plan.price_rub}₽ или {plan.price_stars}⭐️\n\n"
+        "Выбери способ оплаты:"
+    )
+    await cb.message.answer(text, reply_markup=pay_methods_keyboard(plan_code))
+    await cb.answer()
+
+
+@dp.callback_query(F.data.startswith("pay_stars:"))
+async def pay_stars(cb: CallbackQuery):
+    if cb.from_user is None:
+        return
+    plan_code = cb.data.split(":", 1)[1]
+    plan = SUBSCRIPTION_PLANS.get(plan_code)
+    if not plan:
+        await cb.answer("Тариф не найден", show_alert=True)
+        return
+    amount_units = plan.price_stars * STAR_MULTIPLIER
+    payload = json.dumps({"product_code": plan_code})
+    try:
+        await bot.send_invoice(
+            chat_id=cb.from_user.id,
+            title=f"Подписка Vitte — {plan.title}",
+            description="Премиум доступ к общению без лимитов и улучшенным ответам.",
+            payload=payload,
+            provider_token="",  # Stars не требуют токен
+            currency="XTR",
+            prices=[LabeledPrice(label=plan.title, amount=amount_units)],
+        )
+        await cb.answer()
+    except Exception as exc:
+        logger.error("Failed to send stars invoice: %s", exc)
+        await cb.answer("Не получилось создать счёт", show_alert=True)
+
+
+@dp.callback_query(F.data.startswith("pay_yk:"))
+async def pay_yk(cb: CallbackQuery):
+    if cb.from_user is None:
+        return
+    plan_code = cb.data.split(":", 1)[1]
+    plan = SUBSCRIPTION_PLANS.get(plan_code)
+    if not plan:
+        await cb.answer("Тариф не найден", show_alert=True)
+        return
+    # Заглушка YooKassa с попыткой ссылки
+    link = await create_yookassa_payment_link(plan_code, cb.from_user.id)
+    if link:
+        kb = InlineKeyboardMarkup(
+            inline_keyboard=[[InlineKeyboardButton(text="Оплатить в YooKassa", url=link)]]
+        )
+        await cb.message.answer(
+            f"Тариф «{plan.title}» — {plan.price_rub}₽.\nОплатить через YooKassa:",
+            reply_markup=kb,
+        )
+    else:
+        await cb.message.answer(
+            "Ссылка на оплату через YooKassa будет доступна чуть позже. "
+            "Сейчас можно оформить подписку за звёзды внутри Telegram."
+        )
+    await cb.answer()
+
+
+@dp.pre_checkout_query()
+async def on_pre_checkout(pre_checkout_query: PreCheckoutQuery):
+    try:
+        await bot.answer_pre_checkout_query(pre_checkout_query.id, ok=True)
+    except Exception as exc:
+        logger.error("Pre-checkout failed: %s", exc)
+
+
+@dp.message(F.successful_payment)
+async def on_successful_payment(message: Message):
+    if message.from_user is None:
+        return
+    payload_raw = message.successful_payment.invoice_payload if message.successful_payment else ""
+    try:
+        payload = json.loads(payload_raw)
+    except Exception:
+        payload = {}
+    product_code = payload.get("product_code")
+    async for session in get_session():
+        user = await get_or_create_user_by_telegram_id(session, message.from_user.id)
+        if product_code and product_code.startswith("sub_"):
+            days = PLAN_DURATIONS.get(product_code, 30)
+            await ensure_premium_for_user(session, user, plan_code=product_code, period_days=days)
+            await session.commit()
+            await message.answer("Оплата получена! Подписка активирована. 💜")
+        elif product_code and product_code.startswith("feature_"):
+            try:
+                apply_product_purchase(user, product_code.replace("feature_", ""))
+            except Exception as exc:
+                logger.error("Feature activation failed: %s", exc)
+            await session.commit()
+            await message.answer("Оплата получена! Улучшение активировано.")
+        else:
+            await message.answer("Оплата получена. Спасибо!")
 
 
 async def handle_update(update: dict):

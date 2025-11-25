@@ -7,6 +7,7 @@ from .routes_payments import router as payments_router
 from .routes_store import router as store_router
 from .routes_analytics import router as analytics_router
 from .routes_features import router as features_router
+from .routes_bot_control import router as bot_control_router
 
 __all__ = [
     "health_router",
@@ -18,4 +19,5 @@ __all__ = [
     "store_router",
     "analytics_router",
     "features_router",
+    "bot_control_router",
 ]

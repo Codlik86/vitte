@@ -16,6 +16,7 @@ from .api import (
     store_router,
     analytics_router,
     features_router,
+    bot_control_router,
 )
 from .db import engine, Base, async_session_factory
 from .logging_config import logger
@@ -247,3 +248,4 @@ app.include_router(payments_router)
 app.include_router(store_router)
 app.include_router(analytics_router)
 app.include_router(features_router)
+app.include_router(bot_control_router)

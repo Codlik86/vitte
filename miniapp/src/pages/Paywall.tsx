@@ -3,7 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { PageHeader } from "../components/layout/PageHeader";
 import { DebugTelegramBanner } from "../components/DebugTelegramBanner";
 import { useAccessStatus } from "../hooks/useAccessStatus";
-import { fetchPaymentPlans, logAnalyticsEvent, subscribeToPlan } from "../api/client";
+import { fetchPaymentPlans, logAnalyticsEvent, triggerBotPay } from "../api/client";
 import type { PaymentPlan } from "../api/types";
 import { tg } from "../lib/telegram";
 
@@ -11,7 +11,7 @@ const BOT_USERNAME = "<ИМЯ_БОТА>"; // TODO: заменить на акт�
 
 const FALLBACK_PLANS: PaymentPlan[] = [
   {
-    code: "premium_3d",
+    code: "sub_3d",
     title: "3 дня Premium",
     description: "Познакомься с безлимитными ответами.",
     price: 299,
@@ -20,7 +20,7 @@ const FALLBACK_PLANS: PaymentPlan[] = [
     provider: "yookassa",
   },
   {
-    code: "premium_1w",
+    code: "sub_week",
     title: "Неделя Premium",
     description: "7 дней глубоких сцен и флирта.",
     price: 599,
@@ -29,7 +29,7 @@ const FALLBACK_PLANS: PaymentPlan[] = [
     provider: "yookassa",
   },
   {
-    code: "premium_1m",
+    code: "sub_month",
     title: "Месяц Premium",
     description: "30 дней безлимитного общения.",
     price: 999,
@@ -39,7 +39,7 @@ const FALLBACK_PLANS: PaymentPlan[] = [
     recommended: true,
   },
   {
-    code: "premium_3m",
+    code: "sub_quarter",
     title: "3 месяца Premium",
     description: "Экономия и длинные истории.",
     price: 2199,
@@ -49,7 +49,7 @@ const FALLBACK_PLANS: PaymentPlan[] = [
   },
 ];
 
-const PLAN_ORDER = ["premium_3d", "premium_1w", "premium_1m", "premium_3m"];
+const PLAN_ORDER = ["sub_3d", "premium_3d", "sub_week", "premium_1w", "sub_month", "premium_1m", "sub_quarter", "premium_3m"];
 
 function getPeriodLabel(period: PaymentPlan["period"]) {
   switch (period) {
@@ -77,7 +77,7 @@ function openBotPayment(planCode: string) {
 }
 
 export function Paywall() {
-  const { data, error, reload } = useAccessStatus();
+  const { data, error } = useAccessStatus();
   const navigate = useNavigate();
   const [plans, setPlans] = useState<PaymentPlan[]>([]);
   const [plansLoading, setPlansLoading] = useState(true);
@@ -141,21 +141,12 @@ export function Paywall() {
     setSubmitError(null);
     try {
       await logAnalyticsEvent("paywall_cta_click", { plan_code: activePlan.code });
-      const response = await subscribeToPlan(activePlan.code);
-      const confirmation = response.confirmation as { confirmation_url?: string } | undefined;
-      if (response.provider === "yookassa" && confirmation?.confirmation_url) {
-        if (tg?.openTelegramLink) {
-          tg.openTelegramLink(confirmation.confirmation_url);
-        } else {
-          window.open(confirmation.confirmation_url, "_blank");
-        }
-      } else if (response.provider === "stars") {
-        // TODO: интеграция openInvoice при запуске Stars
-        console.info("[Vitte] Stars invoice", confirmation);
+      await triggerBotPay();
+      if (tg?.close) {
+        tg.close();
       } else {
         openBotPayment(activePlan.code);
       }
-      await reload();
     } catch (err) {
       const message =
         err instanceof Error ? err.message : "Не удалось инициировать подписку";

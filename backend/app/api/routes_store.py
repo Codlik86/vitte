@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request, Query
+import json
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..db import get_session
@@ -19,6 +20,9 @@ from ..services.store import get_store_product, list_store_products
 from ..users_service import get_or_create_user_by_telegram_id
 from ..logging_config import logger
 from ..services.telegram_id import get_or_raise_telegram_id
+from ..billing.prices import FEATURE_PRICES_STARS
+from ..bot import bot, STAR_MULTIPLIER
+from aiogram.types import LabeledPrice
 
 router = APIRouter(prefix="/api/store", tags=["store"])
 
@@ -147,3 +151,30 @@ async def buy_product(
         activated_until=activated_until,
         features=[item.code for item in activated_features],
     )
+
+
+@router.post("/invoice", response_model=dict)
+async def create_feature_invoice(
+    request: Request,
+    product_code: str = Query(..., description="Feature product code"),
+    session: AsyncSession = Depends(get_session),
+):
+    telegram_id = await get_or_raise_telegram_id(request)
+    price_stars = FEATURE_PRICES_STARS.get(product_code)
+    if price_stars is None:
+        raise HTTPException(status_code=404, detail="Feature not found")
+    amount_units = price_stars * STAR_MULTIPLIER
+    payload = json.dumps({"product_code": f"feature_{product_code}"})
+    try:
+        link = await bot.create_invoice_link(
+            title="Улучшения Vitte",
+            description="Оплата улучшения для Vitte",
+            payload=payload,
+            provider_token="",
+            currency="XTR",
+            prices=[LabeledPrice(label=product_code, amount=amount_units)],
+        )
+    except Exception as exc:
+        logger.error("Failed to create feature invoice: %s", exc)
+        raise HTTPException(status_code=502, detail="Не удалось создать счёт")
+    return {"invoice_link": link}
