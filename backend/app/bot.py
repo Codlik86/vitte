@@ -9,6 +9,7 @@ from aiogram.types import (
     WebAppInfo,
     BotCommand,
     CallbackQuery,
+    MenuButtonWebApp,
 )
 from datetime import datetime
 
@@ -45,6 +46,18 @@ async def setup_bot_commands(bot: Bot) -> None:
         BotCommand(command="help", description="О сервисе"),
     ]
     await bot.set_my_commands(commands)
+
+
+async def setup_menu_button(bot: Bot) -> None:
+    try:
+        await bot.set_chat_menu_button(
+            menu_button=MenuButtonWebApp(
+                text="Открыть Vitte 💌",
+                web_app=WebAppInfo(url=settings.miniapp_url),
+            )
+        )
+    except Exception as exc:
+        logger.error("Failed to set menu button: %s", exc)
 
 
 def build_miniapp_keyboard() -> InlineKeyboardMarkup:
