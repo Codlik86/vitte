@@ -322,6 +322,12 @@ async def pay_stars(cb: CallbackQuery):
     if not plan:
         await cb.answer("Тариф не найден", show_alert=True)
         return
+    if not settings.stars_provider_token:
+        await cb.message.answer(
+            "Оплата звёздами временно недоступна. Попробуй YooKassa или чуть позже."
+        )
+        await cb.answer()
+        return
     amount_units = plan.price_stars * STAR_MULTIPLIER
     payload = json.dumps({"product_code": plan_code})
     try:
@@ -330,7 +336,7 @@ async def pay_stars(cb: CallbackQuery):
             title=f"Подписка Vitte — {plan.title}",
             description="Премиум доступ к общению без лимитов и улучшенным ответам.",
             payload=payload,
-            provider_token="",  # Stars не требуют токен
+            provider_token=settings.stars_provider_token,
             currency="XTR",
             prices=[LabeledPrice(label=plan.title, amount=amount_units)],
         )
