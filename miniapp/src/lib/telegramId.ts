@@ -1,6 +1,8 @@
 export const TELEGRAM_ID_ERROR_MESSAGE =
   "Не удалось определить Telegram ID. Добавь VITE_DEBUG_TELEGRAM_ID в .env для локального запуска.";
 
+const DEBUG_ENV_KEYS = ["VITE_DEBUG_TELEGRAM_ID", "VITTE_DEBUG_TELEGRAM_ID", "VITE_DEBUG_ID"];
+
 function normalizeId(id: unknown): number | undefined {
   if (typeof id === "number") {
     return Number.isFinite(id) ? id : undefined;
@@ -27,10 +29,13 @@ export function resolveTelegramId(): number | undefined {
     return webAppId;
   }
 
-  const debugEnv = import.meta.env.VITE_DEBUG_TELEGRAM_ID;
-  const debugId = normalizeId(debugEnv);
-  if (import.meta.env.DEV && debugId !== undefined) {
-    return debugId;
+  if (import.meta.env.DEV) {
+    for (const key of DEBUG_ENV_KEYS) {
+      const candidate = normalizeId((import.meta.env as any)?.[key]);
+      if (candidate !== undefined) {
+        return candidate;
+      }
+    }
   }
 
   return undefined;
