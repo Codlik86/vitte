@@ -5,6 +5,9 @@ from typing import Optional
 
 from fastapi import Request, HTTPException, status
 
+from ..logging_config import logger
+from .telegram_webapp import extract_telegram_user_from_request
+
 TELEGRAM_DEBUG_ID_ENV_KEYS = [
     "VITTE_DEBUG_TELEGRAM_ID",
     "VITTE_DEBUG_ID",
@@ -67,13 +70,29 @@ async def get_or_raise_telegram_id(
     *,
     explicit: int | None = None,
     allow_debug: bool = True,
+    allow_telegram_id_param: bool = True,
 ) -> int:
+    env = (os.getenv("ENV") or "").lower()
+    is_prod = env == "prod"
     if explicit:
         return int(explicit)
 
-    real_id = await extract_telegram_id_from_request(request)
+    # Пытаемся достать из WebApp initData (с валидацией) или других источников
+    user = await extract_telegram_user_from_request(
+        request,
+        allow_debug=allow_debug,
+        allow_telegram_id_param=allow_telegram_id_param,
+    )
+    real_id = user.id if user else None
+
     if real_id:
         return real_id
+
+    # Фоллбек на старую схему (заголовки/квери), если WebApp недоступен
+    if not is_prod:
+        real_id = await extract_telegram_id_from_request(request)
+        if real_id:
+            return real_id
 
     if allow_debug:
         debug_id = get_debug_telegram_id()
@@ -82,6 +101,7 @@ async def get_or_raise_telegram_id(
         if debug_id and debug_flag:
             return debug_id
 
+    logger.warning("Failed to resolve telegram id")
     raise HTTPException(
         status_code=status.HTTP_400_BAD_REQUEST,
         detail="не удалось определить telegram id",

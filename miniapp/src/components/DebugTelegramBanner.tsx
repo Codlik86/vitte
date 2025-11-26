@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import {
   TELEGRAM_ID_ERROR_MESSAGE,
   waitTelegramId,
+  isTelegramWebApp,
 } from "../lib/telegramId";
 
 export function DebugTelegramBanner() {
@@ -11,6 +12,9 @@ export function DebugTelegramBanner() {
     let cancelled = false;
 
     async function checkTelegram() {
+      if (isTelegramWebApp()) {
+        return;
+      }
       const hasDebugEnv = Boolean(import.meta.env.VITE_DEBUG_TELEGRAM_ID);
       if (!import.meta.env.DEV || hasDebugEnv) {
         return;

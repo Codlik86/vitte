@@ -10,7 +10,8 @@ import type {
   FeatureStatusResponse,
   StoreBuyResponse,
 } from "./types";
-import { requireTelegramId } from "../lib/telegramId";
+import { getTelegramIdOptional } from "../lib/telegramId";
+import { tg } from "../lib/telegram";
 
 const BASE_URL = (import.meta.env.VITE_BACKEND_URL ?? "").replace(/\/$/, "");
 
@@ -18,10 +19,35 @@ if (!BASE_URL) {
   console.warn("[Vitte] VITE_BACKEND_URL is not set");
 }
 
+function buildInitDataString(): string | null {
+  const raw = (tg as any)?.initData;
+  if (typeof raw === "string" && raw.length > 0) {
+    return raw;
+  }
+  return null;
+}
+
+function buildHeaders(extra?: Record<string, string>): Record<string, string> {
+  const headers: Record<string, string> = { ...(extra || {}) };
+  const initData = buildInitDataString();
+  if (initData) {
+    headers["X-Telegram-Web-App-Init-Data"] = initData;
+  }
+  return headers;
+}
+
+function buildUrlWithTelegramId(path: string, telegramId?: number | null): string {
+  if (telegramId) {
+    const delimiter = path.includes("?") ? "&" : "?";
+    return `${path}${delimiter}telegram_id=${telegramId}`;
+  }
+  return path;
+}
+
 export async function fetchPersonas(): Promise<PersonasListResponse> {
-  const telegramId = await requireTelegramId();
-  const url = `${BASE_URL}/api/personas?telegram_id=${telegramId}`;
-  const res = await fetch(url);
+  const telegramId = await getTelegramIdOptional();
+  const url = buildUrlWithTelegramId(`${BASE_URL}/api/personas`, telegramId);
+  const res = await fetch(url, { headers: buildHeaders() });
   if (!res.ok) {
     throw new Error("Не удалось загрузить персонажей");
   }
@@ -29,13 +55,15 @@ export async function fetchPersonas(): Promise<PersonasListResponse> {
 }
 
 export async function selectPersona(personaId: number): Promise<PersonaDetails> {
-  const telegramId = await requireTelegramId();
-  const res = await fetch(
-    `${BASE_URL}/api/personas/${personaId}/select?telegram_id=${telegramId}`,
-    {
-      method: "POST",
-    }
+  const telegramId = await getTelegramIdOptional();
+  const url = buildUrlWithTelegramId(
+    `${BASE_URL}/api/personas/${personaId}/select`,
+    telegramId
   );
+  const res = await fetch(url, {
+    method: "POST",
+    headers: buildHeaders(),
+  });
   if (!res.ok) {
     throw new Error("Не удалось выбрать персонажа");
   }
@@ -57,10 +85,11 @@ export async function selectPersonaAndGreet({
   storyId?: string | null;
   settingsChanged?: boolean;
 }): Promise<PersonaSelectResponse> {
-  const telegramId = await requireTelegramId();
-  const res = await fetch(`${BASE_URL}/api/personas/select_and_greet?telegram_id=${telegramId}`, {
+  const telegramId = await getTelegramIdOptional();
+  const url = buildUrlWithTelegramId(`${BASE_URL}/api/personas/select_and_greet`, telegramId);
+  const res = await fetch(url, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: buildHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({
       persona_id: personaId,
       extra_description: extraDescription ?? undefined,
@@ -83,10 +112,10 @@ export async function createCustomPersona(payload: {
   vibe?: string;
   replace_existing?: boolean;
 }): Promise<PersonaDetails> {
-  const telegramId = await requireTelegramId();
+  const telegramId = await getTelegramIdOptional();
   const res = await fetch(`${BASE_URL}/api/personas/custom`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: buildHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({
       telegram_id: telegramId,
       name: payload.name,
@@ -108,10 +137,9 @@ export async function createCustomPersona(payload: {
 }
 
 export async function fetchPersona(id: number): Promise<PersonaDetails> {
-  const telegramId = await requireTelegramId();
-  const res = await fetch(
-    `${BASE_URL}/api/personas/${id}?telegram_id=${telegramId}`
-  );
+  const telegramId = await getTelegramIdOptional();
+  const url = buildUrlWithTelegramId(`${BASE_URL}/api/personas/${id}`, telegramId);
+  const res = await fetch(url, { headers: buildHeaders() });
   if (!res.ok) {
     throw new Error("Не удалось загрузить персонажа");
   }
@@ -119,10 +147,9 @@ export async function fetchPersona(id: number): Promise<PersonaDetails> {
 }
 
 export async function fetchAccessStatus(): Promise<AccessStatusResponse> {
-  const telegramId = await requireTelegramId();
-  const res = await fetch(
-    `${BASE_URL}/api/access/status?telegram_id=${telegramId}`
-  );
+  const telegramId = await getTelegramIdOptional();
+  const url = buildUrlWithTelegramId(`${BASE_URL}/api/access/status`, telegramId);
+  const res = await fetch(url, { headers: buildHeaders() });
   if (!res.ok) {
     throw new Error("Не удалось загрузить статус доступа");
   }
@@ -130,7 +157,7 @@ export async function fetchAccessStatus(): Promise<AccessStatusResponse> {
 }
 
 export async function fetchPaymentPlans(): Promise<PaymentPlan[]> {
-  const res = await fetch(`${BASE_URL}/api/payments/plans`);
+  const res = await fetch(`${BASE_URL}/api/payments/plans`, { headers: buildHeaders() });
   if (!res.ok) {
     throw new Error("Не удалось загрузить планы подписки");
   }
@@ -138,10 +165,10 @@ export async function fetchPaymentPlans(): Promise<PaymentPlan[]> {
 }
 
 export async function subscribeToPlan(planCode: string, provider?: string): Promise<SubscribeResponse> {
-  const telegramId = await requireTelegramId();
+  const telegramId = await getTelegramIdOptional();
   const res = await fetch(`${BASE_URL}/api/payments/subscribe`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: buildHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({
       telegram_id: telegramId,
       plan_code: planCode,
@@ -156,10 +183,10 @@ export async function subscribeToPlan(planCode: string, provider?: string): Prom
 }
 
 export async function triggerBotPay(): Promise<void> {
-  const telegramId = await requireTelegramId();
+  const telegramId = await getTelegramIdOptional();
   const res = await fetch(`${BASE_URL}/api/bot/pay_from_miniapp`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: buildHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({ telegram_id: telegramId }),
   });
   if (!res.ok) {
@@ -169,10 +196,10 @@ export async function triggerBotPay(): Promise<void> {
 }
 
 export async function createFeatureInvoice(productCode: string): Promise<string> {
-  const telegramId = await requireTelegramId();
+  const telegramId = await getTelegramIdOptional();
   const res = await fetch(`${BASE_URL}/api/store/invoice?product_code=${productCode}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: buildHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({ telegram_id: telegramId }),
   });
   if (!res.ok) {
@@ -185,10 +212,10 @@ export async function createFeatureInvoice(productCode: string): Promise<string>
 
 export async function logAnalyticsEvent(eventType: string, payload?: Record<string, unknown>): Promise<void> {
   try {
-    const telegramId = await requireTelegramId().catch(() => null);
+    const telegramId = await getTelegramIdOptional();
     await fetch(`${BASE_URL}/api/analytics/events`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: buildHeaders({ "Content-Type": "application/json" }),
       body: JSON.stringify({
         telegram_id: telegramId ?? undefined,
         event_type: eventType,
@@ -202,17 +229,13 @@ export async function logAnalyticsEvent(eventType: string, payload?: Record<stri
 
 export async function logMiniAppOpen(startParam?: string | null): Promise<void> {
   try {
-    const telegramId = await requireTelegramId().catch(() => null);
     const body: Record<string, unknown> = {};
-    if (telegramId) {
-      body.telegram_id = telegramId;
-    }
     if (startParam) {
       body.start_param = startParam;
     }
     await fetch(`${BASE_URL}/api/events/miniapp_open`, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: buildHeaders({ "Content-Type": "application/json" }),
       body: JSON.stringify(body),
     });
   } catch (error) {
@@ -221,7 +244,7 @@ export async function logMiniAppOpen(startParam?: string | null): Promise<void> 
 }
 
 export async function fetchStoreProducts(): Promise<StoreProductsResponse> {
-  const res = await fetch(`${BASE_URL}/api/store/products`);
+  const res = await fetch(`${BASE_URL}/api/store/products`, { headers: buildHeaders() });
   if (!res.ok) {
     throw new Error("Не удалось загрузить магазин");
   }
@@ -229,10 +252,10 @@ export async function fetchStoreProducts(): Promise<StoreProductsResponse> {
 }
 
 export async function purchaseProduct(productCode: string): Promise<StoreBuyResponse> {
-  const telegramId = await requireTelegramId();
+  const telegramId = await getTelegramIdOptional();
   const res = await fetch(`${BASE_URL}/api/store/buy/${productCode}`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: buildHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({
       telegram_id: telegramId,
     }),
@@ -251,10 +274,10 @@ export async function sendChatMessage(payload: {
   story_id?: string;
   persona_id?: number;
 }): Promise<ChatResponse> {
-  const telegramId = await requireTelegramId();
+  const telegramId = await getTelegramIdOptional();
   const res = await fetch(`${BASE_URL}/api/chat`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: buildHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({
       telegram_id: telegramId,
       message: payload.message,
@@ -272,8 +295,9 @@ export async function sendChatMessage(payload: {
 }
 
 export async function fetchFeaturesStatus(): Promise<FeatureStatusResponse> {
-  const telegramId = await requireTelegramId();
-  const res = await fetch(`${BASE_URL}/api/features/status?telegram_id=${telegramId}`);
+  const telegramId = await getTelegramIdOptional();
+  const url = buildUrlWithTelegramId(`${BASE_URL}/api/features/status`, telegramId);
+  const res = await fetch(url, { headers: buildHeaders() });
   if (!res.ok) {
     throw new Error("Не удалось загрузить статус улучшений");
   }
@@ -281,10 +305,10 @@ export async function fetchFeaturesStatus(): Promise<FeatureStatusResponse> {
 }
 
 export async function toggleFeature(featureCode: string, enabled: boolean): Promise<FeatureStatusResponse> {
-  const telegramId = await requireTelegramId();
+  const telegramId = await getTelegramIdOptional();
   const res = await fetch(`${BASE_URL}/api/features/toggle`, {
     method: "POST",
-    headers: { "Content-Type": "application/json" },
+    headers: buildHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({
       telegram_id: telegramId,
       feature_code: featureCode,
@@ -299,22 +323,28 @@ export async function toggleFeature(featureCode: string, enabled: boolean): Prom
 }
 
 export async function clearDialogs(): Promise<void> {
-  const telegramId = await requireTelegramId();
-  await fetch(`${BASE_URL}/api/features/clear-dialogs?telegram_id=${telegramId}`, {
+  const telegramId = await getTelegramIdOptional();
+  const url = buildUrlWithTelegramId(`${BASE_URL}/api/features/clear-dialogs`, telegramId);
+  await fetch(url, {
     method: "POST",
+    headers: buildHeaders(),
   });
 }
 
 export async function clearLongMemory(): Promise<void> {
-  const telegramId = await requireTelegramId();
-  await fetch(`${BASE_URL}/api/features/clear-long-memory?telegram_id=${telegramId}`, {
+  const telegramId = await getTelegramIdOptional();
+  const url = buildUrlWithTelegramId(`${BASE_URL}/api/features/clear-long-memory`, telegramId);
+  await fetch(url, {
     method: "POST",
+    headers: buildHeaders(),
   });
 }
 
 export async function deleteAccount(): Promise<void> {
-  const telegramId = await requireTelegramId();
-  await fetch(`${BASE_URL}/api/features/delete-account?telegram_id=${telegramId}`, {
+  const telegramId = await getTelegramIdOptional();
+  const url = buildUrlWithTelegramId(`${BASE_URL}/api/features/delete-account`, telegramId);
+  await fetch(url, {
     method: "POST",
+    headers: buildHeaders(),
   });
 }

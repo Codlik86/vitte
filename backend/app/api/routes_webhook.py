@@ -5,8 +5,10 @@ from ..bot import handle_update
 
 router = APIRouter(tags=["telegram"])
 
+WEBHOOK_PATH = f"/webhook/{settings.telegram_webhook_secret or 'telegram'}"
 
-@router.post("/telegram/webhook")
+
+@router.post(WEBHOOK_PATH)
 async def telegram_webhook(
     request: Request,
     x_telegram_bot_api_secret_token: str | None = Header(default=None),

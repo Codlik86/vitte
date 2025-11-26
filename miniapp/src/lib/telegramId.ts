@@ -1,5 +1,7 @@
 export const TELEGRAM_ID_ERROR_MESSAGE =
-  "Не удалось определить Telegram ID. Добавь VITE_DEBUG_TELEGRAM_ID в .env для локального запуска.";
+  "Для локального запуска без Telegram задай VITE_DEBUG_TELEGRAM_ID в .env.";
+export const TELEGRAM_WEBAPP_RETRY_MESSAGE =
+  "Не получилось получить данные, попробуй закрыть и открыть мини-приложение ещё раз.";
 
 const DEBUG_ENV_KEYS = ["VITE_DEBUG_TELEGRAM_ID", "VITTE_DEBUG_TELEGRAM_ID", "VITE_DEBUG_ID"];
 
@@ -80,10 +82,25 @@ export async function waitTelegramId(timeoutMs = 8000): Promise<number | undefin
   return undefined;
 }
 
+export function isTelegramWebApp(): boolean {
+  return typeof window !== "undefined" && Boolean(window.Telegram?.WebApp);
+}
+
+export async function getTelegramIdOptional(timeoutMs = 8000): Promise<number | undefined> {
+  return waitTelegramId(timeoutMs);
+}
+
 export async function requireTelegramId(timeoutMs = 8000): Promise<number> {
   const id = await waitTelegramId(timeoutMs);
   if (typeof id === "number" && Number.isFinite(id)) {
     return id;
   }
-  throw new Error(TELEGRAM_ID_ERROR_MESSAGE);
+  if (isTelegramWebApp()) {
+    throw new Error(TELEGRAM_WEBAPP_RETRY_MESSAGE);
+  }
+  const isProd = import.meta.env.MODE === "production" || import.meta.env.PROD;
+  if (!isProd) {
+    throw new Error(TELEGRAM_ID_ERROR_MESSAGE);
+  }
+  throw new Error(TELEGRAM_WEBAPP_RETRY_MESSAGE);
 }
