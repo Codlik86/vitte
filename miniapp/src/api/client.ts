@@ -11,7 +11,6 @@ import type {
   StoreBuyResponse,
 } from "./types";
 import { getTelegramIdOptional } from "../lib/telegramId";
-import { tg } from "../lib/telegram";
 
 const BASE_URL = (import.meta.env.VITE_BACKEND_URL ?? "").replace(/\/$/, "");
 
@@ -20,7 +19,9 @@ if (!BASE_URL) {
 }
 
 function buildInitDataString(): string | null {
-  const raw = (tg as any)?.initData;
+  if (typeof window === "undefined") return null;
+  const webApp = (window as any).Telegram?.WebApp;
+  const raw = webApp?.initData;
   if (typeof raw === "string" && raw.length > 0) {
     return raw;
   }
