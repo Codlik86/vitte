@@ -10,7 +10,6 @@ from pydantic import BaseModel
 
 from ..config import settings
 from ..logging_config import logger
-from .telegram_id import get_debug_telegram_id
 
 
 class TelegramWebAppUser(BaseModel):
@@ -18,6 +17,23 @@ class TelegramWebAppUser(BaseModel):
     username: Optional[str] = None
     first_name: Optional[str] = None
     last_name: Optional[str] = None
+
+
+def _get_debug_telegram_id() -> Optional[int]:
+    debug_keys = [
+        "VITTE_DEBUG_TELEGRAM_ID",
+        "VITTE_DEBUG_ID",
+        "vite_debug_id",
+        "VITE_DEBUG_TELEGRAM_ID",
+    ]
+    for key in debug_keys:
+        value = os.getenv(key)
+        if value:
+            try:
+                return int(value)
+            except ValueError:
+                continue
+    return None
 
 
 def _parse_init_data(init_data: str, bot_token: str) -> dict:
@@ -73,7 +89,7 @@ def extract_telegram_user(
 
     # Dev-only фоллбеки
     if allow_debug:
-        debug_id = get_debug_telegram_id()
+        debug_id = _get_debug_telegram_id()
         if debug_id:
             return TelegramWebAppUser(id=debug_id)
 
