@@ -200,6 +200,26 @@ export async function logAnalyticsEvent(eventType: string, payload?: Record<stri
   }
 }
 
+export async function logMiniAppOpen(startParam?: string | null): Promise<void> {
+  try {
+    const telegramId = await requireTelegramId().catch(() => null);
+    const body: Record<string, unknown> = {};
+    if (telegramId) {
+      body.telegram_id = telegramId;
+    }
+    if (startParam) {
+      body.start_param = startParam;
+    }
+    await fetch(`${BASE_URL}/api/events/miniapp_open`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+  } catch (error) {
+    console.warn("[Vitte] Failed to log miniapp open", error);
+  }
+}
+
 export async function fetchStoreProducts(): Promise<StoreProductsResponse> {
   const res = await fetch(`${BASE_URL}/api/store/products`);
   if (!res.ok) {

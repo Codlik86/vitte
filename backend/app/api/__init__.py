@@ -8,6 +8,7 @@ from .routes_store import router as store_router
 from .routes_analytics import router as analytics_router
 from .routes_features import router as features_router
 from .routes_bot_control import router as bot_control_router
+from .routes_events import router as events_router
 
 __all__ = [
     "health_router",
@@ -20,4 +21,5 @@ __all__ = [
     "analytics_router",
     "features_router",
     "bot_control_router",
+    "events_router",
 ]

@@ -11,6 +11,7 @@ type TelegramUser = {
 
 type TelegramInitData = {
   user?: TelegramUser;
+  start_param?: string;
 };
 
 type TelegramWebApp = {

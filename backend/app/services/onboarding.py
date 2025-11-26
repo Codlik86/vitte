@@ -3,12 +3,7 @@ from __future__ import annotations
 from aiogram.types import (
     InlineKeyboardMarkup,
     InlineKeyboardButton,
-    ReplyKeyboardMarkup,
-    KeyboardButton,
-    WebAppInfo,
 )
-
-from ..config import settings
 
 
 def build_terms_keyboard() -> InlineKeyboardMarkup:
@@ -49,21 +44,5 @@ def help_text() -> str:
         "— общаться с виртуальными персонажами,\n"
         "— делиться мыслями и получать тёплый отклик,\n"
         "— строить отношения по переписке в безопасном пространстве.\n\n"
-        "В Mini App ты выбираешь героиню, управляешь подпиской и улучшениями общения.\n\n"
-        "Чтобы начать, нажми «Открыть Vitte 💌» или открой мини-приложение в Telegram."
-    )
-
-
-def build_main_reply_keyboard() -> ReplyKeyboardMarkup:
-    return ReplyKeyboardMarkup(
-        keyboard=[
-            [
-                KeyboardButton(
-                    text="Открыть Vitte 💌",
-                    web_app=WebAppInfo(url=settings.miniapp_url),
-                )
-            ]
-        ],
-        resize_keyboard=True,
-        is_persistent=True,
+        "В Mini App ты выбираешь героиню, управляешь подпиской и улучшениями общения."
     )

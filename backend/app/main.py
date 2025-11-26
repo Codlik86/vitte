@@ -16,6 +16,7 @@ from .api import (
     store_router,
     analytics_router,
     features_router,
+    events_router,
     bot_control_router,
 )
 from .db import engine, Base, async_session_factory
@@ -23,7 +24,6 @@ from .logging_config import logger
 from . import models  # noqa: F401 ensures models are imported for metadata
 from .personas_seed import ensure_default_personas
 from .bot import bot, setup_bot_commands
-from .bot import setup_menu_button
 from .services.retention import start_retention_worker
 from .services.cleanup import start_cleanup_worker
 
@@ -225,8 +225,7 @@ async def on_startup():
         await ensure_default_personas(session)
     logger.info("Default personas ensured.")
     await setup_bot_commands(bot)
-    await setup_menu_button(bot)
-    logger.info("Bot commands and menu set up.")
+    logger.info("Bot commands set up.")
     logger.info("DB tables ensured.")
     global retention_task
     retention_task = await start_retention_worker()
@@ -248,4 +247,5 @@ app.include_router(payments_router)
 app.include_router(store_router)
 app.include_router(analytics_router)
 app.include_router(features_router)
+app.include_router(events_router)
 app.include_router(bot_control_router)

@@ -9,8 +9,7 @@ from aiogram.types import (
     WebAppInfo,
     BotCommand,
     CallbackQuery,
-    MenuButtonWebApp,
-    MenuButtonCommands,
+    BotCommandScopeDefault,
 )
 from datetime import datetime
 
@@ -30,7 +29,6 @@ from .services.onboarding import (
     build_terms_keyboard,
     onboarding_text,
     intro_text,
-    build_main_reply_keyboard,
     help_text,
 )
 from .models import User
@@ -56,19 +54,10 @@ PLAN_DURATIONS = {
 
 async def setup_bot_commands(bot: Bot) -> None:
     commands = [
-        BotCommand(command="start", description="Начать заново"),
-        BotCommand(command="app", description="Открыть Vitte (Mini App)"),
-        BotCommand(command="pay", description="Подписка и улучшения"),
-        BotCommand(command="help", description="О сервисе"),
+        BotCommand(command="pay", description="Подписка"),
+        BotCommand(command="help", description="Помощь"),
     ]
-    await bot.set_my_commands(commands)
-
-
-async def setup_menu_button(bot: Bot) -> None:
-    try:
-        await bot.set_chat_menu_button(menu_button=MenuButtonCommands())
-    except Exception as exc:
-        logger.error("Failed to set menu button: %s", exc)
+    await bot.set_my_commands(commands, scope=BotCommandScopeDefault())
 
 
 def build_miniapp_keyboard() -> InlineKeyboardMarkup:
@@ -188,7 +177,7 @@ async def cmd_app(message: Message):
     await message.answer(
         "Открываю мини-приложение Vitte 💌\n"
         "Через него можно оформить подписку и управлять персонажами.",
-        reply_markup=build_main_reply_keyboard(),
+        reply_markup=build_miniapp_keyboard(),
     )
 
 
@@ -214,7 +203,7 @@ async def cmd_help(message: Message, current_user: User | None = None):
             await session.commit()
             break
     if user and user.accepted_terms_at and user.is_adult_confirmed:
-        await message.answer(help_text(), reply_markup=build_main_reply_keyboard())
+        await message.answer(help_text(), reply_markup=build_miniapp_keyboard())
     else:
         await message.answer(
             "Чтобы использовать Vitte, нужно подтвердить возраст 18+ и принять правила.",
@@ -251,7 +240,7 @@ async def on_reject_terms(cb: CallbackQuery):
 
 async def send_intro(message: Message):
     try:
-        await message.answer(intro_text(), reply_markup=build_main_reply_keyboard())
+        await message.answer(intro_text(), reply_markup=build_miniapp_keyboard())
     except Exception as exc:
         logger.error("Failed to send intro: %s", exc)
 
@@ -268,7 +257,7 @@ async def on_user_message(message: Message, current_user: User | None = None, db
             await message.answer(
                 "Выбери персонажа в мини-приложении, чтобы начать общение. "
                 "Это нужно, чтобы приветствие и ответы были в стиле выбранного героя.",
-                reply_markup=build_main_reply_keyboard(),
+                reply_markup=build_miniapp_keyboard(),
             )
             continue
         try:
@@ -284,7 +273,7 @@ async def on_user_message(message: Message, current_user: User | None = None, db
         except PermissionError:
             await message.answer(
                 "Похоже, бесплатный лимит исчерпан. Открой мини-приложение Vitte, чтобы оформить подписку.",
-                reply_markup=build_main_reply_keyboard(),
+                reply_markup=build_miniapp_keyboard(),
             )
         except Exception as exc:
             logger.error("Failed to handle user message: %s", exc)

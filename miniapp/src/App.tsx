@@ -7,10 +7,12 @@ import { CharacterCustom } from "./pages/CharacterCustom";
 import { Store } from "./pages/Store";
 import { Settings } from "./pages/Settings";
 import { tg } from "./lib/telegram";
+import { useTrackMiniAppOpen } from "./hooks/useTrackMiniAppOpen";
 
 function App() {
   const location = useLocation();
   const navigate = useNavigate();
+  useTrackMiniAppOpen();
 
   useEffect(() => {
     const telegram = tg;
