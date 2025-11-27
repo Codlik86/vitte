@@ -17,7 +17,18 @@ class AccessMiddleware(BaseMiddleware):
     """
 
     SERVICE_COMMANDS = {"/start", "/app", "/pay", "/help", "/policy"}
-    ALLOWED_CALLBACK_PREFIXES = ("pay_", "plan_", "tariff_", "stars_", "yookassa_", "buy_")
+    ALLOWED_CALLBACK_PREFIXES = (
+        "pay_",
+        "plan_",
+        "tariff_",
+        "stars_",
+        "yookassa_",
+        "buy_",
+        "store_",
+        "invoice_",
+        "feat_",
+        "feature_",
+    )
 
     async def __call__(
         self,

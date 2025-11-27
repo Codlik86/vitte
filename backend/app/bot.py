@@ -32,8 +32,9 @@ from .services.onboarding import (
     intro_text,
     help_text,
 )
+from .services.stars import send_stars_invoice_for_subscription
 from .models import User
-from aiogram.types import LabeledPrice, PreCheckoutQuery
+from aiogram.types import PreCheckoutQuery
 import json
 
 bot = Bot(
@@ -318,23 +319,12 @@ async def pay_stars(cb: CallbackQuery):
     if not plan:
         await cb.answer("Тариф не найден", show_alert=True)
         return
-    if not settings.stars_provider_token:
-        await cb.message.answer(
-            "Оплата звёздами временно недоступна. Попробуй YooKassa или чуть позже."
-        )
-        await cb.answer()
-        return
-    amount_units = plan.price_stars * STAR_MULTIPLIER
-    payload = json.dumps({"product_code": plan_code})
     try:
-        await bot.send_invoice(
-            chat_id=cb.from_user.id,
-            title=f"Подписка Vitte — {plan.title}",
-            description="Премиум доступ к общению без лимитов и улучшенным ответам.",
-            payload=payload,
-            provider_token=settings.stars_provider_token,
-            currency="XTR",
-            prices=[LabeledPrice(label=plan.title, amount=amount_units)],
+        await send_stars_invoice_for_subscription(
+            bot,
+            cb.message,
+            plan_code=plan_code,
+            price_rub=plan.price_rub,
         )
         await cb.answer()
     except Exception as exc:
@@ -381,12 +371,23 @@ async def on_pre_checkout(pre_checkout_query: PreCheckoutQuery):
 async def on_successful_payment(message: Message):
     if message.from_user is None:
         return
-    payload_raw = message.successful_payment.invoice_payload if message.successful_payment else ""
-    try:
-        payload = json.loads(payload_raw)
-    except Exception:
-        payload = {}
-    product_code = payload.get("product_code")
+    success = message.successful_payment
+    payload_raw = success.invoice_payload if success else ""
+    currency = success.currency if success else ""
+    product_code = None
+
+    if currency == "XTR" and payload_raw:
+        if payload_raw.startswith("sub:"):
+            product_code = payload_raw.split(":", 1)[1]
+        elif payload_raw.startswith("feat:"):
+            product_code = f"feature_{payload_raw.split(':', 1)[1]}"
+    if product_code is None:
+        try:
+            payload = json.loads(payload_raw)
+        except Exception:
+            payload = {}
+        product_code = payload.get("product_code")
+
     async for session in get_session():
         user = await get_or_create_user_by_telegram_id(session, message.from_user.id)
         if product_code and product_code.startswith("sub_"):

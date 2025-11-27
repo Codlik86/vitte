@@ -9,7 +9,6 @@ from sqlalchemy.orm import selectinload
 
 from ..config import settings
 from ..db import get_session
-from ..integrations.stars_client import create_stars_invoice
 from ..integrations.yookassa_client import create_payment, verify_webhook_signature
 from ..models import Subscription, SubscriptionStatus, AccessStatus
 from ..schemas import PaymentPlanSchema, SubscribeRequest, SubscribeResponse
@@ -21,6 +20,8 @@ from ..services.payments import (
 )
 from ..users_service import get_or_create_user_by_telegram_id
 from ..services.telegram_id import get_or_raise_telegram_id
+from ..bot import bot
+from ..services.stars import send_stars_invoice_for_subscription
 
 router = APIRouter(prefix="/api/payments", tags=["payments"])
 
@@ -86,18 +87,16 @@ async def subscribe(
         subscription.confirmation_payload = payment
         confirmation = payment.get("confirmation")
     else:
-        invoice = create_stars_invoice(
-            user_id=user.id,
-            product_code=plan.code,
-            amount_stars=plan.price,
-            description=plan.description,
-            metadata={
-                "subscription_id": subscription.id,
-                "plan_code": plan.code,
-            },
-        )
-        subscription.confirmation_payload = invoice
-        confirmation = invoice
+        try:
+            await send_stars_invoice_for_subscription(
+                bot,
+                telegram_id,
+                plan_code=plan.code,
+                price_rub=plan.price,
+            )
+        except Exception:
+            await send_stars_invoice_for_subscription(bot, telegram_id, plan_code=plan.code, price_rub=plan.price)
+        confirmation = {"provider": "stars", "status": "invoice_sent"}
 
     await log_event(
         session,

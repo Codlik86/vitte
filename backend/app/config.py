@@ -21,8 +21,6 @@ class Settings(BaseSettings):
     yookassa_shop_id: str | None = None
     yookassa_secret_key: str | None = None
 
-    stars_provider_token: str | None = None
-
     free_messages_limit: int = 15
 
     miniapp_url: str = "https://vitte-pi.vercel.app"

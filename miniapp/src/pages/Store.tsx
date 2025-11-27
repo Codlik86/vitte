@@ -5,17 +5,9 @@ import { DebugTelegramBanner } from "../components/DebugTelegramBanner";
 import { fetchStoreProducts, fetchFeaturesStatus, createFeatureInvoice } from "../api/client";
 import type { StoreProduct, FeatureStatusItem } from "../api/types";
 import { useAccessStatus } from "../hooks/useAccessStatus";
-import { tg } from "../lib/telegram";
 
 type PurchaseState = {
   [code: string]: "idle" | "loading" | "success" | "error";
-};
-
-const RUB_PRICE: Record<string, number> = {
-  long_letters_month: 249,
-  voice_month: 279,
-  deep_mode_month: 259,
-  fantasy_pack_month: 199,
 };
 
 export function Store() {
@@ -56,18 +48,13 @@ export function Store() {
   const handlePurchase = async (productCode: string) => {
     setStates((prev) => ({ ...prev, [productCode]: "loading" }));
     try {
-      const link = await createFeatureInvoice(productCode);
-      if (tg?.openInvoice) {
-        tg.openInvoice(link);
-        // Не узнаем статус напрямую: обновим фичи чуть позже
-        setTimeout(() => {
-          fetchFeaturesStatus().then((latest) => setFeatures(latest.features));
-        }, 2000);
-        setStates((prev) => ({ ...prev, [productCode]: "idle" }));
-      } else {
-        window.open(link, "_blank");
-        setStates((prev) => ({ ...prev, [productCode]: "idle" }));
-      }
+      await createFeatureInvoice(productCode);
+      // Счёт отправлен в чат бота
+      setTimeout(() => {
+        fetchFeaturesStatus().then((latest) => setFeatures(latest.features));
+      }, 2000);
+      setStates((prev) => ({ ...prev, [productCode]: "idle" }));
+      alert("Счёт отправлен в чат Vitte. Оплати его в Telegram, чтобы активировать улучшение.");
     } catch (err) {
       setStates((prev) => ({ ...prev, [productCode]: "error" }));
       console.error(err);
@@ -109,6 +96,7 @@ export function Store() {
             : products.map((product) => {
                 const state = states[product.product_code] ?? "idle";
                 const feature = getFeatureByProduct(product.product_code);
+                const approxRub = Math.round(product.price_stars * 2.1);
                 const activeLabel =
                   feature && feature.until
                     ? `Активно до ${formatDate(feature.until) ?? "∞"}`
@@ -131,9 +119,7 @@ export function Store() {
                     </div>
                     <div className="mt-4 flex flex-wrap items-center justify-between gap-3">
                       <span className="text-sm text-white/80">
-                        {product.price_stars} ⭐
-                        {RUB_PRICE[product.product_code] ? ` · ≈ ${RUB_PRICE[product.product_code]} ₽` : ""} ·{" "}
-                        {product.type}
+                        {product.price_stars} ⭐ · ≈ {approxRub} ₽ · {product.type}
                       </span>
                       <button
                         className="rounded-full bg-gradient-to-r from-[#2c1a52] via-[#5a2b80] to-[#c23ba7] px-4 py-2 text-sm font-semibold text-white shadow-lg disabled:cursor-not-allowed disabled:opacity-60"

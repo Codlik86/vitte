@@ -196,7 +196,7 @@ export async function triggerBotPay(): Promise<void> {
   }
 }
 
-export async function createFeatureInvoice(productCode: string): Promise<string> {
+export async function createFeatureInvoice(productCode: string): Promise<void> {
   const telegramId = await getTelegramIdOptional();
   const res = await fetch(`${BASE_URL}/api/store/invoice?product_code=${productCode}`, {
     method: "POST",
@@ -207,8 +207,7 @@ export async function createFeatureInvoice(productCode: string): Promise<string>
     const text = await res.text();
     throw new Error(text || "Не удалось создать счёт");
   }
-  const data = (await res.json()) as { invoice_link: string };
-  return data.invoice_link;
+  return;
 }
 
 export async function logAnalyticsEvent(eventType: string, payload?: Record<string, unknown>): Promise<void> {

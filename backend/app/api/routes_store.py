@@ -1,13 +1,10 @@
 from __future__ import annotations
 
 from fastapi import APIRouter, Depends, HTTPException, Request, Query
-import json
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..db import get_session
-from ..integrations.stars_client import create_stars_invoice
 from ..models import Purchase, PurchaseStatus
-from ..config import settings
 from ..schemas import (
     StoreProductsResponse,
     StorePurchaseRequest,
@@ -21,9 +18,9 @@ from ..services.store import get_store_product, list_store_products
 from ..users_service import get_or_create_user_by_telegram_id
 from ..logging_config import logger
 from ..services.telegram_id import get_or_raise_telegram_id
-from ..billing.prices import FEATURE_PRICES_STARS
-from ..bot import bot, STAR_MULTIPLIER
-from aiogram.types import LabeledPrice
+from ..billing.prices import FEATURE_PRICES_STARS, RUB_PER_STAR
+from ..bot import bot
+from ..services.stars import send_stars_invoice_for_feature
 
 router = APIRouter(prefix="/api/store", tags=["store"])
 
@@ -57,29 +54,19 @@ async def purchase_product(
     telegram_id = await get_or_raise_telegram_id(request, explicit=payload.telegram_id)
     user = await get_or_create_user_by_telegram_id(session, telegram_id)
 
+    price_rub = int(round(product.price_stars * RUB_PER_STAR))
     try:
-        invoice = create_stars_invoice(
-            user_id=user.id,
-            product_code=product.product_code,
-            amount_stars=product.price_stars,
+        await send_stars_invoice_for_feature(
+            bot,
+            telegram_id,
+            feature_code=product.product_code,
+            title=product.title,
             description=product.description,
-            metadata={"product_code": product.product_code},
+            price_rub=price_rub,
         )
     except Exception as exc:  # noqa: BLE001
-        logger.error("Failed to create invoice for user %s product %s: %s", user.id, product.product_code, exc)
+        logger.error("Failed to send stars invoice for user %s product %s: %s", user.id, product.product_code, exc)
         raise HTTPException(status_code=502, detail="Invoice creation failed")
-
-    purchase = Purchase(
-        user_id=user.id,
-        product_code=product.product_code,
-        provider="stars",
-        amount=product.price_stars,
-        currency="STARS",
-        status=PurchaseStatus.PENDING,
-        meta=invoice,
-    )
-    session.add(purchase)
-    await session.flush()
 
     await log_event(
         session,
@@ -87,14 +74,13 @@ async def purchase_product(
         "purchase_started",
         {"product_code": product.product_code, "provider": "stars"},
     )
-
     await session.commit()
 
     return StorePurchaseResponse(
-        purchase_id=purchase.id,
-        provider=purchase.provider,
-        status=purchase.status.value,
-        invoice=invoice,
+        purchase_id=0,
+        provider="stars",
+        status="pending",
+        invoice={"provider": "stars", "status": "invoice_sent"},
     )
 
 
@@ -164,20 +150,17 @@ async def create_feature_invoice(
     price_stars = FEATURE_PRICES_STARS.get(product_code)
     if price_stars is None:
         raise HTTPException(status_code=404, detail="Feature not found")
-    if not settings.stars_provider_token:
-        raise HTTPException(status_code=502, detail="Stars provider token is not configured")
-    amount_units = price_stars * STAR_MULTIPLIER
-    payload = json.dumps({"product_code": f"feature_{product_code}"})
+    price_rub = int(round(price_stars * RUB_PER_STAR))
     try:
-        link = await bot.create_invoice_link(
+        await send_stars_invoice_for_feature(
+            bot,
+            telegram_id,
+            feature_code=product_code,
             title="Улучшения Vitte",
             description="Оплата улучшения для Vitte",
-            payload=payload,
-            provider_token=settings.stars_provider_token,
-            currency="XTR",
-            prices=[LabeledPrice(label=product_code, amount=amount_units)],
+            price_rub=price_rub,
         )
     except Exception as exc:
         logger.error("Failed to create feature invoice: %s", exc)
         raise HTTPException(status_code=502, detail="Не удалось создать счёт")
-    return {"invoice_link": link}
+    return {"ok": True, "invoice_sent": True}
