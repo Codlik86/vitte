@@ -54,8 +54,11 @@ PLAN_DURATIONS = {
 
 async def setup_bot_commands(bot: Bot) -> None:
     commands = [
+        BotCommand(command="start", description="Начать"),
+        BotCommand(command="app", description="Открыть мини-приложение"),
         BotCommand(command="pay", description="Подписка"),
         BotCommand(command="help", description="Помощь"),
+        BotCommand(command="policy", description="Правила сервиса"),
     ]
     await bot.set_my_commands(commands, scope=BotCommandScopeDefault())
 
@@ -174,10 +177,10 @@ async def cmd_start(message: Message):
 
 @dp.message(Command("app"))
 async def cmd_app(message: Message):
+    kb = build_miniapp_keyboard()
     await message.answer(
-        "Открываю мини-приложение Vitte 💌\n"
-        "Через него можно оформить подписку и управлять персонажами.",
-        reply_markup=build_miniapp_keyboard(),
+        "Чтобы открыть мини-приложение Vitte, нажми на кнопку ниже.",
+        reply_markup=kb,
     )
 
 
@@ -203,12 +206,21 @@ async def cmd_help(message: Message, current_user: User | None = None):
             await session.commit()
             break
     if user and user.accepted_terms_at and user.is_adult_confirmed:
-        await message.answer(help_text(), reply_markup=build_miniapp_keyboard())
+        await message.answer(help_text())
     else:
         await message.answer(
             "Чтобы использовать Vitte, нужно подтвердить возраст 18+ и принять правила.",
             reply_markup=build_terms_keyboard(),
         )
+
+
+@dp.message(Command("policy"))
+async def cmd_policy(message: Message):
+    await message.answer(
+        "Правила сервиса Vitte: сервис 18+, виртуальное общение, без офлайн-встреч и эскорта. "
+        "При использовании ты подтверждаешь совершеннолетие и согласие с условиями. "
+        "Полный текст правил доступен в мини-приложении."
+    )
 
 
 @dp.callback_query(F.data == "onb_accept_terms")
@@ -240,7 +252,7 @@ async def on_reject_terms(cb: CallbackQuery):
 
 async def send_intro(message: Message):
     try:
-        await message.answer(intro_text(), reply_markup=build_miniapp_keyboard())
+        await message.answer(intro_text())
     except Exception as exc:
         logger.error("Failed to send intro: %s", exc)
 
@@ -257,7 +269,6 @@ async def on_user_message(message: Message, current_user: User | None = None, db
             await message.answer(
                 "Выбери персонажа в мини-приложении, чтобы начать общение. "
                 "Это нужно, чтобы приветствие и ответы были в стиле выбранного героя.",
-                reply_markup=build_miniapp_keyboard(),
             )
             continue
         try:
@@ -273,7 +284,6 @@ async def on_user_message(message: Message, current_user: User | None = None, db
         except PermissionError:
             await message.answer(
                 "Похоже, бесплатный лимит исчерпан. Открой мини-приложение Vitte, чтобы оформить подписку.",
-                reply_markup=build_miniapp_keyboard(),
             )
         except Exception as exc:
             logger.error("Failed to handle user message: %s", exc)

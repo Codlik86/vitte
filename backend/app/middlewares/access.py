@@ -16,6 +16,9 @@ class AccessMiddleware(BaseMiddleware):
     и статусом подписки.
     """
 
+    SERVICE_COMMANDS = {"/start", "/app", "/pay", "/help", "/policy"}
+    ALLOWED_CALLBACK_PREFIXES = ("pay_", "plan_", "tariff_", "stars_", "yookassa_", "buy_")
+
     async def __call__(
         self,
         handler: Callable[[Update, dict[str, Any]], Awaitable[Any]],
@@ -41,6 +44,9 @@ class AccessMiddleware(BaseMiddleware):
         if text.startswith("/health"):
             return await handler(event, data)
 
+        # Сервисные команды не считаем и не блокируем
+        # (проверяем позже, после загрузки пользователя, чтобы заполнить data)
+
         # Подключаем сессию БД через зависимость get_session
         async for session in get_session():  # type: AsyncSession
             user = await self._get_or_create_user(session, telegram_id)
@@ -57,10 +63,15 @@ class AccessMiddleware(BaseMiddleware):
                 await session.commit()
                 return await handler(event, data)
 
-            # Считаем бесплатные сообщения только для обычного текста
-            # и только если это не команда /pay
-            if text.startswith("/pay"):
-                await self._log_event(session, user, "pay_command_called", {})
+            # Разрешаем оплату через callbacks, даже при лимите
+            if callback and callback.data and callback.data.startswith(self.ALLOWED_CALLBACK_PREFIXES):
+                await session.commit()
+                return await handler(event, data)
+
+            # Сервисные команды не считаем и не блокируем
+            if text.startswith("/"):
+                if text.startswith("/pay"):
+                    await self._log_event(session, user, "pay_command_called", {})
                 await session.commit()
                 return await handler(event, data)
 
