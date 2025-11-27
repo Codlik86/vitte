@@ -10,6 +10,7 @@ from aiogram.types import (
     BotCommand,
     CallbackQuery,
     BotCommandScopeDefault,
+    ReplyKeyboardRemove,
 )
 from datetime import datetime
 
@@ -206,7 +207,7 @@ async def cmd_help(message: Message, current_user: User | None = None):
             await session.commit()
             break
     if user and user.accepted_terms_at and user.is_adult_confirmed:
-        await message.answer(help_text())
+        await message.answer(help_text(), reply_markup=ReplyKeyboardRemove())
     else:
         await message.answer(
             "Чтобы использовать Vitte, нужно подтвердить возраст 18+ и принять правила.",
@@ -252,7 +253,7 @@ async def on_reject_terms(cb: CallbackQuery):
 
 async def send_intro(message: Message):
     try:
-        await message.answer(intro_text())
+        await message.answer(intro_text(), reply_markup=ReplyKeyboardRemove())
     except Exception as exc:
         logger.error("Failed to send intro: %s", exc)
 

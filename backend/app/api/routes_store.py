@@ -7,6 +7,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from ..db import get_session
 from ..integrations.stars_client import create_stars_invoice
 from ..models import Purchase, PurchaseStatus
+from ..config import settings
 from ..schemas import (
     StoreProductsResponse,
     StorePurchaseRequest,
@@ -163,6 +164,8 @@ async def create_feature_invoice(
     price_stars = FEATURE_PRICES_STARS.get(product_code)
     if price_stars is None:
         raise HTTPException(status_code=404, detail="Feature not found")
+    if not settings.stars_provider_token:
+        raise HTTPException(status_code=502, detail="Stars provider token is not configured")
     amount_units = price_stars * STAR_MULTIPLIER
     payload = json.dumps({"product_code": f"feature_{product_code}"})
     try:
@@ -170,7 +173,7 @@ async def create_feature_invoice(
             title="Улучшения Vitte",
             description="Оплата улучшения для Vitte",
             payload=payload,
-            provider_token="",
+            provider_token=settings.stars_provider_token,
             currency="XTR",
             prices=[LabeledPrice(label=product_code, amount=amount_units)],
         )
