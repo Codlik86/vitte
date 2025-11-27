@@ -38,31 +38,33 @@ function App() {
   }, [location.pathname, navigate]);
 
   return (
-    <Routes>
-      <Route path="/" element={<CharactersList />} />
-      <Route path="/paywall" element={<Paywall />} />
-      <Route path="/characters" element={<CharactersList />} />
-      <Route path="/characters/:id" element={<CharacterDetails />} />
-      <Route path="/characters/custom" element={<CharacterCustom />} />
-      <Route path="/store" element={<Store />} />
-      <Route path="/settings" element={<Settings />} />
-      <Route
-        path="*"
-        element={
-          <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white">
-            <div className="text-center space-y-2">
-              <p className="text-sm text-white/60">Страница не найдена</p>
-              <Link
-                to="/"
-                className="inline-flex px-4 py-2 rounded-2xl bg-white text-slate-950 text-sm"
-              >
-                На главную
-              </Link>
+    <div className="safe-top">
+      <Routes>
+        <Route path="/" element={<CharactersList />} />
+        <Route path="/paywall" element={<Paywall />} />
+        <Route path="/characters" element={<CharactersList />} />
+        <Route path="/characters/:id" element={<CharacterDetails />} />
+        <Route path="/characters/custom" element={<CharacterCustom />} />
+        <Route path="/store" element={<Store />} />
+        <Route path="/settings" element={<Settings />} />
+        <Route
+          path="*"
+          element={
+            <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white">
+              <div className="text-center space-y-2">
+                <p className="text-sm text-white/60">Страница не найдена</p>
+                <Link
+                  to="/"
+                  className="inline-flex px-4 py-2 rounded-2xl bg-white text-slate-950 text-sm"
+                >
+                  На главную
+                </Link>
+              </div>
             </div>
-          </div>
-        }
-      />
-    </Routes>
+          }
+        />
+      </Routes>
+    </div>
   );
 }
 
