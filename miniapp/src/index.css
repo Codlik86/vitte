@@ -8,5 +8,5 @@ body {
 }
 
 .safe-top {
-  padding-top: calc(env(safe-area-inset-top, 0px) + 22px);
+  padding-top: calc(env(safe-area-inset-top, 0px) + 2px);
 }
