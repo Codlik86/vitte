@@ -31,7 +31,7 @@ CUSTOM_PERSONA_PHOTO = "/personas/custom-chat.jpg"
 PERSONA_PHOTO_SLUGS = {
     "лина": "lina",
     "эва": "eva",
-    "мия": "mia",
+    "марианна": "mia",
     "фэй": "fey",
     "арина": "arina",
     "аки": "aki",
