@@ -93,6 +93,12 @@ def pay_plans_keyboard() -> InlineKeyboardMarkup:
             [_format_plan_button("sub_week")],
             [_format_plan_button("sub_month")],
             [_format_plan_button("sub_quarter")],
+            [
+                InlineKeyboardButton(
+                    text="Купить ⭐ у Telegram",
+                    url="https://t.me/PremiumBot",
+                )
+            ],
         ]
     )
 
