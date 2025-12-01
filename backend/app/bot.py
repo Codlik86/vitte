@@ -106,12 +106,6 @@ def pay_methods_keyboard(plan_code: str) -> InlineKeyboardMarkup:
                     callback_data=f"pay_stars:{plan_code}",
                 )
             ],
-            [
-                InlineKeyboardButton(
-                    text="Оплатить через YooKassa",
-                    callback_data=f"pay_yk:{plan_code}",
-                )
-            ],
         ]
     )
 
@@ -304,7 +298,7 @@ async def pay_plan_selected(cb: CallbackQuery):
     text = (
         f"Тариф «{plan.title}»\n"
         f"Цена: {plan.price_rub}₽ или {plan.price_stars}⭐️\n\n"
-        "Выбери способ оплаты:"
+        "Оплатить можно через Telegram Stars."
     )
     await cb.message.answer(text, reply_markup=pay_methods_keyboard(plan_code))
     await cb.answer()
@@ -330,33 +324,6 @@ async def pay_stars(cb: CallbackQuery):
     except Exception as exc:
         logger.error("Failed to send stars invoice: %s", exc)
         await cb.answer("Не получилось создать счёт", show_alert=True)
-
-
-@dp.callback_query(F.data.startswith("pay_yk:"))
-async def pay_yk(cb: CallbackQuery):
-    if cb.from_user is None:
-        return
-    plan_code = cb.data.split(":", 1)[1]
-    plan = SUBSCRIPTION_PLANS.get(plan_code)
-    if not plan:
-        await cb.answer("Тариф не найден", show_alert=True)
-        return
-    # Заглушка YooKassa с попыткой ссылки
-    link = await create_yookassa_payment_link(plan_code, cb.from_user.id)
-    if link:
-        kb = InlineKeyboardMarkup(
-            inline_keyboard=[[InlineKeyboardButton(text="Оплатить в YooKassa", url=link)]]
-        )
-        await cb.message.answer(
-            f"Тариф «{plan.title}» — {plan.price_rub}₽.\nОплатить через YooKassa:",
-            reply_markup=kb,
-        )
-    else:
-        await cb.message.answer(
-            "Ссылка на оплату через YooKassa будет доступна чуть позже. "
-            "Сейчас можно оформить подписку за звёзды внутри Telegram."
-        )
-    await cb.answer()
 
 
 @dp.pre_checkout_query()
