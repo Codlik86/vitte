@@ -20,6 +20,7 @@ from aiogram.types import PreCheckoutQuery
 from .config import settings
 from .db import get_session
 from .logging_config import logger
+from .models import User
 from .middlewares.access import AccessMiddleware
 from .middlewares.terms_gate import TermsGateMiddleware
 from .services.chat_flow import generate_chat_reply
