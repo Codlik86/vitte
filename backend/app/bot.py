@@ -14,28 +14,28 @@ from aiogram.types import (
 )
 from datetime import datetime
 
+import json
+from aiogram.types import PreCheckoutQuery
+
 from .config import settings
+from .db import get_session
 from .logging_config import logger
 from .middlewares.access import AccessMiddleware
 from .middlewares.terms_gate import TermsGateMiddleware
 from .services.chat_flow import generate_chat_reply
-from .services.subscriptions import get_user_subscription_status, ensure_premium_for_user
-from .billing.prices import SUBSCRIPTION_PLANS, FEATURE_PRICES_STARS
 from .services.features import apply_product_purchase
-from .services.telegram_id import get_debug_telegram_id
-from .services.payments import create_yookassa_payment_link
-from .db import get_session
-from .users_service import get_or_create_user_by_telegram_id
 from .services.onboarding import (
     build_terms_keyboard,
     onboarding_text,
     intro_text,
     help_text,
 )
+from .services.payments import create_yookassa_payment_link
 from .services.stars import send_stars_invoice_for_subscription
-from .models import User
-from aiogram.types import PreCheckoutQuery
-import json
+from .services.subscriptions import ensure_premium_for_user, get_user_subscription_status
+from .services.telegram_id import get_debug_telegram_id
+from .users_service import get_or_create_user_by_telegram_id
+from .utils.async_helpers import ensure_async_iter
 
 bot = Bot(
     token=settings.telegram_bot_token,
@@ -264,7 +264,13 @@ async def on_user_message(message: Message, current_user: User | None = None, db
     if message.from_user is None:
         return
     telegram_id = message.from_user.id
-    session_iter = [db_session] if db_session is not None and current_user is not None else get_session()
+    session_iter_raw = [db_session] if db_session is not None and current_user is not None else get_session()
+    session_iter = ensure_async_iter(session_iter_raw)
+    logger.debug(
+        "on_user_message: session_iter type=%s, repr=%s",
+        type(session_iter_raw),
+        str(session_iter_raw)[:400],
+    )
     async for session in session_iter:
         user = current_user or await get_or_create_user_by_telegram_id(session, telegram_id)
         if user.active_persona_id is None:
