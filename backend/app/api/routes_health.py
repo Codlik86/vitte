@@ -49,7 +49,7 @@ async def health_extended(session: AsyncSession = Depends(get_session)):
             logger.error("Healthcheck qdrant failed: %s", exc)
             statuses["qdrant"] = "error"
 
-    if settings.openai_api_key:
+    if settings.proxyapi_api_key or settings.openai_api_key:
         statuses["llm"] = "skipped"  # avoid external call in health
 
     retention = retention_status()

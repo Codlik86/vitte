@@ -1,5 +1,8 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
+OPENROUTER_BASE_URL = "https://api.proxyapi.ru/openrouter/v1"
+DEFAULT_VITTE_MODEL = "deepseek/deepseek-v3.2"
+
 
 class Settings(BaseSettings):
     env: str = "dev"
@@ -16,7 +19,12 @@ class Settings(BaseSettings):
     qdrant_url: str | None = None
     qdrant_api_key: str | None = None
 
-    openai_api_key: str
+    proxyapi_api_key: str
+    openrouter_base_url: str = OPENROUTER_BASE_URL
+    vitte_llm_model: str = DEFAULT_VITTE_MODEL
+    vitte_llm_model_strong: str = DEFAULT_VITTE_MODEL
+
+    openai_api_key: str | None = None  # legacy, не используется в Vitte
 
     yookassa_shop_id: str | None = None
     yookassa_secret_key: str | None = None
