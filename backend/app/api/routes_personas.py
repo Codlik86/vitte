@@ -28,14 +28,11 @@ router = APIRouter(prefix="/api/personas", tags=["personas"])
 DEFAULT_SHORT_DESCRIPTION = "Базовый персонаж"
 DEFAULT_PERSONA_PHOTO = "/personas/custom-chat.jpg"
 CUSTOM_PERSONA_PHOTO = "/personas/custom-chat.jpg"
+ALLOWED_DEFAULT_PERSONA_NAMES = ("Лина", "Марианна", "Аки")
 PERSONA_PHOTO_SLUGS = {
     "лина": "lina",
-    "эва": "eva",
-    "марианна": "mia",
-    "фэй": "fey",
-    "арина": "arina",
+    "марианна": "marianna",
     "аки": "aki",
-    "хана": "hana",
     "свой герой": "custom",
     "custom": "custom",
 }
@@ -157,7 +154,12 @@ async def list_personas(
 
     result = await session.execute(
         select(Persona).where(
-            (Persona.is_default.is_(True)) | (Persona.owner_user_id == user.id)
+            (
+                (Persona.is_default.is_(True))
+                & (Persona.is_active.is_(True))
+                & (Persona.name.in_(ALLOWED_DEFAULT_PERSONA_NAMES))
+            )
+            | (Persona.owner_user_id == user.id)
         ).order_by(Persona.id)
     )
     personas = result.scalars().all()
@@ -191,6 +193,8 @@ async def get_persona(
     persona = result.scalar_one_or_none()
     if persona is None:
         raise HTTPException(status_code=404, detail="Persona not found")
+    if persona.is_default and (not persona.is_active or persona.name not in ALLOWED_DEFAULT_PERSONA_NAMES):
+        raise HTTPException(status_code=404, detail="Persona not available")
 
     user_id = user.id if user else None
     active_id = user.active_persona_id if user else None
@@ -214,7 +218,11 @@ async def select_persona(
         select(Persona).where(Persona.id == persona_id)
     )
     persona = persona_result.scalar_one_or_none()
-    if persona is None or not _is_persona_owned_or_default(persona, user.id):
+    if (
+        persona is None
+        or (persona.is_default and (not persona.is_active or persona.name not in ALLOWED_DEFAULT_PERSONA_NAMES))
+        or not _is_persona_owned_or_default(persona, user.id)
+    ):
         raise HTTPException(status_code=404, detail="Persona not found")
 
     await _apply_persona_selection(session, user, persona)
@@ -236,7 +244,11 @@ async def select_persona_and_greet(
         select(Persona).where(Persona.id == payload.persona_id)
     )
     persona = persona_result.scalar_one_or_none()
-    if persona is None or not _is_persona_owned_or_default(persona, user.id):
+    if (
+        persona is None
+        or (persona.is_default and (not persona.is_active or persona.name not in ALLOWED_DEFAULT_PERSONA_NAMES))
+        or not _is_persona_owned_or_default(persona, user.id)
+    ):
         raise HTTPException(status_code=404, detail="Persona not found")
 
     await _apply_persona_selection(session, user, persona)

@@ -18,6 +18,7 @@ DEFAULT_PERSONAS = [
         "hooks": ["совместные тренировки", "ночной спортзал", "сауна после зала", "флирт между подходами"],
         "triggers_positive": ["честные признания", "рассказывать, в каких позах она тренируется", "любить учиться новому"],
         "triggers_negative": ["холодность и игнор", "обесценивание её усилий", "грубые шутки без такта"],
+        "is_active": True,
     },
     {
         "name": "Эва",
@@ -32,6 +33,7 @@ DEFAULT_PERSONAS = [
         "hooks": ["ночные переписки", "челленджи «кто решится»", "придумывать совместные игры"],
         "triggers_positive": ["быть услышанной", "игра слов", "смелость делиться мечтами"],
         "triggers_negative": ["скука", "нежелание открываться", "обесценивание чувств"],
+        "is_active": False,
     },
     {
         "name": "Марианна",
@@ -51,6 +53,7 @@ DEFAULT_PERSONAS = [
             "шёпот, намёки и личные секреты",
         ],
         "triggers_negative": ["насмешки над чужими фантазиями", "грубость без согласия", "равнодушие"],
+        "is_active": True,
     },
     {
         "name": "Фэй",
@@ -65,6 +68,7 @@ DEFAULT_PERSONAS = [
         "hooks": ["придумывать легенды", "переименовывать друг друга", "играть в «а что если»"],
         "triggers_positive": ["чувство юмора", "спонтанность", "доверие к её идеям"],
         "triggers_negative": ["жёсткие рамки", "насмешки над её фантазиями", "недоверие"],
+        "is_active": False,
     },
     {
         "name": "Арина",
@@ -79,6 +83,7 @@ DEFAULT_PERSONAS = [
         "hooks": ["ритуалы благодарности", "письма самому себе", "маленькие праздничные традиции"],
         "triggers_positive": ["открытые эмоции", "бережное отношение", "готовность замедлиться"],
         "triggers_negative": ["грубые шутки", "торопливость", "нечувствительность к чужой боли"],
+        "is_active": False,
     },
     {
         "name": "Аки",
@@ -93,6 +98,7 @@ DEFAULT_PERSONAS = [
         "hooks": ["ночные прогулки по городу", "манга и саундтреки", "тайные обещания"],
         "triggers_positive": ["терпение", "уважение к её темпу", "интеллигентность"],
         "triggers_negative": ["давление", "надменность", "игры на ревность"],
+        "is_active": True,
     },
     {
         "name": "Хана",
@@ -107,6 +113,7 @@ DEFAULT_PERSONAS = [
         "hooks": ["ночные саундтреки", "совместные мечты", "сохранённые цитаты"],
         "triggers_positive": ["внимание к мелочам", "искренние комплименты", "терпение"],
         "triggers_negative": ["насмешки над мечтами", "холодность", "спешка"],
+        "is_active": False,
     },
 ]
 
@@ -126,7 +133,7 @@ async def ensure_default_personas(session: AsyncSession):
             select(Persona).where(Persona.name == p["name"], Persona.is_default.is_(True))
         )
         persona = result.scalar_one_or_none()
-        key = f"default_{p['name']}".lower().replace(" ", "_")
+        key = (p.get("key") or f"default_{p['name']}").lower().replace(" ", "_")
         if persona:
             if not persona.key:
                 persona.key = key
@@ -148,7 +155,6 @@ async def ensure_default_personas(session: AsyncSession):
             persona.is_default = True
             persona.is_custom = False
             persona.owner_user_id = None
-            persona.is_active = True
             persona.short_lore = p.get("short_lore")
             persona.background = p.get("background")
             persona.legend_full = _combine_legend(p)
@@ -158,6 +164,7 @@ async def ensure_default_personas(session: AsyncSession):
             persona.hooks = p.get("hooks")
             persona.triggers_positive = p.get("triggers_positive")
             persona.triggers_negative = p.get("triggers_negative")
+            persona.is_active = p.get("is_active", True)
         else:
             persona = Persona(
                 key=key,
@@ -177,7 +184,6 @@ async def ensure_default_personas(session: AsyncSession):
                 long_description=None,
                 is_default=True,
                 is_custom=False,
-                is_active=True,
                 owner_user_id=None,
                 short_lore=p.get("short_lore"),
                 background=p.get("background"),
@@ -188,6 +194,7 @@ async def ensure_default_personas(session: AsyncSession):
                 hooks=p.get("hooks"),
                 triggers_positive=p.get("triggers_positive"),
                 triggers_negative=p.get("triggers_negative"),
+                is_active=p.get("is_active", True),
             )
             session.add(persona)
 

@@ -48,6 +48,7 @@ export function CharactersList() {
   }, []);
 
   const renderCards = () => {
+    const allowedNames = new Set(["лина", "марианна", "аки"]);
     const personasWithCustom: Array<PersonaListItem | CustomPersonaEntry> = [
       {
         id: "custom",
@@ -55,7 +56,9 @@ export function CharactersList() {
         short_description: "Создай собственного персонажа",
         isCustomEntry: true,
       },
-      ...items.filter((p) => !p.is_custom),
+      ...items.filter(
+        (p) => !p.is_custom && allowedNames.has(p.name.trim().toLowerCase())
+      ),
     ];
 
     if (loading) {

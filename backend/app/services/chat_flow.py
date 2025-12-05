@@ -7,24 +7,37 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException
 
 from ..models import User, Persona, Dialog, Message
-from ..integrations.openai_client import simple_chat_completion
+from ..integrations.llm_client import simple_chat_completion
 from ..services.access import build_access_status
 from ..logging_config import logger
 from ..services.llm_adapter import (
-    calculate_trust_level,
     describe_mode,
     build_story_context,
     should_add_ritual,
     format_memory,
 )
 from ..services.memory import collect_recent_memory
-from ..story_cards import get_story_cards_for_persona, StoryCard
+from ..story_cards import get_story_cards_for_persona, resolve_story_id, StoryCard
 from ..services.features import collect_feature_states, build_feature_instruction
 from ..integrations.tts_client import synthesize_voice
 from ..services.safety import run_safety_check, SafetyContext, supportive_reply
 from ..services.intimacy import evaluate_intimacy
 from ..services.prompt_builder import ChatPromptContext, build_chat_messages
 from ..services.subscriptions import get_user_subscription_status
+from ..services.relationship_state import (
+    RelationshipState,
+    get_relationship_state,
+    save_relationship_state,
+    update_relationship_state,
+)
+from ..services.message_analysis import analyze_message
+from ..services.relationship_state import (
+    RelationshipState,
+    get_relationship_state,
+    save_relationship_state,
+    update_relationship_state,
+)
+from ..services.message_analysis import analyze_message
 
 
 class ChatResult:
@@ -106,10 +119,70 @@ async def _resolve_persona(session: AsyncSession, user: User, persona_id: int | 
 def _find_story_card(persona: Persona, story_id: str | None) -> StoryCard | None:
     if not story_id:
         return None
+    resolved_id = resolve_story_id(story_id)
     for card in get_story_cards_for_persona(persona.archetype, persona.name):
-        if card.id == story_id:
+        if card.id == resolved_id:
             return card
     return None
+
+
+async def _recent_dialogue_snippet(session: AsyncSession, dialog: Dialog, *, limit: int = 12) -> str:
+    stmt = (
+        select(Message)
+        .where(Message.dialog_id == dialog.id)
+        .order_by(Message.created_at.desc())
+        .limit(limit)
+    )
+    result = await session.execute(stmt)
+    messages = list(reversed(result.scalars().all()))
+    lines: list[str] = []
+    for msg in messages:
+        role = "Пользователь" if msg.role == "user" else "Персонаж"
+        content = (msg.content or "").strip()
+        preview = content[:500]
+        lines.append(f"{role}: {preview}")
+    return "\n".join(lines).strip()
+
+
+def _apply_relationship_deltas(
+    state: RelationshipState,
+    analysis,
+    message_count: int,
+) -> RelationshipState:
+    trust_delta = 0
+    respect_delta = 0
+    closeness_delta = 0
+
+    if analysis.is_polite or analysis.shares_feelings:
+        trust_delta += 2
+        respect_delta += 1
+        closeness_delta += 1
+    if analysis.is_romantic or analysis.is_flirty:
+        trust_delta += 2
+        closeness_delta += 3
+    if analysis.is_rude:
+        trust_delta -= 3
+        respect_delta -= 2
+        closeness_delta -= 3
+    if analysis.is_pushy:
+        respect_delta -= 2
+        closeness_delta -= 2
+    if analysis.asks_for_intimacy and state.closeness_level > 25:
+        closeness_delta += 1
+
+    if not analysis.is_rude and not analysis.is_pushy and state.respect_score < 0:
+        respect_delta += 1  # мягкое восстановление
+
+    if message_count > 3 and not analysis.is_rude and not analysis.is_pushy:
+        closeness_delta += 1
+        trust_delta += 1
+
+    return update_relationship_state(
+        state,
+        trust_delta=trust_delta,
+        respect_delta=respect_delta,
+        closeness_delta=closeness_delta,
+    )
 
 
 def _story_prompt_with_meta(card: StoryCard | None) -> tuple[str | None, str | None]:
@@ -128,35 +201,50 @@ def _story_prompt_with_meta(card: StoryCard | None) -> tuple[str | None, str | N
 def _build_greeting_user_message(
     mode: str,
     extra_description: str | None,
+    *,
+    story_card: StoryCard | None,
+    persona_name: str,
+    recent_dialogue: str | None,
+    relationship_state: RelationshipState | None,
 ) -> str:
     prompt_extra = (
-        f"Дополнительный контекст от пользователя: {extra_description.strip()}."
+        f" Дополнительный контекст от пользователя: {extra_description.strip()}."
         if extra_description
         else ""
     )
 
-    if mode == "greeting_return":
+    if recent_dialogue:
         return (
-            "Сформируй короткое приветствие при повторном контакте. "
-            "Скажи, что рада его снова слышать, мягко напомни, что помнишь детали прошлых разговоров, "
-            "и задай один лёгкий вопрос, чтобы продолжить. "
-            "Говори естественно и не раскрывай, что получил инструкцию. "
+            "Пользователь вернулся к диалогу. "
+            "Используй последние сообщения, чтобы продолжить разговор и подхватить темы, без повторов. "
+            "Не начинай заново, покажи, что помнишь детали. "
+            f"Последние сообщения:\n{recent_dialogue}\n"
+            "Сделай первую реплику живой и без режиссёрских ремарок. "
+            f"{prompt_extra}"
+        ).strip()
+
+    if story_card:
+        return (
+            f"Начинается новая сцена «{story_card.title}» для персонажа {persona_name}. "
+            "Ответь как персонаж, сразу подхвати вводную и атмосферу сцены. "
+            "Избегай шаблонных приветствий и режиссёрских ремарок; говори живо и по делу. "
+            f"Вводная сцены: {story_card.prompt} "
             f"{prompt_extra}"
         ).strip()
 
     if mode == "greeting_updated":
         return (
-            "Сформируй приветствие после того, как собеседник обновил настройки. "
-            "Отметь, что чувствуешь новую атмосферу, но не вопросами про настройку — говори про ощущения, "
-            "пригласи продолжить диалог и задай один мягкий вопрос. "
+            "Настройки персонажа только что обновились. "
+            "Отметь новую атмосферу ощущениями, пригласи продолжить диалог и задай один мягкий вопрос. "
+            "Без ремарок в скобках, говори живо."
             f"{prompt_extra}"
         ).strip()
 
     # default to first
     return (
-        "Сформируй первое приветствие для пользователя. Представься от имени персонажа, "
+        "Сформируй первое приветствие для пользователя: представься от имени персонажа, "
         "поддержи тёплую атмосферу, задай один безопасный вопрос и пригласи продолжить диалог. "
-        "Не упоминай, что получил инструкцию. "
+        "Не используй режиссёрские ремарки."
         f"{prompt_extra}"
     ).strip()
 
@@ -193,6 +281,7 @@ async def generate_chat_reply(
     dialog: Dialog | None = None
     message_count = 0
     memory_context = "Нет особых воспоминаний, но персонаж открыт к новым."
+    relationship_state = await get_relationship_state(session, user.id, persona.id)
 
     if not preview_story:
         dialog = await _get_or_create_dialog(session, user, persona, story_id=story_id)
@@ -200,13 +289,21 @@ async def generate_chat_reply(
             select(func.count(Message.id)).where(Message.dialog_id == dialog.id)
         )
         message_count = message_count_result.scalar_one() or 0
-        memory_context = format_memory(await collect_recent_memory(session, dialog))
+        memory_context = format_memory(await collect_recent_memory(session, dialog, limit=12))
     # история диалога
     effective_story_id = story_id or (dialog.entry_story_id if dialog else None)
     story_card = _find_story_card(persona, effective_story_id)
     story_prompt, story_meta = _story_prompt_with_meta(story_card)
+    recent_dialogue = await _recent_dialogue_snippet(session, dialog, limit=12) if dialog and message_count > 0 else None
 
-    trust_level = calculate_trust_level(message_count, access.get("has_subscription", False))
+    analysis = analyze_message(input_text)
+    updated_relationship = (
+        _apply_relationship_deltas(relationship_state, analysis, message_count)
+        if not preview_story
+        else relationship_state
+    )
+
+    trust_level = updated_relationship.trust_level
     mode_instruction = describe_mode(mode, atmosphere)
     story_instruction = build_story_context(story_prompt)
     if story_meta:
@@ -220,6 +317,8 @@ async def generate_chat_reply(
     feature_flags = {
         "has_subscription": access.get("has_subscription", False),
         "deep_mode": bool(getattr(deep_state, "active", False)),
+        "closeness_level": updated_relationship.closeness_level,
+        "respect_score": updated_relationship.respect_score,
     }
     safety_result = run_safety_check(
         input_text,
@@ -239,6 +338,7 @@ async def generate_chat_reply(
         memory_short=memory_context,
         memory_long=None,
         story_context=story_instruction,
+        recent_dialogue=recent_dialogue,
         feature_instruction=feature_instruction,
         feature_mode=feature_mode,
         voice_enabled=bool(getattr(voice_state, "active", False)),
@@ -246,6 +346,7 @@ async def generate_chat_reply(
         intimacy_label=intimacy.label,
         can_engage_intimately=intimacy.can_engage_intimately,
         safety_needs_warmup=safety_result.needs_warmup,
+        relationship_state=updated_relationship,
     )
     messages, _ = build_chat_messages(prompt_ctx, input_text)
 
@@ -279,6 +380,7 @@ async def generate_chat_reply(
         session.add(Message(dialog_id=dialog.id, role="assistant", content=reply))
         if not skip_increment and not access.get("has_subscription", False):
             user.free_messages_used += 1
+        await save_relationship_state(session, user.id, persona.id, updated_relationship)
         await session.commit()
 
     return ChatResult(
@@ -310,6 +412,7 @@ async def generate_greeting_reply(
     Генерация приветствия (первое, повторное или после обновления настроек),
     сохранение его в диалог и возврат текста.
     """
+    relationship_state = await get_relationship_state(session, user.id, persona.id)
     if message_count is None:
         message_count_result = await session.execute(
             select(func.count(Message.id)).where(Message.dialog_id == dialog.id)
@@ -326,30 +429,40 @@ async def generate_greeting_reply(
         greeting_mode = "return"
         llm_mode = "greeting_return"
 
-    memory_items = await collect_recent_memory(session, dialog, limit=5) if message_count > 0 else []
+    memory_items = await collect_recent_memory(session, dialog, limit=12) if message_count > 0 else []
     memory_context = format_memory(memory_items)
+    recent_dialogue = await _recent_dialogue_snippet(session, dialog, limit=12) if message_count > 0 else None
     # история
-    effective_story_id = story_id or dialog.entry_story_id
+    effective_story_id = resolve_story_id(story_id or dialog.entry_story_id)
     story_card = _find_story_card(persona, effective_story_id)
     story_prompt, story_meta = _story_prompt_with_meta(story_card)
     if story_meta:
         memory_context = f"{story_meta} {memory_context}"
-    trust_level = calculate_trust_level(message_count, has_subscription)
+    trust_level = relationship_state.trust_level
     mode_instruction = describe_mode(llm_mode, atmosphere)
-    story_instruction = build_story_context(story_prompt)
+    story_instruction = build_story_context(story_prompt) if message_count == 0 else ""
     feature_states = collect_feature_states(user)
     feature_instruction, feature_mode, feature_max_tokens = build_feature_instruction(feature_states)
-    user_message = _build_greeting_user_message(llm_mode, extra_description)
-
     deep_state = feature_states.get("deep_mode") if feature_states else None
     voice_state = feature_states.get("voice") if feature_states else None
+    feature_flags = {
+        "has_subscription": has_subscription,
+        "deep_mode": bool(getattr(deep_state, "active", False)),
+        "closeness_level": relationship_state.closeness_level,
+        "respect_score": relationship_state.respect_score,
+    }
+    user_message = _build_greeting_user_message(
+        llm_mode,
+        extra_description,
+        story_card=story_card if message_count == 0 else None,
+        persona_name=persona.name,
+        recent_dialogue=recent_dialogue,
+        relationship_state=relationship_state,
+    )
     intimacy = evaluate_intimacy(
         trust_level=trust_level,
         message_count=message_count,
-        user_flags={
-          "has_subscription": has_subscription,
-          "deep_mode": bool(getattr(deep_state, "active", False)),
-        },
+        user_flags=feature_flags,
     )
     prompt_ctx = ChatPromptContext(
         persona=persona,
@@ -359,6 +472,7 @@ async def generate_greeting_reply(
         memory_short=memory_context,
         memory_long=None,
         story_context=story_instruction,
+        recent_dialogue=recent_dialogue,
         feature_instruction=feature_instruction,
         feature_mode=feature_mode,
         voice_enabled=bool(getattr(voice_state, "active", False)),
@@ -366,6 +480,7 @@ async def generate_greeting_reply(
         intimacy_label=intimacy.label,
         can_engage_intimately=intimacy.can_engage_intimately,
         safety_needs_warmup=False,
+        relationship_state=relationship_state,
     )
     messages, _ = build_chat_messages(prompt_ctx, user_message)
 

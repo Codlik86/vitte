@@ -4,6 +4,7 @@ from dataclasses import dataclass
 from typing import List
 
 from ..models import Persona, User
+from .relationship_state import RelationshipState, choose_relationship_mode, describe_relationship
 
 
 @dataclass
@@ -15,6 +16,7 @@ class ChatPromptContext:
     memory_short: str
     memory_long: str | None
     story_context: str | None
+    recent_dialogue: str | None
     feature_instruction: str | None
     feature_mode: str | None
     voice_enabled: bool
@@ -22,6 +24,7 @@ class ChatPromptContext:
     intimacy_label: str
     can_engage_intimately: bool
     safety_needs_warmup: bool
+    relationship_state: RelationshipState | None = None
 
 
 def _persona_block(ctx: ChatPromptContext) -> str:
@@ -40,6 +43,7 @@ def _persona_block(ctx: ChatPromptContext) -> str:
             f"Что персонаж избегает: {negative_triggers}" if negative_triggers else "",
             "Используй короткую и длинную память: упоминай прошлые темы, вкусы, события, возвращайся к тому, что ему понравилось.",
             "Если уместно, напомни о приятных моментах из прошлого диалога и развивай их.",
+            "Пиши живо и без режиссёрских ремарок в начале сообщения; максимум одна короткая ремарка, если она уместна внутри текста.",
             f"Текущая близость: {ctx.intimacy_label} (уровень {ctx.intimacy_level}).",
         ]
         if part
@@ -80,6 +84,15 @@ def _story_block(ctx: ChatPromptContext) -> str:
     return f"История/сцена: {ctx.story_context}"
 
 
+def _recent_dialogue_block(ctx: ChatPromptContext) -> str:
+    if not ctx.recent_dialogue:
+        return ""
+    return (
+        "Последние сообщения диалога (используй их, чтобы продолжить разговор, не повторяй дословно):\n"
+        f"{ctx.recent_dialogue.strip()}"
+    )
+
+
 def _memory_blocks(ctx: ChatPromptContext) -> List[str]:
     blocks: list[str] = []
     if ctx.memory_short:
@@ -105,11 +118,33 @@ def _user_message_block(user_message: str) -> str:
 
 
 def build_chat_messages(ctx: ChatPromptContext, user_message: str) -> tuple[list[dict], str]:
+    relationship_block = ""
+    if ctx.relationship_state:
+        mode = choose_relationship_mode(ctx.relationship_state)
+        mode_text = {
+            "hurt": "Пользователь сейчас задел чувствами. Ставь границы, отвечай короче и без флирта/интима, обозначай, что неприятно.",
+            "getting_to_know": "Вы только знакомитесь: будь мягкой, любопытной, но не спеши в интим. Дай почувствовать характер персонажа.",
+            "friendly": "Отношения тёплые: можно флиртовать, делиться чувствами и поддержкой, но уважай границы.",
+            "very_close": "Вы очень близки и уважительны: открыт флирт, романтика и интимные темы, если это желает пользователь.",
+        }.get(mode, "")
+        relationship_block = "\n".join(
+            part
+            for part in [
+                describe_relationship(ctx.relationship_state),
+                mode_text,
+                "Если уважение падает (речь грубая), охлади тон и скажи, что так общаться не ок.",
+                "Интимные сцены допустимы, только если уважение не в минусе и близость высокая.",
+            ]
+            if part
+        )
+
     blocks = [
         _persona_block(ctx),
         _safety_block(ctx),
         ctx.mode_instruction or "",
         _story_block(ctx),
+        _recent_dialogue_block(ctx),
+        relationship_block,
         *_memory_blocks(ctx),
         _features_block(ctx),
     ]

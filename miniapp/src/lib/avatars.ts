@@ -2,12 +2,8 @@ import { pub } from "./pub";
 
 const AVATARS: Record<string, { card: string; chat: string }> = {
   "лина": { card: pub("personas/lina-card.jpg"), chat: pub("personas/lina-chat.jpg") },
-  "эва": { card: pub("personas/eva-card.jpg"), chat: pub("personas/eva-chat.jpg") },
-  "марианна": { card: pub("personas/mia-card.jpg"), chat: pub("personas/mia-chat.jpg") },
-  "фэй": { card: pub("personas/fey-card.jpg"), chat: pub("personas/fey-chat.jpg") },
-  "арина": { card: pub("personas/arina-card.jpg"), chat: pub("personas/arina-chat.jpg") },
+  "марианна": { card: pub("personas/marianna-card.jpg"), chat: pub("personas/marianna-chat.jpg") },
   "аки": { card: pub("personas/aki-card.jpg"), chat: pub("personas/aki-chat.jpg") },
-  "хана": { card: pub("personas/hana-card.jpg"), chat: pub("personas/hana-chat.jpg") },
 };
 
 const DEFAULT_AVATAR = {

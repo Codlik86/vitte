@@ -24,8 +24,6 @@ class Settings(BaseSettings):
     vitte_llm_model: str = DEFAULT_VITTE_MODEL
     vitte_llm_model_strong: str = DEFAULT_VITTE_MODEL
 
-    openai_api_key: str | None = None  # legacy, не используется в Vitte
-
     yookassa_shop_id: str | None = None
     yookassa_secret_key: str | None = None
 

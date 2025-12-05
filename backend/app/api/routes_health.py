@@ -24,7 +24,7 @@ async def health_extended(session: AsyncSession = Depends(get_session)):
     statuses = {
         "postgres": "unknown",
         "qdrant": "not_configured",
-        "llm": "skipped",
+        "llm": "not_configured",
         "retention_worker": "unknown",
         "cleanup_worker": "unknown",
         "timestamp": datetime.utcnow().isoformat(),
@@ -49,8 +49,8 @@ async def health_extended(session: AsyncSession = Depends(get_session)):
             logger.error("Healthcheck qdrant failed: %s", exc)
             statuses["qdrant"] = "error"
 
-    if settings.proxyapi_api_key or settings.openai_api_key:
-        statuses["llm"] = "skipped"  # avoid external call in health
+    if settings.proxyapi_api_key:
+        statuses["llm"] = "skipped"  # avoid external call in health when LLM key configured
 
     retention = retention_status()
     statuses["retention_worker"] = retention

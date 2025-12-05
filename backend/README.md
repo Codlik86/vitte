@@ -9,7 +9,7 @@
    ```bash
    pip install -r requirements.txt
    ```
-3. Скопировать `.env.example` в `.env` и заполнить ключи (Telegram, OpenAI и т.д.).
+3. Скопировать `.env.example` в `.env` и заполнить ключи (Telegram, ProxyAPI/OpenRouter для LLM и т.д.).
 4. Запустить сервер:
    ```bash
    uvicorn app.main:app --reload --host 0.0.0.0 --port 8000

@@ -3,12 +3,11 @@ from openai import OpenAI
 from ..config import settings, OPENROUTER_BASE_URL
 from ..logging_config import logger
 
-openrouter_client = OpenAI(
+# LLM client via ProxyAPI + OpenRouter targeting DeepSeek models.
+llm_client = OpenAI(
     api_key=settings.proxyapi_api_key,
     base_url=settings.openrouter_base_url or OPENROUTER_BASE_URL,
 )
-# Legacy client: не используется в Vitte, оставлен для совместимости.
-legacy_openai_client = OpenAI(api_key=settings.openai_api_key) if settings.openai_api_key else None
 
 
 async def simple_chat_completion(
@@ -19,17 +18,16 @@ async def simple_chat_completion(
     model: str | None = None,
 ) -> str:
     """
-    Простейшая обёртка для чат-комплишена.
-    В следующих этапах будет настроен полноценный pipeline.
+    Minimal chat-completions wrapper for Vitte.
     """
     try:
-        response = openrouter_client.chat.completions.create(
+        response = llm_client.chat.completions.create(
             model=model or settings.vitte_llm_model,
             messages=messages,
             max_tokens=max_tokens,
             temperature=temperature,
         )
         return response.choices[0].message.content or ""
-    except Exception as exc:  # noqa: BLE001 - логируем любые ошибки клиента
+    except Exception as exc:  # noqa: BLE001 - log any client errors
         logger.error("LLM completion failed: %s", exc)
         raise
