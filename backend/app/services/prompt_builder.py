@@ -17,8 +17,6 @@ class ChatPromptContext:
     memory_long: str | None
     story_context: str | None
     recent_dialogue: str | None
-    story_intro: bool = False
-    story_reentry: bool = False
     feature_instruction: str | None
     feature_mode: str | None
     voice_enabled: bool
@@ -26,6 +24,8 @@ class ChatPromptContext:
     intimacy_label: str
     can_engage_intimately: bool
     safety_needs_warmup: bool
+    story_intro: bool = False
+    story_reentry: bool = False
     relationship_state: RelationshipState | None = None
 
 
