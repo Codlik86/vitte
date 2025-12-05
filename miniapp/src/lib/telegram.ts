@@ -16,6 +16,7 @@ type TelegramInitData = {
 
 type TelegramWebApp = {
   ready: () => void;
+  expand?: () => void;
   BackButton: TelegramBackButton;
   initDataUnsafe?: TelegramInitData;
   initData?: TelegramInitData;
@@ -42,6 +43,7 @@ function resolveTelegramWebApp(): TelegramWebApp | undefined {
   if (instance && !isReadyCalled) {
     try {
       instance.ready();
+      instance.expand?.();
     } catch {
       // ignore init errors, telegram may not be available locally
     }

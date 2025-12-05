@@ -15,6 +15,10 @@ function App() {
   useTrackMiniAppOpen();
 
   useEffect(() => {
+    tg?.expand?.();
+  }, []);
+
+  useEffect(() => {
     const telegram = tg;
     if (!telegram?.BackButton) return;
 
