@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
+import logging
 
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -11,6 +12,7 @@ DEFAULT_RESPECT = 0
 DEFAULT_CLOSENESS = 5
 
 _TABLE_READY = False
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -25,27 +27,26 @@ async def _ensure_table(session: AsyncSession) -> None:
     global _TABLE_READY
     if _TABLE_READY:
         return
-    await session.execute(
-        text(
-            """
-            CREATE TABLE IF NOT EXISTS relationship_states (
-                id SERIAL PRIMARY KEY,
-                user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
-                persona_id INTEGER NOT NULL REFERENCES personas(id) ON DELETE CASCADE,
-                trust_level INTEGER NOT NULL DEFAULT :default_trust,
-                respect_score INTEGER NOT NULL DEFAULT :default_respect,
-                closeness_level INTEGER NOT NULL DEFAULT :default_closeness,
-                updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW(),
-                UNIQUE (user_id, persona_id)
+    try:
+        await session.execute(
+            text(
+                """
+                CREATE TABLE IF NOT EXISTS relationship_states (
+                    id SERIAL PRIMARY KEY,
+                    user_id INTEGER NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+                    persona_id INTEGER NOT NULL REFERENCES personas(id) ON DELETE CASCADE,
+                    trust_level INTEGER NOT NULL DEFAULT 10,
+                    respect_score INTEGER NOT NULL DEFAULT 0,
+                    closeness_level INTEGER NOT NULL DEFAULT 5,
+                    updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW(),
+                    UNIQUE (user_id, persona_id)
+                )
+                """
             )
-            """
-        ),
-        {
-            "default_trust": DEFAULT_TRUST,
-            "default_respect": DEFAULT_RESPECT,
-            "default_closeness": DEFAULT_CLOSENESS,
-        },
-    )
+        )
+    except Exception:  # noqa: BLE001
+        logger.exception("Failed to ensure relationship_states table exists")
+        raise
     _TABLE_READY = True
 
 
