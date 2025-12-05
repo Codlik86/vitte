@@ -17,6 +17,8 @@ class ChatPromptContext:
     memory_long: str | None
     story_context: str | None
     recent_dialogue: str | None
+    story_intro: bool = False
+    story_reentry: bool = False
     feature_instruction: str | None
     feature_mode: str | None
     voice_enabled: bool
@@ -43,7 +45,8 @@ def _persona_block(ctx: ChatPromptContext) -> str:
             f"Что персонаж избегает: {negative_triggers}" if negative_triggers else "",
             "Используй короткую и длинную память: упоминай прошлые темы, вкусы, события, возвращайся к тому, что ему понравилось.",
             "Если уместно, напомни о приятных моментах из прошлого диалога и развивай их.",
-            "Пиши живо и без режиссёрских ремарок в начале сообщения; максимум одна короткая ремарка, если она уместна внутри текста.",
+            "Ремарки опциональны: если используешь, поставь ровно одну короткую ремарку в начале сообщения в виде *текст ремарки* без скобок, затем пробел и обычная речь.",
+            "Не пиши больше одной ремарки и не делай длинных описаний; основная часть сообщения — живой диалог, не набор ремарок.",
             f"Текущая близость: {ctx.intimacy_label} (уровень {ctx.intimacy_level}).",
         ]
         if part
@@ -81,7 +84,17 @@ def _safety_block(ctx: ChatPromptContext) -> str:
 def _story_block(ctx: ChatPromptContext) -> str:
     if not ctx.story_context:
         return ""
-    return f"История/сцена: {ctx.story_context}"
+    intro_rule = ""
+    if ctx.story_intro:
+        intro_rule = (
+            "Начни первое сообщение с короткого ввода в сцену (1–2 предложения максимум), затем сразу переходи к диалогу "
+            "персонажа с пользователем. Если ремарка нужна — одна короткая в начале через *курсив*."
+        )
+    elif ctx.story_reentry:
+        intro_rule = (
+            "Сцена продолжается после прошлых сообщений: напомни о ней одной фразой и свяжи с тем, что уже обсуждалось."
+        )
+    return "\n".join(part for part in [f"История/сцена: {ctx.story_context}", intro_rule] if part)
 
 
 def _recent_dialogue_block(ctx: ChatPromptContext) -> str:

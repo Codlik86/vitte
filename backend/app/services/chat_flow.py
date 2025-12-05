@@ -226,8 +226,9 @@ def _build_greeting_user_message(
     if story_card:
         return (
             f"Начинается новая сцена «{story_card.title}» для персонажа {persona_name}. "
-            "Ответь как персонаж, сразу подхвати вводную и атмосферу сцены. "
-            "Избегай шаблонных приветствий и режиссёрских ремарок; говори живо и по делу. "
+            "Сначала дай один-два коротких предложения, вводящих в сцену (локация, момент), затем сразу переходи к диалогу с вопросом. "
+            "Если нужна ремарка — одна в начале через *курсив*, без скобок, короче одного предложения. "
+            "Избегай шаблонных приветствий; говори живо и по делу. "
             f"Вводная сцены: {story_card.prompt} "
             f"{prompt_extra}"
         ).strip()
@@ -305,7 +306,7 @@ async def generate_chat_reply(
 
     trust_level = updated_relationship.trust_level
     mode_instruction = describe_mode(mode, atmosphere)
-    story_instruction = build_story_context(story_prompt)
+    story_instruction = build_story_context(story_prompt, reentry=bool(story_prompt and message_count > 0))
     if story_meta:
         memory_context = f"{story_meta} {memory_context}"
     ritual_hint = None if preview_story else should_add_ritual(message_count + 1)
@@ -339,6 +340,8 @@ async def generate_chat_reply(
         memory_long=None,
         story_context=story_instruction,
         recent_dialogue=recent_dialogue,
+        story_intro=bool(story_prompt and message_count == 0),
+        story_reentry=bool(story_prompt and message_count > 0),
         feature_instruction=feature_instruction,
         feature_mode=feature_mode,
         voice_enabled=bool(getattr(voice_state, "active", False)),
@@ -440,7 +443,10 @@ async def generate_greeting_reply(
         memory_context = f"{story_meta} {memory_context}"
     trust_level = relationship_state.trust_level
     mode_instruction = describe_mode(llm_mode, atmosphere)
-    story_instruction = build_story_context(story_prompt) if message_count == 0 else ""
+    story_instruction = build_story_context(
+        story_prompt,
+        reentry=bool(story_prompt and message_count > 0),
+    )
     feature_states = collect_feature_states(user)
     feature_instruction, feature_mode, feature_max_tokens = build_feature_instruction(feature_states)
     deep_state = feature_states.get("deep_mode") if feature_states else None
@@ -473,6 +479,8 @@ async def generate_greeting_reply(
         memory_long=None,
         story_context=story_instruction,
         recent_dialogue=recent_dialogue,
+        story_intro=bool(story_prompt and message_count == 0),
+        story_reentry=bool(story_prompt and message_count > 0),
         feature_instruction=feature_instruction,
         feature_mode=feature_mode,
         voice_enabled=bool(getattr(voice_state, "active", False)),

@@ -113,15 +113,17 @@ def describe_mode(mode: str | None, atmosphere: str | None) -> str:
     return ""
 
 
-def build_story_context(story_prompt: str | None) -> str:
+def build_story_context(story_prompt: str | None, *, reentry: bool = False) -> str:
     if not story_prompt:
         return ""
-    return (
+    base = (
         "Сейчас вы разыгрываете мини-сцену. "
-        "В первые 5–7 сообщений опирайся на историю максимально: отыгрывай сеттинг, эмоции и отношения. "
-        "К 10–15 сообщению мягко отпусти фокус истории, но оставь её фоном и иногда отсылайся к прожитому. "
-        f"Описание истории: {story_prompt}"
+        "Опирайся на сеттинг, эмоции и отношения из этой сцены, используй их как фон для диалога. "
+        "Если это первое сообщение — начни с короткого ввода в сцену (1–2 предложения) и сразу переходи к живому диалогу."
     )
+    if reentry:
+        base += " Если сцена продолжается после прошлых сообщений, сделай мягкую связку с тем, что уже обсуждали."
+    return f"{base} Описание истории: {story_prompt}"
 
 
 def should_add_ritual(message_count: int) -> str | None:
