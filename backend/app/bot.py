@@ -104,15 +104,25 @@ def pay_images_keyboard() -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
-async def send_pay_root(message: Message) -> None:
-    text = (
+async def send_pay_intro_to_user(telegram_id: int) -> None:
+    """
+    Отправляет первый экран оплаты с кнопками Подписка / Изображения / Купить звёзды.
+    """
+    await bot.send_message(telegram_id, _pay_root_text(), reply_markup=pay_root_keyboard())
+
+
+def _pay_root_text() -> str:
+    return (
         "Vitte\n"
         "Выбери, что хочешь оформить:\n\n"
         "• Подписка Vitte Plus\n"
         "• Дополнительные изображения\n"
         "• Купить звёзды у Telegram"
     )
-    await message.answer(text, reply_markup=pay_root_keyboard())
+
+
+async def send_pay_root(message: Message) -> None:
+    await message.answer(_pay_root_text(), reply_markup=pay_root_keyboard())
 
 
 async def send_pay_subs(message: Message, subscription_active: bool, until: datetime | None) -> None:
@@ -156,7 +166,9 @@ async def cmd_app(message: Message):
 
 @dp.message(F.text == "/pay")
 async def cmd_pay(message: Message):
-    await send_pay_root(message)
+    if message.from_user is None:
+        return
+    await send_pay_intro_to_user(message.from_user.id)
 
 
 @dp.message(Command("help"))
