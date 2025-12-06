@@ -367,21 +367,6 @@ async def pay_feature_selected(cb: CallbackQuery):
     await cb.answer("Улучшение разблокировано")
 
 
-@dp.pre_checkout_query()
-async def on_pre_checkout(pre_checkout_query: PreCheckoutQuery):
-    try:
-        await bot.answer_pre_checkout_query(pre_checkout_query.id, ok=True)
-    except Exception as exc:
-        logger.error("Pre-checkout failed: %s", exc)
-
-
-@dp.message(F.successful_payment)
-async def on_successful_payment(message: Message):
-    if message.from_user is None:
-        return
-    await message.answer("Оплата получена. Спасибо!")
-
-
 async def handle_update(update: dict):
     telegram_update = Update.model_validate(update)
     await dp.feed_update(bot, telegram_update)
