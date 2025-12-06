@@ -13,7 +13,7 @@ from ..users_service import get_or_create_user_by_telegram_id
 from ..services.access import get_active_subscription
 from ..logging_config import logger
 from ..bot import bot
-from ..services.stars import send_stars_invoice_for_subscription, send_stars_invoice_for_feature
+from ..services.stars import send_stars_invoice_for_subscription, send_stars_invoice_for_feature, create_invoice_link
 from ..services.analytics import log_event
 from ..models import Purchase, PurchaseStatus
 from ..schemas import StoreBuyRequest, StoreBuyResponse
@@ -65,18 +65,20 @@ async def buy_subscription(
 
     price_rub = plan.price_stars  # Stars invoice uses rub_to_stars internally
     try:
-        await send_stars_invoice_for_subscription(
-            bot, telegram_id, plan_code=plan.code, price_rub=price_rub
+        invoice_url = await create_invoice_link(
+            bot,
+            title="Подписка Vitte",
+            description="Безлимитные сообщения + 20 изображений в день.",
+            payload=f"sub:{plan.code}",
+            price_rub=price_rub,
         )
     except Exception as exc:  # noqa: BLE001
-        logger.error("Failed to send stars invoice for plan %s: %s", plan.code, exc)
+        logger.error("Failed to create stars invoice link for plan %s: %s", plan.code, exc)
         raise HTTPException(status_code=502, detail="Invoice creation failed")
 
-    # immediate activation (Stars callback отсутствует) — активируем сразу
-    await ensure_premium_for_user(session, user, plan.code)
-    await log_event(session, user.id, "subscription_activated", {"plan_code": plan.code})
+    await log_event(session, user.id, "subscription_invoice_sent", {"plan_code": plan.code})
     await session.commit()
-    return StoreBuyResponse(ok=True, product_code=plan.code, features=None)
+    return StoreBuyResponse(ok=True, product_code=plan.code, features=None, invoice_url=invoice_url)
 
 
 @router.post("/buy/image_pack/{pack_code}", response_model=StoreBuyResponse)
@@ -91,23 +93,21 @@ async def buy_image_pack(
         raise HTTPException(status_code=404, detail="Image pack not found")
     telegram_id = await get_or_raise_telegram_id(request, explicit=payload.telegram_id)
     user = await get_or_create_user_by_telegram_id(session, telegram_id)
-    purchase = Purchase(
-        user_id=user.id,
-        product_code=pack.code,
-        provider="stars",
-        amount=pack.price_stars,
-        currency="STARS",
-        status=PurchaseStatus.SUCCESS,
-        meta={"mode": "image_pack"},
-    )
-    session.add(purchase)
-    await session.flush()
-    balance = await _ensure_balance(session, user)
-    balance.total_purchased_images += pack.images
-    balance.remaining_purchased_images += pack.images
-    await log_event(session, user.id, "image_pack_purchased", {"pack": pack.code, "images": pack.images})
+    try:
+        invoice_url = await create_invoice_link(
+            bot,
+            title="Пакет изображений",
+            description=f"{pack.images} изображений",
+            payload=f"pack:{pack.code}",
+            price_rub=pack.price_stars,
+        )
+    except Exception as exc:  # noqa: BLE001
+        logger.error("Failed to create stars invoice link for pack %s: %s", pack.code, exc)
+        raise HTTPException(status_code=502, detail="Invoice creation failed")
+
+    await log_event(session, user.id, "image_pack_invoice_sent", {"pack": pack.code, "images": pack.images})
     await session.commit()
-    return StoreBuyResponse(ok=True, product_code=pack.code, features=None)
+    return StoreBuyResponse(ok=True, product_code=pack.code, features=None, invoice_url=invoice_url)
 
 
 @router.post("/buy/feature/{feature_code}", response_model=StoreBuyResponse)
@@ -125,19 +125,17 @@ async def buy_feature(
 
     price_rub = feature.price_stars  # Stars invoice uses rub_to_stars internally
     try:
-        await send_stars_invoice_for_feature(
+        invoice_url = await create_invoice_link(
             bot,
-            telegram_id,
-            feature_code=feature.code,
             title=feature.title,
             description=feature.description,
+            payload=f"feat:{feature.code}",
             price_rub=price_rub,
         )
     except Exception as exc:  # noqa: BLE001
-        logger.error("Failed to send stars invoice for feature %s: %s", feature.code, exc)
+        logger.error("Failed to create stars invoice link for feature %s: %s", feature.code, exc)
         raise HTTPException(status_code=502, detail="Invoice creation failed")
 
-    await unlock_feature(session, user, feature.code)
-    await log_event(session, user.id, "feature_unlocked", {"feature": feature.code})
+    await log_event(session, user.id, "feature_invoice_sent", {"feature": feature.code})
     await session.commit()
-    return StoreBuyResponse(ok=True, product_code=feature.code, features=[feature.code])
+    return StoreBuyResponse(ok=True, product_code=feature.code, features=[feature.code], invoice_url=invoice_url)

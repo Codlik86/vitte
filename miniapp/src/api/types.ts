@@ -106,6 +106,7 @@ export type StoreBuyResponse = {
   product_code: string;
   activated_until?: string | null;
   features?: string[] | null;
+  invoice_url?: string | null;
 };
 
 export type StoreConfig = {

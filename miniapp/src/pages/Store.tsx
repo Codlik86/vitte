@@ -1,5 +1,5 @@
 import { StoreLayout } from "../components/store/StoreLayout";
 
 export function Store() {
-  return <StoreLayout title="Магазин" showBack showFreeBlock={false} />;
+  return <StoreLayout title="Магазин" showBack />;
 }

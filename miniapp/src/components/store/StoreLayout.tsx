@@ -4,32 +4,27 @@ import {
   buyFeature,
   buyImagePack,
   buySubscription,
-  triggerBotPay,
 } from "../../api/client";
 import type { StoreConfig, StoreStatus } from "../../api/types";
 import { useAccessStatus } from "../../hooks/useAccessStatus";
 import { useStoreData } from "../../hooks/useStoreData";
 import { PageHeader } from "../layout/PageHeader";
 import { DebugTelegramBanner } from "../DebugTelegramBanner";
+import { tg } from "../../lib/telegram";
 
 type BusyMap = Record<string, boolean>;
 
 type StoreLayoutProps = {
   title: string;
   showBack?: boolean;
-  showFreeBlock?: boolean;
 };
 
-export function StoreLayout({ title, showBack = true, showFreeBlock = true }: StoreLayoutProps) {
+export function StoreLayout({ title, showBack = true }: StoreLayoutProps) {
   const navigate = useNavigate();
-  const { data: accessStatus, reload: reloadAccess } = useAccessStatus();
+  const { reload: reloadAccess } = useAccessStatus();
   const { config, status, loading, error, reload } = useStoreData();
   const [busy, setBusy] = useState<BusyMap>({});
   const hasSubscription = Boolean(status?.has_active_subscription);
-  const remainingMessages = Math.max(
-    0,
-    (accessStatus?.free_messages_limit ?? 15) - (accessStatus?.free_messages_used ?? 0),
-  );
   const imagesAvailable = useMemo(
     () => (status?.remaining_images_today ?? 0) + (status?.remaining_paid_images ?? 0),
     [status?.remaining_images_today, status?.remaining_paid_images],
@@ -48,11 +43,26 @@ export function StoreLayout({ title, showBack = true, showFreeBlock = true }: St
     await Promise.all([reload(), reloadAccess()]);
   };
 
+  const openInvoiceLink = (url?: string | null) => {
+    if (!url) return false;
+    const webApp = tg;
+    try {
+      webApp?.openTelegramLink?.(url);
+      webApp?.close?.();
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
   const handleBuySubscription = async (code: string) => {
     setBusyFlag(code, true);
     try {
-      await buySubscription(code);
-      await triggerBotPay().catch(() => {});
+      const res = await buySubscription(code);
+      const opened = openInvoiceLink(res.invoice_url);
+      if (!opened) {
+        alert("Счёт отправлен в Telegram. Оплатите его в чате бота.");
+      }
       await handleAfterPurchase();
     } catch (e: any) {
       alert(e.message ?? "Не удалось оформить подписку");
@@ -64,8 +74,11 @@ export function StoreLayout({ title, showBack = true, showFreeBlock = true }: St
   const handleBuyPack = async (code: string) => {
     setBusyFlag(code, true);
     try {
-      await buyImagePack(code);
-      await triggerBotPay().catch(() => {});
+      const res = await buyImagePack(code);
+      const opened = openInvoiceLink(res.invoice_url);
+      if (!opened) {
+        alert("Счёт отправлен в Telegram. Оплатите его в чате бота.");
+      }
       await handleAfterPurchase();
     } catch (e: any) {
       alert(e.message ?? "Не удалось купить пакет изображений");
@@ -77,8 +90,11 @@ export function StoreLayout({ title, showBack = true, showFreeBlock = true }: St
   const handleBuyFeature = async (code: string) => {
     setBusyFlag(code, true);
     try {
-      await buyFeature(code);
-      await triggerBotPay().catch(() => {});
+      const res = await buyFeature(code);
+      const opened = openInvoiceLink(res.invoice_url);
+      if (!opened) {
+        alert("Счёт отправлен в Telegram. Оплатите его в чате бота.");
+      }
       await handleAfterPurchase();
     } catch (e: any) {
       alert(e.message ?? "Не удалось разблокировать улучшение");
@@ -102,19 +118,6 @@ export function StoreLayout({ title, showBack = true, showFreeBlock = true }: St
         {error && (
           <div className="rounded-3xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-100">
             {error}
-          </div>
-        )}
-
-        {showFreeBlock && (
-          <div className="rounded-4xl border border-white/10 bg-card-elevated/70 px-5 py-4 shadow-card">
-            <p className="text-xs font-semibold uppercase tracking-[0.3em] text-white/60">
-              Бесплатный доступ
-            </p>
-            <p className="mt-2 text-sm text-white/80">
-              Сегодня можно отправить до {accessStatus?.free_messages_limit ?? 15} бесплатных сообщений.
-              Осталось{" "}
-              <span className="font-semibold text-white">{remainingMessages}</span>.
-            </p>
           </div>
         )}
 
@@ -159,18 +162,15 @@ function StoreSubscriptionSection({
   const plans = config?.subscription_plans ?? [];
 
   return (
-    <section className="space-y-4 rounded-4xl border border-white/10 bg-card-elevated/85 px-5 py-6 shadow-card">
+    <section className="space-y-3 rounded-3xl border border-white/10 bg-card-elevated/80 px-5 py-5 shadow-card">
       <div className="space-y-1">
-        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-white/60">
-          Подписка
-        </p>
-        <h2 className="text-xl font-semibold text-white">Vitte Plus</h2>
+        <h2 className="text-lg font-semibold text-white">Подписка</h2>
         <p className="text-sm text-white/70">
-          Безлимитные сообщения и 20 изображений в день. Оформление через Telegram Stars.
+          Безлимит сообщений + 20 изображений в день.
         </p>
         {hasSubscription && (
           <p className="text-sm text-emerald-200">
-            Активно {endDate ? `до ${endDate}` : "без ограничения по дате"}.
+            Активно {endDate ? `до ${endDate}` : "без даты окончания"}.
           </p>
         )}
       </div>
@@ -184,36 +184,22 @@ function StoreSubscriptionSection({
               />
             ))
           : plans.map((plan) => {
-              const isPopular = plan.is_most_popular;
               const isBusy = busy[plan.code];
               return (
                 <button
                   key={plan.code}
                   type="button"
                   onClick={() => onBuy(plan.code)}
-                  className={`flex w-full items-start justify-between rounded-3xl border px-4 py-4 text-left transition ${
-                    isPopular
-                      ? "border-pink-400/60 bg-white/10 shadow-card"
-                      : "border-white/10 bg-transparent hover:border-white/30"
-                  }`}
+                  className="flex w-full items-center justify-between rounded-3xl border border-white/10 bg-card-dark/30 px-4 py-4 text-left transition hover:border-white/30"
                   disabled={isBusy}
                 >
                   <div className="min-w-0 pr-3">
                     <p className="text-sm font-semibold text-white">{plan.title}</p>
-                    <p className="text-xs text-white/60 leading-snug line-clamp-2">
-                      {plan.description}
-                    </p>
-                    <p className="mt-2 text-[11px] uppercase text-white/50">
-                      {plan.duration_days} дней
-                      {isPopular ? " · рекомендовано" : ""}
-                    </p>
+                    <p className="text-xs text-white/60 leading-snug">{plan.duration_days} дней</p>
                   </div>
                   <div className="flex-shrink-0 text-right">
                     <p className="text-lg font-semibold text-white whitespace-nowrap">
                       {plan.price_stars} ⭐
-                    </p>
-                    <p className="text-[11px] uppercase text-white/50">
-                      {plan.duration_days} дн.
                     </p>
                     {isBusy && (
                       <p className="text-[11px] text-white/60">Оформляем...</p>
@@ -249,22 +235,15 @@ function StoreImagesAndFeaturesSection({
   const remainingPaid = status?.remaining_paid_images ?? 0;
 
   return (
-    <section className="space-y-4 rounded-4xl border border-white/10 bg-card-elevated/75 px-5 py-6 shadow-card">
+    <section className="space-y-4 rounded-3xl border border-white/10 bg-card-elevated/75 px-5 py-5 shadow-card">
       <div className="space-y-1">
-        <p className="text-xs font-semibold uppercase tracking-[0.3em] text-white/60">
-          Изображения и улучшения
-        </p>
-        <h2 className="text-xl font-semibold text-white">Баланс и эмоции</h2>
+        <h2 className="text-lg font-semibold text-white">Изображения</h2>
         <p className="text-sm text-white/70">
-          Подписка даёт 20 изображений в день. Пакеты добавляют запас сверх дневной квоты.
-        </p>
-        <p className="text-sm text-white/80">
-          Сегодня осталось {remainingToday} из подписки и {remainingPaid} из пакетов.
+          Осталось {remainingToday} по подписке и {remainingPaid} из пакетов.
         </p>
       </div>
 
       <div className="space-y-3">
-        <h3 className="text-sm font-semibold text-white">Пакеты изображений</h3>
         {loading
           ? Array.from({ length: 2 }).map((_, i) => (
               <div
@@ -279,10 +258,7 @@ function StoreImagesAndFeaturesSection({
                   key={pack.code}
                   className="flex items-center justify-between rounded-3xl border border-white/10 bg-card-dark/40 px-4 py-3"
                 >
-                  <div className="space-y-1">
-                    <p className="text-sm font-semibold text-white">{pack.images} изображений</p>
-                    <p className="text-xs text-white/60">Списывается после дневной квоты.</p>
-                  </div>
+                  <p className="text-sm font-semibold text-white">{pack.images} изображений</p>
                   <button
                     type="button"
                     onClick={() => onBuyPack(pack.code)}
@@ -297,7 +273,6 @@ function StoreImagesAndFeaturesSection({
       </div>
 
       <div className="space-y-3">
-        <h3 className="text-sm font-semibold text-white">Улучшения</h3>
         {loading
           ? Array.from({ length: 2 }).map((_, i) => (
               <div
@@ -316,7 +291,7 @@ function StoreImagesAndFeaturesSection({
                   <div className="flex items-start justify-between gap-3">
                     <div className="space-y-1">
                       <p className="text-sm font-semibold text-white">{feature.title}</p>
-                      <p className="text-xs text-white/70">{feature.description}</p>
+                      <p className="text-xs text-white/70 line-clamp-2">{feature.description}</p>
                     </div>
                     <span
                       className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-wide ${

@@ -51,7 +51,7 @@ async def setup_bot_commands(bot: Bot) -> None:
     commands = [
         BotCommand(command="start", description="Начать"),
         BotCommand(command="app", description="Открыть мини-приложение"),
-        BotCommand(command="pay", description="Подписка"),
+        BotCommand(command="pay", description="Оплата и подписка"),
         BotCommand(command="help", description="Помощь"),
         BotCommand(command="policy", description="Правила сервиса"),
     ]
@@ -71,81 +71,64 @@ def build_miniapp_keyboard() -> InlineKeyboardMarkup:
     )
 
 
-def pay_keyboard(subscription_active: bool, unlocked_features: set[str]) -> InlineKeyboardMarkup:
-    buttons: list[list[InlineKeyboardButton]] = []
-    # Subscriptions
-    for plan in SUBSCRIPTION_PLANS:
-        label = f"{plan.title} — {plan.price_stars}⭐"
-        buttons.append([InlineKeyboardButton(text=label, callback_data=f"pay_sub:{plan.code}")])
-    # Image packs
-    for pack in IMAGE_PACKS:
-        label = f"{pack.images} изображений — {pack.price_stars}⭐"
-        buttons.append([InlineKeyboardButton(text=label, callback_data=f"pay_pack:{pack.code}")])
-    # Features
-    for feature in EMOTIONAL_FEATURES:
-        unlocked = feature.code in unlocked_features
-        prefix = "✅ " if unlocked else ""
-        label = f"{prefix}{feature.title} — {feature.price_stars}⭐"
-        buttons.append([InlineKeyboardButton(text=label, callback_data=f"pay_feat:{feature.code}")])
-    buttons.append(
-        [
-            InlineKeyboardButton(
-                text="Купить ⭐ у Telegram",
-                url="https://t.me/PremiumBot",
-            )
+def pay_root_keyboard() -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[
+            [InlineKeyboardButton(text="Подписка", callback_data="pay_menu:subs")],
+            [InlineKeyboardButton(text="Изображения", callback_data="pay_menu:images")],
+            [
+                InlineKeyboardButton(
+                    text="Купить ⭐ у Telegram",
+                    url="https://t.me/PremiumBot",
+                )
+            ],
         ]
     )
+
+
+def pay_subs_keyboard() -> InlineKeyboardMarkup:
+    buttons: list[list[InlineKeyboardButton]] = []
+    for plan in SUBSCRIPTION_PLANS:
+        label = f"{plan.duration_days} дн — {plan.price_stars}⭐"
+        buttons.append([InlineKeyboardButton(text=label, callback_data=f"pay_sub:{plan.code}")])
+    buttons.append([InlineKeyboardButton(text="⬅️ Назад", callback_data="pay_menu:root")])
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
-async def send_pay_intro(message: Message, user: User, status: dict, unlocked_features: set[str] | None = None):
-    has_sub = status.get("has_subscription")
-    until = status.get("until")
-    until_text = until.strftime("%d.%m.%Y") if until else "—"
-    text_lines = [
-        "Подписка Vitte Plus:",
-        f"Статус: {'активна' if has_sub else 'нет'}",
-        f"До: {until_text}" if has_sub else "",
-        "Планы:",
-        "• 2 дня — 199⭐",
-        "• 7 дней — 399⭐",
-        "• 30 дней — 999⭐",
-        "",
-        "Пакеты изображений:",
-        "• 20 — 50⭐, 50 — 120⭐, 100 — 250⭐, 200 — 500⭐",
-        "",
-        "Улучшения:",
-        "• Режим страсти — 150⭐",
-        "• Фантазии и сцены — 200⭐",
-        "",
-        "Выбери вариант:",
-    ]
-    await message.answer("\n".join([l for l in text_lines if l]), reply_markup=pay_keyboard(has_sub, unlocked_features or set()))
+def pay_images_keyboard() -> InlineKeyboardMarkup:
+    buttons: list[list[InlineKeyboardButton]] = []
+    for pack in IMAGE_PACKS:
+        label = f"{pack.images} изображений — {pack.price_stars}⭐"
+        buttons.append([InlineKeyboardButton(text=label, callback_data=f"pay_pack:{pack.code}")])
+    buttons.append([InlineKeyboardButton(text="⬅️ Назад", callback_data="pay_menu:root")])
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
-async def send_pay_intro_to_user(user: User, status: dict, unlocked_features: set[str] | None = None):
-    has_sub = status.get("has_subscription")
-    until = status.get("until")
-    until_text = until.strftime("%d.%m.%Y") if until else "—"
-    text_lines = [
-        "Подписка Vitte Plus:",
-        f"Статус: {'активна' if has_sub else 'нет'}",
-        f"До: {until_text}" if has_sub else "",
-        "Планы:",
-        "• 2 дня — 199⭐",
-        "• 7 дней — 399⭐",
-        "• 30 дней — 999⭐",
-        "",
-        "Пакеты изображений:",
-        "• 20 — 50⭐, 50 — 120⭐, 100 — 250⭐, 200 — 500⭐",
-        "",
-        "Улучшения:",
-        "• Режим страсти — 150⭐",
-        "• Фантазии и сцены — 200⭐",
-        "",
-        "Выбери вариант:",
+async def send_pay_root(message: Message) -> None:
+    text = (
+        "Vitte\n"
+        "Выбери, что хочешь оформить:\n\n"
+        "• Подписка Vitte Plus\n"
+        "• Дополнительные изображения\n"
+        "• Купить звёзды у Telegram"
+    )
+    await message.answer(text, reply_markup=pay_root_keyboard())
+
+
+async def send_pay_subs(message: Message, subscription_active: bool, until: datetime | None) -> None:
+    lines = [
+        "Подписка Vitte Plus",
+        "Безлимит сообщений + 20 изображений в день.",
     ]
-    await bot.send_message(user.telegram_id, "\n".join([l for l in text_lines if l]), reply_markup=pay_keyboard(has_sub, unlocked_features or set()))
+    if subscription_active:
+        until_text = until.strftime("%d.%m.%Y") if until else "без даты окончания"
+        lines.append(f"Активна до {until_text}.")
+    await message.answer("\n".join(lines), reply_markup=pay_subs_keyboard())
+
+
+async def send_pay_images(message: Message) -> None:
+    text = "Дополнительные изображения\nПокупай пакеты и трать, когда хочешь."
+    await message.answer(text, reply_markup=pay_images_keyboard())
 
 
 @dp.message(CommandStart())
@@ -173,15 +156,7 @@ async def cmd_app(message: Message):
 
 @dp.message(F.text == "/pay")
 async def cmd_pay(message: Message):
-    if message.from_user is None:
-        return
-    async for session in get_session():
-        user = await get_or_create_user_by_telegram_id(session, message.from_user.id)
-        status = await get_user_subscription_status(session, user)
-        feature_states = await collect_feature_states(session, user)
-        await session.commit()
-    unlocked = {code for code, state in feature_states.items() if state.unlocked}
-    await send_pay_intro(message, user, status, unlocked)
+    await send_pay_root(message)
 
 
 @dp.message(Command("help"))
@@ -210,6 +185,34 @@ async def cmd_policy(message: Message):
         "При использовании ты подтверждаешь совершеннолетие и согласие с условиями. "
         "Полный текст правил доступен в мини-приложении."
     )
+
+@dp.callback_query(F.data.startswith("pay_menu:"))
+async def pay_menu(cb: CallbackQuery):
+    if cb.message is None:
+        return
+    if cb.data == "pay_menu:root":
+        await cb.message.edit_text(
+            "Vitte\nВыбери, что хочешь оформить:\n\n• Подписка Vitte Plus\n• Дополнительные изображения\n• Купить звёзды у Telegram",
+            reply_markup=pay_root_keyboard(),
+        )
+        return
+    if cb.data == "pay_menu:subs":
+        async for session in get_session():
+            user = await get_or_create_user_by_telegram_id(session, cb.from_user.id)
+            status = await get_user_subscription_status(session, user)
+            await session.commit()
+        await cb.message.edit_text(
+            "Подписка Vitte Plus\nБезлимит сообщений + 20 изображений в день."
+            + (f"\nАктивна до {status['until'].strftime('%d.%m.%Y')}" if status.get("has_subscription") else ""),
+            reply_markup=pay_subs_keyboard(),
+        )
+        return
+    if cb.data == "pay_menu:images":
+        await cb.message.edit_text(
+            "Дополнительные изображения\nПокупай пакеты и трать, когда хочешь.",
+            reply_markup=pay_images_keyboard(),
+        )
+        return
 
 
 @dp.callback_query(F.data == "onb_accept_terms")
@@ -301,11 +304,7 @@ async def pay_sub_selected(cb: CallbackQuery):
             plan_code=plan_code,
             price_rub=plan.price_stars,
         )
-        async for session in get_session():
-            user = await get_or_create_user_by_telegram_id(session, cb.from_user.id)
-            await ensure_premium_for_user(session, user, plan_code=plan_code)
-            await session.commit()
-        await cb.answer("Подписка активирована")
+        await cb.answer("Счёт отправлен. Оплати в Stars.")
     except Exception as exc:
         logger.error("Failed to send stars invoice: %s", exc)
         await cb.answer("Не получилось создать счёт", show_alert=True)
@@ -320,12 +319,6 @@ async def pay_pack_selected(cb: CallbackQuery):
     if not pack:
         await cb.answer("Пакет не найден", show_alert=True)
         return
-    async for session in get_session():
-        user = await get_or_create_user_by_telegram_id(session, cb.from_user.id)
-        balance = await _ensure_balance(session, user)
-        balance.total_purchased_images += pack.images
-        balance.remaining_purchased_images += pack.images
-        await session.commit()
     try:
         await send_stars_invoice_for_feature(
             bot,
@@ -334,10 +327,11 @@ async def pay_pack_selected(cb: CallbackQuery):
             title="Пакет изображений",
             description=f"{pack.images} изображений",
             price_rub=pack.price_stars,
+            payload_prefix="pack",
         )
     except Exception as exc:
         logger.error("Failed to send stars invoice for pack: %s", exc)
-    await cb.answer("Пакет активирован")
+    await cb.answer("Счёт отправлен. Оплати в Stars.")
 
 
 @dp.callback_query(F.data.startswith("pay_feat:"))
@@ -349,10 +343,6 @@ async def pay_feature_selected(cb: CallbackQuery):
     if not feature:
         await cb.answer("Улучшение не найдено", show_alert=True)
         return
-    async for session in get_session():
-        user = await get_or_create_user_by_telegram_id(session, cb.from_user.id)
-        await unlock_feature(session, user, feature_code)
-        await session.commit()
     try:
         await send_stars_invoice_for_feature(
             bot,
@@ -364,12 +354,41 @@ async def pay_feature_selected(cb: CallbackQuery):
         )
     except Exception as exc:
         logger.error("Failed to send stars invoice for feature %s: %s", feature_code, exc)
-    await cb.answer("Улучшение разблокировано")
+    await cb.answer("Счёт отправлен. Оплати в Stars.")
 
 
 async def handle_update(update: dict):
     telegram_update = Update.model_validate(update)
     await dp.feed_update(bot, telegram_update)
+
+
+@dp.message(F.successful_payment)
+async def on_successful_payment(message: Message):
+    if message.from_user is None or message.successful_payment is None:
+        return
+    payload = message.successful_payment.invoice_payload
+    if not payload or ":" not in payload:
+        return
+    kind, code = payload.split(":", 1)
+    try:
+        async for session in get_session():
+            user = await get_or_create_user_by_telegram_id(session, message.from_user.id)
+            if kind == "sub":
+                await ensure_premium_for_user(session, user, plan_code=code)
+            elif kind == "pack":
+                pack = get_image_pack(code)
+                if pack:
+                    balance = await _ensure_balance(session, user)
+                    balance.total_purchased_images += pack.images
+                    balance.remaining_purchased_images += pack.images
+            elif kind == "feat":
+                feature = get_feature(code)
+                if feature:
+                    await unlock_feature(session, user, feature_code=code)
+            await session.commit()
+    except Exception as exc:
+        logger.error("Failed to apply payment %s:%s error=%s", kind, code, exc)
+        return
 
 
 # Further webhook binding is handled in main.py.

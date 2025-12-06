@@ -23,7 +23,7 @@ export function ImageChip({
   className = "",
 }: ImageChipProps) {
   const displayImages = formatCounter(imagesRemaining ?? 0);
-  const labelText = isPremium || hasSubscription ? "Premium" : "Изображения";
+  const labelText = isPremium || hasSubscription ? "Premium" : "";
 
   return (
     <div
@@ -37,9 +37,11 @@ export function ImageChip({
         <span aria-hidden>🖼️</span>
         <span>{displayImages}</span>
       </span>
-      <span className="rounded-full bg-white/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-white/90">
-        {labelText}
-      </span>
+      {labelText ? (
+        <span className="rounded-full bg-white/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-white/90">
+          {labelText}
+        </span>
+      ) : null}
       <button
         type="button"
         onClick={(e) => {

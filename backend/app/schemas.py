@@ -165,6 +165,7 @@ class StoreBuyResponse(BaseModel):
     product_code: str
     activated_until: datetime | None = None
     features: list[str] | None = None
+    invoice_url: str | None = None
 
 
 class AnalyticsEventRequest(BaseModel):

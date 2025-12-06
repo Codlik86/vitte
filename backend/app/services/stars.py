@@ -18,6 +18,27 @@ def rub_to_stars(price_rub: int) -> int:
     return int(math.ceil(raw))
 
 
+async def create_invoice_link(
+    bot: Bot,
+    *,
+    title: str,
+    description: str,
+    payload: str,
+    price_rub: int,
+    currency: str = STARS_CURRENCY,
+) -> str:
+    amount_stars = rub_to_stars(price_rub)
+    prices = [LabeledPrice(label=title, amount=amount_stars)]
+    return await bot.create_invoice_link(
+        title=title,
+        description=description,
+        payload=payload,
+        provider_token="",  # для Stars не нужен токен
+        currency=currency,
+        prices=prices,
+    )
+
+
 async def send_stars_invoice_for_subscription(
     bot: Bot,
     recipient: Message | int,
@@ -46,6 +67,7 @@ async def send_stars_invoice_for_feature(
     title: str,
     description: str,
     price_rub: int,
+    payload_prefix: str = "feat",
 ) -> None:
     amount_stars = rub_to_stars(price_rub)
     prices = [LabeledPrice(label=title, amount=amount_stars)]
@@ -55,7 +77,7 @@ async def send_stars_invoice_for_feature(
         chat_id=chat_id,
         title=title,
         description=description,
-        payload=f"feat:{feature_code}",
+        payload=f"{payload_prefix}:{feature_code}",
         provider_token="",  # для Stars не нужен токен
         currency=STARS_CURRENCY,
         prices=prices,
