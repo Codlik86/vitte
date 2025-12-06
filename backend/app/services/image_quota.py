@@ -6,13 +6,11 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..models import ImageBalance, User
-from .economy_schema import ensure_economy_schema
 
 DAILY_SUBSCRIPTION_QUOTA = 20
 
 
 async def _ensure_balance(session: AsyncSession, user: User) -> ImageBalance:
-    await ensure_economy_schema(session)
     result = await session.execute(select(ImageBalance).where(ImageBalance.user_id == user.id))
     balance = result.scalar_one_or_none()
     if balance:
