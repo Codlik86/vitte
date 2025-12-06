@@ -23,8 +23,12 @@ export function CharactersList() {
   const [loading, setLoading] = useState(true);
   const hasSubscription = Boolean(accessStatus?.has_subscription);
   const imagesAvailable = (accessStatus?.images?.remaining_free_today ?? 0) + (accessStatus?.images?.remaining_paid ?? 0);
+  const messagesLeft = hasSubscription
+    ? null
+    : Math.max(0, (accessStatus?.free_messages_limit ?? 15) - (accessStatus?.free_messages_used ?? 0));
   const headerStats = {
     images: imagesAvailable,
+    messagesLeft,
     hasSubscription: hasSubscription,
     isPremium: hasSubscription,
   };

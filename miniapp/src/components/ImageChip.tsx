@@ -1,8 +1,11 @@
 type ImageChipProps = {
   imagesRemaining: number | null;
+  messagesLeft?: number | null;
   hasSubscription?: boolean;
   isPremium?: boolean;
-  onPrimaryClick?: () => void;
+  onImagesClick?: () => void;
+  onMessagesClick?: () => void;
+  onBadgeClick?: () => void;
   onSettingsClick?: () => void;
   className?: string;
 };
@@ -16,39 +19,65 @@ function formatCounter(value: number | null): string {
 
 export function ImageChip({
   imagesRemaining,
+  messagesLeft = null,
   hasSubscription = false,
   isPremium = false,
-  onPrimaryClick,
+  onImagesClick,
+  onMessagesClick,
+  onBadgeClick,
   onSettingsClick,
   className = "",
 }: ImageChipProps) {
   const displayImages = formatCounter(imagesRemaining ?? 0);
-  const labelText = isPremium || hasSubscription ? "Premium" : "";
+  const displayMessages = formatCounter(messagesLeft);
+  const labelText = isPremium || hasSubscription ? "Premium" : "Free";
+  const showMessages = !hasSubscription;
 
   return (
     <div
-      role={onPrimaryClick ? "button" : undefined}
-      onClick={onPrimaryClick ?? undefined}
-      className={`inline-flex min-h-9 min-w-[200px] flex-shrink-0 items-center gap-2 rounded-full bg-gradient-to-r from-[#2D1747] via-[#5C2D83] to-[#D64CC1] px-4 py-1 text-white shadow-card transition hover:opacity-95 active:scale-95 ${
-        onPrimaryClick ? "cursor-pointer" : "cursor-default"
-      } ${className}`}
+      className={`inline-flex min-h-9 min-w-[200px] flex-shrink-0 items-center gap-2 rounded-full bg-gradient-to-r from-[#2D1747] via-[#5C2D83] to-[#D64CC1] px-4 py-1 text-white shadow-card transition hover:opacity-95 ${className}`}
+      style={{ whiteSpace: "nowrap" }}
     >
-      <span className="flex flex-1 items-center justify-start gap-1 whitespace-nowrap text-sm font-semibold text-white/90 tabular-nums">
-        <span aria-hidden>🖼️</span>
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onImagesClick?.();
+        }}
+        className="flex items-center gap-1 text-sm font-semibold text-white/90 tabular-nums"
+      >
+        <span aria-hidden>📷</span>
         <span>{displayImages}</span>
-      </span>
-      {labelText ? (
-        <span className="rounded-full bg-white/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-white/90">
-          {labelText}
-        </span>
-      ) : null}
+      </button>
+      {showMessages && (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onMessagesClick?.();
+          }}
+          className="flex items-center gap-1 text-sm font-semibold text-white/90 tabular-nums"
+        >
+          <span aria-hidden>💬</span>
+          <span>{displayMessages}</span>
+        </button>
+      )}
+      <button
+        type="button"
+        onClick={(e) => {
+          e.stopPropagation();
+          onBadgeClick?.();
+        }}
+        className="flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-white/90"
+      >
+        {labelText}
+      </button>
       <button
         type="button"
         onClick={(e) => {
           e.stopPropagation();
           onSettingsClick?.();
         }}
-        disabled={!onSettingsClick}
         className="flex h-8 w-8 items-center justify-center rounded-full bg-white/18 text-white transition hover:bg-white/28 active:scale-95 disabled:opacity-60"
         aria-label="Открыть настройки"
       >

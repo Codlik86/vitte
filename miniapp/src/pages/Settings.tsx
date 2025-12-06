@@ -27,9 +27,13 @@ export function Settings() {
 
   const imagesAvailable =
     (accessStatus?.images?.remaining_free_today ?? 0) + (accessStatus?.images?.remaining_paid ?? 0);
+  const messagesLeft = accessStatus?.has_subscription
+    ? null
+    : Math.max(0, (accessStatus?.free_messages_limit ?? 15) - (accessStatus?.free_messages_used ?? 0));
 
   const headerStats = {
     images: imagesAvailable,
+    messagesLeft,
     hasSubscription: Boolean(accessStatus?.has_subscription),
     isPremium: Boolean(accessStatus?.has_subscription),
   };

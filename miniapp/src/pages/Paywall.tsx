@@ -9,7 +9,7 @@ import { tg } from "../lib/telegram";
 export function Paywall() {
   const navigate = useNavigate();
   const { status, config, loading, reload } = useStoreData();
-  const { reload: reloadAccess } = useAccessStatus();
+  const { data: accessStatus, reload: reloadAccess } = useAccessStatus();
   const [busyCode, setBusyCode] = useState<string | null>(null);
 
   const hasSubscription = Boolean(status?.has_active_subscription);
@@ -18,8 +18,12 @@ export function Paywall() {
     : null;
   const plans = config?.subscription_plans ?? [];
   const imagesAvailable = (status?.remaining_images_today ?? 0) + (status?.remaining_paid_images ?? 0);
+  const messagesLeft = hasSubscription
+    ? null
+    : Math.max(0, (accessStatus?.free_messages_limit ?? 15) - (accessStatus?.free_messages_used ?? 0));
   const headerStats = {
     images: imagesAvailable,
+    messagesLeft,
     hasSubscription,
     isPremium: hasSubscription,
   };
@@ -63,8 +67,13 @@ export function Paywall() {
 
         <section className="space-y-3 rounded-3xl border border-white/10 bg-card-elevated/80 px-5 py-5 shadow-card">
           <div className="space-y-1">
-            <h2 className="text-xl font-semibold text-white">Vitte Plus</h2>
-            <p className="text-sm text-white/70">Безлимит сообщений + 20 изображений в день.</p>
+            <h2 className="text-xl font-semibold text-white">Vitte Premium</h2>
+            <ul className="space-y-1 text-sm text-white/80">
+              <li>• Безлимитные сообщения</li>
+              <li>• 20 изображений каждый день</li>
+              <li>• Самые продвинутые модели ИИ</li>
+              <li>• Мгновенные ответы и качественные изображения</li>
+            </ul>
             {hasSubscription && (
               <p className="text-sm text-emerald-200">
                 Подписка активна {endDate ? `до ${endDate}` : "без даты окончания"}. Спасибо, что остаёшься 💛

@@ -1,10 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import {
-  buyFeature,
-  buyImagePack,
-  buySubscription,
-} from "../../api/client";
+import { buyFeature, buyImagePack } from "../../api/client";
 import type { StoreConfig, StoreStatus } from "../../api/types";
 import { useAccessStatus } from "../../hooks/useAccessStatus";
 import { useStoreData } from "../../hooks/useStoreData";
@@ -21,7 +17,7 @@ type StoreLayoutProps = {
 
 export function StoreLayout({ title, showBack = true }: StoreLayoutProps) {
   const navigate = useNavigate();
-  const { reload: reloadAccess } = useAccessStatus();
+  const { data: accessStatus, reload: reloadAccess } = useAccessStatus();
   const { config, status, loading, error, reload } = useStoreData();
   const [busy, setBusy] = useState<BusyMap>({});
   const hasSubscription = Boolean(status?.has_active_subscription);
@@ -29,8 +25,12 @@ export function StoreLayout({ title, showBack = true }: StoreLayoutProps) {
     () => (status?.remaining_images_today ?? 0) + (status?.remaining_paid_images ?? 0),
     [status?.remaining_images_today, status?.remaining_paid_images],
   );
+  const messagesLeft = hasSubscription
+    ? null
+    : Math.max(0, (accessStatus?.free_messages_limit ?? 15) - (accessStatus?.free_messages_used ?? 0));
   const headerStats = {
     images: imagesAvailable,
+    messagesLeft,
     hasSubscription,
     isPremium: hasSubscription,
   };
@@ -45,29 +45,18 @@ export function StoreLayout({ title, showBack = true }: StoreLayoutProps) {
 
   const openInvoiceLink = (url?: string | null) => {
     if (!url) return false;
-    const webApp = tg;
     try {
-      webApp?.openTelegramLink?.(url);
-      webApp?.close?.();
+      tg?.openInvoice?.(url);
+      tg?.close?.();
       return true;
     } catch {
-      return false;
-    }
-  };
-
-  const handleBuySubscription = async (code: string) => {
-    setBusyFlag(code, true);
-    try {
-      const res = await buySubscription(code);
-      const opened = openInvoiceLink(res.invoice_url);
-      if (!opened) {
-        alert("Счёт отправлен в Telegram. Оплатите его в чате бота.");
+      try {
+        tg?.openTelegramLink?.(url);
+        tg?.close?.();
+        return true;
+      } catch {
+        return false;
       }
-      await handleAfterPurchase();
-    } catch (e: any) {
-      alert(e.message ?? "Не удалось оформить подписку");
-    } finally {
-      setBusyFlag(code, false);
     }
   };
 
@@ -121,14 +110,6 @@ export function StoreLayout({ title, showBack = true }: StoreLayoutProps) {
           </div>
         )}
 
-        <StoreSubscriptionSection
-          config={config}
-          status={status}
-          loading={loading}
-          busy={busy}
-          onBuy={handleBuySubscription}
-        />
-
         <StoreImagesAndFeaturesSection
           config={config}
           status={status}
@@ -139,77 +120,6 @@ export function StoreLayout({ title, showBack = true }: StoreLayoutProps) {
         />
       </div>
     </div>
-  );
-}
-
-function StoreSubscriptionSection({
-  config,
-  status,
-  loading,
-  busy,
-  onBuy,
-}: {
-  config: StoreConfig | null;
-  status: StoreStatus | null;
-  loading: boolean;
-  busy: BusyMap;
-  onBuy: (code: string) => void;
-}) {
-  const hasSubscription = Boolean(status?.has_active_subscription);
-  const endDate = status?.subscription_ends_at
-    ? new Date(status.subscription_ends_at).toLocaleDateString("ru-RU")
-    : null;
-  const plans = config?.subscription_plans ?? [];
-
-  return (
-    <section className="space-y-3 rounded-3xl border border-white/10 bg-card-elevated/80 px-5 py-5 shadow-card">
-      <div className="space-y-1">
-        <h2 className="text-lg font-semibold text-white">Подписка</h2>
-        <p className="text-sm text-white/70">
-          Безлимит сообщений + 20 изображений в день.
-        </p>
-        {hasSubscription && (
-          <p className="text-sm text-emerald-200">
-            Активно {endDate ? `до ${endDate}` : "без даты окончания"}.
-          </p>
-        )}
-      </div>
-
-      <div className="space-y-3">
-        {loading
-          ? Array.from({ length: 3 }).map((_, i) => (
-              <div
-                key={`plan-skeleton-${i}`}
-                className="h-20 rounded-3xl border border-white/10 bg-white/5 animate-pulse"
-              />
-            ))
-          : plans.map((plan) => {
-              const isBusy = busy[plan.code];
-              return (
-                <button
-                  key={plan.code}
-                  type="button"
-                  onClick={() => onBuy(plan.code)}
-                  className="flex w-full items-center justify-between rounded-3xl border border-white/10 bg-card-dark/30 px-4 py-4 text-left transition hover:border-white/30"
-                  disabled={isBusy}
-                >
-                  <div className="min-w-0 pr-3">
-                    <p className="text-sm font-semibold text-white">{plan.title}</p>
-                    <p className="text-xs text-white/60 leading-snug">{plan.duration_days} дней</p>
-                  </div>
-                  <div className="flex-shrink-0 text-right">
-                    <p className="text-lg font-semibold text-white whitespace-nowrap">
-                      {plan.price_stars} ⭐
-                    </p>
-                    {isBusy && (
-                      <p className="text-[11px] text-white/60">Оформляем...</p>
-                    )}
-                  </div>
-                </button>
-              );
-            })}
-      </div>
-    </section>
   );
 }
 
@@ -231,15 +141,14 @@ function StoreImagesAndFeaturesSection({
   const packs = config?.image_packs ?? [];
   const features = config?.emotional_features ?? [];
   const unlocked = new Set(status?.unlocked_features ?? []);
-  const remainingToday = status?.remaining_images_today ?? 0;
-  const remainingPaid = status?.remaining_paid_images ?? 0;
+  const imagesAvailable = (status?.remaining_images_today ?? 0) + (status?.remaining_paid_images ?? 0);
 
   return (
     <section className="space-y-4 rounded-3xl border border-white/10 bg-card-elevated/75 px-5 py-5 shadow-card">
       <div className="space-y-1">
         <h2 className="text-lg font-semibold text-white">Изображения</h2>
         <p className="text-sm text-white/70">
-          Осталось {remainingToday} по подписке и {remainingPaid} из пакетов.
+          У вас {imagesAvailable} изображений. Докупите ещё — выберите нужный пакет ниже.
         </p>
       </div>
 
@@ -289,7 +198,7 @@ function StoreImagesAndFeaturesSection({
                   className="flex flex-col gap-2 rounded-3xl border border-white/10 bg-card-dark/35 px-4 py-3"
                 >
                   <div className="flex items-start justify-between gap-3">
-                    <div className="space-y-1">
+                    <div className="space-y-1 min-w-0">
                       <p className="text-sm font-semibold text-white">{feature.title}</p>
                       <p className="text-xs text-white/70 line-clamp-2">{feature.description}</p>
                     </div>
@@ -299,6 +208,7 @@ function StoreImagesAndFeaturesSection({
                           ? "bg-emerald-400/15 text-emerald-100"
                           : "bg-white/10 text-white/80"
                       }`}
+                      style={{ whiteSpace: "nowrap", flexShrink: 0, minWidth: "fit-content" }}
                     >
                       {isUnlocked ? "Активировано" : `${feature.price_stars} ⭐`}
                     </span>
