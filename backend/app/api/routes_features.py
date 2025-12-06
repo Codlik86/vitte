@@ -26,7 +26,7 @@ def _serialize_features(states):
             "code": feature.code,
             "title": feature.title,
             "description": feature.description,
-            "active": feature.active,
+            "active": feature.unlocked and feature.enabled,
             "enabled": feature.enabled,
             "until": feature.until,
             "product_code": feature.product_code,
@@ -44,7 +44,7 @@ async def feature_status(
 ):
     telegram_id = await get_or_raise_telegram_id(request, explicit=telegram_id)
     user = await get_or_create_user_by_telegram_id(session, telegram_id)
-    states = collect_feature_states(user)
+    states = await collect_feature_states(session, user)
     await session.commit()
     return {"features": _serialize_features(states)}
 
@@ -57,10 +57,7 @@ async def feature_toggle(
 ):
     telegram_id = await get_or_raise_telegram_id(request, explicit=payload.telegram_id)
     user = await get_or_create_user_by_telegram_id(session, telegram_id)
-    try:
-        state = toggle_feature(user, payload.feature_code, payload.enabled)
-    except ValueError:
-        raise HTTPException(status_code=404, detail="Feature not found")
+    state = await toggle_feature(session, user, payload.feature_code, payload.enabled)
     await log_event(
         session,
         user.id,

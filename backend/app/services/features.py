@@ -6,6 +6,8 @@ from typing import Dict, List
 from sqlalchemy import select, delete
 from sqlalchemy.ext.asyncio import AsyncSession
 
+from fastapi import HTTPException
+
 from ..models import FeatureUnlock, User
 
 
@@ -17,6 +19,8 @@ class FeatureState:
     unlocked: bool
     enabled: bool
     toggleable: bool
+    product_code: str
+    until: None = None
 
 
 FEATURE_DEFINITIONS: Dict[str, dict] = {
@@ -36,17 +40,24 @@ FEATURE_DEFINITIONS: Dict[str, dict] = {
 
 
 async def collect_feature_states(session: AsyncSession, user: User) -> Dict[str, FeatureState]:
-    result = await session.execute(select(FeatureUnlock.feature_code).where(FeatureUnlock.user_id == user.id))
-    unlocked = {row[0] for row in result.all()}
+    result = await session.execute(
+        select(FeatureUnlock.feature_code, FeatureUnlock.enabled).where(FeatureUnlock.user_id == user.id)
+    )
+    rows = result.all()
+    unlocked = {row[0] for row in rows}
+    enabled_map = {row[0]: row[1] for row in rows}
     states: Dict[str, FeatureState] = {}
     for code, meta in FEATURE_DEFINITIONS.items():
+        is_unlocked = code in unlocked
+        is_enabled = enabled_map.get(code, False) if is_unlocked else False
         states[code] = FeatureState(
             code=code,
             title=meta["title"],
             description=meta["description"],
-            unlocked=code in unlocked,
-            enabled=code in unlocked,  # toggle placeholder, can extend
+            unlocked=is_unlocked,
+            enabled=is_enabled,
             toggleable=bool(meta.get("toggleable", True)),
+            product_code=code,
         )
     return states
 
@@ -64,6 +75,33 @@ async def unlock_feature(session: AsyncSession, user: User, code: str) -> Featur
     session.add(unlock)
     await session.flush()
     return unlock
+
+
+async def toggle_feature(
+    session: AsyncSession,
+    user: User,
+    feature_code: str,
+    enabled: bool,
+) -> FeatureState:
+    if feature_code not in FEATURE_DEFINITIONS:
+        raise HTTPException(status_code=404, detail="Feature not found")
+
+    result = await session.execute(
+        select(FeatureUnlock).where(
+            FeatureUnlock.user_id == user.id,
+            FeatureUnlock.feature_code == feature_code,
+        )
+    )
+    record = result.scalar_one_or_none()
+    if record is None:
+        raise HTTPException(status_code=400, detail="Feature is not unlocked")
+
+    record.enabled = bool(enabled)
+    session.add(record)
+    await session.flush()
+
+    states = await collect_feature_states(session, user)
+    return states[feature_code]
 
 
 async def reset_all_feature_unlocks(session: AsyncSession, user: User) -> None:

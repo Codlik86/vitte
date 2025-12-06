@@ -259,6 +259,7 @@ class FeatureUnlock(Base):
     user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
     feature_code: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
     unlocked_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    enabled: Mapped[bool] = mapped_column(Boolean, default=True, nullable=False)
 
     user: Mapped["User"] = relationship("User", back_populates="feature_unlocks")
 
