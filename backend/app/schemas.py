@@ -4,16 +4,32 @@ from typing import Any
 from pydantic import BaseModel
 
 
-class StoreProductSchema(BaseModel):
-    product_code: str
+class StorePlanSchema(BaseModel):
+    code: str
+    title: str
+    description: str
+    duration_days: int
+    price_stars: int
+    is_most_popular: bool | None = None
+
+
+class StoreImagePackSchema(BaseModel):
+    code: str
+    images: int
+    price_stars: int
+
+
+class StoreFeatureSchema(BaseModel):
+    code: str
     title: str
     description: str
     price_stars: int
-    type: str
 
 
-class StoreInfoSchema(BaseModel):
-    available_products: list[StoreProductSchema]
+class StoreCatalogSchema(BaseModel):
+    plans: list[StorePlanSchema]
+    image_packs: list[StoreImagePackSchema]
+    features: list[StoreFeatureSchema]
 
 
 class AccessStatusResponse(BaseModel):
@@ -27,7 +43,7 @@ class AccessStatusResponse(BaseModel):
     plan_code: str | None = None
     premium_until: datetime | None = None
     paywall_variant: str
-    store: StoreInfoSchema
+    store: StoreCatalogSchema
     features: "FeatureStatusResponse | None" = None
 
 
@@ -138,22 +154,6 @@ class SubscribeResponse(BaseModel):
     provider: str
     status: str
     confirmation: dict[str, Any] | None = None
-
-
-class StoreProductsResponse(BaseModel):
-    products: list[StoreProductSchema]
-
-
-class StorePurchaseRequest(BaseModel):
-    telegram_id: int
-    product_code: str
-
-
-class StorePurchaseResponse(BaseModel):
-    purchase_id: int
-    provider: str
-    status: str
-    invoice: dict[str, Any] | None = None
 
 
 class StoreBuyRequest(BaseModel):

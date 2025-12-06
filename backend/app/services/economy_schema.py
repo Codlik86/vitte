@@ -33,11 +33,6 @@ CREATE TABLE IF NOT EXISTS feature_unlocks (
 );
 """
 
-DDA_ALTER_FEATURE_UNLOCKS_ENABLED = """
-ALTER TABLE feature_unlocks
-    ADD COLUMN IF NOT EXISTS enabled BOOLEAN NOT NULL DEFAULT TRUE;
-"""
-
 DDL_DROP_LEGACY_USER_FEATURE_COLUMNS = """
 ALTER TABLE users
     DROP COLUMN IF EXISTS feature_long_letters_until,
@@ -54,7 +49,6 @@ async def ensure_economy_schema(session: AsyncSession) -> None:
     try:
         await session.execute(text(DDL_CREATE_IMAGE_BALANCES))
         await session.execute(text(DDL_CREATE_FEATURE_UNLOCKS))
-        await session.execute(text(DDA_ALTER_FEATURE_UNLOCKS_ENABLED))
         await session.execute(text(DDL_DROP_LEGACY_USER_FEATURE_COLUMNS))
     except Exception:  # noqa: BLE001
         logger.exception("Failed to ensure economy schema (image balances, feature unlocks, legacy cleanup)")
