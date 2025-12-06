@@ -1,23 +1,16 @@
 from __future__ import annotations
 
-from datetime import datetime
+from datetime import datetime, timedelta
 
-from fastapi import APIRouter, Depends, HTTPException, Header, Request
-from sqlalchemy import select
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
-from ..config import settings
 from ..db import get_session
-from ..integrations.yookassa_client import create_payment, verify_webhook_signature
 from ..models import Subscription, SubscriptionStatus, AccessStatus
 from ..schemas import PaymentPlanSchema, SubscribeRequest, SubscribeResponse
 from ..services.analytics import log_event
-from ..services.payments import (
-    estimate_valid_until,
-    get_payment_plan,
-    list_payment_plans,
-)
+from ..services.subscriptions import ensure_premium_for_user
+from ..services.store import SUBSCRIPTION_PLANS, get_plan
 from ..users_service import get_or_create_user_by_telegram_id
 from ..services.telegram_id import get_or_raise_telegram_id
 from ..bot import bot
@@ -33,13 +26,13 @@ async def get_plans():
             code=plan.code,
             title=plan.title,
             description=plan.description,
-            price=plan.price,
-            currency=plan.currency,
-            period=plan.period,
-            provider=plan.provider,
-            recommended=plan.recommended,
+            price=plan.price_stars,
+            currency="STARS",
+            period=f"{plan.duration_days}_days",
+            provider="stars",
+            recommended=plan.is_most_popular,
         )
-        for plan in list_payment_plans()
+        for plan in SUBSCRIPTION_PLANS
     ]
 
 
@@ -49,13 +42,11 @@ async def subscribe(
     request: Request,
     session: AsyncSession = Depends(get_session),
 ):
-    plan = get_payment_plan(payload.plan_code)
+    plan = get_plan(payload.plan_code)
     if not plan:
         raise HTTPException(status_code=404, detail="Plan not found")
 
-    provider = payload.provider or plan.provider
-    if provider not in {"yookassa", "stars"}:
-        raise HTTPException(status_code=400, detail="Unsupported provider")
+    provider = "stars"
 
     telegram_id = await get_or_raise_telegram_id(request, explicit=payload.telegram_id)
     user = await get_or_create_user_by_telegram_id(session, telegram_id)
@@ -65,38 +56,29 @@ async def subscribe(
         provider=provider,
         plan_code=plan.code,
         status=SubscriptionStatus.PENDING,
-        is_auto_renew=provider == "yookassa",
+        is_auto_renew=False,
         started_at=datetime.utcnow(),
     )
     session.add(subscription)
     await session.flush()
 
     confirmation: dict | None = None
-    if provider == "yookassa":
-        payment = await create_payment(
-            amount=plan.price,
-            currency=plan.currency,
-            description=plan.title,
-            return_url=settings.miniapp_url,
-            metadata={
-                "subscription_id": subscription.id,
-                "plan_code": plan.code,
-            },
+    try:
+        await send_stars_invoice_for_subscription(
+            bot,
+            telegram_id,
+            plan_code=plan.code,
+            price_rub=plan.price_stars,
         )
-        subscription.external_payment_id = payment.get("id")
-        subscription.confirmation_payload = payment
-        confirmation = payment.get("confirmation")
-    else:
-        try:
-            await send_stars_invoice_for_subscription(
-                bot,
-                telegram_id,
-                plan_code=plan.code,
-                price_rub=plan.price,
-            )
-        except Exception:
-            await send_stars_invoice_for_subscription(bot, telegram_id, plan_code=plan.code, price_rub=plan.price)
-        confirmation = {"provider": "stars", "status": "invoice_sent"}
+    except Exception as exc:  # noqa: BLE001
+        raise HTTPException(status_code=502, detail="Invoice creation failed") from exc
+    confirmation = {"provider": "stars", "status": "invoice_sent"}
+
+    # Immediate activation (no webhook for Stars in this flow)
+    await ensure_premium_for_user(session, user, plan.code)
+    subscription.status = SubscriptionStatus.ACTIVE
+    subscription.valid_until = datetime.utcnow() + timedelta(days=plan.duration_days)
+    user.access_status = AccessStatus.SUBSCRIPTION_ACTIVE
 
     await log_event(
         session,
@@ -112,58 +94,3 @@ async def subscribe(
         status=subscription.status.value,
         confirmation=confirmation,
     )
-
-
-@router.post("/yookassa/webhook")
-async def yookassa_webhook(
-    request: Request,
-    content_hmac: str | None = Header(default=None, alias="Content-HMAC"),
-    session: AsyncSession = Depends(get_session),
-):
-    body = await request.body()
-    if not verify_webhook_signature(body, content_hmac):
-        raise HTTPException(status_code=403, detail="Invalid signature")
-
-    payload = await request.json()
-    payment_data = payload.get("object") or {}
-    payment_id = payment_data.get("id")
-    metadata = payment_data.get("metadata") or {}
-
-    stmt = select(Subscription).options(selectinload(Subscription.user))
-    if metadata.get("subscription_id"):
-        stmt = stmt.where(Subscription.id == metadata["subscription_id"])
-    else:
-        stmt = stmt.where(Subscription.external_payment_id == payment_id)
-    result = await session.execute(stmt)
-    subscription = result.scalar_one_or_none()
-    if subscription is None:
-        raise HTTPException(status_code=404, detail="Subscription not found")
-
-    status = payment_data.get("status")
-    if status == "succeeded":
-        subscription.status = SubscriptionStatus.ACTIVE
-        plan = get_payment_plan(subscription.plan_code)
-        if plan:
-            subscription.valid_until = estimate_valid_until(plan, subscription.started_at)
-        subscription.confirmation_payload = payment_data
-        if subscription.user:
-            subscription.user.access_status = AccessStatus.SUBSCRIPTION_ACTIVE
-            await log_event(
-                session,
-                subscription.user.id,
-                "subscription_renewed",
-                {"plan_code": subscription.plan_code, "provider": subscription.provider},
-            )
-    elif status in {"canceled", "refunded"}:
-        subscription.status = SubscriptionStatus.CANCELED
-        if subscription.user:
-            subscription.user.access_status = AccessStatus.TRIAL_USAGE
-            await log_event(
-                session,
-                subscription.user.id,
-                "subscription_canceled",
-                {"plan_code": subscription.plan_code},
-            )
-
-    await session.commit()
-    return {"ok": True}

@@ -1,166 +1,143 @@
 from __future__ import annotations
 
-from fastapi import APIRouter, Depends, HTTPException, Request, Query
+from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..db import get_session
-from ..models import Purchase, PurchaseStatus
-from ..schemas import (
-    StoreProductsResponse,
-    StorePurchaseRequest,
-    StorePurchaseResponse,
-    StoreBuyRequest,
-    StoreBuyResponse,
-)
-from ..services.analytics import log_event
-from ..services.features import apply_product_purchase
-from ..services.store import get_store_product, list_store_products
-from ..users_service import get_or_create_user_by_telegram_id
-from ..logging_config import logger
+from ..services.store import SUBSCRIPTION_PLANS, IMAGE_PACKS, EMOTIONAL_FEATURES, get_plan, get_image_pack, get_feature
+from ..services.subscriptions import ensure_premium_for_user
+from ..services.image_quota import get_image_quota, _ensure_balance
+from ..services.features import unlock_feature, collect_feature_states
 from ..services.telegram_id import get_or_raise_telegram_id
-from ..billing.prices import FEATURE_PRICES_STARS, RUB_PER_STAR
+from ..users_service import get_or_create_user_by_telegram_id
+from ..services.access import get_active_subscription
+from ..logging_config import logger
 from ..bot import bot
-from ..services.stars import send_stars_invoice_for_feature
+from ..services.stars import send_stars_invoice_for_subscription, send_stars_invoice_for_feature
+from ..services.analytics import log_event
+from ..models import Purchase, PurchaseStatus
+from ..schemas import StoreBuyRequest, StoreBuyResponse
 
 router = APIRouter(prefix="/api/store", tags=["store"])
 
 
-@router.get("/products", response_model=StoreProductsResponse)
-async def store_products():
+@router.get("/config")
+async def store_config():
     return {
-        "products": [
-            {
-                "product_code": product.product_code,
-                "title": product.title,
-                "description": product.description,
-                "price_stars": product.price_stars,
-                "type": product.type,
-            }
-            for product in list_store_products()
-        ]
+        "subscription_plans": [plan.__dict__ for plan in SUBSCRIPTION_PLANS],
+        "image_packs": [pack.__dict__ for pack in IMAGE_PACKS],
+        "emotional_features": [feat.__dict__ for feat in EMOTIONAL_FEATURES],
     }
 
 
-@router.post("/purchase", response_model=StorePurchaseResponse)
-async def purchase_product(
-    payload: StorePurchaseRequest,
+@router.get("/status")
+async def store_status(
     request: Request,
     session: AsyncSession = Depends(get_session),
 ):
-    product = get_store_product(payload.product_code)
-    if product is None:
-        raise HTTPException(status_code=404, detail="Product not found")
-
-    telegram_id = await get_or_raise_telegram_id(request, explicit=payload.telegram_id)
+    telegram_id = await get_or_raise_telegram_id(request, allow_debug=True)
     user = await get_or_create_user_by_telegram_id(session, telegram_id)
-
-    price_rub = int(round(product.price_stars * RUB_PER_STAR))
-    try:
-        await send_stars_invoice_for_feature(
-            bot,
-            telegram_id,
-            feature_code=product.product_code,
-            title=product.title,
-            description=product.description,
-            price_rub=price_rub,
-        )
-    except Exception as exc:  # noqa: BLE001
-        logger.error("Failed to send stars invoice for user %s product %s: %s", user.id, product.product_code, exc)
-        raise HTTPException(status_code=502, detail="Invoice creation failed")
-
-    await log_event(
-        session,
-        user.id,
-        "purchase_started",
-        {"product_code": product.product_code, "provider": "stars"},
-    )
-    await session.commit()
-
-    return StorePurchaseResponse(
-        purchase_id=0,
-        provider="stars",
-        status="pending",
-        invoice={"provider": "stars", "status": "invoice_sent"},
-    )
+    subscription = await get_active_subscription(session, user.id)
+    quota = await get_image_quota(session, user, has_subscription=bool(subscription))
+    features = await collect_feature_states(session, user)
+    return {
+        "has_active_subscription": bool(subscription),
+        "subscription_ends_at": subscription.valid_until if subscription else None,
+        "remaining_images_today": quota["remaining_free_today"] + quota["remaining_paid"],
+        "remaining_paid_images": quota["remaining_paid"],
+        "unlocked_features": [code for code, state in features.items() if state.unlocked],
+        "is_free_user": not bool(subscription),
+    }
 
 
-@router.post("/buy/{product_code}", response_model=StoreBuyResponse)
-async def buy_product(
-    product_code: str,
+@router.post("/buy/subscription/{plan_code}", response_model=StoreBuyResponse)
+async def buy_subscription(
+    plan_code: str,
     payload: StoreBuyRequest,
     request: Request,
     session: AsyncSession = Depends(get_session),
 ):
-    product = get_store_product(product_code)
-    if product is None:
-        raise HTTPException(status_code=404, detail="Product not found")
-
+    plan = get_plan(plan_code)
+    if plan is None:
+        raise HTTPException(status_code=404, detail="Plan not found")
     telegram_id = await get_or_raise_telegram_id(request, explicit=payload.telegram_id)
     user = await get_or_create_user_by_telegram_id(session, telegram_id)
 
+    price_rub = plan.price_stars  # Stars invoice uses rub_to_stars internally
+    try:
+        await send_stars_invoice_for_subscription(
+            bot, telegram_id, plan_code=plan.code, price_rub=price_rub
+        )
+    except Exception as exc:  # noqa: BLE001
+        logger.error("Failed to send stars invoice for plan %s: %s", plan.code, exc)
+        raise HTTPException(status_code=502, detail="Invoice creation failed")
+
+    # immediate activation (Stars callback отсутствует) — активируем сразу
+    await ensure_premium_for_user(session, user, plan.code)
+    await log_event(session, user.id, "subscription_activated", {"plan_code": plan.code})
+    await session.commit()
+    return StoreBuyResponse(ok=True, product_code=plan.code, features=None)
+
+
+@router.post("/buy/image_pack/{pack_code}", response_model=StoreBuyResponse)
+async def buy_image_pack(
+    pack_code: str,
+    payload: StoreBuyRequest,
+    request: Request,
+    session: AsyncSession = Depends(get_session),
+):
+    pack = get_image_pack(pack_code)
+    if pack is None:
+        raise HTTPException(status_code=404, detail="Image pack not found")
+    telegram_id = await get_or_raise_telegram_id(request, explicit=payload.telegram_id)
+    user = await get_or_create_user_by_telegram_id(session, telegram_id)
     purchase = Purchase(
         user_id=user.id,
-        product_code=product.product_code,
+        product_code=pack.code,
         provider="stars",
-        amount=product.price_stars,
+        amount=pack.price_stars,
         currency="STARS",
         status=PurchaseStatus.SUCCESS,
-        meta={"mode": "direct_feature_purchase"},
+        meta={"mode": "image_pack"},
     )
     session.add(purchase)
     await session.flush()
-
-    try:
-        activated_features = apply_product_purchase(user, product.product_code)
-    except ValueError:
-        logger.error("Feature mapping missing for product %s", product.product_code)
-        raise HTTPException(status_code=400, detail="Feature mapping missing")
-
-    event_overrides = {"images": "feature_image_pack_activated"}
-    for feature in activated_features:
-        event_type = event_overrides.get(feature.code, f"feature_{feature.code}_activated")
-        await log_event(
-            session,
-            user.id,
-            event_type,
-            {"product_code": product.product_code, "until": feature.until.isoformat() if feature.until else None},
-        )
-
+    balance = await _ensure_balance(session, user)
+    balance.total_purchased_images += pack.images
+    balance.remaining_purchased_images += pack.images
+    await log_event(session, user.id, "image_pack_purchased", {"pack": pack.code, "images": pack.images})
     await session.commit()
-
-    activated_until = None
-    if activated_features:
-        activated_until = max((item.until for item in activated_features if item.until), default=None)
-
-    return StoreBuyResponse(
-        ok=True,
-        product_code=product.product_code,
-        activated_until=activated_until,
-        features=[item.code for item in activated_features],
-    )
+    return StoreBuyResponse(ok=True, product_code=pack.code, features=None)
 
 
-@router.post("/invoice", response_model=dict)
-async def create_feature_invoice(
+@router.post("/buy/feature/{feature_code}", response_model=StoreBuyResponse)
+async def buy_feature(
+    feature_code: str,
+    payload: StoreBuyRequest,
     request: Request,
-    product_code: str = Query(..., description="Feature product code"),
     session: AsyncSession = Depends(get_session),
 ):
-    telegram_id = await get_or_raise_telegram_id(request)
-    price_stars = FEATURE_PRICES_STARS.get(product_code)
-    if price_stars is None:
+    feature = get_feature(feature_code)
+    if feature is None:
         raise HTTPException(status_code=404, detail="Feature not found")
-    price_rub = int(round(price_stars * RUB_PER_STAR))
+    telegram_id = await get_or_raise_telegram_id(request, explicit=payload.telegram_id)
+    user = await get_or_create_user_by_telegram_id(session, telegram_id)
+
+    price_rub = feature.price_stars  # Stars invoice uses rub_to_stars internally
     try:
         await send_stars_invoice_for_feature(
             bot,
             telegram_id,
-            feature_code=product_code,
-            title="Улучшения Vitte",
-            description="Оплата улучшения для Vitte",
+            feature_code=feature.code,
+            title=feature.title,
+            description=feature.description,
             price_rub=price_rub,
         )
-    except Exception as exc:
-        logger.error("Failed to create feature invoice: %s", exc)
-        raise HTTPException(status_code=502, detail="Не удалось создать счёт")
-    return {"ok": True, "invoice_sent": True}
+    except Exception as exc:  # noqa: BLE001
+        logger.error("Failed to send stars invoice for feature %s: %s", feature.code, exc)
+        raise HTTPException(status_code=502, detail="Invoice creation failed")
+
+    await unlock_feature(session, user, feature.code)
+    await log_event(session, user.id, "feature_unlocked", {"feature": feature.code})
+    await session.commit()
+    return StoreBuyResponse(ok=True, product_code=feature.code, features=[feature.code])

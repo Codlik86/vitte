@@ -20,16 +20,13 @@ class PlanPrice:
 
 
 SUBSCRIPTION_PLANS: dict[str, PlanPrice] = {
-    "sub_3d": PlanPrice(code="sub_3d", title="3 дня", price_rub=299),
-    "sub_week": PlanPrice(code="sub_week", title="1 неделя", price_rub=599),
-    "sub_month": PlanPrice(code="sub_month", title="1 месяц", price_rub=999),
-    "sub_quarter": PlanPrice(code="sub_quarter", title="3 месяца", price_rub=2199),
+    "plus_2d": PlanPrice(code="plus_2d", title="2 дня", price_rub=int(199 * RUB_PER_STAR)),
+    "plus_7d": PlanPrice(code="plus_7d", title="7 дней", price_rub=int(399 * RUB_PER_STAR)),
+    "plus_30d": PlanPrice(code="plus_30d", title="30 дней", price_rub=int(999 * RUB_PER_STAR)),
 }
 
 
 FEATURE_PRICES_STARS: dict[str, int] = {
-    "long_letters_month": 150,
-    "voice_month": 300,
-    "deep_mode_month": 300,
-    "fantasy_pack_month": 300,
+    "intense_mode": 150,
+    "fantasy_scenes": 200,
 }

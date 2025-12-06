@@ -1,11 +1,9 @@
 import { useNavigate } from "react-router-dom";
-import { GemChip } from "../GemChip";
+import { ImageChip } from "../ImageChip";
 
 export type PageHeaderStats = {
-  gems: number | null;
-  usedMessages: number | null;
-  limitMessages: number | null;
-  hasUnlimited?: boolean;
+  images: number | null;
+  hasSubscription?: boolean;
   isPremium?: boolean;
 };
 
@@ -48,11 +46,9 @@ export function PageHeader({
       </div>
       {stats ? (
         <div className="w-full min-[420px]:w-auto min-[420px]:justify-end flex justify-start">
-          <GemChip
-            gems={stats.gems ?? null}
-            usedMessages={stats.usedMessages ?? null}
-            totalMessages={stats.limitMessages ?? null}
-            hasUnlimited={stats.hasUnlimited}
+          <ImageChip
+            imagesRemaining={stats.images ?? null}
+            hasSubscription={stats.hasSubscription}
             isPremium={stats.isPremium}
             onPrimaryClick={() => navigate("/paywall")}
             onSettingsClick={() => navigate("/settings")}

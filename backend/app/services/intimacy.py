@@ -21,7 +21,6 @@ def evaluate_intimacy(
     дальше — можно идти в близость при достаточном доверии.
     """
     premium = bool(user_flags.get("has_subscription")) if user_flags else False
-    deep_mode = bool(user_flags.get("deep_mode")) if user_flags else False
     closeness_level = user_flags.get("closeness_level") if user_flags else None
     respect_score = user_flags.get("respect_score") if user_flags else None
 
@@ -38,7 +37,7 @@ def evaluate_intimacy(
     if message_count < 18 or trust_level < 60 or effective_closeness < 40:
         return IntimacyResult(
             level=2,
-            can_engage_intimately=deep_mode or premium or (trust_level >= 55 and effective_closeness >= 35),
+            can_engage_intimately=premium or (trust_level >= 55 and effective_closeness >= 35),
             label="близость",
         )
 

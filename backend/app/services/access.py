@@ -9,8 +9,9 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from ..config import settings
 from ..models import AccessStatus, Subscription, SubscriptionStatus, User
-from .store import list_store_products
+from .store import SUBSCRIPTION_PLANS, IMAGE_PACKS, EMOTIONAL_FEATURES
 from .features import collect_feature_states
+from .image_quota import get_image_quota
 
 
 async def get_active_subscription(session: AsyncSession, user_id: int) -> Subscription | None:
@@ -54,17 +55,8 @@ async def build_access_status(session: AsyncSession, user: User) -> dict[str, An
     free_used = 0 if has_subscription else user.free_messages_used
     can_send_message = has_subscription or free_used < limit
 
-    store_products = [
-        {
-            "product_code": product.product_code,
-            "title": product.title,
-            "description": product.description,
-            "price_stars": product.price_stars,
-            "type": product.type,
-        }
-        for product in list_store_products()
-    ]
-    feature_states = collect_feature_states(user)
+    feature_states = await collect_feature_states(session, user)
+    image_quota = await get_image_quota(session, user, has_subscription=has_subscription)
 
     return {
         "telegram_id": user.telegram_id,
@@ -78,7 +70,9 @@ async def build_access_status(session: AsyncSession, user: User) -> dict[str, An
         "premium_until": premium_until,
         "paywall_variant": paywall_variant,
         "store": {
-            "available_products": store_products,
+            "plans": [plan.__dict__ for plan in SUBSCRIPTION_PLANS],
+            "image_packs": [pack.__dict__ for pack in IMAGE_PACKS],
+            "features": [feat.__dict__ for feat in EMOTIONAL_FEATURES],
         },
         "features": {
             "features": [
@@ -86,13 +80,14 @@ async def build_access_status(session: AsyncSession, user: User) -> dict[str, An
                     "code": feature.code,
                     "title": feature.title,
                     "description": feature.description,
-                    "active": feature.active,
+                    "active": feature.unlocked and feature.enabled,
                     "enabled": feature.enabled,
-                    "until": feature.until,
-                    "product_code": feature.product_code,
+                    "until": None,
+                    "product_code": feature.code,
                     "toggleable": feature.toggleable,
                 }
                 for feature in feature_states.values()
             ]
         },
+        "images": image_quota,
     }

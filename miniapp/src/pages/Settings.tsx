@@ -14,6 +14,7 @@ import { useAccessStatus } from "../hooks/useAccessStatus";
 import { tg } from "../lib/telegram";
 
 type TabKey = "upgrades" | "base";
+const FEATURE_CODES = ["intense_mode", "fantasy_scenes"];
 
 export function Settings() {
   const navigate = useNavigate();
@@ -24,11 +25,12 @@ export function Settings() {
   const [error, setError] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
 
+  const imagesAvailable =
+    (accessStatus?.images?.remaining_free_today ?? 0) + (accessStatus?.images?.remaining_paid ?? 0);
+
   const headerStats = {
-    gems: 0,
-    usedMessages: accessStatus?.free_messages_used ?? null,
-    limitMessages: accessStatus?.free_messages_limit ?? null,
-    hasUnlimited: Boolean(accessStatus?.has_subscription),
+    images: imagesAvailable,
+    hasSubscription: Boolean(accessStatus?.has_subscription),
     isPremium: Boolean(accessStatus?.has_subscription),
   };
 
@@ -55,9 +57,20 @@ export function Settings() {
   }, [accessStatus?.features?.features, load]);
 
   const ownedFeatures = useMemo(
-    () => features.filter((f) => f.active || Boolean(f.until)),
-    [features]
+    () => features.filter((f) => FEATURE_CODES.includes(f.code) && (f.active || f.enabled)),
+    [features],
   );
+  const lockedFeatures = useMemo(
+    () => features.filter((f) => FEATURE_CODES.includes(f.code) && !(f.active || f.enabled)),
+    [features],
+  );
+  const featurePrices = useMemo(() => {
+    const map = new Map<string, number>();
+    accessStatus?.store?.features?.forEach((item) => {
+      map.set(item.code, item.price_stars);
+    });
+    return map;
+  }, [accessStatus?.store?.features]);
 
   const handleToggle = async (feature: FeatureStatusItem, next: boolean) => {
     try {
@@ -132,23 +145,11 @@ export function Settings() {
           <p className="text-sm text-white/70">
             Пока нет активных улучшений. Подключи фичи, чтобы сделать общение богаче.
           </p>
-          <div className="grid gap-3">
-            {FEATURE_PLACEHOLDERS.map((card) => (
-              <div
-                key={card.code}
-                className="rounded-3xl border border-white/5 bg-card-dark/40 px-4 py-4"
-              >
-                <p className="text-base font-semibold text-white">{card.title}</p>
-                <p className="mt-1 text-sm text-white/70">{card.description}</p>
-                <button
-                  className="mt-3 inline-flex w-full items-center justify-center rounded-full bg-gradient-to-r from-amber-400 to-orange-500 px-4 py-3 text-sm font-semibold text-white"
-                  onClick={() => navigate("/store")}
-                >
-                  Подключить
-                </button>
-              </div>
-            ))}
-          </div>
+          <LockedFeatureList
+            lockedFeatures={lockedFeatures}
+            onUnlock={() => navigate("/store")}
+            priceMap={featurePrices}
+          />
         </div>
       );
     }
@@ -164,11 +165,6 @@ export function Settings() {
               <div>
                 <p className="text-base font-semibold text-white">{feature.title}</p>
                 <p className="text-sm text-white/70">{feature.description}</p>
-                {feature.until && (
-                  <p className="mt-1 text-xs text-white/60">
-                    Активно до {new Date(feature.until).toLocaleDateString("ru-RU", { day: "2-digit", month: "short" })}
-                  </p>
-                )}
               </div>
               {feature.toggleable && (
                 <ToggleSwitch
@@ -178,16 +174,19 @@ export function Settings() {
                 />
               )}
             </div>
-            {feature.code === "voice" && (
-              <p className="text-xs text-white/60">Статус: ответы приходят голосом.</p>
-            )}
-            {feature.code === "images" && (
-              <p className="text-xs text-amber-200/80">
-                Функция готовится. Статус сохраняется за твоим аккаунтом.
-              </p>
-            )}
           </div>
         ))}
+
+        {lockedFeatures.length > 0 && (
+          <div className="space-y-3">
+            <p className="text-sm font-semibold text-white">Недоступные улучшения</p>
+            <LockedFeatureList
+              lockedFeatures={lockedFeatures}
+              onUnlock={() => navigate("/store")}
+              priceMap={featurePrices}
+            />
+          </div>
+        )}
       </div>
     );
   };
@@ -249,6 +248,37 @@ export function Settings() {
 
         {activeTab === "upgrades" ? renderFeatures() : renderBaseSettings()}
       </div>
+    </div>
+  );
+}
+
+function LockedFeatureList({
+  lockedFeatures,
+  onUnlock,
+  priceMap,
+}: {
+  lockedFeatures: FeatureStatusItem[];
+  onUnlock: () => void;
+  priceMap: Map<string, number>;
+}) {
+  return (
+    <div className="grid gap-3">
+      {lockedFeatures.map((card) => (
+        <div
+          key={card.code}
+          className="rounded-3xl border border-white/5 bg-card-dark/40 px-4 py-4"
+        >
+          <p className="text-base font-semibold text-white">{card.title}</p>
+          <p className="mt-1 text-sm text-white/70">{card.description}</p>
+          <button
+            className="mt-3 inline-flex w-full items-center justify-center rounded-full bg-gradient-to-r from-amber-400 to-orange-500 px-4 py-3 text-sm font-semibold text-white"
+            onClick={onUnlock}
+          >
+            Разблокировать
+            {priceMap.has(card.code) ? ` · ${priceMap.get(card.code)} ⭐` : ""}
+          </button>
+        </div>
+      ))}
     </div>
   );
 }
@@ -334,46 +364,3 @@ function ActionButton({
     </button>
   );
 }
-
-const FEATURE_PLACEHOLDERS: FeatureStatusItem[] = [
-  {
-    code: "long_letters",
-    title: "Большие письма",
-    description: "Длинные, тёплые ответы и письма.",
-    active: false,
-    enabled: false,
-    until: null,
-    product_code: "long_letters_month",
-    toggleable: true,
-  },
-  {
-    code: "voice",
-    title: "Голос персонажа",
-    description: "Ответы голосом, будто вы рядом.",
-    active: false,
-    enabled: false,
-    until: null,
-    product_code: "voice_month",
-    toggleable: true,
-  },
-  {
-    code: "deep_mode",
-    title: "Глубокие отношения",
-    description: "Больше эмоциональной глубины и искренности.",
-    active: false,
-    enabled: false,
-    until: null,
-    product_code: "deep_mode_month",
-    toggleable: true,
-  },
-  {
-    code: "images",
-    title: "Фантазии и образы",
-    description: "Будущие визуальные сцены (заглушка).",
-    active: false,
-    enabled: false,
-    until: null,
-    product_code: "fantasy_pack_month",
-    toggleable: false,
-  },
-];

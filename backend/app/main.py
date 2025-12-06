@@ -128,13 +128,6 @@ async def on_startup():
                 ADD COLUMN IF NOT EXISTS age_confirmed boolean NOT NULL DEFAULT false,
                 ADD COLUMN IF NOT EXISTS is_adult_confirmed boolean NOT NULL DEFAULT false,
                 ADD COLUMN IF NOT EXISTS accepted_terms_at timestamp NULL,
-                ADD COLUMN IF NOT EXISTS feature_long_letters_until timestamp NULL,
-                ADD COLUMN IF NOT EXISTS feature_long_letters_enabled boolean NULL DEFAULT true,
-                ADD COLUMN IF NOT EXISTS feature_voice_until timestamp NULL,
-                ADD COLUMN IF NOT EXISTS feature_voice_enabled boolean NULL DEFAULT true,
-                ADD COLUMN IF NOT EXISTS feature_deep_mode_until timestamp NULL,
-                ADD COLUMN IF NOT EXISTS feature_deep_mode_enabled boolean NULL DEFAULT true,
-                ADD COLUMN IF NOT EXISTS feature_images_until timestamp NULL,
                 ADD COLUMN IF NOT EXISTS last_surprise_sent_at timestamp NULL,
                 ADD COLUMN IF NOT EXISTS updated_at timestamp NULL DEFAULT now();
                 """

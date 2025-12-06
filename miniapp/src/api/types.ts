@@ -27,14 +27,6 @@ export type PersonasListResponse = {
   items: PersonaListItem[];
 };
 
-export type StoreProduct = {
-  product_code: string;
-  title: string;
-  description: string;
-  price_stars: number;
-  type: string;
-};
-
 export type FeatureStatusItem = {
   code: string;
   title: string;
@@ -62,9 +54,32 @@ export type AccessStatusResponse = {
   premium_until: string | null;
   paywall_variant: "A" | "B";
   store: {
-    available_products: StoreProduct[];
+    plans: Array<{
+      code: string;
+      title: string;
+      description: string;
+      duration_days: number;
+      price_stars: number;
+      is_most_popular?: boolean;
+    }>;
+    image_packs: Array<{
+      code: string;
+      images: number;
+      price_stars: number;
+    }>;
+    features: Array<{
+      code: string;
+      title: string;
+      description: string;
+      price_stars: number;
+    }>;
   };
   features?: FeatureStatusResponse | null;
+  images?: {
+    remaining_free_today: number;
+    remaining_paid: number;
+    total_remaining: number;
+  };
 };
 
 export type ChatResponse = {
@@ -86,40 +101,42 @@ export type PersonaSelectResponse = {
   greeting_mode?: "first" | "return" | "updated" | string | null;
 };
 
-export type PaymentPlan = {
-  code: string;
-  title: string;
-  description: string;
-  price: number;
-  currency: string;
-  period: "day" | "week" | "month" | "quarter" | "year";
-  provider: string;
-  recommended?: boolean;
-};
-
-export type SubscribeResponse = {
-  subscription_id: number;
-  provider: string;
-  status: string;
-  confirmation?: Record<string, unknown> | null;
-};
-
-export type StoreProductsResponse = {
-  products: StoreProduct[];
-};
-
-export type StorePurchaseResponse = {
-  purchase_id: number;
-  provider: string;
-  status: string;
-  invoice?: Record<string, unknown> | null;
-};
-
 export type StoreBuyResponse = {
   ok: boolean;
   product_code: string;
   activated_until?: string | null;
   features?: string[] | null;
+};
+
+export type StoreConfig = {
+  subscription_plans: Array<{
+    code: string;
+    title: string;
+    description: string;
+    duration_days: number;
+    price_stars: number;
+    is_most_popular?: boolean;
+  }>;
+  image_packs: Array<{
+    code: string;
+    images: number;
+    price_stars: number;
+  }>;
+  emotional_features: Array<{
+    code: string;
+    title: string;
+    description: string;
+    price_stars: number;
+  }>;
+};
+
+export type StoreStatus = {
+  has_active_subscription: boolean;
+  subscription_ends_at: string | null;
+  remaining_images_today: number;
+  remaining_paid_images: number;
+  unlocked_features: string[];
+  is_free_user?: boolean;
 };
 export type StoryCard = {
   id: string;

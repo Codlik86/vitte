@@ -2,13 +2,12 @@ import type {
   PersonasListResponse,
   PersonaDetails,
   AccessStatusResponse,
-  PaymentPlan,
-  SubscribeResponse,
-  StoreProductsResponse,
   ChatResponse,
   PersonaSelectResponse,
   FeatureStatusResponse,
   StoreBuyResponse,
+  StoreConfig,
+  StoreStatus,
 } from "./types";
 import { getTelegramIdOptional } from "../lib/telegramId";
 
@@ -157,32 +156,6 @@ export async function fetchAccessStatus(): Promise<AccessStatusResponse> {
   return (await res.json()) as AccessStatusResponse;
 }
 
-export async function fetchPaymentPlans(): Promise<PaymentPlan[]> {
-  const res = await fetch(`${BASE_URL}/api/payments/plans`, { headers: buildHeaders() });
-  if (!res.ok) {
-    throw new Error("Не удалось загрузить планы подписки");
-  }
-  return (await res.json()) as PaymentPlan[];
-}
-
-export async function subscribeToPlan(planCode: string, provider?: string): Promise<SubscribeResponse> {
-  const telegramId = await getTelegramIdOptional();
-  const res = await fetch(`${BASE_URL}/api/payments/subscribe`, {
-    method: "POST",
-    headers: buildHeaders({ "Content-Type": "application/json" }),
-    body: JSON.stringify({
-      telegram_id: telegramId,
-      plan_code: planCode,
-      provider,
-    }),
-  });
-  if (!res.ok) {
-    const errorText = await res.text();
-    throw new Error(errorText || "Не удалось оформить подписку");
-  }
-  return (await res.json()) as SubscribeResponse;
-}
-
 export async function triggerBotPay(): Promise<void> {
   const telegramId = await getTelegramIdOptional();
   const res = await fetch(`${BASE_URL}/api/bot/pay_from_miniapp`, {
@@ -194,20 +167,6 @@ export async function triggerBotPay(): Promise<void> {
     const text = await res.text();
     throw new Error(text || "Не удалось открыть оплату");
   }
-}
-
-export async function createFeatureInvoice(productCode: string): Promise<void> {
-  const telegramId = await getTelegramIdOptional();
-  const res = await fetch(`${BASE_URL}/api/store/invoice?product_code=${productCode}`, {
-    method: "POST",
-    headers: buildHeaders({ "Content-Type": "application/json" }),
-    body: JSON.stringify({ telegram_id: telegramId }),
-  });
-  if (!res.ok) {
-    const text = await res.text();
-    throw new Error(text || "Не удалось создать счёт");
-  }
-  return;
 }
 
 export async function logAnalyticsEvent(eventType: string, payload?: Record<string, unknown>): Promise<void> {
@@ -243,26 +202,62 @@ export async function logMiniAppOpen(startParam?: string | null): Promise<void> 
   }
 }
 
-export async function fetchStoreProducts(): Promise<StoreProductsResponse> {
-  const res = await fetch(`${BASE_URL}/api/store/products`, { headers: buildHeaders() });
+export async function fetchStoreConfig(): Promise<StoreConfig> {
+  const res = await fetch(`${BASE_URL}/api/store/config`, { headers: buildHeaders() });
   if (!res.ok) {
-    throw new Error("Не удалось загрузить магазин");
+    throw new Error("Не удалось загрузить конфигурацию магазина");
   }
-  return (await res.json()) as StoreProductsResponse;
+  return (await res.json()) as StoreConfig;
 }
 
-export async function purchaseProduct(productCode: string): Promise<StoreBuyResponse> {
+export async function fetchStoreStatus(): Promise<StoreStatus> {
   const telegramId = await getTelegramIdOptional();
-  const res = await fetch(`${BASE_URL}/api/store/buy/${productCode}`, {
+  const url = buildUrlWithTelegramId(`${BASE_URL}/api/store/status`, telegramId);
+  const res = await fetch(url, { headers: buildHeaders() });
+  if (!res.ok) {
+    throw new Error("Не удалось загрузить статус магазина");
+  }
+  return (await res.json()) as StoreStatus;
+}
+
+export async function buySubscription(planCode: string): Promise<StoreBuyResponse> {
+  const telegramId = await getTelegramIdOptional();
+  const res = await fetch(`${BASE_URL}/api/store/buy/subscription/${planCode}`, {
     method: "POST",
     headers: buildHeaders({ "Content-Type": "application/json" }),
-    body: JSON.stringify({
-      telegram_id: telegramId,
-    }),
+    body: JSON.stringify({ telegram_id: telegramId }),
   });
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(text || "Не удалось оформить покупку");
+    throw new Error(text || "Не удалось оформить подписку");
+  }
+  return (await res.json()) as StoreBuyResponse;
+}
+
+export async function buyImagePack(packCode: string): Promise<StoreBuyResponse> {
+  const telegramId = await getTelegramIdOptional();
+  const res = await fetch(`${BASE_URL}/api/store/buy/image_pack/${packCode}`, {
+    method: "POST",
+    headers: buildHeaders({ "Content-Type": "application/json" }),
+    body: JSON.stringify({ telegram_id: telegramId }),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || "Не удалось купить пакет изображений");
+  }
+  return (await res.json()) as StoreBuyResponse;
+}
+
+export async function buyFeature(featureCode: string): Promise<StoreBuyResponse> {
+  const telegramId = await getTelegramIdOptional();
+  const res = await fetch(`${BASE_URL}/api/store/buy/feature/${featureCode}`, {
+    method: "POST",
+    headers: buildHeaders({ "Content-Type": "application/json" }),
+    body: JSON.stringify({ telegram_id: telegramId }),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || "Не удалось разблокировать улучшение");
   }
   return (await res.json()) as StoreBuyResponse;
 }

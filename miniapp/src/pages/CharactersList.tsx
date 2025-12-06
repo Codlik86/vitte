@@ -22,11 +22,10 @@ export function CharactersList() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const hasSubscription = Boolean(accessStatus?.has_subscription);
+  const imagesAvailable = (accessStatus?.images?.remaining_free_today ?? 0) + (accessStatus?.images?.remaining_paid ?? 0);
   const headerStats = {
-    gems: 0,
-    usedMessages: accessStatus?.free_messages_used ?? null,
-    limitMessages: accessStatus?.free_messages_limit ?? null,
-    hasUnlimited: hasSubscription,
+    images: imagesAvailable,
+    hasSubscription: hasSubscription,
     isPremium: hasSubscription,
   };
 

@@ -31,13 +31,6 @@ class User(Base):
     age_confirmed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     is_adult_confirmed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     accepted_terms_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
-    feature_long_letters_until: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
-    feature_long_letters_enabled: Mapped[bool | None] = mapped_column(Boolean, default=True, nullable=True)
-    feature_voice_until: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
-    feature_voice_enabled: Mapped[bool | None] = mapped_column(Boolean, default=True, nullable=True)
-    feature_deep_mode_until: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
-    feature_deep_mode_enabled: Mapped[bool | None] = mapped_column(Boolean, default=True, nullable=True)
-    feature_images_until: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     last_surprise_sent_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     updated_at: Mapped[datetime | None] = mapped_column(
         DateTime,
@@ -54,6 +47,8 @@ class User(Base):
     dialogs: Mapped[list["Dialog"]] = relationship(back_populates="user")
     subscriptions: Mapped[list["Subscription"]] = relationship(back_populates="user")
     purchases: Mapped[list["Purchase"]] = relationship(back_populates="user")
+    image_balance: Mapped["ImageBalance | None"] = relationship("ImageBalance", uselist=False, back_populates="user")
+    feature_unlocks: Mapped[list["FeatureUnlock"]] = relationship("FeatureUnlock", back_populates="user")
 
 
 class Dialog(Base):
@@ -234,6 +229,38 @@ class Purchase(Base):
     )
 
     user: Mapped["User"] = relationship(back_populates="purchases")
+
+
+class ImageBalance(Base):
+    __tablename__ = "image_balances"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), unique=True, nullable=False)
+    total_purchased_images: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    remaining_purchased_images: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    daily_subscription_quota: Mapped[int] = mapped_column(Integer, default=20, nullable=False)
+    daily_subscription_used: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    daily_quota_date: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    created_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+    updated_at: Mapped[datetime] = mapped_column(
+        DateTime,
+        default=datetime.utcnow,
+        onupdate=datetime.utcnow,
+        nullable=False,
+    )
+
+    user: Mapped["User"] = relationship("User", back_populates="image_balance")
+
+
+class FeatureUnlock(Base):
+    __tablename__ = "feature_unlocks"
+
+    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+    feature_code: Mapped[str] = mapped_column(String(64), nullable=False, index=True)
+    unlocked_at: Mapped[datetime] = mapped_column(DateTime, default=datetime.utcnow, nullable=False)
+
+    user: Mapped["User"] = relationship("User", back_populates="feature_unlocks")
 
 
 class UserPersona(Base):

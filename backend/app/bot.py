@@ -14,9 +14,6 @@ from aiogram.types import (
 )
 from datetime import datetime
 
-import json
-from aiogram.types import PreCheckoutQuery
-
 from .config import settings
 from .db import get_session
 from .logging_config import logger
@@ -24,19 +21,20 @@ from .models import User
 from .middlewares.access import AccessMiddleware
 from .middlewares.terms_gate import TermsGateMiddleware
 from .services.chat_flow import generate_chat_reply
-from .services.features import apply_product_purchase
+from .services.features import unlock_feature, collect_feature_states
 from .services.onboarding import (
     build_terms_keyboard,
     onboarding_text,
     intro_text,
     help_text,
 )
-from .services.payments import create_yookassa_payment_link
-from .services.stars import send_stars_invoice_for_subscription
+from .services.stars import send_stars_invoice_for_subscription, send_stars_invoice_for_feature
 from .services.subscriptions import ensure_premium_for_user, get_user_subscription_status
 from .services.telegram_id import get_debug_telegram_id
 from .users_service import get_or_create_user_by_telegram_id
 from .utils.async_helpers import ensure_async_iter
+from .services.store import SUBSCRIPTION_PLANS, IMAGE_PACKS, EMOTIONAL_FEATURES, get_plan, get_image_pack, get_feature
+from .services.image_quota import _ensure_balance
 
 bot = Bot(
     token=settings.telegram_bot_token,
@@ -47,12 +45,6 @@ dp.update.middleware(TermsGateMiddleware())
 dp.update.middleware(AccessMiddleware())
 
 STAR_MULTIPLIER = 1_000_000_000  # 1 XTR minimal units
-PLAN_DURATIONS = {
-    "sub_3d": 3,
-    "sub_week": 7,
-    "sub_month": 30,
-    "sub_quarter": 90,
-}
 
 
 async def setup_bot_commands(bot: Bot) -> None:
@@ -79,89 +71,81 @@ def build_miniapp_keyboard() -> InlineKeyboardMarkup:
     )
 
 
-def _format_plan_button(plan_code: str) -> InlineKeyboardButton:
-    plan = SUBSCRIPTION_PLANS[plan_code]
-    price_rub = plan.price_rub
-    price_stars = plan.price_stars
-    text = f"{plan.title} — {price_rub}₽ · {price_stars}⭐"
-    return InlineKeyboardButton(text=text, callback_data=f"pay_plan:{plan_code}")
-
-
-def pay_plans_keyboard() -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(
-        inline_keyboard=[
-            [_format_plan_button("sub_3d")],
-            [_format_plan_button("sub_week")],
-            [_format_plan_button("sub_month")],
-            [_format_plan_button("sub_quarter")],
-            [
-                InlineKeyboardButton(
-                    text="Купить ⭐ у Telegram",
-                    url="https://t.me/PremiumBot",
-                )
-            ],
+def pay_keyboard(subscription_active: bool, unlocked_features: set[str]) -> InlineKeyboardMarkup:
+    buttons: list[list[InlineKeyboardButton]] = []
+    # Subscriptions
+    for plan in SUBSCRIPTION_PLANS:
+        label = f"{plan.title} — {plan.price_stars}⭐"
+        buttons.append([InlineKeyboardButton(text=label, callback_data=f"pay_sub:{plan.code}")])
+    # Image packs
+    for pack in IMAGE_PACKS:
+        label = f"{pack.images} изображений — {pack.price_stars}⭐"
+        buttons.append([InlineKeyboardButton(text=label, callback_data=f"pay_pack:{pack.code}")])
+    # Features
+    for feature in EMOTIONAL_FEATURES:
+        unlocked = feature.code in unlocked_features
+        prefix = "✅ " if unlocked else ""
+        label = f"{prefix}{feature.title} — {feature.price_stars}⭐"
+        buttons.append([InlineKeyboardButton(text=label, callback_data=f"pay_feat:{feature.code}")])
+    buttons.append(
+        [
+            InlineKeyboardButton(
+                text="Купить ⭐ у Telegram",
+                url="https://t.me/PremiumBot",
+            )
         ]
     )
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
 
 
-def pay_methods_keyboard(plan_code: str) -> InlineKeyboardMarkup:
-    return InlineKeyboardMarkup(
-        inline_keyboard=[
-            [
-                InlineKeyboardButton(
-                    text="Оплатить звёздами ⭐",
-                    callback_data=f"pay_stars:{plan_code}",
-                )
-            ],
-        ]
-    )
+async def send_pay_intro(message: Message, user: User, status: dict, unlocked_features: set[str] | None = None):
+    has_sub = status.get("has_subscription")
+    until = status.get("until")
+    until_text = until.strftime("%d.%m.%Y") if until else "—"
+    text_lines = [
+        "Подписка Vitte Plus:",
+        f"Статус: {'активна' if has_sub else 'нет'}",
+        f"До: {until_text}" if has_sub else "",
+        "Планы:",
+        "• 2 дня — 199⭐",
+        "• 7 дней — 399⭐",
+        "• 30 дней — 999⭐",
+        "",
+        "Пакеты изображений:",
+        "• 20 — 50⭐, 50 — 120⭐, 100 — 250⭐, 200 — 500⭐",
+        "",
+        "Улучшения:",
+        "• Режим страсти — 150⭐",
+        "• Фантазии и сцены — 200⭐",
+        "",
+        "Выбери вариант:",
+    ]
+    await message.answer("\n".join([l for l in text_lines if l]), reply_markup=pay_keyboard(has_sub, unlocked_features or set()))
 
 
-async def send_pay_intro(message: Message, user: User, status: dict):
-    text = ""
-    if status.get("has_subscription"):
-        until = status.get("until")
-        until_text = until.strftime("%d.%m.%Y") if until else "без срока"
-        text = (
-            f"Премиум Vitte активен до {until_text}.\n\n"
-            "Премиум даёт:\n"
-            "— безлимитные сообщения,\n"
-            "— полный доступ к персонажам и историям,\n"
-            "— улучшенные ответы.\n\n"
-            "Хочешь продлить подписку?"
-        )
-    else:
-        text = (
-            "Премиум Vitte открывает:\n"
-            "— общение без лимитов,\n"
-            "— полный доступ к персонажам и улучшениям,\n"
-            "— более глубокие и тёплые ответы.\n\n"
-            "Выбери тариф:"
-        )
-    await message.answer(text, reply_markup=pay_plans_keyboard())
-
-
-async def send_pay_intro_to_user(user: User, status: dict):
-    if status.get("has_subscription"):
-        until = status.get("until")
-        until_text = until.strftime("%d.%m.%Y") if until else "без срока"
-        text = (
-            f"Премиум Vitte активен до {until_text}.\n\n"
-            "Премиум даёт:\n"
-            "— безлимитные сообщения,\n"
-            "— полный доступ к персонажам и историям,\n"
-            "— улучшенные ответы.\n\n"
-            "Хочешь продлить подписку?"
-        )
-    else:
-        text = (
-            "Премиум Vitte открывает:\n"
-            "— общение без лимитов,\n"
-            "— полный доступ к персонажам и улучшениям,\n"
-            "— более глубокие и тёплые ответы.\n\n"
-            "Выбери тариф:"
-        )
-    await bot.send_message(user.telegram_id, text, reply_markup=pay_plans_keyboard())
+async def send_pay_intro_to_user(user: User, status: dict, unlocked_features: set[str] | None = None):
+    has_sub = status.get("has_subscription")
+    until = status.get("until")
+    until_text = until.strftime("%d.%m.%Y") if until else "—"
+    text_lines = [
+        "Подписка Vitte Plus:",
+        f"Статус: {'активна' if has_sub else 'нет'}",
+        f"До: {until_text}" if has_sub else "",
+        "Планы:",
+        "• 2 дня — 199⭐",
+        "• 7 дней — 399⭐",
+        "• 30 дней — 999⭐",
+        "",
+        "Пакеты изображений:",
+        "• 20 — 50⭐, 50 — 120⭐, 100 — 250⭐, 200 — 500⭐",
+        "",
+        "Улучшения:",
+        "• Режим страсти — 150⭐",
+        "• Фантазии и сцены — 200⭐",
+        "",
+        "Выбери вариант:",
+    ]
+    await bot.send_message(user.telegram_id, "\n".join([l for l in text_lines if l]), reply_markup=pay_keyboard(has_sub, unlocked_features or set()))
 
 
 @dp.message(CommandStart())
@@ -194,8 +178,10 @@ async def cmd_pay(message: Message):
     async for session in get_session():
         user = await get_or_create_user_by_telegram_id(session, message.from_user.id)
         status = await get_user_subscription_status(session, user)
+        feature_states = await collect_feature_states(session, user)
         await session.commit()
-    await send_pay_intro(message, user, status)
+    unlocked = {code for code, state in feature_states.items() if state.unlocked}
+    await send_pay_intro(message, user, status, unlocked)
 
 
 @dp.message(Command("help"))
@@ -299,30 +285,12 @@ async def on_user_message(message: Message, current_user: User | None = None, db
             await message.answer("Не получилось ответить, попробуй ещё раз или открой мини-приложение.")
 
 
-@dp.callback_query(F.data.startswith("pay_plan:"))
-async def pay_plan_selected(cb: CallbackQuery):
+@dp.callback_query(F.data.startswith("pay_sub:"))
+async def pay_sub_selected(cb: CallbackQuery):
     if cb.from_user is None or cb.message is None:
         return
     plan_code = cb.data.split(":", 1)[1]
-    plan = SUBSCRIPTION_PLANS.get(plan_code)
-    if not plan:
-        await cb.answer("Тариф не найден", show_alert=True)
-        return
-    text = (
-        f"Тариф «{plan.title}»\n"
-        f"Цена: {plan.price_rub}₽ или {plan.price_stars}⭐️\n\n"
-        "Оплатить можно через Telegram Stars."
-    )
-    await cb.message.answer(text, reply_markup=pay_methods_keyboard(plan_code))
-    await cb.answer()
-
-
-@dp.callback_query(F.data.startswith("pay_stars:"))
-async def pay_stars(cb: CallbackQuery):
-    if cb.from_user is None:
-        return
-    plan_code = cb.data.split(":", 1)[1]
-    plan = SUBSCRIPTION_PLANS.get(plan_code)
+    plan = get_plan(plan_code)
     if not plan:
         await cb.answer("Тариф не найден", show_alert=True)
         return
@@ -331,12 +299,72 @@ async def pay_stars(cb: CallbackQuery):
             bot,
             cb.message,
             plan_code=plan_code,
-            price_rub=plan.price_rub,
+            price_rub=plan.price_stars,
         )
-        await cb.answer()
+        async for session in get_session():
+            user = await get_or_create_user_by_telegram_id(session, cb.from_user.id)
+            await ensure_premium_for_user(session, user, plan_code=plan_code)
+            await session.commit()
+        await cb.answer("Подписка активирована")
     except Exception as exc:
         logger.error("Failed to send stars invoice: %s", exc)
         await cb.answer("Не получилось создать счёт", show_alert=True)
+
+
+@dp.callback_query(F.data.startswith("pay_pack:"))
+async def pay_pack_selected(cb: CallbackQuery):
+    if cb.from_user is None or cb.message is None:
+        return
+    pack_code = cb.data.split(":", 1)[1]
+    pack = get_image_pack(pack_code)
+    if not pack:
+        await cb.answer("Пакет не найден", show_alert=True)
+        return
+    async for session in get_session():
+        user = await get_or_create_user_by_telegram_id(session, cb.from_user.id)
+        balance = await _ensure_balance(session, user)
+        balance.total_purchased_images += pack.images
+        balance.remaining_purchased_images += pack.images
+        await session.commit()
+    try:
+        await send_stars_invoice_for_feature(
+            bot,
+            cb.message,
+            feature_code=pack.code,
+            title="Пакет изображений",
+            description=f"{pack.images} изображений",
+            price_rub=pack.price_stars,
+        )
+    except Exception as exc:
+        logger.error("Failed to send stars invoice for pack: %s", exc)
+    await cb.answer("Пакет активирован")
+
+
+@dp.callback_query(F.data.startswith("pay_feat:"))
+async def pay_feature_selected(cb: CallbackQuery):
+    if cb.from_user is None or cb.message is None:
+        return
+    feature_code = cb.data.split(":", 1)[1]
+    feature = get_feature(feature_code)
+    if not feature:
+        await cb.answer("Улучшение не найдено", show_alert=True)
+        return
+    async for session in get_session():
+        user = await get_or_create_user_by_telegram_id(session, cb.from_user.id)
+        await unlock_feature(session, user, feature_code)
+        await session.commit()
+    try:
+        await send_stars_invoice_for_feature(
+            bot,
+            cb.message,
+            feature_code=feature_code,
+            title=feature.title,
+            description=feature.description,
+            price_rub=feature.price_stars,
+        )
+    except Exception as exc:
+        logger.error("Failed to send stars invoice for feature %s: %s", feature_code, exc)
+    await cb.answer("Улучшение разблокировано")
 
 
 @dp.pre_checkout_query()
@@ -351,39 +379,7 @@ async def on_pre_checkout(pre_checkout_query: PreCheckoutQuery):
 async def on_successful_payment(message: Message):
     if message.from_user is None:
         return
-    success = message.successful_payment
-    payload_raw = success.invoice_payload if success else ""
-    currency = success.currency if success else ""
-    product_code = None
-
-    if currency == "XTR" and payload_raw:
-        if payload_raw.startswith("sub:"):
-            product_code = payload_raw.split(":", 1)[1]
-        elif payload_raw.startswith("feat:"):
-            product_code = f"feature_{payload_raw.split(':', 1)[1]}"
-    if product_code is None:
-        try:
-            payload = json.loads(payload_raw)
-        except Exception:
-            payload = {}
-        product_code = payload.get("product_code")
-
-    async for session in get_session():
-        user = await get_or_create_user_by_telegram_id(session, message.from_user.id)
-        if product_code and product_code.startswith("sub_"):
-            days = PLAN_DURATIONS.get(product_code, 30)
-            await ensure_premium_for_user(session, user, plan_code=product_code, period_days=days)
-            await session.commit()
-            await message.answer("Оплата получена! Подписка активирована. 💜")
-        elif product_code and product_code.startswith("feature_"):
-            try:
-                apply_product_purchase(user, product_code.replace("feature_", ""))
-            except Exception as exc:
-                logger.error("Feature activation failed: %s", exc)
-            await session.commit()
-            await message.answer("Оплата получена! Улучшение активировано.")
-        else:
-            await message.answer("Оплата получена. Спасибо!")
+    await message.answer("Оплата получена. Спасибо!")
 
 
 async def handle_update(update: dict):

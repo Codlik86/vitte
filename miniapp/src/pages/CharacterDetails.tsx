@@ -27,15 +27,11 @@ export function CharacterDetails() {
   }, [fallbackTitle, id]);
 
   const hasSubscription = Boolean(accessStatus?.has_subscription);
-  const activeFeatures = accessStatus?.features?.features ?? [];
-  const hasVoice = activeFeatures.some((f) => f.code === "voice" && f.active);
-  const hasLongLetters = activeFeatures.some((f) => f.code === "long_letters" && f.active);
-  const hasDeepMode = activeFeatures.some((f) => f.code === "deep_mode" && f.active);
+  const imagesAvailable =
+    (accessStatus?.images?.remaining_free_today ?? 0) + (accessStatus?.images?.remaining_paid ?? 0);
   const headerStats = {
-    gems: 0,
-    usedMessages: accessStatus?.free_messages_used ?? null,
-    limitMessages: accessStatus?.free_messages_limit ?? null,
-    hasUnlimited: hasSubscription,
+    images: imagesAvailable,
+    hasSubscription: hasSubscription,
     isPremium: hasSubscription,
   };
 
@@ -139,13 +135,6 @@ export function CharacterDetails() {
               <h1 className="text-4xl font-semibold tracking-tight">
                 {persona.name}
               </h1>
-              {(hasVoice || hasLongLetters || hasDeepMode) && (
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {hasVoice && <Badge label="Голос персонажа" />}
-                  {hasLongLetters && <Badge label="Большие письма" />}
-                  {hasDeepMode && <Badge label="Глубокие отношения" />}
-                </div>
-              )}
               {persona.short_description && (
                 <p className="mt-3 text-base text-white/70">
                   {persona.short_description}
@@ -320,14 +309,6 @@ function StoriesBlock({
         })}
       </div>
     </div>
-  );
-}
-
-function Badge({ label }: { label: string }) {
-  return (
-    <span className="inline-flex items-center justify-center rounded-full border border-white/15 bg-white/10 px-3 py-1 text-xs font-semibold uppercase tracking-wide text-white/80">
-      {label}
-    </span>
   );
 }
 

@@ -1,82 +1,41 @@
-import { useRef } from "react";
-
-type GemChipProps = {
-  gems: number | null;
-  usedMessages: number | null;
-  totalMessages: number | null;
-  hasUnlimited?: boolean;
+type ImageChipProps = {
+  imagesRemaining: number | null;
+  hasSubscription?: boolean;
   isPremium?: boolean;
   onPrimaryClick?: () => void;
   onSettingsClick?: () => void;
   className?: string;
 };
 
-function useStableNumber(value: number | null) {
-  const ref = useRef<number | null>(null);
-  if (typeof value === "number" && Number.isFinite(value)) {
-    ref.current = value;
-  }
-  return ref.current;
-}
-
-function useStableBoolean(value: boolean | undefined) {
-  const ref = useRef<boolean | null>(null);
-  if (typeof value === "boolean") {
-    ref.current = value;
-  }
-  return ref.current;
-}
-
 function formatCounter(value: number | null): string {
   if (typeof value === "number" && Number.isFinite(value)) {
-    return String(value);
+    return String(Math.max(0, value));
   }
   return "–";
 }
 
-export function GemChip({
-  gems,
-  usedMessages,
-  totalMessages,
-  hasUnlimited = false,
+export function ImageChip({
+  imagesRemaining,
+  hasSubscription = false,
   isPremium = false,
   onPrimaryClick,
   onSettingsClick,
   className = "",
-}: GemChipProps) {
-  const stableGems = useStableNumber(gems);
-  const stableUsed = useStableNumber(usedMessages);
-  const stableTotal = useStableNumber(totalMessages);
-  const stableUnlimited = useStableBoolean(hasUnlimited);
-
-  const resolvedGems = stableGems ?? gems;
-  const resolvedUsed = stableUsed ?? usedMessages;
-  const resolvedTotal = stableTotal ?? totalMessages;
-  const resolvedUnlimited = (stableUnlimited ?? hasUnlimited) === true;
-
-  const displayGems = formatCounter(resolvedGems ?? null);
-  const remaining =
-    resolvedUnlimited || isPremium
-      ? "∞"
-      : resolvedUsed != null && resolvedTotal != null
-      ? Math.max(resolvedTotal - resolvedUsed, 0)
-      : null;
-  const labelText = isPremium
-    ? "Premium"
-    : remaining != null
-    ? `Осталось ${remaining}`
-    : "Осталось сообщений";
+}: ImageChipProps) {
+  const displayImages = formatCounter(imagesRemaining ?? 0);
+  const labelText = isPremium || hasSubscription ? "Premium" : "Изображения";
 
   return (
-    <button
-      type="button"
-      onClick={onPrimaryClick}
-      disabled={!onPrimaryClick}
-      className={`inline-flex min-h-9 min-w-[200px] flex-shrink-0 items-center gap-2 rounded-full bg-gradient-to-r from-[#2D1747] via-[#5C2D83] to-[#D64CC1] px-4 py-1 text-white shadow-card transition hover:opacity-95 active:scale-95 disabled:opacity-60 ${className}`}
+    <div
+      role={onPrimaryClick ? "button" : undefined}
+      onClick={onPrimaryClick ?? undefined}
+      className={`inline-flex min-h-9 min-w-[200px] flex-shrink-0 items-center gap-2 rounded-full bg-gradient-to-r from-[#2D1747] via-[#5C2D83] to-[#D64CC1] px-4 py-1 text-white shadow-card transition hover:opacity-95 active:scale-95 ${
+        onPrimaryClick ? "cursor-pointer" : "cursor-default"
+      } ${className}`}
     >
       <span className="flex flex-1 items-center justify-start gap-1 whitespace-nowrap text-sm font-semibold text-white/90 tabular-nums">
-        <span aria-hidden>💎</span>
-        <span>{displayGems}</span>
+        <span aria-hidden>🖼️</span>
+        <span>{displayImages}</span>
       </span>
       <span className="rounded-full bg-white/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-white/90">
         {labelText}
@@ -108,6 +67,6 @@ export function GemChip({
           />
         </svg>
       </button>
-    </button>
+    </div>
   );
 }

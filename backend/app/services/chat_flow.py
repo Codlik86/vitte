@@ -310,14 +310,11 @@ async def generate_chat_reply(
     if story_meta:
         memory_context = f"{story_meta} {memory_context}"
     ritual_hint = None if preview_story else should_add_ritual(message_count + 1)
-    feature_states = collect_feature_states(user)
+    feature_states = await collect_feature_states(session, user)
     feature_instruction, feature_mode, feature_max_tokens = build_feature_instruction(feature_states)
 
-    deep_state = feature_states.get("deep_mode") if feature_states else None
-    voice_state = feature_states.get("voice") if feature_states else None
     feature_flags = {
         "has_subscription": access.get("has_subscription", False),
-        "deep_mode": bool(getattr(deep_state, "active", False)),
         "closeness_level": updated_relationship.closeness_level,
         "respect_score": updated_relationship.respect_score,
     }
@@ -344,7 +341,7 @@ async def generate_chat_reply(
         story_reentry=bool(story_prompt and message_count > 0),
         feature_instruction=feature_instruction,
         feature_mode=feature_mode,
-        voice_enabled=bool(getattr(voice_state, "active", False)),
+        voice_enabled=False,
         intimacy_level=intimacy.level,
         intimacy_label=intimacy.label,
         can_engage_intimately=intimacy.can_engage_intimately,
@@ -447,13 +444,10 @@ async def generate_greeting_reply(
         story_prompt,
         reentry=bool(story_prompt and message_count > 0),
     )
-    feature_states = collect_feature_states(user)
+    feature_states = await collect_feature_states(session, user)
     feature_instruction, feature_mode, feature_max_tokens = build_feature_instruction(feature_states)
-    deep_state = feature_states.get("deep_mode") if feature_states else None
-    voice_state = feature_states.get("voice") if feature_states else None
     feature_flags = {
         "has_subscription": has_subscription,
-        "deep_mode": bool(getattr(deep_state, "active", False)),
         "closeness_level": relationship_state.closeness_level,
         "respect_score": relationship_state.respect_score,
     }
@@ -483,7 +477,7 @@ async def generate_greeting_reply(
         story_reentry=bool(story_prompt and message_count > 0),
         feature_instruction=feature_instruction,
         feature_mode=feature_mode,
-        voice_enabled=bool(getattr(voice_state, "active", False)),
+        voice_enabled=False,
         intimacy_level=intimacy.level,
         intimacy_label=intimacy.label,
         can_engage_intimately=intimacy.can_engage_intimately,
