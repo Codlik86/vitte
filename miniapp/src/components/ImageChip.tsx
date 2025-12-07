@@ -32,6 +32,7 @@ export function ImageChip({
   const displayMessages = formatCounter(messagesLeft);
   const labelText = isPremium || hasSubscription ? "Premium" : "Free";
   const showMessages = !hasSubscription;
+  const iconClass = "leading-none relative top-[-1px]";
 
   const chipMetricClass = "inline-flex items-center gap-1 text-sm font-semibold text-white/90 tabular-nums leading-none";
 
@@ -48,7 +49,7 @@ export function ImageChip({
         }}
         className={chipMetricClass}
       >
-        <span aria-hidden className="leading-none">
+        <span aria-hidden className={iconClass}>
           📷
         </span>
         <span className="leading-none">{displayImages}</span>
@@ -62,7 +63,7 @@ export function ImageChip({
           }}
           className={chipMetricClass}
         >
-          <span aria-hidden className="leading-none">
+          <span aria-hidden className={iconClass}>
             💬
           </span>
           <span className="leading-none">{displayMessages}</span>

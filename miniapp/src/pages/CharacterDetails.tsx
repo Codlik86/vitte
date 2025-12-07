@@ -160,11 +160,22 @@ export function CharacterDetails() {
 
             <div className="pt-2">
               <button
-                className="w-full rounded-full bg-white px-4 py-4 text-base font-semibold text-bg-dark transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70"
+                className={`w-full rounded-full bg-white px-4 py-4 text-base font-semibold text-bg-dark transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70 ${busy ? "loading-pulse" : ""}`}
                 onClick={handleSelect}
                 disabled={busy}
               >
-                {busy ? "Отправляем приветствие..." : actionLabel}
+                {busy ? (
+                  <span className="inline-flex items-center gap-1 leading-none">
+                    Всего несколько секунд
+                    <span className="loading-dots" aria-hidden>
+                      <span />
+                      <span />
+                      <span />
+                    </span>
+                  </span>
+                ) : (
+                  actionLabel
+                )}
               </button>
               <button
                 className="mt-3 w-full rounded-full bg-gradient-to-r from-[#2c1a52] via-[#5a2b80] to-[#c23ba7] px-4 py-4 text-base font-semibold text-white shadow-card transition active:scale-[0.98]"
