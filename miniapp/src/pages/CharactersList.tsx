@@ -51,7 +51,7 @@ export function CharactersList() {
   }, []);
 
   const renderCards = () => {
-    const allowedNames = new Set(["лина", "марианна", "аки"]);
+    const allowedNames = new Set(["лина", "марианна", "аки", "мей", "стейси", "тая"]);
     const personasWithCustom: Array<PersonaListItem | CustomPersonaEntry> = [
       {
         id: "custom",

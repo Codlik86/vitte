@@ -1,21 +1,15 @@
-import math
-import os
+from __future__ import annotations
 
 from aiogram import Bot
 from aiogram.types import LabeledPrice, Message
 
+from .store import get_plan, get_image_pack, get_feature
+
 STARS_CURRENCY = "XTR"
 
-# Подбираем коэффициент, чтобы покрывать комиссию Telegram и маржу
-STARS_RUB_MULTIPLIER = float(os.getenv("STARS_RUB_MULTIPLIER", "1.3"))
-STARS_ROUND_STEP = int(os.getenv("STARS_ROUND_STEP", "10"))
 
-
-def rub_to_stars(price_rub: int) -> int:
-    raw = price_rub * STARS_RUB_MULTIPLIER
-    if STARS_ROUND_STEP > 1:
-        return int(math.ceil(raw / STARS_ROUND_STEP) * STARS_ROUND_STEP)
-    return int(math.ceil(raw))
+def stars_amount(price_stars: int) -> int:
+    return int(price_stars)
 
 
 async def create_invoice_link(
@@ -24,16 +18,16 @@ async def create_invoice_link(
     title: str,
     description: str,
     payload: str,
-    price_rub: int,
+    price_stars: int,
     currency: str = STARS_CURRENCY,
 ) -> str:
-    amount_stars = rub_to_stars(price_rub)
-    prices = [LabeledPrice(label=title, amount=amount_stars)]
+    amount = stars_amount(price_stars)
+    prices = [LabeledPrice(label=title, amount=amount)]
     return await bot.create_invoice_link(
         title=title,
         description=description,
         payload=payload,
-        provider_token="",  # для Stars не нужен токен
+        provider_token="",
         currency=currency,
         prices=prices,
     )
@@ -43,18 +37,19 @@ async def send_stars_invoice_for_subscription(
     bot: Bot,
     recipient: Message | int,
     plan_code: str,
-    price_rub: int,
 ) -> None:
-    amount_stars = rub_to_stars(price_rub)
-    prices = [LabeledPrice(label=f"Подписка Vitte: {plan_code}", amount=amount_stars)]
+    plan = get_plan(plan_code)
+    if plan is None:
+        raise ValueError("Plan not found")
+    amount = stars_amount(plan.price_stars)
+    prices = [LabeledPrice(label=f"Подписка Vitte: {plan.title}", amount=amount)]
     chat_id = recipient.chat.id if isinstance(recipient, Message) else recipient
-
     await bot.send_invoice(
         chat_id=chat_id,
         title="Подписка Vitte",
         description="Безлимитные сообщения, быстрый режим и премиум-функции.",
         payload=f"sub:{plan_code}",
-        provider_token="",  # для Stars не нужен токен
+        provider_token="",
         currency=STARS_CURRENCY,
         prices=prices,
     )
@@ -66,19 +61,28 @@ async def send_stars_invoice_for_feature(
     feature_code: str,
     title: str,
     description: str,
-    price_rub: int,
+    price_stars: int | None = None,
     payload_prefix: str = "feat",
 ) -> None:
-    amount_stars = rub_to_stars(price_rub)
-    prices = [LabeledPrice(label=title, amount=amount_stars)]
-    chat_id = recipient.chat.id if isinstance(recipient, Message) else recipient
+    resolved_price = price_stars
+    if resolved_price is None and payload_prefix == "feat":
+        feat = get_feature(feature_code)
+        resolved_price = feat.price_stars if feat else None
+    if resolved_price is None and payload_prefix == "pack":
+        pack = get_image_pack(feature_code)
+        resolved_price = pack.price_stars if pack else None
+    if resolved_price is None:
+        raise ValueError("Price not found for invoice")
 
+    amount = stars_amount(resolved_price)
+    prices = [LabeledPrice(label=title, amount=amount)]
+    chat_id = recipient.chat.id if isinstance(recipient, Message) else recipient
     await bot.send_invoice(
         chat_id=chat_id,
         title=title,
         description=description,
         payload=f"{payload_prefix}:{feature_code}",
-        provider_token="",  # для Stars не нужен токен
+        provider_token="",
         currency=STARS_CURRENCY,
         prices=prices,
     )

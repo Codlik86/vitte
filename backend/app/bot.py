@@ -314,7 +314,6 @@ async def pay_sub_selected(cb: CallbackQuery):
             bot,
             cb.message,
             plan_code=plan_code,
-            price_rub=plan.price_stars,
         )
         await cb.answer("Счёт отправлен. Оплати в Stars.")
     except Exception as exc:
@@ -338,7 +337,7 @@ async def pay_pack_selected(cb: CallbackQuery):
             feature_code=pack.code,
             title="Пакет изображений",
             description=f"{pack.images} изображений",
-            price_rub=pack.price_stars,
+            price_stars=pack.price_stars,
             payload_prefix="pack",
         )
     except Exception as exc:
@@ -362,7 +361,7 @@ async def pay_feature_selected(cb: CallbackQuery):
             feature_code=feature_code,
             title=feature.title,
             description=feature.description,
-            price_rub=feature.price_stars,
+            price_stars=feature.price_stars,
         )
     except Exception as exc:
         logger.error("Failed to send stars invoice for feature %s: %s", feature_code, exc)

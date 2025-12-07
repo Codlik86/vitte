@@ -63,14 +63,13 @@ async def buy_subscription(
     telegram_id = await get_or_raise_telegram_id(request, explicit=payload.telegram_id)
     user = await get_or_create_user_by_telegram_id(session, telegram_id)
 
-    price_rub = plan.price_stars  # Stars invoice uses rub_to_stars internally
     try:
         invoice_url = await create_invoice_link(
             bot,
             title="Подписка Vitte",
             description="Безлимитные сообщения + 20 изображений в день.",
             payload=f"sub:{plan.code}",
-            price_rub=price_rub,
+            price_stars=plan.price_stars,
         )
     except Exception as exc:  # noqa: BLE001
         logger.error("Failed to create stars invoice link for plan %s: %s", plan.code, exc)
@@ -99,7 +98,7 @@ async def buy_image_pack(
             title="Пакет изображений",
             description=f"{pack.images} изображений",
             payload=f"pack:{pack.code}",
-            price_rub=pack.price_stars,
+            price_stars=pack.price_stars,
         )
     except Exception as exc:  # noqa: BLE001
         logger.error("Failed to create stars invoice link for pack %s: %s", pack.code, exc)
@@ -123,14 +122,13 @@ async def buy_feature(
     telegram_id = await get_or_raise_telegram_id(request, explicit=payload.telegram_id)
     user = await get_or_create_user_by_telegram_id(session, telegram_id)
 
-    price_rub = feature.price_stars  # Stars invoice uses rub_to_stars internally
     try:
         invoice_url = await create_invoice_link(
             bot,
             title=feature.title,
             description=feature.description,
             payload=f"feat:{feature.code}",
-            price_rub=price_rub,
+            price_stars=feature.price_stars,
         )
     except Exception as exc:  # noqa: BLE001
         logger.error("Failed to create stars invoice link for feature %s: %s", feature.code, exc)

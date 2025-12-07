@@ -33,10 +33,12 @@ export function ImageChip({
   const labelText = isPremium || hasSubscription ? "Premium" : "Free";
   const showMessages = !hasSubscription;
 
+  const chipMetricClass = "inline-flex items-center gap-1 text-sm font-semibold text-white/90 tabular-nums leading-none";
+
   return (
     <div
       className={`inline-flex min-h-9 min-w-[200px] flex-shrink-0 items-center gap-2 rounded-full bg-gradient-to-r from-[#2D1747] via-[#5C2D83] to-[#D64CC1] px-4 py-1 text-white shadow-card transition hover:opacity-95 ${className}`}
-      style={{ whiteSpace: "nowrap" }}
+      style={{ whiteSpace: "nowrap", lineHeight: 1 }}
     >
       <button
         type="button"
@@ -44,10 +46,12 @@ export function ImageChip({
           e.stopPropagation();
           onImagesClick?.();
         }}
-        className="flex items-center gap-1 text-sm font-semibold text-white/90 tabular-nums"
+        className={chipMetricClass}
       >
-        <span aria-hidden>📷</span>
-        <span>{displayImages}</span>
+        <span aria-hidden className="leading-none">
+          📷
+        </span>
+        <span className="leading-none">{displayImages}</span>
       </button>
       {showMessages && (
         <button
@@ -56,10 +60,12 @@ export function ImageChip({
             e.stopPropagation();
             onMessagesClick?.();
           }}
-          className="flex items-center gap-1 text-sm font-semibold text-white/90 tabular-nums"
+          className={chipMetricClass}
         >
-          <span aria-hidden>💬</span>
-          <span>{displayMessages}</span>
+          <span aria-hidden className="leading-none">
+            💬
+          </span>
+          <span className="leading-none">{displayMessages}</span>
         </button>
       )}
       <button
@@ -68,7 +74,7 @@ export function ImageChip({
           e.stopPropagation();
           onBadgeClick?.();
         }}
-        className="flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-white/90"
+        className="flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-white/90 leading-none"
       >
         {labelText}
       </button>

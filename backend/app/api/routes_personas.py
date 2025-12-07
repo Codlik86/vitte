@@ -28,13 +28,16 @@ router = APIRouter(prefix="/api/personas", tags=["personas"])
 DEFAULT_SHORT_DESCRIPTION = "Базовый персонаж"
 DEFAULT_PERSONA_PHOTO = "/personas/custom-chat.jpg"
 CUSTOM_PERSONA_PHOTO = "/personas/custom-chat.jpg"
-ALLOWED_DEFAULT_PERSONA_NAMES = ("Лина", "Марианна", "Аки")
+ALLOWED_DEFAULT_PERSONA_NAMES = ("Лина", "Марианна", "Аки", "Мей", "Стейси", "Тая")
 PERSONA_PHOTO_SLUGS = {
     "лина": "lina",
     "марианна": "marianna",
     "аки": "aki",
     "свой герой": "custom",
     "custom": "custom",
+    "мей": "mei",
+    "стейси": "stacey",
+    "тая": "taya",
 }
 
 
