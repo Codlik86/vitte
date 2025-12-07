@@ -1,8 +1,11 @@
 from __future__ import annotations
 
-from typing import Optional
+import asyncio
+import os
+import time
+from typing import Optional, List
 
-from sqlalchemy import select, func
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from fastapi import HTTPException
 
@@ -16,7 +19,6 @@ from ..services.llm_adapter import (
     should_add_ritual,
     format_memory,
 )
-from ..services.memory import collect_recent_memory
 from ..story_cards import get_story_cards_for_persona, resolve_story_id, StoryCard
 from ..services.features import collect_feature_states, build_feature_instruction
 from ..integrations.tts_client import synthesize_voice
@@ -31,13 +33,9 @@ from ..services.relationship_state import (
     update_relationship_state,
 )
 from ..services.message_analysis import analyze_message
-from ..services.relationship_state import (
-    RelationshipState,
-    get_relationship_state,
-    save_relationship_state,
-    update_relationship_state,
-)
-from ..services.message_analysis import analyze_message
+
+MAX_RECENT_MESSAGES = 12
+ENABLE_PERF_LOGS = os.getenv("ENABLE_PERF_LOGS", "").lower() == "true"
 
 
 class ChatResult:
@@ -135,6 +133,37 @@ async def _recent_dialogue_snippet(session: AsyncSession, dialog: Dialog, *, lim
     )
     result = await session.execute(stmt)
     messages = list(reversed(result.scalars().all()))
+    lines: list[str] = []
+    for msg in messages:
+        role = "Пользователь" if msg.role == "user" else "Персонаж"
+        content = (msg.content or "").strip()
+        preview = content[:500]
+        lines.append(f"{role}: {preview}")
+    return "\n".join(lines).strip()
+
+
+async def _load_recent_messages(session: AsyncSession, dialog: Dialog, *, limit: int = MAX_RECENT_MESSAGES) -> List[Message]:
+    stmt = (
+        select(Message)
+        .where(Message.dialog_id == dialog.id)
+        .order_by(Message.created_at.desc())
+        .limit(limit)
+    )
+    result = await session.execute(stmt)
+    return list(reversed(result.scalars().all()))
+
+
+def _memory_facts_from_messages(messages: List[Message]) -> List[str]:
+    facts: List[str] = []
+    for msg in messages:
+        prefix = "Ты говорил" if msg.role == "user" else "Она отвечала"
+        facts.append(f"{prefix}: {msg.content[:180]}".strip())
+    return facts
+
+
+def _recent_dialogue_from_messages(messages: List[Message]) -> str | None:
+    if not messages:
+        return None
     lines: list[str] = []
     for msg in messages:
         role = "Пользователь" if msg.role == "user" else "Персонаж"
@@ -265,6 +294,9 @@ async def generate_chat_reply(
     """
     Общая точка генерации ответа: используется и /api/chat, и ботовым хендлером.
     """
+    perf_enabled = ENABLE_PERF_LOGS
+    t_start = time.monotonic()
+    cache: dict[str, object] = {}
     # Resolve persona
     try:
         persona = await _resolve_persona(session, user, persona_id)
@@ -282,20 +314,26 @@ async def generate_chat_reply(
     dialog: Dialog | None = None
     message_count = 0
     memory_context = "Нет особых воспоминаний, но персонаж открыт к новым."
-    relationship_state = await get_relationship_state(session, user.id, persona.id)
+    recent_messages: list[Message] = []
+    relationship_state_task = asyncio.create_task(get_relationship_state(session, user.id, persona.id))
+    feature_states_task = asyncio.create_task(collect_feature_states(session, user))
 
     if not preview_story:
         dialog = await _get_or_create_dialog(session, user, persona, story_id=story_id)
-        message_count_result = await session.execute(
-            select(func.count(Message.id)).where(Message.dialog_id == dialog.id)
-        )
-        message_count = message_count_result.scalar_one() or 0
-        memory_context = format_memory(await collect_recent_memory(session, dialog, limit=12))
+        recent_messages = await _load_recent_messages(session, dialog, limit=MAX_RECENT_MESSAGES)
+        message_count = len(recent_messages)
+        if message_count > 0:
+            memory_context = format_memory(_memory_facts_from_messages(recent_messages))
     # история диалога
     effective_story_id = story_id or (dialog.entry_story_id if dialog else None)
     story_card = _find_story_card(persona, effective_story_id)
     story_prompt, story_meta = _story_prompt_with_meta(story_card)
-    recent_dialogue = await _recent_dialogue_snippet(session, dialog, limit=12) if dialog and message_count > 0 else None
+    recent_dialogue = _recent_dialogue_from_messages(recent_messages) if message_count > 0 else None
+
+    relationship_state = cache.get("relationship_state") or await relationship_state_task
+    cache["relationship_state"] = relationship_state
+    feature_states = cache.get("feature_states") or await feature_states_task
+    cache["feature_states"] = feature_states
 
     analysis = analyze_message(input_text)
     updated_relationship = (
@@ -310,8 +348,8 @@ async def generate_chat_reply(
     if story_meta:
         memory_context = f"{story_meta} {memory_context}"
     ritual_hint = None if preview_story else should_add_ritual(message_count + 1)
-    feature_states = await collect_feature_states(session, user)
     feature_instruction, feature_mode, feature_max_tokens = build_feature_instruction(feature_states)
+    voice_state = None
 
     feature_flags = {
         "has_subscription": access.get("has_subscription", False),
@@ -359,7 +397,15 @@ async def generate_chat_reply(
             safety_result.reason,
         )
     else:
+        t_llm_start = time.monotonic()
         reply = await simple_chat_completion(messages, max_tokens=feature_max_tokens)
+        if perf_enabled:
+            logger.info(
+                "[perf][chat_reply] llm=%.1fms dialog=%s user=%s",
+                (time.monotonic() - t_llm_start) * 1000,
+                dialog.id if dialog else None,
+                user.id,
+            )
     voice_id: str | None = None
     voice_url: str | None = None
     reply_kind = "text"
@@ -382,6 +428,16 @@ async def generate_chat_reply(
             user.free_messages_used += 1
         await save_relationship_state(session, user.id, persona.id, updated_relationship)
         await session.commit()
+
+    if perf_enabled:
+        logger.info(
+            "[perf][chat_reply] total=%.1fms dialog=%s user=%s messages=%s story=%s",
+            (time.monotonic() - t_start) * 1000,
+            dialog.id if dialog else None,
+            user.id,
+            message_count,
+            story_id,
+        )
 
     return ChatResult(
         reply=reply,
@@ -412,12 +468,18 @@ async def generate_greeting_reply(
     Генерация приветствия (первое, повторное или после обновления настроек),
     сохранение его в диалог и возврат текста.
     """
-    relationship_state = await get_relationship_state(session, user.id, persona.id)
+    perf_enabled = ENABLE_PERF_LOGS
+    t_start = time.monotonic()
+    cache: dict[str, object] = {}
+
+    relationship_state_task = asyncio.create_task(get_relationship_state(session, user.id, persona.id))
+    feature_states_task = asyncio.create_task(collect_feature_states(session, user))
+
+    recent_messages: list[Message] = []
+    if message_count is None or message_count > 0:
+        recent_messages = await _load_recent_messages(session, dialog, limit=MAX_RECENT_MESSAGES)
     if message_count is None:
-        message_count_result = await session.execute(
-            select(func.count(Message.id)).where(Message.dialog_id == dialog.id)
-        )
-        message_count = message_count_result.scalar_one() or 0
+        message_count = len(recent_messages)
 
     if message_count == 0:
         greeting_mode = "first"
@@ -429,22 +491,25 @@ async def generate_greeting_reply(
         greeting_mode = "return"
         llm_mode = "greeting_return"
 
-    memory_items = await collect_recent_memory(session, dialog, limit=12) if message_count > 0 else []
+    memory_items = _memory_facts_from_messages(recent_messages) if message_count > 0 else []
     memory_context = format_memory(memory_items)
-    recent_dialogue = await _recent_dialogue_snippet(session, dialog, limit=12) if message_count > 0 else None
+    recent_dialogue = _recent_dialogue_from_messages(recent_messages) if message_count > 0 else None
     # история
     effective_story_id = resolve_story_id(story_id or dialog.entry_story_id)
     story_card = _find_story_card(persona, effective_story_id)
     story_prompt, story_meta = _story_prompt_with_meta(story_card)
     if story_meta:
         memory_context = f"{story_meta} {memory_context}"
+    relationship_state = cache.get("relationship_state") or await relationship_state_task
+    cache["relationship_state"] = relationship_state
     trust_level = relationship_state.trust_level
     mode_instruction = describe_mode(llm_mode, atmosphere)
     story_instruction = build_story_context(
         story_prompt,
         reentry=bool(story_prompt and message_count > 0),
     )
-    feature_states = await collect_feature_states(session, user)
+    feature_states = cache.get("feature_states") or await feature_states_task
+    cache["feature_states"] = feature_states
     feature_instruction, feature_mode, feature_max_tokens = build_feature_instruction(feature_states)
     feature_flags = {
         "has_subscription": has_subscription,
