@@ -426,6 +426,7 @@ async def generate_chat_reply(
         session.add(Message(dialog_id=dialog.id, role="assistant", content=reply))
         if not skip_increment and not access.get("has_subscription", False):
             user.free_messages_used += 1
+        user.bot_reply_counter = (user.bot_reply_counter or 0) + 1
         await save_relationship_state(session, user.id, persona.id, updated_relationship)
         await session.commit()
 

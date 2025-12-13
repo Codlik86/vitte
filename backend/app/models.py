@@ -32,6 +32,8 @@ class User(Base):
     is_adult_confirmed: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     accepted_terms_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     last_surprise_sent_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
+    bot_reply_counter: Mapped[int] = mapped_column(Integer, default=0, nullable=False)
+    last_image_sent_at: Mapped[datetime | None] = mapped_column(DateTime, nullable=True)
     updated_at: Mapped[datetime | None] = mapped_column(
         DateTime,
         default=datetime.utcnow,

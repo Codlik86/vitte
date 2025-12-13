@@ -1,3 +1,5 @@
+import asyncio
+
 from aiogram import Bot, Dispatcher, F
 from aiogram.client.default import DefaultBotProperties
 from aiogram.filters import CommandStart, Command
@@ -33,6 +35,7 @@ from .services.subscriptions import ensure_premium_for_user, get_user_subscripti
 from .services.telegram_id import get_debug_telegram_id
 from .users_service import get_or_create_user_by_telegram_id
 from .utils.async_helpers import ensure_async_iter
+from .services.image_generation import maybe_generate_and_send_image
 from .services.store import SUBSCRIPTION_PLANS, IMAGE_PACKS, EMOTIONAL_FEATURES, get_plan, get_image_pack, get_feature
 from .services.image_quota import _ensure_balance
 
@@ -291,6 +294,21 @@ async def on_user_message(message: Message, current_user: User | None = None, db
                 skip_increment=True,  # уже инкрементировано в middleware
             )
             await message.answer(result.reply)
+            try:
+                if message.chat and getattr(message.chat, "type", None) == "private":
+                    asyncio.create_task(
+                        maybe_generate_and_send_image(
+                            user_id=user.id,
+                            chat_id=message.chat.id,
+                            persona_id=result.persona_id,
+                            context={
+                                "reply_text": result.reply,
+                                "user_message": message.text or "",
+                            },
+                        )
+                    )
+            except Exception as exc:
+                logger.error("Failed to enqueue image generation: %s", exc)
         except PermissionError:
             await message.answer(
                 "Похоже, бесплатный лимит исчерпан. Открой мини-приложение Vitte, чтобы оформить подписку.",

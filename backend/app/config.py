@@ -31,6 +31,15 @@ class Settings(BaseSettings):
 
     miniapp_url: str = "https://vitte-pi.vercel.app"
 
+    comfyui_base_url: str | None = None
+    comfyui_timeout_seconds: int = 120
+    comfyui_concurrency: int = 2
+    comfyui_default_checkpoint: str | None = None
+
+    image_every_n_bot_replies: int = 3
+    image_cooldown_seconds: int = 120
+    image_enabled: bool = True
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
 

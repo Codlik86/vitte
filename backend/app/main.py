@@ -129,6 +129,8 @@ async def on_startup():
                 ADD COLUMN IF NOT EXISTS is_adult_confirmed boolean NOT NULL DEFAULT false,
                 ADD COLUMN IF NOT EXISTS accepted_terms_at timestamp NULL,
                 ADD COLUMN IF NOT EXISTS last_surprise_sent_at timestamp NULL,
+                ADD COLUMN IF NOT EXISTS bot_reply_counter integer NOT NULL DEFAULT 0,
+                ADD COLUMN IF NOT EXISTS last_image_sent_at timestamp NULL,
                 ADD COLUMN IF NOT EXISTS updated_at timestamp NULL DEFAULT now();
                 """
             )
