@@ -8,7 +8,6 @@ from typing import Iterable
 from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from ..bot import bot
 from ..db import async_session_factory
 from ..logging_config import logger
 from ..models import Dialog, EventAnalytics, Message, Persona, User
@@ -113,10 +112,7 @@ async def _send_retention_message(session: AsyncSession, dialog: Dialog, text: s
     if not user or not user.telegram_id:
         return
     prefix = f"{persona.name}: " if persona else ""
-    try:
-        await bot.send_message(user.telegram_id, f"{prefix}{text}")
-    except Exception as exc:
-        logger.error("Failed to send retention message: %s", exc)
+    logger.info("Retention message to %s skipped (bot not available): %s%s", user.telegram_id, prefix, text)
 
 
 async def _latest_dialog_snapshot(session: AsyncSession, user_id: int) -> DialogSnapshot | None:

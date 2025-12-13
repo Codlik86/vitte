@@ -11,9 +11,9 @@ from pathlib import Path
 from typing import Any, Dict
 
 import httpx
+from aiogram import Bot
 from aiogram.types import BufferedInputFile
 
-from ..bot import bot
 from ..config import settings
 from ..db import get_session
 from ..logging_config import logger
@@ -285,7 +285,7 @@ async def _download_image(client: httpx.AsyncClient, base_url: str, image_info: 
     return resp.content
 
 
-async def _deliver_image(plan: GenerationPlan, image_bytes: bytes) -> None:
+async def _deliver_image(plan: GenerationPlan, image_bytes: bytes, bot_instance: Bot) -> None:
     async for session in get_session():
         user = await session.get(User, plan.user_id)
         if not user:
@@ -307,10 +307,10 @@ async def _deliver_image(plan: GenerationPlan, image_bytes: bytes) -> None:
             raise
 
     input_file = BufferedInputFile(image_bytes, filename="vitte_image.png")
-    await bot.send_photo(plan.chat_id, input_file)
+    await bot_instance.send_photo(plan.chat_id, input_file)
 
 
-async def _generate_and_send(plan: GenerationPlan, context: dict[str, Any]) -> None:
+async def _generate_and_send(plan: GenerationPlan, context: dict[str, Any], bot_instance: Bot) -> None:
     base_url = (settings.comfyui_base_url or "").rstrip("/")
     if not base_url:
         logger.info("ComfyUI base URL is not configured; skipping image generation")
@@ -344,7 +344,7 @@ async def _generate_and_send(plan: GenerationPlan, context: dict[str, Any]) -> N
     try:
         async with _semaphore:
             image_bytes = await request_comfyui(workflow_payload=workflow)
-        await _deliver_image(plan, image_bytes)
+        await _deliver_image(plan, image_bytes, bot_instance)
 
     except Exception as exc:  # noqa: BLE001
         logger.error("Image generation/delivery failed user=%s persona=%s: %s", plan.user_id, plan.persona_id, exc)
@@ -360,6 +360,7 @@ async def maybe_generate_and_send_image(
     user_id: int,
     chat_id: int,
     persona_id: int,
+    bot_instance: Bot,
     context: dict[str, Any] | None = None,
 ) -> None:
     """
@@ -376,7 +377,7 @@ async def maybe_generate_and_send_image(
             return
 
         asyncio.create_task(
-            _generate_and_send(plan, ctx),
+            _generate_and_send(plan, ctx, bot_instance),
             name=f"image-gen-{user_id}-{persona_id}",
         )
 

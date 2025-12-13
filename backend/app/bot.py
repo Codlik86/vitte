@@ -301,6 +301,7 @@ async def on_user_message(message: Message, current_user: User | None = None, db
                             user_id=user.id,
                             chat_id=message.chat.id,
                             persona_id=result.persona_id,
+                            bot_instance=bot,
                             context={
                                 "reply_text": result.reply,
                                 "user_message": message.text or "",
