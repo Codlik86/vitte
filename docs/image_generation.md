@@ -17,7 +17,7 @@
 - `IMAGE_ENABLED` — быстрый выключатель фичи
 
 ## Настройка персонажей и LoRA
-- Конфиг находится в `backend/app/config/persona_images.py`.
+- Конфиг находится в `backend/app/services/persona_images.py`.
 - Для каждого персонажа можно задать:
   - `lora_filename` (путь относительно `ComfyUI/models/lora/`)
   - `lora_strength_model` / `lora_strength_clip`
