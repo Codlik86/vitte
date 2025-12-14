@@ -1,91 +1,26 @@
 {
   "3": {
     "inputs": {
-      "ckpt_name": "realism_illustrious.safetensors"
-    },
-    "class_type": "CheckpointLoaderSimple",
-    "_meta": {
-      "title": "Checkpoint Loader"
-    }
-  },
-  "4": {
-    "inputs": {
-      "lora_name": "placeholder.safetensors",
-      "strength_model": 0.7,
-      "strength_clip": 0.65,
-      "model": [
-        "3",
-        0
-      ],
-      "clip": [
-        "3",
-        1
-      ]
-    },
-    "class_type": "LoraLoader",
-    "_meta": {
-      "title": "Apply LoRA"
-    }
-  },
-  "5": {
-    "inputs": {
-      "text": "positive prompt here",
-      "clip": [
-        "4",
-        1
-      ]
-    },
-    "class_type": "CLIPTextEncode",
-    "_meta": {
-      "title": "Positive Prompt"
-    }
-  },
-  "6": {
-    "inputs": {
-      "text": "negative prompt here",
-      "clip": [
-        "4",
-        1
-      ]
-    },
-    "class_type": "CLIPTextEncode",
-    "_meta": {
-      "title": "Negative Prompt"
-    }
-  },
-  "7": {
-    "inputs": {
-      "width": 1024,
-      "height": 1024,
-      "batch_size": 1
-    },
-    "class_type": "EmptyLatentImage",
-    "_meta": {
-      "title": "Latent Base"
-    }
-  },
-  "8": {
-    "inputs": {
-      "seed": 1234567,
-      "steps": 28,
-      "cfg": 7.5,
-      "sampler_name": "dpmpp_2m",
+      "seed": 156680208700286,
+      "steps": 20,
+      "cfg": 8,
+      "sampler_name": "euler_ancestral",
       "scheduler": "normal",
-      "denoise": 1.0,
+      "denoise": 1,
       "model": [
-        "4",
+        "12",
         0
       ],
       "positive": [
-        "5",
-        0
-      ],
-      "negative": [
         "6",
         0
       ],
-      "latent_image": [
+      "negative": [
         "7",
+        0
+      ],
+      "latent_image": [
+        "5",
         0
       ]
     },
@@ -94,14 +29,60 @@
       "title": "KSampler"
     }
   },
-  "9": {
+  "4": {
+    "inputs": {
+      "ckpt_name": "realism_illustrious.safetensors"
+    },
+    "class_type": "CheckpointLoaderSimple",
+    "_meta": {
+      "title": "Load Checkpoint"
+    }
+  },
+  "5": {
+    "inputs": {
+      "width": 1024,
+      "height": 1024,
+      "batch_size": 1
+    },
+    "class_type": "EmptyLatentImage",
+    "_meta": {
+      "title": "Empty Latent Image"
+    }
+  },
+  "6": {
+    "inputs": {
+      "text": "woman033, 21 year-old Mediterranean woman, sun-kissed olive skin, medium-length straight dark blonde hair with lighter highlights, hazel eyes, oval face with full lips, large breasts, (slim waist:1.1)",
+      "clip": [
+        "12",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Prompt)"
+    }
+  },
+  "7": {
+    "inputs": {
+      "text": "",
+      "clip": [
+        "12",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Prompt)"
+    }
+  },
+  "8": {
     "inputs": {
       "samples": [
-        "8",
+        "3",
         0
       ],
       "vae": [
-        "3",
+        "4",
         2
       ]
     },
@@ -110,17 +91,36 @@
       "title": "VAE Decode"
     }
   },
-  "10": {
+  "9": {
     "inputs": {
-      "filename_prefix": "vitte_sdxl",
+      "filename_prefix": "Lina",
       "images": [
-        "9",
+        "8",
         0
       ]
     },
     "class_type": "SaveImage",
     "_meta": {
       "title": "Save Image"
+    }
+  },
+  "12": {
+    "inputs": {
+      "lora_name": "woman033.safetensors",
+      "strength_model": 1,
+      "strength_clip": 1,
+      "model": [
+        "4",
+        0
+      ],
+      "clip": [
+        "4",
+        1
+      ]
+    },
+    "class_type": "LoraLoader",
+    "_meta": {
+      "title": "Load LoRA"
     }
   }
 }

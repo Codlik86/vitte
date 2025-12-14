@@ -5,6 +5,7 @@ import asyncio
 import json
 import random
 import time
+import uuid
 from dataclasses import dataclass
 from datetime import datetime, timedelta
 from pathlib import Path
@@ -25,7 +26,7 @@ from .persona_images import PersonaImageConfig, get_persona_image_config
 
 WORKFLOW_PATH = Path(__file__).resolve().parent.parent / "assets" / "comfyui" / "workflows" / "sdxl_lora.json"
 
-# Без NSFW-тегов (как ты просил) — только техничка.
+# Без NSFW-тегов — только техничка.
 DEFAULT_NEGATIVE = (
     "lowres, blurry, bad anatomy, bad proportions, deformed face, deformed hands, "
     "extra fingers, extra limbs, mutated, worst quality, jpeg artifacts, watermark, text, logo"
@@ -212,7 +213,11 @@ async def _prepare_generation(
     return None
 
 
-async def request_comfyui(workflow_payload: Dict[str, Any]) -> bytes:
+async def request_comfyui(*, workflow_payload: Dict[str, Any], client_id: str | None = None) -> bytes:
+    """
+    Sends a workflow to ComfyUI and returns the generated image bytes.
+    Includes client_id for easier debugging and more stable history tracking.
+    """
     base_url = (settings.comfyui_base_url or "").rstrip("/")
     if not base_url:
         raise RuntimeError("COMFYUI_BASE_URL is not configured")
@@ -220,18 +225,24 @@ async def request_comfyui(workflow_payload: Dict[str, Any]) -> bytes:
     timeout_seconds = float(getattr(settings, "comfyui_timeout_seconds", 90) or 90)
     timeout = httpx.Timeout(timeout_seconds, connect=10.0)
 
+    logger.info("ComfyUI base_url=%s", base_url)
+
     async with httpx.AsyncClient(timeout=timeout) as client:
         last_error: Exception | None = None
 
         for attempt in range(1, RETRIES + 2):
             try:
-                resp = await client.post(f"{base_url}/prompt", json={"prompt": workflow_payload})
+                payload: Dict[str, Any] = {"prompt": workflow_payload}
+                if client_id:
+                    payload["client_id"] = client_id
+
+                resp = await client.post(f"{base_url}/prompt", json=payload)
                 resp.raise_for_status()
 
-                payload = resp.json() or {}
-                prompt_id = payload.get("prompt_id") or payload.get("promptId")
+                data = resp.json() or {}
+                prompt_id = data.get("prompt_id") or data.get("promptId")
                 if not prompt_id:
-                    raise RuntimeError("No prompt_id in ComfyUI response")
+                    raise RuntimeError(f"No prompt_id in ComfyUI response: {data}")
 
                 image_info = await _wait_for_image(client, base_url, str(prompt_id))
                 return await _download_image(client, base_url, image_info)
@@ -252,7 +263,14 @@ async def _wait_for_image(client: httpx.AsyncClient, base_url: str, prompt_id: s
         resp = await client.get(f"{base_url}/history/{prompt_id}")
         resp.raise_for_status()
 
-        data = resp.json() or {}
+        try:
+            data = resp.json() or {}
+        except Exception as exc:  # noqa: BLE001
+            # Occasionally (especially through tunnels) body can be non-JSON; retry.
+            logger.warning("ComfyUI history json parse failed prompt_id=%s err=%s", prompt_id, exc)
+            await asyncio.sleep(POLL_INTERVAL)
+            continue
+
         record = data.get(prompt_id) or {}
         outputs = record.get("outputs") or {}
 
@@ -316,7 +334,12 @@ async def _generate_and_send(plan: GenerationPlan, context: dict[str, Any], bot_
         logger.info("ComfyUI base URL is not configured; skipping image generation")
         async for session in get_session():
             try:
-                await log_event(session, plan.user_id, "image_failed", {"reason": "not_configured", "persona_id": plan.persona_id})
+                await log_event(
+                    session,
+                    plan.user_id,
+                    "image_failed",
+                    {"reason": "not_configured", "persona_id": plan.persona_id},
+                )
                 await session.commit()
             except Exception:
                 pass
@@ -341,16 +364,24 @@ async def _generate_and_send(plan: GenerationPlan, context: dict[str, Any], bot_
         plan.config.lora_strength_clip,
     )
 
+    # Stable-ish client_id helps debugging and history tracking through tunnels.
+    client_id = f"vitte-{plan.user_id}-{plan.persona_id}-{uuid.uuid4().hex[:8]}"
+
     try:
         async with _semaphore:
-            image_bytes = await request_comfyui(workflow_payload=workflow)
+            image_bytes = await request_comfyui(workflow_payload=workflow, client_id=client_id)
         await _deliver_image(plan, image_bytes, bot_instance)
 
     except Exception as exc:  # noqa: BLE001
         logger.error("Image generation/delivery failed user=%s persona=%s: %s", plan.user_id, plan.persona_id, exc)
         async for session in get_session():
             try:
-                await log_event(session, plan.user_id, "image_failed", {"reason": "generation_error", "persona_id": plan.persona_id})
+                await log_event(
+                    session,
+                    plan.user_id,
+                    "image_failed",
+                    {"reason": "generation_error", "persona_id": plan.persona_id},
+                )
                 await session.commit()
             except Exception:
                 pass
