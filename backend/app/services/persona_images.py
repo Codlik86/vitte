@@ -22,12 +22,15 @@ DEFAULT_NEGATIVE = (
 )
 
 DEFAULT_IMAGE_CONFIG = PersonaImageConfig(
-    lora_filename="generic.safetensors",
-    prompt_core="cinematic photo portrait, warm friendly woman, natural skin, soft light, high detail",
+    lora_filename="woman033.safetensors",
+    prompt_core=(
+        "woman033, photorealistic young woman, consistent face, athletic fit body, "
+        "natural skin texture, 85mm lens, high detail"
+    ),
     negative_prompt=DEFAULT_NEGATIVE,
-    lora_strength_model=0.6,
-    lora_strength_clip=0.55,
-    default_style="cozy room, shallow depth of field, gentle mood",
+    lora_strength_model=0.7,
+    lora_strength_clip=0.65,
+    default_style="neutral studio background, soft cinematic lighting",
 )
 
 

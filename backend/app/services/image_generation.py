@@ -7,9 +7,9 @@ import random
 import time
 import uuid
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict
+from typing import Any, Dict, Iterable
 
 import httpx
 from aiogram import Bot
@@ -41,6 +41,10 @@ _workflow_cache: Dict[str, Any] | None = None
 _semaphore = asyncio.Semaphore(max(int(getattr(settings, "comfyui_concurrency", 1) or 1), 1))
 
 
+def _deepcopy_workflow(template: Dict[str, Any]) -> Dict[str, Any]:
+    return json.loads(json.dumps(template))
+
+
 @dataclass
 class GenerationPlan:
     user_id: int
@@ -69,7 +73,85 @@ def _load_workflow_template() -> Dict[str, Any]:
         except Exception as exc:  # noqa: BLE001
             logger.error("Failed to read workflow template %s: %s", WORKFLOW_PATH, exc)
             _workflow_cache = {}
-    return json.loads(json.dumps(_workflow_cache))
+    return _deepcopy_workflow(_workflow_cache or {})
+
+
+def find_first_node_id(
+    workflow: Dict[str, Any],
+    class_type: str,
+    *,
+    title_hints: str | Iterable[str] | None = None,
+    exclude: Iterable[str] | None = None,
+) -> str | None:
+    """
+    Returns the first node id matching class_type.
+    If title_hints provided, prefers nodes whose _meta.title contains the hint(s).
+    """
+    exclude_set = {str(item) for item in (exclude or [])}
+    matches: list[tuple[str, dict]] = []
+
+    for node_id, node in workflow.items():
+        if str(node_id) in exclude_set:
+            continue
+        if not isinstance(node, dict):
+            continue
+        if str(node.get("class_type")) != class_type:
+            continue
+        matches.append((str(node_id), node))
+
+    if not matches:
+        return None
+
+    hints: list[str] = []
+    if isinstance(title_hints, str):
+        hints = [title_hints]
+    elif title_hints:
+        hints = list(title_hints)
+
+    for hint in hints:
+        lowered_hint = hint.lower()
+        for node_id, node in matches:
+            title = str(node.get("_meta", {}).get("title", "")).lower()
+            if lowered_hint in title:
+                return node_id
+
+    return matches[0][0]
+
+
+def _extract_connected_node_id(
+    workflow: Dict[str, Any], inputs: Dict[str, Any], key: str, expected_class: str
+) -> str | None:
+    ref = inputs.get(key)
+    if isinstance(ref, list) and ref:
+        candidate = str(ref[0])
+        node = workflow.get(candidate)
+        if isinstance(node, dict) and node.get("class_type") == expected_class:
+            return candidate
+    return None
+
+
+def _find_clip_text_nodes(workflow: Dict[str, Any], sampler_node_id: str | None) -> tuple[str | None, str | None]:
+    sampler_inputs = workflow.get(sampler_node_id, {}).get("inputs", {}) if sampler_node_id else {}
+
+    positive_node_id = _extract_connected_node_id(workflow, sampler_inputs, "positive", "CLIPTextEncode")
+    negative_node_id = _extract_connected_node_id(workflow, sampler_inputs, "negative", "CLIPTextEncode")
+
+    if not positive_node_id:
+        positive_node_id = find_first_node_id(
+            workflow,
+            "CLIPTextEncode",
+            title_hints=["positive", "prompt", "clip text encode"],
+        )
+
+    if not negative_node_id:
+        negative_node_id = find_first_node_id(
+            workflow,
+            "CLIPTextEncode",
+            title_hints=["negative", "prompt", "clip text encode"],
+            exclude=[positive_node_id] if positive_node_id else None,
+        )
+
+    return positive_node_id, negative_node_id
 
 
 def _apply_template_values(
@@ -79,33 +161,62 @@ def _apply_template_values(
     negative_prompt: str,
     config: PersonaImageConfig,
 ) -> Dict[str, Any]:
-    """
-    Applies ckpt/lora/prompt/seed to the expected node IDs:
-      3: CheckpointLoaderSimple
-      4: LoraLoader
-      5: CLIPTextEncode (positive)
-      6: CLIPTextEncode (negative)
-      8: KSampler
-    """
-    workflow = json.loads(json.dumps(template))
+    workflow = template
 
-    checkpoint_name = settings.comfyui_default_checkpoint or workflow.get("3", {}).get("inputs", {}).get("ckpt_name")
+    checkpoint_node_id = find_first_node_id(
+        workflow,
+        "CheckpointLoaderSimple",
+        title_hints=["load checkpoint", "checkpoint"],
+    )
+    lora_node_id = find_first_node_id(workflow, "LoraLoader", title_hints=["load lora", "lora"])
+    sampler_node_id = find_first_node_id(workflow, "KSampler", title_hints=["ksampler", "sampler"])
+    positive_clip_id, negative_clip_id = _find_clip_text_nodes(workflow, sampler_node_id)
+
+    missing = [
+        name
+        for name, value in {
+            "checkpoint": checkpoint_node_id,
+            "lora": lora_node_id,
+            "positive_text": positive_clip_id,
+            "negative_text": negative_clip_id,
+            "sampler": sampler_node_id,
+        }.items()
+        if not value
+    ]
+    if missing:
+        raise RuntimeError(f"Workflow template missing nodes: {', '.join(sorted(missing))}")
+
+    checkpoint_inputs = workflow[checkpoint_node_id]["inputs"]
+    lora_inputs = workflow[lora_node_id]["inputs"]
+    positive_inputs = workflow[positive_clip_id]["inputs"]
+    negative_inputs = workflow[negative_clip_id]["inputs"]
+    sampler_inputs = workflow[sampler_node_id]["inputs"]
+
+    checkpoint_name = settings.comfyui_default_checkpoint or checkpoint_inputs.get("ckpt_name")
     seed = random.randint(1, 2_000_000_000)
 
-    try:
-        if checkpoint_name:
-            workflow["3"]["inputs"]["ckpt_name"] = checkpoint_name
+    lora_filename = Path(config.lora_filename).name
 
-        workflow["4"]["inputs"]["lora_name"] = config.lora_filename
-        workflow["4"]["inputs"]["strength_model"] = float(config.lora_strength_model)
-        workflow["4"]["inputs"]["strength_clip"] = float(config.lora_strength_clip)
+    if checkpoint_name:
+        checkpoint_inputs["ckpt_name"] = checkpoint_name
 
-        workflow["5"]["inputs"]["text"] = prompt
-        workflow["6"]["inputs"]["text"] = negative_prompt or DEFAULT_NEGATIVE
+    lora_inputs["lora_name"] = lora_filename
+    lora_inputs["strength_model"] = float(config.lora_strength_model)
+    lora_inputs["strength_clip"] = float(config.lora_strength_clip)
 
-        workflow["8"]["inputs"]["seed"] = seed
-    except Exception as exc:  # noqa: BLE001
-        logger.error("Failed to apply workflow template values: %s", exc)
+    positive_inputs["text"] = prompt
+    negative_inputs["text"] = negative_prompt or DEFAULT_NEGATIVE
+
+    sampler_inputs["seed"] = seed
+
+    logger.info(
+        "Workflow nodes ckpt=%s lora=%s pos=%s neg=%s sampler=%s",
+        checkpoint_node_id,
+        lora_node_id,
+        positive_clip_id,
+        negative_clip_id,
+        sampler_node_id,
+    )
 
     return workflow
 
@@ -140,77 +251,18 @@ def _build_full_prompt(config: PersonaImageConfig, hint: str) -> str:
     return prompt[:MAX_PROMPT_LEN]
 
 
-async def _prepare_generation(
-    user_id: int,
-    persona_id: int,
-    chat_id: int,
-    context: dict[str, Any],
-) -> GenerationPlan | None:
-    every_n = max(int(getattr(settings, "image_every_n_bot_replies", 0) or 0), 0)
-    cooldown_seconds = max(int(getattr(settings, "image_cooldown_seconds", 0) or 0), 0)
-
-    if every_n <= 0:
-        return None
-
-    # Группы/каналы имеют отрицательный chat_id — вырубаем тут на всякий.
-    if chat_id < 0:
-        return None
+async def _log_failure(plan: GenerationPlan, reason: str, extra: Dict[str, Any] | None = None) -> None:
+    payload: Dict[str, Any] = {"reason": reason, "persona_id": plan.persona_id, "persona_key": plan.persona_key}
+    if extra:
+        payload.update(extra)
 
     async for session in get_session():
-        user = await session.get(User, user_id)
-        persona = await session.get(Persona, persona_id) if persona_id else None
-        if not user or not persona:
-            return None
-
-        counter = int(user.bot_reply_counter or 0)
-        # Генерим на каждом N-м ответе бота (3,6,9...)
-        if counter == 0 or (counter % every_n) != 0:
-            return None
-
-        now = datetime.utcnow()
-        if user.last_image_sent_at and cooldown_seconds > 0:
-            if now - user.last_image_sent_at < timedelta(seconds=cooldown_seconds):
-                return None
-
-        has_subscription = bool(
-            user.access_status == AccessStatus.SUBSCRIPTION_ACTIVE
-            or await get_active_subscription(session, user.id)
-        )
-
-        quota = await get_image_quota(session, user, has_subscription=has_subscription)
-        if quota.get("total_remaining", 0) <= 0:
-            await log_event(session, user.id, "image_failed", {"reason": "no_quota", "persona_id": persona.id})
+        try:
+            await log_event(session, plan.user_id, "image_failed", payload)
             await session.commit()
-            return None
-
-        config = get_persona_image_config(persona.key, persona.name)
-        hint = _build_prompt_hint(context, persona)
-        prompt = _build_full_prompt(config, hint)
-        negative_prompt = (config.negative_prompt or DEFAULT_NEGATIVE).strip()
-
-        # Ставим timestamp сразу, чтобы не спамить при параллельных сообщениях
-        user.last_image_sent_at = now
-        await log_event(
-            session,
-            user.id,
-            "image_requested",
-            {"persona_id": persona.id, "persona_key": persona.key, "counter": counter},
-        )
-        await session.commit()
-
-        return GenerationPlan(
-            user_id=user.id,
-            chat_id=chat_id,
-            persona_id=persona.id,
-            persona_key=persona.key,
-            persona_name=persona.name,
-            prompt=prompt,
-            negative_prompt=negative_prompt,
-            config=config,
-            has_subscription=has_subscription,
-        )
-
-    return None
+        except Exception:
+            await session.rollback()
+        break
 
 
 async def request_comfyui(*, workflow_payload: Dict[str, Any], client_id: str | None = None) -> bytes:
@@ -328,38 +380,42 @@ async def _deliver_image(plan: GenerationPlan, image_bytes: bytes, bot_instance:
     await bot_instance.send_photo(plan.chat_id, input_file)
 
 
-async def _generate_and_send(plan: GenerationPlan, context: dict[str, Any], bot_instance: Bot) -> None:
+async def _generate_and_send(plan: GenerationPlan, context: dict[str, Any], bot_instance: Bot) -> bool:
     base_url = (settings.comfyui_base_url or "").rstrip("/")
     if not base_url:
         logger.info("ComfyUI base URL is not configured; skipping image generation")
-        async for session in get_session():
-            try:
-                await log_event(
-                    session,
-                    plan.user_id,
-                    "image_failed",
-                    {"reason": "not_configured", "persona_id": plan.persona_id},
-                )
-                await session.commit()
-            except Exception:
-                pass
-        return
+        await _log_failure(plan, "not_configured")
+        return False
 
     template = _load_workflow_template()
-    workflow = _apply_template_values(
-        template,
-        prompt=plan.prompt,
-        negative_prompt=plan.negative_prompt,
-        config=plan.config,
-    )
+    if not template:
+        logger.error("Workflow template is empty or missing at %s", WORKFLOW_PATH)
+        await _log_failure(plan, "bad_workflow_template")
+        return False
+    try:
+        workflow = _apply_template_values(
+            template,
+            prompt=plan.prompt,
+            negative_prompt=plan.negative_prompt,
+            config=plan.config,
+        )
+    except Exception as exc:  # noqa: BLE001
+        logger.error("Failed to apply workflow template user=%s persona=%s: %s", plan.user_id, plan.persona_id, exc)
+        await _log_failure(plan, "bad_workflow_template")
+        return False
 
-    ckpt_name = workflow.get("3", {}).get("inputs", {}).get("ckpt_name")
+    checkpoint_node_id = find_first_node_id(workflow, "CheckpointLoaderSimple", title_hints=["checkpoint"])
+    ckpt_name = (
+        workflow.get(checkpoint_node_id or "", {}).get("inputs", {}).get("ckpt_name")
+        if checkpoint_node_id
+        else None
+    )
     logger.info(
         "ComfyUI request user=%s persona=%s ckpt=%s lora=%s strengths=(%.2f/%.2f)",
         plan.user_id,
         plan.persona_id,
         ckpt_name,
-        plan.config.lora_filename,
+        Path(plan.config.lora_filename).name,
         plan.config.lora_strength_model,
         plan.config.lora_strength_clip,
     )
@@ -371,23 +427,21 @@ async def _generate_and_send(plan: GenerationPlan, context: dict[str, Any], bot_
         async with _semaphore:
             image_bytes = await request_comfyui(workflow_payload=workflow, client_id=client_id)
         await _deliver_image(plan, image_bytes, bot_instance)
+        return True
 
     except Exception as exc:  # noqa: BLE001
         logger.error("Image generation/delivery failed user=%s persona=%s: %s", plan.user_id, plan.persona_id, exc)
-        async for session in get_session():
-            try:
-                await log_event(
-                    session,
-                    plan.user_id,
-                    "image_failed",
-                    {"reason": "generation_error", "persona_id": plan.persona_id},
-                )
-                await session.commit()
-            except Exception:
-                pass
+        await _log_failure(plan, "generation_error")
+        return False
 
 
-async def maybe_generate_and_send_image(
+class ImageRequestError(RuntimeError):
+    def __init__(self, reason: str):
+        self.reason = reason
+        super().__init__(reason)
+
+
+async def request_image_on_demand(
     user_id: int,
     chat_id: int,
     persona_id: int,
@@ -395,22 +449,58 @@ async def maybe_generate_and_send_image(
     context: dict[str, Any] | None = None,
 ) -> None:
     """
-    Called after sending a text reply. Schedules async generation without blocking chat flow.
+    Generate and send image on explicit user action.
     """
     if not getattr(settings, "image_enabled", False):
-        return
+        raise ImageRequestError("disabled")
 
     ctx = context or {}
 
-    try:
-        plan = await _prepare_generation(user_id, persona_id, chat_id, ctx)
-        if not plan:
-            return
+    async for session in get_session():
+        user = await session.get(User, user_id)
+        persona = await session.get(Persona, persona_id) if persona_id else None
+        if not user or not persona:
+            raise ImageRequestError("not_found")
 
-        asyncio.create_task(
-            _generate_and_send(plan, ctx, bot_instance),
-            name=f"image-gen-{user_id}-{persona_id}",
+        has_subscription = bool(
+            user.access_status == AccessStatus.SUBSCRIPTION_ACTIVE
+            or await get_active_subscription(session, user.id)
         )
 
-    except Exception as exc:  # noqa: BLE001
-        logger.error("Failed to schedule image generation user=%s persona=%s: %s", user_id, persona_id, exc)
+        quota = await get_image_quota(session, user, has_subscription=has_subscription)
+        if quota.get("total_remaining", 0) <= 0:
+            await log_event(session, user.id, "image_failed", {"reason": "no_quota", "persona_id": persona.id})
+            await session.commit()
+            raise ImageRequestError("no_quota")
+
+        config = get_persona_image_config(persona.key, persona.name)
+        hint = _build_prompt_hint(ctx, persona)
+        prompt = _build_full_prompt(config, hint)
+        negative_prompt = (config.negative_prompt or DEFAULT_NEGATIVE).strip()
+
+        await log_event(
+            session,
+            user.id,
+            "image_requested",
+            {"persona_id": persona.id, "persona_key": persona.key, "trigger": "button"},
+        )
+        await session.commit()
+
+        plan = GenerationPlan(
+            user_id=user.id,
+            chat_id=chat_id,
+            persona_id=persona.id,
+            persona_key=persona.key,
+            persona_name=persona.name,
+            prompt=prompt,
+            negative_prompt=negative_prompt,
+            config=config,
+            has_subscription=has_subscription,
+        )
+        break
+    else:
+        raise ImageRequestError("not_found")
+
+    success = await _generate_and_send(plan, ctx, bot_instance)
+    if not success:
+        raise ImageRequestError("generation_failed")

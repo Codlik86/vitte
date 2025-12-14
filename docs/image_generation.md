@@ -1,9 +1,8 @@
 # Генерация изображений через ComfyUI (SDXL + LoRA)
 
 ## Как это работает
-- После того как бот отправил текстовый ответ, в фоне пытается запустить `services.image_generation.maybe_generate_and_send_image`.
-- Счётчик `users.bot_reply_counter` увеличивается при каждой реплике ассистента; на кратных `IMAGE_EVERY_N_BOT_REPLIES` и при прохождении `IMAGE_COOLDOWN_SECONDS` создаётся задача генерации.
-- Перед запросом проверяются квоты (`image_quota` + подписка), ставится `last_image_sent_at`, логируется `image_requested`, далее запрос уходит на ComfyUI. Ошибка/отсутствие GPU не блокирует чат.
+- После текстового ответа бота в приватных чатах подставляется кнопка «👁️ Посмотреть». При нажатии вызывается `services.image_generation.request_image_on_demand`.
+- Перед запросом проверяются квоты (`image_quota` + подписка), логируется `image_requested`, далее запрос уходит на ComfyUI. Ошибка/отсутствие GPU не блокирует чат.
 - Успешная генерация пишет `image_generated`, списывает квоту (`consume_image`), отправляет фото в Telegram. Ошибки — `image_failed` с reason.
 
 ## Настройки окружения
@@ -12,8 +11,6 @@
 - `COMFYUI_TIMEOUT_SECONDS` — общий таймаут ожидания истории/скачивания (по умолчанию 120)
 - `COMFYUI_CONCURRENCY` — максимум одновременных генераций на процесс (по умолчанию 2)
 - `COMFYUI_DEFAULT_CHECKPOINT` — имя чекпоинта в ComfyUI (например `sd_xl_base_1.0.safetensors`)
-- `IMAGE_EVERY_N_BOT_REPLIES` — частота картинок (default 3)
-- `IMAGE_COOLDOWN_SECONDS` — минимальный интервал между попытками (default 120)
 - `IMAGE_ENABLED` — быстрый выключатель фичи
 
 ## Настройка персонажей и LoRA
@@ -33,11 +30,10 @@
 - Код подставляет чекпоинт, LoRA, веса, тексты промптов и сид перед отправкой в `/prompt`.
 
 ## Поток работы
-1. `chat_flow.generate_chat_reply` увеличивает `bot_reply_counter`.
-2. Бот (aiogram) после отправки текста дергает `maybe_generate_and_send_image` (только в приватных чатах).
-3. Фоновая задача проверяет `IMAGE_EVERY_N_BOT_REPLIES`, `IMAGE_COOLDOWN_SECONDS`, наличие квоты/подписки, логирует `image_requested`.
-4. Через HTTP (aiohttp/httpx) вызывается ComfyUI: POST `/prompt`, опрос `/history/{prompt_id}`, скачивание `/view`.
-5. Успех → `consume_image`, `image_generated`, отправка фото. Ошибки → `image_failed`, текст остаётся без изменений.
+1. Бот отдаёт текстовый ответ и прикрепляет кнопку «👁️ Посмотреть» (приватные чаты).
+2. Пользователь жмёт кнопку → `request_image_on_demand` проверяет квоту/подписку, логирует `image_requested`, строит промпт.
+3. Через HTTP (httpx) вызывается ComfyUI: POST `/prompt`, опрос `/history/{prompt_id}`, скачивание `/view`.
+4. Успех → `consume_image`, `image_generated`, отправка фото. Ошибки → `image_failed`, текст остаётся без изменений.
 
 ## Диагностика
 - Логи: ищите `image_requested`, `image_generated`, `image_failed` в `events_analytics` и stdout.
@@ -54,5 +50,5 @@
 ## Ручной чеклист
 1. Запустить ComfyUI на GPU, скопировать SDXL чекпоинт в `models/checkpoints`, LoRA файлы в `models/lora`.
 2. Прописать env: `COMFYUI_BASE_URL`, `COMFYUI_DEFAULT_CHECKPOINT`, при необходимости скорректировать `IMAGE_*`.
-3. Запустить backend, отправить 3 сообщения в приватный чат бота → на третье сообщение должна прийти картинка (если квоты и cooldown позволяют).
-4. Проверить, что при отключенном `IMAGE_ENABLED=false` текстовые ответы отправляются без ошибок.
+3. Запустить backend, отправить сообщение в приватный чат бота, нажать «👁️ Посмотреть» → должна прийти картинка (если есть квота).
+4. Проверить, что при отключенном `IMAGE_ENABLED=false` кнопка не появляется.

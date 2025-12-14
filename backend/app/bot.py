@@ -35,7 +35,7 @@ from .services.subscriptions import ensure_premium_for_user, get_user_subscripti
 from .services.telegram_id import get_debug_telegram_id
 from .users_service import get_or_create_user_by_telegram_id
 from .utils.async_helpers import ensure_async_iter
-from .services.image_generation import maybe_generate_and_send_image
+from .services.image_generation import ImageRequestError, request_image_on_demand
 from .services.store import SUBSCRIPTION_PLANS, IMAGE_PACKS, EMOTIONAL_FEATURES, get_plan, get_image_pack, get_feature
 from .services.image_quota import _ensure_balance
 
@@ -105,6 +105,12 @@ def pay_images_keyboard() -> InlineKeyboardMarkup:
         buttons.append([InlineKeyboardButton(text=label, callback_data=f"pay_pack:{pack.code}")])
     buttons.append([InlineKeyboardButton(text="⬅️ Назад", callback_data="pay_menu:root")])
     return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+
+def build_image_button(persona_id: int) -> InlineKeyboardMarkup:
+    return InlineKeyboardMarkup(
+        inline_keyboard=[[InlineKeyboardButton(text="👁️ Посмотреть", callback_data=f"img:{persona_id}")]]
+    )
 
 
 async def send_pay_intro_to_user(telegram_id: int) -> None:
@@ -293,23 +299,12 @@ async def on_user_message(message: Message, current_user: User | None = None, db
                 skip_limits=True,  # AccessMiddleware уже ограничил
                 skip_increment=True,  # уже инкрементировано в middleware
             )
-            await message.answer(result.reply)
-            try:
-                if message.chat and getattr(message.chat, "type", None) == "private":
-                    asyncio.create_task(
-                        maybe_generate_and_send_image(
-                            user_id=user.id,
-                            chat_id=message.chat.id,
-                            persona_id=result.persona_id,
-                            bot_instance=bot,
-                            context={
-                                "reply_text": result.reply,
-                                "user_message": message.text or "",
-                            },
-                        )
-                    )
-            except Exception as exc:
-                logger.error("Failed to enqueue image generation: %s", exc)
+            reply_markup = None
+            if message.chat and getattr(message.chat, "type", None) == "private" and getattr(
+                settings, "image_enabled", False
+            ):
+                reply_markup = build_image_button(result.persona_id)
+            await message.answer(result.reply, reply_markup=reply_markup)
         except PermissionError:
             await message.answer(
                 "Похоже, бесплатный лимит исчерпан. Открой мини-приложение Vitte, чтобы оформить подписку.",
@@ -317,6 +312,61 @@ async def on_user_message(message: Message, current_user: User | None = None, db
         except Exception as exc:
             logger.error("Failed to handle user message: %s", exc)
             await message.answer("Не получилось ответить, попробуй ещё раз или открой мини-приложение.")
+
+
+@dp.callback_query(F.data.startswith("img:"))
+async def on_image_requested(cb: CallbackQuery):
+    if cb.from_user is None or cb.message is None:
+        return
+    try:
+        persona_id = int(cb.data.split(":", 1)[1])
+    except (IndexError, ValueError):
+        await cb.answer("Некорректный запрос", show_alert=False)
+        return
+
+    await cb.answer("Генерирую…")
+    try:
+        await cb.message.edit_reply_markup(reply_markup=None)
+    except Exception:
+        # Не критично, если не удалось убрать кнопку.
+        pass
+
+    user_id: int | None = None
+    async for session in get_session():
+        user = await get_or_create_user_by_telegram_id(session, cb.from_user.id)
+        await session.commit()
+        user_id = user.id
+        break
+
+    if user_id is None:
+        await cb.answer("Пользователь не найден", show_alert=False)
+        return
+
+    context = {
+        "reply_text": (cb.message.text or cb.message.caption or "").strip(),
+        "user_message": "",
+    }
+
+    try:
+        await request_image_on_demand(
+            user_id=user_id,
+            chat_id=cb.message.chat.id,
+            persona_id=persona_id,
+            bot_instance=bot,
+            context=context,
+        )
+    except ImageRequestError as exc:
+        if exc.reason == "no_quota":
+            await cb.answer("Лимит изображений закончился", show_alert=True)
+        elif exc.reason == "disabled":
+            await cb.answer("Генерация изображений отключена", show_alert=False)
+        elif exc.reason == "generation_failed":
+            await cb.answer("Не получилось сгенерировать изображение", show_alert=False)
+        else:
+            await cb.answer("Не получилось сгенерировать изображение", show_alert=False)
+    except Exception as exc:  # noqa: BLE001
+        logger.error("Failed to handle image request: %s", exc)
+        await cb.answer("Не получилось сгенерировать изображение", show_alert=False)
 
 
 @dp.callback_query(F.data.startswith("pay_sub:"))

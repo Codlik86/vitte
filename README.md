@@ -4,6 +4,7 @@ Vitte — романтический AI-компаньон. Репозитори
 
 - `backend/` — FastAPI + aiogram, интеграции и API.
 - `miniapp/` — Vite + React + TypeScript + Tailwind для UI мини-аппа.
+- ComfyUI: модели/чекпоинты/LoRA лежат на GPU-хосте, а workflow-шаблон хранится в репо (`backend/app/assets/comfyui/workflows/sdxl_lora.json`) и отправляется в ComfyUI по API перед генерацией.
 
 ## Монетизация (этап 4)
 
