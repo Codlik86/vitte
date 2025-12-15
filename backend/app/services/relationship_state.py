@@ -6,6 +6,7 @@ import logging
 
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
+from ..config import settings
 
 DEFAULT_TRUST = 10
 DEFAULT_RESPECT = 0
@@ -21,6 +22,17 @@ class RelationshipState:
     respect_score: int = DEFAULT_RESPECT
     closeness_level: int = DEFAULT_CLOSENESS
     updated_at: datetime | None = None
+
+
+def apply_test_mode(state: "RelationshipState", enabled: bool) -> "RelationshipState":
+    if not enabled:
+        return state
+    return RelationshipState(
+        trust_level=0,
+        respect_score=0,
+        closeness_level=0,
+        updated_at=state.updated_at,
+    )
 
 
 async def _ensure_table(session: AsyncSession) -> None:

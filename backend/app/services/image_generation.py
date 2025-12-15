@@ -297,6 +297,27 @@ async def _build_context_hint_from_history(
         return ""
 
 
+async def _load_user_request_text(session, dialog: Dialog | None, limit: int = 2) -> str:
+    if not dialog:
+        return ""
+    try:
+        msg_res = await session.execute(
+            select(Message.content)
+            .where(Message.dialog_id == dialog.id, Message.role == "user")
+            .order_by(Message.id.desc())
+            .limit(limit)
+        )
+        messages = [row[0] for row in msg_res.fetchall() if row[0]]
+        if not messages:
+            return ""
+        messages = list(reversed(messages))
+        combined = " ".join(m.replace("\n", " ").replace("\r", " ").strip() for m in messages if m)
+        return _trim_hint_text(combined)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Failed to load user request text dialog=%s err=%s", dialog.id if dialog else None, exc)
+        return ""
+
+
 def _build_story_hint_from_ctx(context: dict[str, Any]) -> str:
     story_scene = str(context.get("story_scene") or "").strip()
     story_text = str(context.get("story_text") or "").strip()
@@ -346,27 +367,51 @@ def _build_prompt_hint(context: dict[str, Any], persona: Persona | None) -> str:
     if isinstance(recent_messages, list):
         recent_messages = " ".join([str(item) for item in recent_messages])
 
+    user_request = _trim_hint_text(str(context.get("user_request_text") or ""))
+
     reply = (context.get("reply_text") or "").strip()
     user_message = (context.get("user_message") or "").strip()
 
-    candidates = [
-        ("story", story_hint),
-        ("history", str(history_text or "").strip()),
-        ("recent", str(recent_messages or "").strip()),
-        ("reply", reply),
-        ("user", user_message),
-        ("persona", (persona.short_description or persona.name or "").strip() if persona else ""),
-    ]
+    env_text = _trim_hint_text(story_hint)
+    optional_context = _trim_hint_text(str(history_text or recent_messages or ""))
 
-    for label, raw in candidates:
-        hint = _trim_hint_text(raw)
-        if hint:
-            preview = hint[:80]
-            logger.info("Image hint source=%s preview=%s", label, preview)
-            return hint
+    if not user_request:
+        user_request = _trim_hint_text(reply or user_message)
 
-    logger.info("Image hint source=empty preview=")
-    return ""
+    if not user_request and persona:
+        user_request = _trim_hint_text(persona.short_description or persona.name or "")
+
+    segments: list[str] = []
+    if env_text:
+        segments.append(f"ENVIRONMENT: {env_text}")
+    if user_request:
+        segments.append(f"USER REQUEST (follow precisely): {user_request}")
+    if optional_context:
+        segments.append(f"OPTIONAL CONTEXT: {optional_context}")
+
+    hint = ". ".join(part for part in segments if part)
+    if len(hint) > MAX_HINT_LEN and optional_context:
+        segments = segments[:-1]
+        hint = ". ".join(segments)
+    if len(hint) > MAX_HINT_LEN and env_text:
+        trimmed_env = _trim_hint_text(env_text[: max(20, MAX_HINT_LEN // 2)])
+        rebuilt = []
+        if trimmed_env:
+            rebuilt.append(f"ENVIRONMENT: {trimmed_env}")
+        if user_request:
+            rebuilt.append(f"USER REQUEST (follow precisely): {user_request}")
+        hint = ". ".join(rebuilt)
+    if len(hint) > MAX_HINT_LEN:
+        hint = hint[:MAX_HINT_LEN]
+
+    preview = hint[:80]
+    logger.info(
+        "Image hint parts user_req=%s env=%s final_len=%s",
+        user_request[:80] if user_request else "",
+        env_text[:80] if env_text else "",
+        len(hint),
+    )
+    return hint
 
 
 def _build_full_prompt(config: PersonaImageConfig, hint: str) -> str:
@@ -656,6 +701,11 @@ async def request_image_on_demand(
                 story_ctx = await _load_story_context(persona, dialog)
                 for key, value in story_ctx.items():
                     ctx.setdefault(key, value)
+
+            if "user_request_text" not in ctx:
+                user_req = await _load_user_request_text(session, dialog)
+                if user_req:
+                    ctx["user_request_text"] = user_req
 
             has_subscription = bool(
                 user.access_status == AccessStatus.SUBSCRIPTION_ACTIVE

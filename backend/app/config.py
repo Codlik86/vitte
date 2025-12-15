@@ -40,6 +40,9 @@ class Settings(BaseSettings):
     image_cooldown_seconds: int = 120
     image_enabled: bool = True
 
+    vitte_rel_test_mode: bool = False
+    vitte_rel_test_mode_behavior: str = "ZERO"
+
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 
 

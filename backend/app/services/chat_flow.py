@@ -31,8 +31,10 @@ from ..services.relationship_state import (
     get_relationship_state,
     save_relationship_state,
     update_relationship_state,
+    apply_test_mode,
 )
 from ..services.message_analysis import analyze_message
+from ..config import settings
 
 MAX_RECENT_MESSAGES = 12
 ENABLE_PERF_LOGS = os.getenv("ENABLE_PERF_LOGS", "").lower() == "true"
@@ -335,12 +337,16 @@ async def generate_chat_reply(
     feature_states = cache.get("feature_states") or await feature_states_task
     cache["feature_states"] = feature_states
 
+    rel_test = bool(getattr(settings, "vitte_rel_test_mode", False))
     analysis = analyze_message(input_text)
     updated_relationship = (
         _apply_relationship_deltas(relationship_state, analysis, message_count)
-        if not preview_story
+        if (not preview_story and not rel_test)
         else relationship_state
     )
+    if rel_test:
+        updated_relationship = apply_test_mode(updated_relationship, True)
+        logger.info("REL_TEST_MODE enabled: overriding relationship_state to zeros; skipping persistence")
 
     trust_level = updated_relationship.trust_level
     mode_instruction = describe_mode(mode, atmosphere)
@@ -427,7 +433,8 @@ async def generate_chat_reply(
         if not skip_increment and not access.get("has_subscription", False):
             user.free_messages_used += 1
         user.bot_reply_counter = (user.bot_reply_counter or 0) + 1
-        await save_relationship_state(session, user.id, persona.id, updated_relationship)
+        if not rel_test:
+            await save_relationship_state(session, user.id, persona.id, updated_relationship)
         await session.commit()
 
     if perf_enabled:

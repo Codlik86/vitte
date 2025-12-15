@@ -5,6 +5,8 @@ from random import random
 from typing import Iterable
 
 from ..models import Persona, User
+from ..config import settings
+from ..logging_config import logger
 
 
 @dataclass(frozen=True)
@@ -152,7 +154,10 @@ def build_system_prompt(
     emotions_text = persona.emotions_full or persona.emotional_style or persona.relationship_style or ""
     positive_triggers = ", ".join(persona.triggers_positive or [])
     negative_triggers = ", ".join(persona.triggers_negative or [])
-    trust_text = describe_trust_layer(trust_level, has_subscription, age_confirmed)
+    rel_test = bool(getattr(settings, "vitte_rel_test_mode", False))
+    trust_text = "" if rel_test else describe_trust_layer(trust_level, has_subscription, age_confirmed)
+    if rel_test:
+        logger.info("REL_TEST_MODE: trust ladder disabled in system prompt")
     ritual_text = ritual_hint or ""
     feature_block = feature_instruction or ""
     feature_mode_text = f"Режим улучшений: {feature_mode}." if feature_mode else ""
