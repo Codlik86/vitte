@@ -24,7 +24,7 @@ DEFAULT_NEGATIVE = (
 DEFAULT_IMAGE_CONFIG = PersonaImageConfig(
     lora_filename="woman033.safetensors",
     prompt_core=(
-        "woman033, photorealistic young woman, consistent face, athletic fit body, "
+        "woman033, photorealistic young woman, consistent face, exelent body, "
         "natural skin texture, 85mm lens, high detail"
     ),
     negative_prompt=DEFAULT_NEGATIVE,
@@ -40,7 +40,7 @@ PERSONA_IMAGE_CONFIGS: Dict[str, PersonaImageConfig] = {
     "default_лина": PersonaImageConfig(
         lora_filename="woman033.safetensors",
         prompt_core=(
-            "woman033, photorealistic young woman, consistent face, athletic fit body, "
+            "woman033, photorealistic young woman, consistent face, exelent body, "
             "natural skin texture, 85mm lens, high detail"
         ),
         negative_prompt=DEFAULT_NEGATIVE,
@@ -52,7 +52,7 @@ PERSONA_IMAGE_CONFIGS: Dict[str, PersonaImageConfig] = {
     "лина": PersonaImageConfig(
         lora_filename="woman033.safetensors",
         prompt_core=(
-            "woman033, photorealistic young woman, consistent face, athletic fit body, "
+            "woman033, photorealistic young woman, consistent face, exelent body, "
             "natural skin texture, 85mm lens, high detail"
         ),
         negative_prompt=DEFAULT_NEGATIVE,
@@ -63,7 +63,7 @@ PERSONA_IMAGE_CONFIGS: Dict[str, PersonaImageConfig] = {
     "lina": PersonaImageConfig(
         lora_filename="woman033.safetensors",
         prompt_core=(
-            "woman033, photorealistic young woman, consistent face, athletic fit body, "
+            "woman033, photorealistic young woman, consistent face, exelent body, "
             "natural skin texture, 85mm lens, high detail"
         ),
         negative_prompt=DEFAULT_NEGATIVE,

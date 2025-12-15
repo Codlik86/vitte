@@ -14,6 +14,7 @@ from aiogram.types import (
     BotCommandScopeDefault,
     ReplyKeyboardRemove,
 )
+from aiogram.exceptions import TelegramBadRequest
 from datetime import datetime
 
 from .config import settings
@@ -111,6 +112,15 @@ def build_image_button(persona_id: int) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[[InlineKeyboardButton(text="👁️ Посмотреть", callback_data=f"img:{persona_id}")]]
     )
+
+
+async def _safe_answer(cb: CallbackQuery, text: str, show_alert: bool = False) -> None:
+    try:
+        await cb.answer(text, show_alert=show_alert)
+    except TelegramBadRequest as exc:
+        logger.warning("Callback answer failed (ignored): %s", exc)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Callback answer unexpected error (ignored): %s", exc)
 
 
 async def send_pay_intro_to_user(telegram_id: int) -> None:
@@ -321,10 +331,10 @@ async def on_image_requested(cb: CallbackQuery):
     try:
         persona_id = int(cb.data.split(":", 1)[1])
     except (IndexError, ValueError):
-        await cb.answer("Некорректный запрос", show_alert=False)
+        await _safe_answer(cb, "Некорректный запрос", show_alert=False)
         return
 
-    await cb.answer("Генерирую…")
+    await _safe_answer(cb, "Генерирую…")
     try:
         await cb.message.edit_reply_markup(reply_markup=None)
     except Exception:
@@ -357,16 +367,16 @@ async def on_image_requested(cb: CallbackQuery):
         )
     except ImageRequestError as exc:
         if exc.reason == "no_quota":
-            await cb.answer("Лимит изображений закончился", show_alert=True)
+            await _safe_answer(cb, "Лимит изображений закончился", show_alert=True)
         elif exc.reason == "disabled":
-            await cb.answer("Генерация изображений отключена", show_alert=False)
+            await _safe_answer(cb, "Генерация изображений отключена", show_alert=False)
         elif exc.reason == "generation_failed":
-            await cb.answer("Не получилось сгенерировать изображение", show_alert=False)
+            await _safe_answer(cb, "Не получилось сгенерировать изображение", show_alert=False)
         else:
-            await cb.answer("Не получилось сгенерировать изображение", show_alert=False)
+            await _safe_answer(cb, "Не получилось сгенерировать изображение", show_alert=False)
     except Exception as exc:  # noqa: BLE001
         logger.error("Failed to handle image request: %s", exc)
-        await cb.answer("Не получилось сгенерировать изображение", show_alert=False)
+        await _safe_answer(cb, "Не получилось сгенерировать изображение", show_alert=False)
 
 
 @dp.callback_query(F.data.startswith("pay_sub:"))
