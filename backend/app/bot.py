@@ -372,6 +372,8 @@ async def on_image_requested(cb: CallbackQuery):
             await _safe_answer(cb, "Генерация изображений отключена", show_alert=False)
         elif exc.reason == "generation_failed":
             await _safe_answer(cb, "Не получилось сгенерировать изображение", show_alert=False)
+        elif exc.reason == "busy":
+            await _safe_answer(cb, "Уже генерирую…", show_alert=False)
         else:
             await _safe_answer(cb, "Не получилось сгенерировать изображение", show_alert=False)
     except Exception as exc:  # noqa: BLE001

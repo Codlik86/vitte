@@ -18,10 +18,12 @@ from aiogram.types import BufferedInputFile
 from ..config import settings
 from ..db import get_session
 from ..logging_config import logger
-from ..models import AccessStatus, Persona, User
+from sqlalchemy import select, text
+from ..models import AccessStatus, Dialog, Message, Persona, User
 from ..services.access import get_active_subscription
 from ..services.analytics import log_event
 from ..services.image_quota import consume_image, get_image_quota
+from ..story_cards import StoryCard, get_story_cards_for_persona, resolve_story_id
 from .persona_images import PersonaImageConfig, get_persona_image_config
 
 WORKFLOW_PATH = Path(__file__).resolve().parent.parent / "assets" / "comfyui" / "workflows" / "sdxl_lora.json"
@@ -43,6 +45,34 @@ _semaphore = asyncio.Semaphore(max(int(getattr(settings, "comfyui_concurrency", 
 
 def _deepcopy_workflow(template: Dict[str, Any]) -> Dict[str, Any]:
     return json.loads(json.dumps(template))
+
+
+async def _get_latest_dialog(session, user_id: int, persona_id: int) -> Dialog | None:
+    res = await session.execute(
+        select(Dialog).where(Dialog.user_id == user_id, Dialog.character_id == persona_id).order_by(Dialog.id.desc()).limit(1)
+    )
+    return res.scalar_one_or_none()
+
+
+def _advisory_key(user_id: int, persona_id: int) -> int:
+    return (int(user_id) << 20) + int(persona_id)
+
+
+async def _try_acquire_advisory_lock(session, key: int) -> bool:
+    try:
+        result = await session.execute(text("SELECT pg_try_advisory_lock(:key) AS locked"), {"key": key})
+        row = result.fetchone()
+        return bool(row and row[0])
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Advisory lock unavailable, continuing without lock: %s", exc)
+        return True
+
+
+async def _release_advisory_lock(session, key: int) -> None:
+    try:
+        await session.execute(text("SELECT pg_advisory_unlock(:key)"), {"key": key})
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Advisory unlock failed (ignored): %s", exc)
 
 
 @dataclass
@@ -74,6 +104,13 @@ def _load_workflow_template() -> Dict[str, Any]:
             logger.error("Failed to read workflow template %s: %s", WORKFLOW_PATH, exc)
             _workflow_cache = {}
     return _deepcopy_workflow(_workflow_cache or {})
+
+
+async def _get_latest_dialog(session, user_id: int, persona_id: int) -> Dialog | None:
+    res = await session.execute(
+        select(Dialog).where(Dialog.user_id == user_id, Dialog.character_id == persona_id).order_by(Dialog.id.desc()).limit(1)
+    )
+    return res.scalar_one_or_none()
 
 
 def find_first_node_id(
@@ -221,19 +258,115 @@ def _apply_template_values(
     return workflow
 
 
+def _trim_hint_text(text: str) -> str:
+    cleaned = text.replace("\n", " ").replace("\r", " ").strip()
+    if len(cleaned) > MAX_HINT_LEN:
+        cleaned = cleaned[:MAX_HINT_LEN].rsplit(" ", 1)[0]
+    return cleaned
+
+
+async def _build_context_hint_from_history(
+    session,
+    user_id: int,
+    persona_id: int,
+    limit: int = 5,
+    dialog: Dialog | None = None,
+) -> str:
+    try:
+        target_dialog = dialog
+        if target_dialog is None:
+            target_dialog = await _get_latest_dialog(session, user_id, persona_id)
+        if not target_dialog:
+            return ""
+
+        msg_res = await session.execute(
+            select(Message.content)
+            .where(Message.dialog_id == target_dialog.id, Message.role == "user")
+            .order_by(Message.id.desc())
+            .limit(limit)
+        )
+        messages = [row[0] for row in msg_res.fetchall() if row[0]]
+        if not messages:
+            return ""
+
+        messages = list(reversed(messages))
+        combined = ". ".join(m.replace("\n", " ").replace("\r", " ").strip() for m in messages if m)
+        return _trim_hint_text(combined)
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Failed to build history hint user=%s persona=%s err=%s", user_id, persona_id, exc)
+        return ""
+
+
+def _build_story_hint_from_ctx(context: dict[str, Any]) -> str:
+    story_scene = str(context.get("story_scene") or "").strip()
+    story_text = str(context.get("story_text") or "").strip()
+    story_title = str(context.get("story_title") or "").strip()
+
+    if story_scene:
+        return _trim_hint_text(story_scene)
+
+    combined = " ".join(part for part in [story_title, story_text] if part)
+    if combined.strip():
+        return _trim_hint_text(combined.strip())
+    return ""
+
+
+def _story_from_card(card: StoryCard | None) -> dict[str, str]:
+    if not card:
+        return {}
+    return {
+        "story_id": card.id,
+        "story_title": card.title,
+        "story_scene": card.prompt,
+        "story_text": card.description,
+    }
+
+
+async def _load_story_context(
+    persona: Persona,
+    dialog: Dialog | None,
+) -> dict[str, str]:
+    if dialog is None or not dialog.entry_story_id:
+        return {}
+    resolved_id = resolve_story_id(dialog.entry_story_id)
+    if not resolved_id:
+        return {}
+    cards = get_story_cards_for_persona(persona.archetype, persona.name)
+    card = next((c for c in cards if c.id == resolved_id), None)
+    return _story_from_card(card)
+
+
 def _build_prompt_hint(context: dict[str, Any], persona: Persona | None) -> str:
+    story_hint = _build_story_hint_from_ctx(context)
+    history_text = context.get("history_text") or ""
+    if isinstance(history_text, list):
+        history_text = " ".join([str(item) for item in history_text])
+
+    recent_messages = context.get("recent_messages") or ""
+    if isinstance(recent_messages, list):
+        recent_messages = " ".join([str(item) for item in recent_messages])
+
     reply = (context.get("reply_text") or "").strip()
     user_message = (context.get("user_message") or "").strip()
-    source = reply or user_message
 
-    hint = source.replace("\n", " ").replace("\r", " ").strip()
-    if len(hint) > MAX_HINT_LEN:
-        hint = hint[:MAX_HINT_LEN].rsplit(" ", 1)[0]
+    candidates = [
+        ("story", story_hint),
+        ("history", str(history_text or "").strip()),
+        ("recent", str(recent_messages or "").strip()),
+        ("reply", reply),
+        ("user", user_message),
+        ("persona", (persona.short_description or persona.name or "").strip() if persona else ""),
+    ]
 
-    if not hint and persona:
-        hint = (persona.short_description or persona.name or "").strip()
+    for label, raw in candidates:
+        hint = _trim_hint_text(raw)
+        if hint:
+            preview = hint[:80]
+            logger.info("Image hint source=%s preview=%s", label, preview)
+            return hint
 
-    return hint
+    logger.info("Image hint source=empty preview=")
+    return ""
 
 
 def _build_full_prompt(config: PersonaImageConfig, hint: str) -> str:
@@ -356,29 +489,22 @@ async def _download_image(client: httpx.AsyncClient, base_url: str, image_info: 
 
 
 async def _deliver_image(plan: GenerationPlan, image_bytes: bytes, bot_instance: Bot) -> None:
-    async for session in get_session():
-        user = await session.get(User, plan.user_id)
-        if not user:
-            return
-
-        try:
-            await consume_image(session, user, count=1, has_subscription=plan.has_subscription)
-            user.last_image_sent_at = datetime.utcnow()
-            await log_event(
-                session,
-                user.id,
-                "image_generated",
-                {"persona_id": plan.persona_id, "persona_key": plan.persona_key},
-            )
-            await session.commit()
-        except Exception as exc:  # noqa: BLE001
-            logger.error("Failed to persist image usage for user %s: %s", plan.user_id, exc)
-            await session.rollback()
-            raise
-
     input_file = BufferedInputFile(image_bytes, filename="vitte_image.png")
     await bot_instance.send_photo(plan.chat_id, input_file)
 
+
+async def _persist_image_usage(session, plan: GenerationPlan) -> None:
+    user = await session.get(User, plan.user_id)
+    if not user:
+        return
+    await consume_image(session, user, count=1, has_subscription=plan.has_subscription)
+    user.last_image_sent_at = datetime.utcnow()
+    await log_event(
+        session,
+        user.id,
+        "image_generated",
+        {"persona_id": plan.persona_id, "persona_key": plan.persona_key},
+    )
 
 async def _generate_and_send(plan: GenerationPlan, context: dict[str, Any], bot_instance: Bot) -> bool:
     base_url = (settings.comfyui_base_url or "").rstrip("/")
@@ -435,6 +561,57 @@ async def _generate_and_send(plan: GenerationPlan, context: dict[str, Any], bot_
         return False
 
 
+async def _generate_image_bytes(plan: GenerationPlan, context: dict[str, Any]) -> bytes:
+    base_url = (settings.comfyui_base_url or "").rstrip("/")
+    if not base_url:
+        await _log_failure(plan, "not_configured")
+        raise ImageRequestError("generation_failed")
+
+    template = _load_workflow_template()
+    if not template:
+        logger.error("Workflow template is empty or missing at %s", WORKFLOW_PATH)
+        await _log_failure(plan, "bad_workflow_template")
+        raise ImageRequestError("generation_failed")
+
+    try:
+        workflow = _apply_template_values(
+            template,
+            prompt=plan.prompt,
+            negative_prompt=plan.negative_prompt,
+            config=plan.config,
+        )
+    except Exception as exc:  # noqa: BLE001
+        logger.error("Failed to apply workflow template user=%s persona=%s: %s", plan.user_id, plan.persona_id, exc)
+        await _log_failure(plan, "bad_workflow_template")
+        raise ImageRequestError("generation_failed")
+
+    checkpoint_node_id = find_first_node_id(workflow, "CheckpointLoaderSimple", title_hints=["checkpoint"])
+    ckpt_name = (
+        workflow.get(checkpoint_node_id or "", {}).get("inputs", {}).get("ckpt_name")
+        if checkpoint_node_id
+        else None
+    )
+    logger.info(
+        "ComfyUI request user=%s persona=%s ckpt=%s lora=%s strengths=(%.2f/%.2f)",
+        plan.user_id,
+        plan.persona_id,
+        ckpt_name,
+        Path(plan.config.lora_filename).name,
+        plan.config.lora_strength_model,
+        plan.config.lora_strength_clip,
+    )
+
+    client_id = f"vitte-{plan.user_id}-{plan.persona_id}-{uuid.uuid4().hex[:8]}"
+
+    async with _semaphore:
+        try:
+            return await request_comfyui(workflow_payload=workflow, client_id=client_id)
+        except Exception as exc:  # noqa: BLE001
+            logger.error("Image generation failed user=%s persona=%s: %s", plan.user_id, plan.persona_id, exc)
+            await _log_failure(plan, "generation_error")
+            raise ImageRequestError("generation_failed")
+
+
 class ImageRequestError(RuntimeError):
     def __init__(self, reason: str):
         self.reason = reason
@@ -462,45 +639,67 @@ async def request_image_on_demand(
         if not user or not persona:
             raise ImageRequestError("not_found")
 
-        has_subscription = bool(
-            user.access_status == AccessStatus.SUBSCRIPTION_ACTIVE
-            or await get_active_subscription(session, user.id)
-        )
+        lock_key = _advisory_key(user.id, persona.id)
+        lock_acquired = await _try_acquire_advisory_lock(session, lock_key)
+        if not lock_acquired:
+            raise ImageRequestError("busy")
 
-        quota = await get_image_quota(session, user, has_subscription=has_subscription)
-        if quota.get("total_remaining", 0) <= 0:
-            await log_event(session, user.id, "image_failed", {"reason": "no_quota", "persona_id": persona.id})
+        try:
+            dialog = await _get_latest_dialog(session, user.id, persona.id)
+
+            if "history_text" not in ctx and "recent_messages" not in ctx:
+                history_hint = await _build_context_hint_from_history(session, user.id, persona.id, dialog=dialog)
+                if history_hint:
+                    ctx["history_text"] = history_hint
+
+            if not any(ctx.get(key) for key in ("story_scene", "story_text", "story_title")):
+                story_ctx = await _load_story_context(persona, dialog)
+                for key, value in story_ctx.items():
+                    ctx.setdefault(key, value)
+
+            has_subscription = bool(
+                user.access_status == AccessStatus.SUBSCRIPTION_ACTIVE
+                or await get_active_subscription(session, user.id)
+            )
+
+            quota = await get_image_quota(session, user, has_subscription=has_subscription)
+            if quota.get("total_remaining", 0) <= 0:
+                await log_event(session, user.id, "image_failed", {"reason": "no_quota", "persona_id": persona.id})
+                await session.commit()
+                raise ImageRequestError("no_quota")
+
+            config = get_persona_image_config(persona.key, persona.name)
+            hint = _build_prompt_hint(ctx, persona)
+            prompt = _build_full_prompt(config, hint)
+            negative_prompt = (config.negative_prompt or DEFAULT_NEGATIVE).strip()
+
+            await log_event(
+                session,
+                user.id,
+                "image_requested",
+                {"persona_id": persona.id, "persona_key": persona.key, "trigger": "button"},
+            )
             await session.commit()
-            raise ImageRequestError("no_quota")
 
-        config = get_persona_image_config(persona.key, persona.name)
-        hint = _build_prompt_hint(ctx, persona)
-        prompt = _build_full_prompt(config, hint)
-        negative_prompt = (config.negative_prompt or DEFAULT_NEGATIVE).strip()
+            plan = GenerationPlan(
+                user_id=user.id,
+                chat_id=chat_id,
+                persona_id=persona.id,
+                persona_key=persona.key,
+                persona_name=persona.name,
+                prompt=prompt,
+                negative_prompt=negative_prompt,
+                config=config,
+                has_subscription=has_subscription,
+            )
 
-        await log_event(
-            session,
-            user.id,
-            "image_requested",
-            {"persona_id": persona.id, "persona_key": persona.key, "trigger": "button"},
-        )
-        await session.commit()
-
-        plan = GenerationPlan(
-            user_id=user.id,
-            chat_id=chat_id,
-            persona_id=persona.id,
-            persona_key=persona.key,
-            persona_name=persona.name,
-            prompt=prompt,
-            negative_prompt=negative_prompt,
-            config=config,
-            has_subscription=has_subscription,
-        )
+            image_bytes = await _generate_image_bytes(plan, ctx)
+            await _persist_image_usage(session, plan)
+            await session.commit()
+        finally:
+            await _release_advisory_lock(session, lock_key)
         break
     else:
         raise ImageRequestError("not_found")
 
-    success = await _generate_and_send(plan, ctx, bot_instance)
-    if not success:
-        raise ImageRequestError("generation_failed")
+    await _deliver_image(plan, image_bytes, bot_instance)

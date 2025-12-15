@@ -24,13 +24,13 @@ DEFAULT_NEGATIVE = (
 DEFAULT_IMAGE_CONFIG = PersonaImageConfig(
     lora_filename="woman033.safetensors",
     prompt_core=(
-        "woman033, photorealistic young woman, consistent face, exelent body, "
+        "woman033, photorealistic young woman, consistent face, natural body, "
         "natural skin texture, 85mm lens, high detail"
     ),
     negative_prompt=DEFAULT_NEGATIVE,
     lora_strength_model=0.7,
     lora_strength_clip=0.65,
-    default_style="neutral studio background, soft cinematic lighting",
+    default_style=None,
 )
 
 
@@ -40,36 +40,36 @@ PERSONA_IMAGE_CONFIGS: Dict[str, PersonaImageConfig] = {
     "default_лина": PersonaImageConfig(
         lora_filename="woman033.safetensors",
         prompt_core=(
-            "woman033, photorealistic young woman, consistent face, exelent body, "
+            "woman033, photorealistic young woman, consistent face, natural body, "
             "natural skin texture, 85mm lens, high detail"
         ),
         negative_prompt=DEFAULT_NEGATIVE,
         lora_strength_model=0.7,
         lora_strength_clip=0.65,
-        default_style="neutral studio background, soft cinematic lighting",
+        default_style=None,
     ),
     # На всякий — алиасы по имени (если persona.key не префиксный)
     "лина": PersonaImageConfig(
         lora_filename="woman033.safetensors",
         prompt_core=(
-            "woman033, photorealistic young woman, consistent face, exelent body, "
+            "woman033, photorealistic young woman, consistent face, natural body, "
             "natural skin texture, 85mm lens, high detail"
         ),
         negative_prompt=DEFAULT_NEGATIVE,
         lora_strength_model=0.7,
         lora_strength_clip=0.65,
-        default_style="neutral studio background, soft cinematic lighting",
+        default_style=None,
     ),
     "lina": PersonaImageConfig(
         lora_filename="woman033.safetensors",
         prompt_core=(
-            "woman033, photorealistic young woman, consistent face, exelent body, "
+            "woman033, photorealistic young woman, consistent face, natural body, "
             "natural skin texture, 85mm lens, high detail"
         ),
         negative_prompt=DEFAULT_NEGATIVE,
         lora_strength_model=0.7,
         lora_strength_clip=0.65,
-        default_style="neutral studio background, soft cinematic lighting",
+        default_style=None,
     ),
 
     "default_марианна": PersonaImageConfig(
@@ -78,7 +78,7 @@ PERSONA_IMAGE_CONFIGS: Dict[str, PersonaImageConfig] = {
         negative_prompt=DEFAULT_NEGATIVE,
         lora_strength_model=0.7,
         lora_strength_clip=0.65,
-        default_style="warm apartment evening light, cozy armchair, cinematic shadows",
+        default_style=None,
     ),
     "default_аки": PersonaImageConfig(
         lora_filename="aki.safetensors",
@@ -86,7 +86,7 @@ PERSONA_IMAGE_CONFIGS: Dict[str, PersonaImageConfig] = {
         negative_prompt=DEFAULT_NEGATIVE,
         lora_strength_model=0.65,
         lora_strength_clip=0.6,
-        default_style="night city lights, soft neon reflections, shallow depth of field",
+        default_style=None,
     ),
 }
 
