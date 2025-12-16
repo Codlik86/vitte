@@ -7,6 +7,8 @@ from ..logging_config import logger
 llm_client = OpenAI(
     api_key=settings.proxyapi_api_key,
     base_url=settings.openrouter_base_url or OPENROUTER_BASE_URL,
+    timeout=30,
+    max_retries=1,
 )
 
 

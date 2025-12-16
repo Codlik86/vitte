@@ -19,6 +19,7 @@ from .api import (
     events_router,
     bot_control_router,
 )
+from .api.routes_webhook import cleanup_processed_updates
 from .db import engine, Base, async_session_factory
 from .logging_config import logger
 from . import models  # noqa: F401 ensures models are imported for metadata
@@ -226,6 +227,11 @@ async def on_startup():
     retention_task = await start_retention_worker()
     global cleanup_task
     cleanup_task = await start_cleanup_worker()
+    try:
+        await cleanup_processed_updates()
+        logger.info("Processed updates cleanup executed on startup.")
+    except Exception as exc:  # noqa: BLE001
+        logger.error("Processed updates cleanup failed: %s", exc)
 
 
 @app.get("/", include_in_schema=False)

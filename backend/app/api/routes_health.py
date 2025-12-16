@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -16,6 +16,12 @@ router = APIRouter(tags=["system"])
 
 @router.get("/health", summary="Healthcheck")
 async def health():
+    try:
+        async with async_session_factory() as session:
+            await session.execute(text("SELECT 1"))
+    except Exception as exc:  # noqa: BLE001
+        logger.error("Healthcheck postgres failed: %s", exc)
+        raise HTTPException(status_code=500, detail="postgres_unreachable")
     return {"status": "ok"}
 
 
