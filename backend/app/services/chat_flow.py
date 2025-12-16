@@ -31,7 +31,10 @@ from ..services.relationship_state import (
     get_relationship_state,
     save_relationship_state,
     update_relationship_state,
-    apply_test_mode,
+    derive_level_from_state,
+    transition_level,
+    level_to_state,
+    RelationshipLevel,
 )
 from ..services.message_analysis import analyze_message
 from ..config import settings
@@ -339,14 +342,28 @@ async def generate_chat_reply(
 
     rel_test = bool(getattr(settings, "vitte_rel_test_mode", False))
     analysis = analyze_message(input_text)
-    updated_relationship = (
-        _apply_relationship_deltas(relationship_state, analysis, message_count)
-        if (not preview_story and not rel_test)
-        else relationship_state
-    )
+    current_level = derive_level_from_state(relationship_state)
+    target_level = current_level
+    manual_override = getattr(relationship_state, "manual_override", False)
+    if not preview_story and not rel_test and not manual_override:
+        target_level = transition_level(current_level, message_count=message_count, analysis=analysis)
     if rel_test:
-        updated_relationship = apply_test_mode(updated_relationship, True)
-        logger.info("REL_TEST_MODE enabled: overriding relationship_state to zeros; skipping persistence")
+        target_level = RelationshipLevel.ROMANTIC
+        logger.info("REL_TEST_MODE enabled: forcing relationship level to ROMANTIC; skipping persistence")
+
+    if manual_override and not rel_test:
+        updated_relationship = RelationshipState(
+            trust_level=relationship_state.trust_level,
+            respect_score=relationship_state.respect_score,
+            closeness_level=relationship_state.closeness_level,
+            updated_at=relationship_state.updated_at,
+            relationship_level=target_level,
+            manual_override=True,
+        )
+    else:
+        updated_relationship = level_to_state(target_level)
+        updated_relationship.manual_override = False
+        updated_relationship.relationship_level = target_level
 
     trust_level = updated_relationship.trust_level
     mode_instruction = describe_mode(mode, atmosphere)
@@ -391,6 +408,7 @@ async def generate_chat_reply(
         can_engage_intimately=intimacy.can_engage_intimately,
         safety_needs_warmup=safety_result.needs_warmup,
         relationship_state=updated_relationship,
+        relationship_level=target_level,
     )
     messages, _ = build_chat_messages(prompt_ctx, input_text)
 
@@ -433,7 +451,7 @@ async def generate_chat_reply(
         if not skip_increment and not access.get("has_subscription", False):
             user.free_messages_used += 1
         user.bot_reply_counter = (user.bot_reply_counter or 0) + 1
-        if not rel_test:
+        if not rel_test and not manual_override:
             await save_relationship_state(session, user.id, persona.id, updated_relationship)
         await session.commit()
 
@@ -537,6 +555,7 @@ async def generate_greeting_reply(
         message_count=message_count,
         user_flags=feature_flags,
     )
+    rel_level = derive_level_from_state(relationship_state)
     prompt_ctx = ChatPromptContext(
         persona=persona,
         user=user,
@@ -556,6 +575,7 @@ async def generate_greeting_reply(
         can_engage_intimately=intimacy.can_engage_intimately,
         safety_needs_warmup=False,
         relationship_state=relationship_state,
+        relationship_level=rel_level,
     )
     messages, _ = build_chat_messages(prompt_ctx, user_message)
 

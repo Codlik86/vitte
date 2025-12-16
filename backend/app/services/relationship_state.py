@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime
 import logging
+from enum import IntEnum
 
 from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -16,12 +17,20 @@ _TABLE_READY = False
 logger = logging.getLogger(__name__)
 
 
+class RelationshipLevel(IntEnum):
+    INIT = 0
+    FRIENDLY = 1
+    ROMANTIC = 2
+
+
 @dataclass
 class RelationshipState:
     trust_level: int = DEFAULT_TRUST
     respect_score: int = DEFAULT_RESPECT
     closeness_level: int = DEFAULT_CLOSENESS
     updated_at: datetime | None = None
+    relationship_level: RelationshipLevel | None = None
+    manual_override: bool = False
 
 
 def apply_test_mode(state: "RelationshipState", enabled: bool) -> "RelationshipState":
@@ -32,7 +41,55 @@ def apply_test_mode(state: "RelationshipState", enabled: bool) -> "RelationshipS
         respect_score=0,
         closeness_level=0,
         updated_at=state.updated_at,
+        relationship_level=state.relationship_level,
+        manual_override=state.manual_override,
     )
+
+
+def level_to_state(level: RelationshipLevel) -> RelationshipState:
+    if level == RelationshipLevel.ROMANTIC:
+        return RelationshipState(trust_level=85, respect_score=0, closeness_level=80)
+    if level == RelationshipLevel.FRIENDLY:
+        return RelationshipState(trust_level=50, respect_score=0, closeness_level=50)
+    return RelationshipState(trust_level=DEFAULT_TRUST, respect_score=DEFAULT_RESPECT, closeness_level=DEFAULT_CLOSENESS)
+
+
+def derive_level_from_state(state: RelationshipState) -> RelationshipLevel:
+    if state.relationship_level is not None:
+        try:
+            return RelationshipLevel(state.relationship_level)
+        except ValueError:
+            pass
+    if state.trust_level >= 70 or state.closeness_level >= 70:
+        return RelationshipLevel.ROMANTIC
+    if state.trust_level >= 30 or state.closeness_level >= 30:
+        return RelationshipLevel.FRIENDLY
+    return RelationshipLevel.INIT
+
+
+def describe_level(level: RelationshipLevel) -> str:
+    if level == RelationshipLevel.ROMANTIC:
+        return "Романтика и флирт разрешены, действуй смело но бережно."
+    if level == RelationshipLevel.FRIENDLY:
+        return "Открытый тёплый диалог, без лишних отказов, держи комфорт и уважение."
+    return "Мягкий прогрев и лёгкий флирт, без откровенности."
+
+
+def transition_level(
+    current_level: RelationshipLevel,
+    *,
+    message_count: int,
+    analysis,
+) -> RelationshipLevel:
+    level = current_level
+    if message_count >= 20:
+        level = max(level, RelationshipLevel.FRIENDLY)
+    if analysis and (analysis.is_flirty or analysis.is_romantic or analysis.asks_for_intimacy):
+        if not analysis.is_rude and not analysis.is_pushy:
+            level = RelationshipLevel.ROMANTIC
+    if analysis and (analysis.is_rude or analysis.is_pushy):
+        level = min(level, RelationshipLevel.FRIENDLY)
+    return level
 
 
 async def _ensure_table(session: AsyncSession) -> None:
@@ -51,10 +108,21 @@ async def _ensure_table(session: AsyncSession) -> None:
                     respect_score INTEGER NOT NULL DEFAULT 0,
                     closeness_level INTEGER NOT NULL DEFAULT 5,
                     updated_at TIMESTAMP WITHOUT TIME ZONE DEFAULT NOW(),
+                    relationship_level SMALLINT NOT NULL DEFAULT 0,
+                    manual_override BOOLEAN NOT NULL DEFAULT FALSE,
                     UNIQUE (user_id, persona_id)
                 )
                 """
             )
+        )
+    except Exception:  # noqa: BLE001
+        logger.exception("Failed to ensure relationship_states table exists")
+        raise
+        await session.execute(
+            text("ALTER TABLE relationship_states ADD COLUMN IF NOT EXISTS relationship_level SMALLINT DEFAULT 0")
+        )
+        await session.execute(
+            text("ALTER TABLE relationship_states ADD COLUMN IF NOT EXISTS manual_override BOOLEAN DEFAULT FALSE")
         )
     except Exception:  # noqa: BLE001
         logger.exception("Failed to ensure relationship_states table exists")
@@ -125,7 +193,7 @@ async def get_relationship_state(session: AsyncSession, user_id: int, persona_id
     result = await session.execute(
         text(
             """
-            SELECT trust_level, respect_score, closeness_level, updated_at
+            SELECT trust_level, respect_score, closeness_level, updated_at, relationship_level, manual_override
             FROM relationship_states
             WHERE user_id = :user_id AND persona_id = :persona_id
             """
@@ -135,12 +203,20 @@ async def get_relationship_state(session: AsyncSession, user_id: int, persona_id
     row = result.first()
     if row is None:
         return RelationshipState()
-    trust_level, respect_score, closeness_level, updated_at = row
+    # Handle legacy rows without new columns
+    if len(row) >= 6:
+        trust_level, respect_score, closeness_level, updated_at, relationship_level, manual_override = row
+    else:
+        trust_level, respect_score, closeness_level, updated_at = row
+        relationship_level = None
+        manual_override = False
     return RelationshipState(
         trust_level=trust_level,
         respect_score=respect_score,
         closeness_level=closeness_level,
         updated_at=updated_at,
+        relationship_level=relationship_level if relationship_level is not None else None,
+        manual_override=bool(manual_override),
     )
 
 
@@ -154,12 +230,16 @@ async def save_relationship_state(
     await session.execute(
         text(
             """
-            INSERT INTO relationship_states (user_id, persona_id, trust_level, respect_score, closeness_level, updated_at)
-            VALUES (:user_id, :persona_id, :trust_level, :respect_score, :closeness_level, NOW())
+            INSERT INTO relationship_states (
+                user_id, persona_id, trust_level, respect_score, closeness_level, relationship_level, manual_override, updated_at
+            )
+            VALUES (:user_id, :persona_id, :trust_level, :respect_score, :closeness_level, :relationship_level, :manual_override, NOW())
             ON CONFLICT (user_id, persona_id) DO UPDATE
             SET trust_level = EXCLUDED.trust_level,
                 respect_score = EXCLUDED.respect_score,
                 closeness_level = EXCLUDED.closeness_level,
+                relationship_level = EXCLUDED.relationship_level,
+                manual_override = EXCLUDED.manual_override,
                 updated_at = NOW()
             """
         ),
@@ -169,5 +249,7 @@ async def save_relationship_state(
             "trust_level": state.trust_level,
             "respect_score": state.respect_score,
             "closeness_level": state.closeness_level,
+            "relationship_level": int(state.relationship_level or derive_level_from_state(state)),
+            "manual_override": bool(state.manual_override),
         },
     )

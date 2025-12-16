@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from typing import List
 
 from ..models import Persona, User
-from .relationship_state import RelationshipState, choose_relationship_mode, describe_relationship
+from .relationship_state import RelationshipLevel, RelationshipState, describe_level
 
 
 @dataclass
@@ -27,6 +27,7 @@ class ChatPromptContext:
     story_intro: bool = False
     story_reentry: bool = False
     relationship_state: RelationshipState | None = None
+    relationship_level: RelationshipLevel | None = None
 
 
 def _persona_block(ctx: ChatPromptContext) -> str:
@@ -132,24 +133,9 @@ def _user_message_block(user_message: str) -> str:
 
 def build_chat_messages(ctx: ChatPromptContext, user_message: str) -> tuple[list[dict], str]:
     relationship_block = ""
-    if ctx.relationship_state:
-        mode = choose_relationship_mode(ctx.relationship_state)
-        mode_text = {
-            "hurt": "Пользователь сейчас задел чувствами. Ставь границы, отвечай короче и без флирта/интима, обозначай, что неприятно.",
-            "getting_to_know": "Вы только знакомитесь: будь мягкой, любопытной, но не спеши в интим. Дай почувствовать характер персонажа.",
-            "friendly": "Отношения тёплые: можно флиртовать, делиться чувствами и поддержкой, но уважай границы.",
-            "very_close": "Вы очень близки и уважительны: открыт флирт, романтика и интимные темы, если это желает пользователь.",
-        }.get(mode, "")
-        relationship_block = "\n".join(
-            part
-            for part in [
-                describe_relationship(ctx.relationship_state),
-                mode_text,
-                "Если уважение падает (речь грубая), охлади тон и скажи, что так общаться не ок.",
-                "Интимные сцены допустимы, только если уважение не в минусе и близость высокая.",
-            ]
-            if part
-        )
+    if ctx.relationship_level is not None:
+        level_text = describe_level(ctx.relationship_level)
+        relationship_block = f"Уровень отношений: {level_text}"
 
     blocks = [
         _persona_block(ctx),

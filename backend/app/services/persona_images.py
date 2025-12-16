@@ -24,8 +24,7 @@ DEFAULT_NEGATIVE = (
 DEFAULT_IMAGE_CONFIG = PersonaImageConfig(
     lora_filename="woman033.safetensors",
     prompt_core=(
-        "woman033, photorealistic young woman, consistent face, natural body, "
-        "natural skin texture, 85mm lens, high detail"
+        "woman033, photorealistic young woman, consistent face, natural body, natural skin texture, high detail"
     ),
     negative_prompt=DEFAULT_NEGATIVE,
     lora_strength_model=0.7,
@@ -40,8 +39,7 @@ PERSONA_IMAGE_CONFIGS: Dict[str, PersonaImageConfig] = {
     "default_лина": PersonaImageConfig(
         lora_filename="woman033.safetensors",
         prompt_core=(
-            "woman033, photorealistic young woman, consistent face, natural body, "
-            "natural skin texture, 85mm lens, high detail"
+            "woman033, photorealistic young woman, consistent face, natural body, natural skin texture, high detail"
         ),
         negative_prompt=DEFAULT_NEGATIVE,
         lora_strength_model=0.7,
@@ -52,8 +50,7 @@ PERSONA_IMAGE_CONFIGS: Dict[str, PersonaImageConfig] = {
     "лина": PersonaImageConfig(
         lora_filename="woman033.safetensors",
         prompt_core=(
-            "woman033, photorealistic young woman, consistent face, natural body, "
-            "natural skin texture, 85mm lens, high detail"
+            "woman033, photorealistic young woman, consistent face, natural body, natural skin texture, high detail"
         ),
         negative_prompt=DEFAULT_NEGATIVE,
         lora_strength_model=0.7,
@@ -63,8 +60,7 @@ PERSONA_IMAGE_CONFIGS: Dict[str, PersonaImageConfig] = {
     "lina": PersonaImageConfig(
         lora_filename="woman033.safetensors",
         prompt_core=(
-            "woman033, photorealistic young woman, consistent face, natural body, "
-            "natural skin texture, 85mm lens, high detail"
+            "woman033, photorealistic young woman, consistent face, natural body, natural skin texture, high detail"
         ),
         negative_prompt=DEFAULT_NEGATIVE,
         lora_strength_model=0.7,

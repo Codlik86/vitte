@@ -9,7 +9,7 @@ import uuid
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Iterable
+from typing import Any, Dict, Iterable, List
 
 import httpx
 from aiogram import Bot
@@ -38,6 +38,37 @@ MAX_PROMPT_LEN = 240
 MAX_HINT_LEN = 160
 POLL_INTERVAL = 1.0
 RETRIES = 2
+USER_INTENT_KEYWORDS = {
+    "покажи",
+    "пришли",
+    "хочу увидеть",
+    "сделай фото",
+    "вид",
+    "ракурс",
+    "поза",
+    "спину",
+    "лицо",
+    "анфас",
+    "профиль",
+    "руки",
+    "ноги",
+    "спина",
+    "грудь",
+    "живот",
+    "бедра",
+    "одежд",
+    "нижнее белье",
+    "белье",
+    "трус",
+    "селфи",
+    "зеркал",
+    "камера",
+    "делай снимок",
+    "голову",
+    "плечи",
+    "покажи руку",
+}
+CUT_PHRASES = ("ENVIRONMENT:", "USER INTENT", "SEMANTIC CONTEXT", "CAMERA/STYLE")
 
 _workflow_cache: Dict[str, Any] | None = None
 _semaphore = asyncio.Semaphore(max(int(getattr(settings, "comfyui_concurrency", 1) or 1), 1))
@@ -86,6 +117,31 @@ class GenerationPlan:
     negative_prompt: str
     config: PersonaImageConfig
     has_subscription: bool
+
+
+@dataclass
+class ImageRequestInputs:
+    user_id: int
+    persona_id: int
+    dialog: Dialog | None
+    entry_story_id: str | None
+    last_user_messages: List[str]
+    history_user_messages: List[str]
+    story_scene: str | None
+    story_text: str | None
+    persona_fallback: str
+    config: PersonaImageConfig
+
+
+@dataclass
+class ImageContext:
+    user_intent_text: str
+    scene_text: str
+    semantic_context_text: str
+    persona_fallback: str
+    prompt_core: str
+    negative_text: str
+    camera_style_text: str
 
 
 def _load_workflow_template() -> Dict[str, Any]:
@@ -311,11 +367,34 @@ async def _load_user_request_text(session, dialog: Dialog | None, limit: int = 2
         if not messages:
             return ""
         messages = list(reversed(messages))
-        combined = " ".join(m.replace("\n", " ").replace("\r", " ").strip() for m in messages if m)
+        normalized = [m.replace("\n", " ").replace("\r", " ").strip() for m in messages if m]
+        for text in reversed(normalized):
+            lowered = text.lower()
+            if any(marker in lowered for marker in USER_INTENT_KEYWORDS):
+                return _trim_hint_text(text)
+        combined = " ".join(normalized)
         return _trim_hint_text(combined)
     except Exception as exc:  # noqa: BLE001
         logger.warning("Failed to load user request text dialog=%s err=%s", dialog.id if dialog else None, exc)
         return ""
+
+
+async def _fetch_last_user_messages(session, dialog: Dialog | None, limit: int) -> list[str]:
+    if not dialog:
+        return []
+    try:
+        msg_res = await session.execute(
+            select(Message.content)
+            .where(Message.dialog_id == dialog.id, Message.role == "user")
+            .order_by(Message.id.desc())
+            .limit(limit)
+        )
+        messages = [row[0] for row in msg_res.fetchall() if row[0]]
+        messages.reverse()
+        return messages
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Failed to fetch last user messages dialog=%s err=%s", dialog.id if dialog else None, exc)
+        return []
 
 
 def _build_story_hint_from_ctx(context: dict[str, Any]) -> str:
@@ -357,61 +436,76 @@ async def _load_story_context(
     return _story_from_card(card)
 
 
-def _build_prompt_hint(context: dict[str, Any], persona: Persona | None) -> str:
+def _build_image_context(inputs: ImageRequestInputs, context: dict[str, Any]) -> ImageContext:
     story_hint = _build_story_hint_from_ctx(context)
+    env_text = _trim_hint_text(story_hint)
+
     history_text = context.get("history_text") or ""
     if isinstance(history_text, list):
         history_text = " ".join([str(item) for item in history_text])
 
-    recent_messages = context.get("recent_messages") or ""
-    if isinstance(recent_messages, list):
-        recent_messages = " ".join([str(item) for item in recent_messages])
+    semantic_context = ""
+    if not context.get("user_request_text"):
+        semantic_context = _trim_hint_text(str(history_text or ""))
 
     user_request = _trim_hint_text(str(context.get("user_request_text") or ""))
+    persona_fallback = _trim_hint_text(inputs.persona_fallback or "")
 
-    reply = (context.get("reply_text") or "").strip()
-    user_message = (context.get("user_message") or "").strip()
+    camera_style = "85mm lens, shallow depth of field, high detail, cinematic lighting"
 
-    env_text = _trim_hint_text(story_hint)
-    optional_context = _trim_hint_text(str(history_text or recent_messages or ""))
-
-    if not user_request:
-        user_request = _trim_hint_text(reply or user_message)
-
-    if not user_request and persona:
-        user_request = _trim_hint_text(persona.short_description or persona.name or "")
-
-    segments: list[str] = []
-    if env_text:
-        segments.append(f"ENVIRONMENT: {env_text}")
-    if user_request:
-        segments.append(f"USER REQUEST (follow precisely): {user_request}")
-    if optional_context:
-        segments.append(f"OPTIONAL CONTEXT: {optional_context}")
-
-    hint = ". ".join(part for part in segments if part)
-    if len(hint) > MAX_HINT_LEN and optional_context:
-        segments = segments[:-1]
-        hint = ". ".join(segments)
-    if len(hint) > MAX_HINT_LEN and env_text:
-        trimmed_env = _trim_hint_text(env_text[: max(20, MAX_HINT_LEN // 2)])
-        rebuilt = []
-        if trimmed_env:
-            rebuilt.append(f"ENVIRONMENT: {trimmed_env}")
-        if user_request:
-            rebuilt.append(f"USER REQUEST (follow precisely): {user_request}")
-        hint = ". ".join(rebuilt)
-    if len(hint) > MAX_HINT_LEN:
-        hint = hint[:MAX_HINT_LEN]
-
-    preview = hint[:80]
-    logger.info(
-        "Image hint parts user_req=%s env=%s final_len=%s",
-        user_request[:80] if user_request else "",
-        env_text[:80] if env_text else "",
-        len(hint),
+    return ImageContext(
+        user_intent_text=user_request,
+        scene_text=env_text,
+        semantic_context_text=semantic_context,
+        persona_fallback=persona_fallback,
+        prompt_core=inputs.config.prompt_core,
+        negative_text=inputs.config.negative_prompt or DEFAULT_NEGATIVE,
+        camera_style_text=camera_style,
     )
-    return hint
+
+
+def _compose_structured_prompt(img_ctx: ImageContext) -> str:
+    segments: list[str] = []
+    core = img_ctx.prompt_core.strip().strip(",")
+    if core:
+        segments.append(f"CORE SUBJECT: {core}")
+
+    if img_ctx.scene_text:
+        segments.append(f"SCENE: {img_ctx.scene_text}")
+
+    if img_ctx.user_intent_text:
+        segments.append(f"USER INTENT (follow precisely): {img_ctx.user_intent_text}")
+    elif img_ctx.semantic_context_text:
+        segments.append(f"SEMANTIC CONTEXT: {img_ctx.semantic_context_text}")
+    elif img_ctx.persona_fallback:
+        segments.append(f"FALLBACK: {img_ctx.persona_fallback}")
+
+    segments.append(f"CAMERA/STYLE: {img_ctx.camera_style_text}")
+
+    prompt = ". ".join(segments)
+
+    if len(prompt) > MAX_PROMPT_LEN:
+        # remove semantic/fallback first
+        segments = [s for s in segments if not s.startswith("SEMANTIC CONTEXT") and not s.startswith("FALLBACK")]
+        prompt = ". ".join(segments)
+    if len(prompt) > MAX_PROMPT_LEN and img_ctx.scene_text:
+        trimmed_scene = _trim_hint_text(img_ctx.scene_text[: max(30, MAX_HINT_LEN // 2)])
+        segments = [seg for seg in segments if not seg.startswith("SCENE")]
+        if trimmed_scene:
+            segments.insert(1, f"SCENE: {trimmed_scene}")
+        prompt = ". ".join(segments)
+    if len(prompt) > MAX_PROMPT_LEN:
+        prompt = prompt[:MAX_PROMPT_LEN]
+
+    logger.info(
+        "Image prompt parts user_intent=%s scene=%s semantic=%s len=%s preview=%s",
+        img_ctx.user_intent_text[:80],
+        img_ctx.scene_text[:80],
+        img_ctx.semantic_context_text[:80],
+        len(prompt),
+        prompt[:120],
+    )
+    return prompt
 
 
 def _build_full_prompt(config: PersonaImageConfig, hint: str) -> str:
@@ -719,9 +813,27 @@ async def request_image_on_demand(
                 raise ImageRequestError("no_quota")
 
             config = get_persona_image_config(persona.key, persona.name)
-            hint = _build_prompt_hint(ctx, persona)
-            prompt = _build_full_prompt(config, hint)
-            negative_prompt = (config.negative_prompt or DEFAULT_NEGATIVE).strip()
+            last_user_messages = await _fetch_last_user_messages(session, dialog, limit=2)
+            history_msgs = await _fetch_last_user_messages(session, dialog, limit=5)
+
+            inputs = ImageRequestInputs(
+                user_id=user.id,
+                persona_id=persona.id,
+                dialog=dialog,
+                entry_story_id=dialog.entry_story_id if dialog else None,
+                last_user_messages=last_user_messages,
+                history_user_messages=history_msgs,
+                story_scene=ctx.get("story_scene") or "",
+                story_text=ctx.get("story_text") or ctx.get("story_title") or "",
+                persona_fallback=persona.short_description or persona.name or "",
+                config=config,
+            )
+
+            if not ctx.get("user_request_text"):
+                ctx["user_request_text"] = inputs.last_user_messages[-1] if inputs.last_user_messages else ""
+            img_ctx = _build_image_context(inputs, ctx)
+            prompt = _compose_structured_prompt(img_ctx)
+            negative_prompt = (img_ctx.negative_text or DEFAULT_NEGATIVE).strip()
 
             await log_event(
                 session,
