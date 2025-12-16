@@ -76,14 +76,6 @@ PERSONA_IMAGE_CONFIGS: Dict[str, PersonaImageConfig] = {
         lora_strength_clip=0.65,
         default_style=None,
     ),
-    "default_аки": PersonaImageConfig(
-        lora_filename="aki.safetensors",
-        prompt_core="anime-inspired girl, dark hair, subtle blush, poised thoughtful expression, clean high quality",
-        negative_prompt=DEFAULT_NEGATIVE,
-        lora_strength_model=0.65,
-        lora_strength_clip=0.6,
-        default_style=None,
-    ),
 }
 
 

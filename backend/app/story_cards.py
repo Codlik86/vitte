@@ -75,37 +75,6 @@ marianna_cards = [
     ),
 ]
 
-anime_tsundere_cards = [
-    StoryCard(
-        id="aki_flirt",
-        title="Сдержанный флирт",
-        description="Аки показывает тепло сквозь лёгкую колкость.",
-        atmosphere="flirt_romance",
-        prompt="Добавь чуть холодной иронии, но проглядывающее тепло. Спроси, что во мне ей любопытно, намекни на личный секрет. Держи эту смесь колкости и тепла в фоновом тоне, чтобы сцена не пропадала.",
-    ),
-    StoryCard(
-        id="aki_support",
-        title="Тихая поддержка",
-        description="Аки рядом, хоть и прячет эмоции.",
-        atmosphere="support",
-        prompt="Покажи, что ей небезразлично, спроси, что тревожит, и предложи остаться рядом без лишних слов. Пусть ощущается тихое присутствие, даже если слов минимум.",
-    ),
-    StoryCard(
-        id="aki_cozy",
-        title="Ночной город",
-        description="Прогулка по пустым улицам, делёжка музыки и мыслей.",
-        atmosphere="cozy_evening",
-        prompt="Опиши прогулку по городу, поделись плейлистом, спроси, какую песню я включу нам двоим. Легко напоминай про пустые улицы и музыку, чтобы эта сцена оставалась рядом.",
-    ),
-    StoryCard(
-        id="aki_serious",
-        title="Честный разговор",
-        description="Аки решается обсудить сложное, не теряя достоинства.",
-        atmosphere="serious_talk",
-        prompt="Скажи, что хочешь услышать правду. Задай прямой вопрос, но мягко отметь, что уважишь мои границы. Сохраняй эту честность и сдержанность в тоне, чтобы разговор держался на одном дыхании.",
-    ),
-]
-
 STORY_ID_ALIASES = {
     # legacy ids -> new ids
     "mia_support": "marianna_support",
@@ -118,10 +87,8 @@ STORY_CARDS: Dict[str, List[StoryCard]] = {
     "gentle": soft_empath_cards,
     "smart_cool": marianna_cards,
     "tomnaya_sosedka": marianna_cards,
-    "anime_tsundere": anime_tsundere_cards,
     "лина": soft_empath_cards,
     "марианна": marianna_cards,
-    "аки": anime_tsundere_cards,
     "мей": [
         StoryCard(
             id="mei_mall",
