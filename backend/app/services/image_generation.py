@@ -606,6 +606,22 @@ def _build_full_prompt(config: PersonaImageConfig, hint: str) -> str:
     return prompt[:MAX_PROMPT_LEN]
 
 
+async def ping_comfyui(base_url: str | None = None) -> bool:
+    target = (base_url or settings.comfyui_base_url or "").rstrip("/")
+    if not target:
+        logger.info("ComfyUI ping skipped: base_url not configured")
+        return False
+    url = f"{target}/system_stats"
+    try:
+        async with httpx.AsyncClient(timeout=httpx.Timeout(5.0, connect=3.0)) as client:
+            resp = await client.get(url)
+            logger.info("ComfyUI ping status=%s url=%s", resp.status_code, url)
+            return resp.status_code == 200
+    except Exception:  # noqa: BLE001
+        logger.exception("COMFYUI_UNREACHABLE base_url=%s", target)
+        return False
+
+
 async def _log_failure(plan: GenerationPlan, reason: str, extra: Dict[str, Any] | None = None) -> None:
     payload: Dict[str, Any] = {"reason": reason, "persona_id": plan.persona_id, "persona_key": plan.persona_key}
     if extra:
@@ -630,9 +646,9 @@ async def request_comfyui(*, workflow_payload: Dict[str, Any], client_id: str | 
         raise RuntimeError("COMFYUI_BASE_URL is not configured")
 
     timeout_seconds = float(getattr(settings, "comfyui_timeout_seconds", 90) or 90)
-    timeout = httpx.Timeout(timeout_seconds, connect=10.0)
+    timeout = httpx.Timeout(timeout_seconds, connect=10.0, read=timeout_seconds, write=timeout_seconds)
 
-    logger.info("ComfyUI base_url=%s", base_url)
+    logger.info("ComfyUI prompt request base_url=%s", base_url)
 
     async with httpx.AsyncClient(timeout=timeout) as client:
         last_error: Exception | None = None
@@ -644,6 +660,12 @@ async def request_comfyui(*, workflow_payload: Dict[str, Any], client_id: str | 
                     payload["client_id"] = client_id
 
                 resp = await client.post(f"{base_url}/prompt", json=payload)
+                logger.info(
+                    "ComfyUI /prompt status=%s len=%s attempt=%s",
+                    resp.status_code,
+                    len(resp.content or b""),
+                    attempt,
+                )
                 resp.raise_for_status()
 
                 data = resp.json() or {}
@@ -651,16 +673,34 @@ async def request_comfyui(*, workflow_payload: Dict[str, Any], client_id: str | 
                 if not prompt_id:
                     raise RuntimeError(f"No prompt_id in ComfyUI response: {data}")
 
+                logger.info("ComfyUI prompt_id=%s received", prompt_id)
                 image_info = await _wait_for_image(client, base_url, str(prompt_id))
                 return await _download_image(client, base_url, image_info)
 
-            except Exception as exc:  # noqa: BLE001
+            except httpx.HTTPStatusError as exc:
+                logger.exception(
+                    "ComfyUI HTTP error base_url=%s status=%s body=%s",
+                    base_url,
+                    getattr(exc.response, "status_code", None),
+                    (exc.response.text or "")[:3000] if exc.response else "",
+                )
                 last_error = exc
-                if attempt >= (RETRIES + 1):
-                    break
-                await asyncio.sleep(1.5 * attempt)
+            except (httpx.ConnectError, httpx.ConnectTimeout) as exc:
+                logger.exception("COMFYUI_UNREACHABLE base_url=%s", base_url)
+                last_error = exc
+                break
+            except (httpx.ReadTimeout, TimeoutError) as exc:
+                logger.exception("ComfyUI timeout base_url=%s", base_url)
+                last_error = exc
+            except Exception as exc:  # noqa: BLE001
+                logger.exception("ComfyUI unknown error base_url=%s", base_url)
+                last_error = exc
 
-        raise last_error or RuntimeError("Unknown ComfyUI error")
+            if attempt >= (RETRIES + 1):
+                break
+            await asyncio.sleep(1.5 * attempt)
+
+        raise last_error or RuntimeError(f"COMFYUI_UNREACHABLE base_url={base_url}")
 
 
 async def _wait_for_image(client: httpx.AsyncClient, base_url: str, prompt_id: str) -> dict:
@@ -668,6 +708,7 @@ async def _wait_for_image(client: httpx.AsyncClient, base_url: str, prompt_id: s
 
     while time.monotonic() < deadline:
         resp = await client.get(f"{base_url}/history/{prompt_id}")
+        logger.info("ComfyUI /history/%s status=%s", prompt_id, resp.status_code)
         resp.raise_for_status()
 
         try:
@@ -681,11 +722,13 @@ async def _wait_for_image(client: httpx.AsyncClient, base_url: str, prompt_id: s
         record = data.get(prompt_id) or {}
         outputs = record.get("outputs") or {}
 
-        for node in outputs.values():
+        for node_id, node in outputs.items():
             images = node.get("images") or []
             if images:
+                logger.info("ComfyUI history got images from node=%s prompt_id=%s", node_id, prompt_id)
                 return images[0]
 
+        logger.info("ComfyUI waiting images prompt_id=%s outputs=%s", prompt_id, list(outputs.keys()))
         await asyncio.sleep(POLL_INTERVAL)
 
     raise TimeoutError("ComfyUI generation timed out")
@@ -706,6 +749,7 @@ async def _download_image(client: httpx.AsyncClient, base_url: str, image_info: 
         params["type"] = file_type
 
     resp = await client.get(f"{base_url}/view", params=params)
+    logger.info("ComfyUI /view status=%s file=%s", resp.status_code, filename)
     resp.raise_for_status()
     return resp.content
 
@@ -793,8 +837,8 @@ async def _generate_and_send(plan: GenerationPlan, context: dict[str, Any], bot_
         await _deliver_image(plan, image_bytes, bot_instance)
         return True
 
-    except Exception as exc:  # noqa: BLE001
-        logger.error("Image generation/delivery failed user=%s persona=%s: %s", plan.user_id, plan.persona_id, exc)
+    except Exception:  # noqa: BLE001
+        logger.exception("Image generation/delivery failed user=%s persona=%s", plan.user_id, plan.persona_id)
         await _log_failure(plan, "generation_error")
         return False
 
@@ -860,8 +904,8 @@ async def _generate_image_bytes(plan: GenerationPlan, context: dict[str, Any]) -
     async with _semaphore:
         try:
             return await request_comfyui(workflow_payload=workflow, client_id=client_id)
-        except Exception as exc:  # noqa: BLE001
-            logger.error("Image generation failed user=%s persona=%s: %s", plan.user_id, plan.persona_id, exc)
+        except Exception:  # noqa: BLE001
+            logger.exception("Image generation failed user=%s persona=%s", plan.user_id, plan.persona_id)
             await _log_failure(plan, "generation_error")
             raise ImageRequestError("generation_failed")
 

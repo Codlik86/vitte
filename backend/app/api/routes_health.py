@@ -15,13 +15,22 @@ router = APIRouter(tags=["system"])
 
 
 @router.get("/health", summary="Healthcheck")
-async def health():
+async def health(from_: str | None = None):
     try:
         async with async_session_factory() as session:
             await session.execute(text("SELECT 1"))
     except Exception as exc:  # noqa: BLE001
         logger.error("Healthcheck postgres failed: %s", exc)
         raise HTTPException(status_code=500, detail="postgres_unreachable")
+    if settings.comfyui_healthcheck_enabled and from_ == "cron":
+        try:
+            from ..services.image_generation import ping_comfyui
+
+            ok = await ping_comfyui()
+            if not ok:
+                logger.error("Healthcheck comfyui failed (cron)")
+        except Exception as exc:  # noqa: BLE001
+            logger.error("Healthcheck comfyui exception: %s", exc)
     return {"status": "ok"}
 
 
