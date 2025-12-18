@@ -26,7 +26,16 @@ from ..services.image_quota import consume_image, get_image_quota
 from ..story_cards import StoryCard, get_story_cards_for_persona, resolve_story_id
 from .persona_images import PersonaImageConfig, get_persona_image_config
 
-WORKFLOW_PATH = Path(__file__).resolve().parent.parent / "assets" / "comfyui" / "workflows" / "sdxl_lora.json"
+WORKFLOW_DIR = Path(__file__).resolve().parent.parent / "assets" / "comfyui" / "workflows"
+WORKFLOW_FILES = {
+    "sdxl_lora": WORKFLOW_DIR / "sdxl_lora.json",
+    "zimage_turbo_lora": WORKFLOW_DIR / "zimage_turbo_lora.json",
+}
+DEFAULT_WORKFLOW_NAME = "zimage_turbo_lora"
+DEFAULT_CHECKPOINT_NAME = "models/checkpoints/huslyorealismxl_v2.safetensors"
+DEFAULT_DIFFUSION_MODEL = "models/diffusion_models/z_image_turbo_bf16.safetensors"
+DEFAULT_TEXT_ENCODER = "models/text_encoders/qwen_3_4b.safetensors"
+DEFAULT_VAE = "models/vae/ae.safetensors"
 
 # Без NSFW-тегов — только техничка.
 DEFAULT_NEGATIVE = (
@@ -70,7 +79,7 @@ USER_INTENT_KEYWORDS = {
 }
 CUT_PHRASES = ("ENVIRONMENT:", "USER INTENT", "SEMANTIC CONTEXT", "CAMERA/STYLE")
 
-_workflow_cache: Dict[str, Any] | None = None
+_workflow_cache: Dict[str, Dict[str, Any]] = {}
 _semaphore = asyncio.Semaphore(max(int(getattr(settings, "comfyui_concurrency", 1) or 1), 1))
 
 
@@ -78,11 +87,37 @@ def _deepcopy_workflow(template: Dict[str, Any]) -> Dict[str, Any]:
     return json.loads(json.dumps(template))
 
 
-async def _get_latest_dialog(session, user_id: int, persona_id: int) -> Dialog | None:
-    res = await session.execute(
-        select(Dialog).where(Dialog.user_id == user_id, Dialog.character_id == persona_id).order_by(Dialog.id.desc()).limit(1)
-    )
-    return res.scalar_one_or_none()
+def _resolve_workflow_name() -> str:
+    name = (getattr(settings, "comfyui_workflow_name", None) or "").strip().lower()
+    if name in WORKFLOW_FILES:
+        return name
+    if name:
+        logger.warning("Unknown ComfyUI workflow '%s', falling back to %s", name, DEFAULT_WORKFLOW_NAME)
+    return DEFAULT_WORKFLOW_NAME
+
+
+def _load_workflow_template(workflow_name: str) -> Dict[str, Any]:
+    """
+    Loads and caches workflow JSON template by name.
+    Returns a deep copy every time (safe to mutate).
+    """
+    path = WORKFLOW_FILES.get(workflow_name) or WORKFLOW_FILES.get(DEFAULT_WORKFLOW_NAME)
+    if not path:
+        logger.error("ComfyUI workflow path not configured for %s", workflow_name)
+        return {}
+
+    cache_key = f"{workflow_name}:{path}"
+    if cache_key not in _workflow_cache:
+        try:
+            _workflow_cache[cache_key] = json.loads(path.read_text(encoding="utf-8"))
+        except FileNotFoundError:
+            logger.error("ComfyUI workflow template not found at %s", path)
+            _workflow_cache[cache_key] = {}
+        except Exception as exc:  # noqa: BLE001
+            logger.error("Failed to read workflow template %s: %s", path, exc)
+            _workflow_cache[cache_key] = {}
+
+    return _deepcopy_workflow(_workflow_cache.get(cache_key) or {})
 
 
 def _advisory_key(user_id: int, persona_id: int) -> int:
@@ -142,24 +177,6 @@ class ImageContext:
     prompt_core: str
     negative_text: str
     camera_style_text: str
-
-
-def _load_workflow_template() -> Dict[str, Any]:
-    """
-    Loads and caches workflow JSON template from WORKFLOW_PATH.
-    Returns a deep copy every time (safe to mutate).
-    """
-    global _workflow_cache
-    if _workflow_cache is None:
-        try:
-            _workflow_cache = json.loads(WORKFLOW_PATH.read_text(encoding="utf-8"))
-        except FileNotFoundError:
-            logger.error("ComfyUI workflow template not found at %s", WORKFLOW_PATH)
-            _workflow_cache = {}
-        except Exception as exc:  # noqa: BLE001
-            logger.error("Failed to read workflow template %s: %s", WORKFLOW_PATH, exc)
-            _workflow_cache = {}
-    return _deepcopy_workflow(_workflow_cache or {})
 
 
 async def _get_latest_dialog(session, user_id: int, persona_id: int) -> Dialog | None:
@@ -247,12 +264,24 @@ def _find_clip_text_nodes(workflow: Dict[str, Any], sampler_node_id: str | None)
     return positive_node_id, negative_node_id
 
 
+def _collect_node_ids(workflow: Dict[str, Any], class_types: Iterable[str]) -> list[str]:
+    target = {str(cls) for cls in class_types}
+    found: list[str] = []
+    for node_id, node in workflow.items():
+        if not isinstance(node, dict):
+            continue
+        if str(node.get("class_type")) in target:
+            found.append(str(node_id))
+    return found
+
+
 def _apply_template_values(
     template: Dict[str, Any],
     *,
     prompt: str,
     negative_prompt: str,
     config: PersonaImageConfig,
+    workflow_name: str,
 ) -> Dict[str, Any]:
     workflow = template
 
@@ -261,53 +290,107 @@ def _apply_template_values(
         "CheckpointLoaderSimple",
         title_hints=["load checkpoint", "checkpoint"],
     )
-    lora_node_id = find_first_node_id(workflow, "LoraLoader", title_hints=["load lora", "lora"])
+    unet_node_id = find_first_node_id(workflow, "UNETLoader", title_hints=["unet", "diffusion", "load model"])
+    clip_loader_id = find_first_node_id(workflow, "CLIPLoader", title_hints=["clip", "text encoder", "load clip"])
+    vae_loader_id = find_first_node_id(workflow, "VAELoader", title_hints=["vae"])
     sampler_node_id = find_first_node_id(workflow, "KSampler", title_hints=["ksampler", "sampler"])
+    lora_node_ids = _collect_node_ids(workflow, ["LoraLoader", "LoraLoaderModelOnly"])
     positive_clip_id, negative_clip_id = _find_clip_text_nodes(workflow, sampler_node_id)
 
-    missing = [
-        name
-        for name, value in {
-            "checkpoint": checkpoint_node_id,
-            "lora": lora_node_id,
-            "positive_text": positive_clip_id,
-            "negative_text": negative_clip_id,
-            "sampler": sampler_node_id,
-        }.items()
-        if not value
-    ]
+    missing = []
+    if not checkpoint_node_id and not unet_node_id:
+        missing.append("diffusion_model")
+    if not lora_node_ids:
+        missing.append("lora")
+    if not sampler_node_id:
+        missing.append("sampler")
+    if not positive_clip_id:
+        missing.append("positive_text")
+    if not clip_loader_id:
+        missing.append("clip_loader")
+    if not vae_loader_id:
+        missing.append("vae_loader")
+
     if missing:
-        raise RuntimeError(f"Workflow template missing nodes: {', '.join(sorted(missing))}")
+        logger.error(
+            "Workflow %s missing nodes (expected CheckpointLoaderSimple/UNETLoader, LoraLoader/LoraLoaderModelOnly, "
+            "CLIPTextEncode, CLIPLoader, VAELoader, KSampler): %s",
+            workflow_name,
+            ", ".join(sorted(missing)),
+        )
+        raise ImageRequestError("bad_workflow_template")
 
-    checkpoint_inputs = workflow[checkpoint_node_id]["inputs"]
-    lora_inputs = workflow[lora_node_id]["inputs"]
-    positive_inputs = workflow[positive_clip_id]["inputs"]
-    negative_inputs = workflow[negative_clip_id]["inputs"]
-    sampler_inputs = workflow[sampler_node_id]["inputs"]
+    primary_lora_id = lora_node_ids[0] if lora_node_ids else None
+    secondary_lora_id = lora_node_ids[1] if len(lora_node_ids) > 1 else None
 
-    checkpoint_name = settings.comfyui_default_checkpoint or checkpoint_inputs.get("ckpt_name")
-    seed = random.randint(1, 2_000_000_000)
+    checkpoint_inputs = workflow.get(checkpoint_node_id or "", {}).setdefault("inputs", {})
+    unet_inputs = workflow.get(unet_node_id or "", {}).setdefault("inputs", {})
+    clip_inputs = workflow.get(clip_loader_id or "", {}).setdefault("inputs", {})
+    vae_inputs = workflow.get(vae_loader_id or "", {}).setdefault("inputs", {})
+    sampler_inputs = workflow.get(sampler_node_id or "", {}).setdefault("inputs", {})
+    positive_inputs = workflow.get(positive_clip_id or "", {}).setdefault("inputs", {})
+
+    checkpoint_name = settings.comfyui_default_checkpoint or checkpoint_inputs.get("ckpt_name") or DEFAULT_CHECKPOINT_NAME
+    diffusion_model_name = (
+        getattr(settings, "comfyui_default_diffusion_model", None)
+        or unet_inputs.get("unet_name")
+        or DEFAULT_DIFFUSION_MODEL
+    )
+    clip_name = (
+        getattr(settings, "comfyui_default_text_encoder", None) or clip_inputs.get("clip_name") or DEFAULT_TEXT_ENCODER
+    )
+    vae_name = getattr(settings, "comfyui_default_vae", None) or vae_inputs.get("vae_name") or DEFAULT_VAE
+
+    if checkpoint_node_id:
+        checkpoint_inputs["ckpt_name"] = checkpoint_name
+    if unet_node_id:
+        unet_inputs["unet_name"] = diffusion_model_name
+    if clip_loader_id:
+        clip_inputs["clip_name"] = clip_name
+    if vae_loader_id:
+        vae_inputs["vae_name"] = vae_name
 
     lora_filename = Path(config.lora_filename).name
+    if primary_lora_id:
+        primary_inputs = workflow.get(primary_lora_id, {}).setdefault("inputs", {})
+        primary_inputs["lora_name"] = lora_filename
+        if "strength_model" in primary_inputs:
+            primary_inputs["strength_model"] = float(config.lora_strength_model)
+        if "strength_clip" in primary_inputs:
+            primary_inputs["strength_clip"] = float(config.lora_strength_clip)
 
-    if checkpoint_name:
-        checkpoint_inputs["ckpt_name"] = checkpoint_name
-
-    lora_inputs["lora_name"] = lora_filename
-    lora_inputs["strength_model"] = float(config.lora_strength_model)
-    lora_inputs["strength_clip"] = float(config.lora_strength_clip)
+    if secondary_lora_id:
+        secondary_inputs = workflow.get(secondary_lora_id, {}).setdefault("inputs", {})
+        if config.quality_lora_filename:
+            secondary_inputs["lora_name"] = Path(config.quality_lora_filename).name
+            if "strength_model" in secondary_inputs:
+                secondary_inputs["strength_model"] = float(config.quality_lora_strength)
+            if "strength_clip" in secondary_inputs:
+                secondary_inputs["strength_clip"] = float(config.quality_lora_strength)
+        elif "strength_model" in secondary_inputs:
+            secondary_inputs["strength_model"] = 0.0
+            if "strength_clip" in secondary_inputs:
+                secondary_inputs["strength_clip"] = 0.0
 
     positive_inputs["text"] = prompt
-    negative_inputs["text"] = negative_prompt or DEFAULT_NEGATIVE
 
-    sampler_inputs["seed"] = seed
+    if negative_clip_id:
+        negative_inputs = workflow.get(negative_clip_id, {}).setdefault("inputs", {})
+        if workflow.get(negative_clip_id, {}).get("class_type") == "CLIPTextEncode":
+            negative_inputs["text"] = negative_prompt or DEFAULT_NEGATIVE
+    else:
+        logger.info("Workflow %s has no negative CLIP node; keeping template negative prompt", workflow_name)
+
+    sampler_inputs["seed"] = random.randint(1, 2_000_000_000)
 
     logger.info(
-        "Workflow nodes ckpt=%s lora=%s pos=%s neg=%s sampler=%s",
+        "Workflow nodes workflow=%s ckpt=%s unet=%s clip=%s vae=%s loras=%s sampler=%s",
+        workflow_name,
         checkpoint_node_id,
-        lora_node_id,
-        positive_clip_id,
-        negative_clip_id,
+        unet_node_id,
+        clip_loader_id,
+        vae_loader_id,
+        ",".join(lora_node_ids),
         sampler_node_id,
     )
 
@@ -652,9 +735,10 @@ async def _generate_and_send(plan: GenerationPlan, context: dict[str, Any], bot_
         await _log_failure(plan, "not_configured")
         return False
 
-    template = _load_workflow_template()
+    workflow_name = _resolve_workflow_name()
+    template = _load_workflow_template(workflow_name)
     if not template:
-        logger.error("Workflow template is empty or missing at %s", WORKFLOW_PATH)
+        logger.error("Workflow template %s is empty or missing", workflow_name)
         await _log_failure(plan, "bad_workflow_template")
         return False
     try:
@@ -663,7 +747,17 @@ async def _generate_and_send(plan: GenerationPlan, context: dict[str, Any], bot_
             prompt=plan.prompt,
             negative_prompt=plan.negative_prompt,
             config=plan.config,
+            workflow_name=workflow_name,
         )
+    except ImageRequestError as exc:
+        logger.error(
+            "Failed to apply workflow template user=%s persona=%s reason=%s",
+            plan.user_id,
+            plan.persona_id,
+            exc.reason,
+        )
+        await _log_failure(plan, exc.reason or "bad_workflow_template")
+        return False
     except Exception as exc:  # noqa: BLE001
         logger.error("Failed to apply workflow template user=%s persona=%s: %s", plan.user_id, plan.persona_id, exc)
         await _log_failure(plan, "bad_workflow_template")
@@ -675,14 +769,19 @@ async def _generate_and_send(plan: GenerationPlan, context: dict[str, Any], bot_
         if checkpoint_node_id
         else None
     )
+    quality_name = Path(plan.config.quality_lora_filename).name if plan.config.quality_lora_filename else None
+
     logger.info(
-        "ComfyUI request user=%s persona=%s ckpt=%s lora=%s strengths=(%.2f/%.2f)",
+        "ComfyUI request user=%s persona=%s workflow=%s ckpt=%s lora=%s quality_lora=%s strengths=(%.2f/%.2f/%.2f)",
         plan.user_id,
         plan.persona_id,
+        workflow_name,
         ckpt_name,
         Path(plan.config.lora_filename).name,
+        quality_name,
         plan.config.lora_strength_model,
         plan.config.lora_strength_clip,
+        plan.config.quality_lora_strength if quality_name else 0.0,
     )
 
     # Stable-ish client_id helps debugging and history tracking through tunnels.
@@ -706,9 +805,10 @@ async def _generate_image_bytes(plan: GenerationPlan, context: dict[str, Any]) -
         await _log_failure(plan, "not_configured")
         raise ImageRequestError("generation_failed")
 
-    template = _load_workflow_template()
+    workflow_name = _resolve_workflow_name()
+    template = _load_workflow_template(workflow_name)
     if not template:
-        logger.error("Workflow template is empty or missing at %s", WORKFLOW_PATH)
+        logger.error("Workflow template %s is empty or missing", workflow_name)
         await _log_failure(plan, "bad_workflow_template")
         raise ImageRequestError("generation_failed")
 
@@ -718,7 +818,17 @@ async def _generate_image_bytes(plan: GenerationPlan, context: dict[str, Any]) -
             prompt=plan.prompt,
             negative_prompt=plan.negative_prompt,
             config=plan.config,
+            workflow_name=workflow_name,
         )
+    except ImageRequestError as exc:
+        logger.error(
+            "Failed to apply workflow template user=%s persona=%s reason=%s",
+            plan.user_id,
+            plan.persona_id,
+            exc.reason,
+        )
+        await _log_failure(plan, exc.reason or "bad_workflow_template")
+        raise
     except Exception as exc:  # noqa: BLE001
         logger.error("Failed to apply workflow template user=%s persona=%s: %s", plan.user_id, plan.persona_id, exc)
         await _log_failure(plan, "bad_workflow_template")
@@ -730,14 +840,19 @@ async def _generate_image_bytes(plan: GenerationPlan, context: dict[str, Any]) -
         if checkpoint_node_id
         else None
     )
+    quality_name = Path(plan.config.quality_lora_filename).name if plan.config.quality_lora_filename else None
+
     logger.info(
-        "ComfyUI request user=%s persona=%s ckpt=%s lora=%s strengths=(%.2f/%.2f)",
+        "ComfyUI request user=%s persona=%s workflow=%s ckpt=%s lora=%s quality_lora=%s strengths=(%.2f/%.2f/%.2f)",
         plan.user_id,
         plan.persona_id,
+        workflow_name,
         ckpt_name,
         Path(plan.config.lora_filename).name,
+        quality_name,
         plan.config.lora_strength_model,
         plan.config.lora_strength_clip,
+        plan.config.quality_lora_strength if quality_name else 0.0,
     )
 
     client_id = f"vitte-{plan.user_id}-{plan.persona_id}-{uuid.uuid4().hex[:8]}"

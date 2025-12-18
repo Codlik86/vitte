@@ -12,6 +12,8 @@ class PersonaImageConfig:
     negative_prompt: str
     lora_strength_model: float = 0.75
     lora_strength_clip: float = 0.7
+    quality_lora_filename: str | None = None
+    quality_lora_strength: float = 0.5
     default_style: str | None = None
 
 
@@ -22,58 +24,119 @@ DEFAULT_NEGATIVE = (
 )
 
 DEFAULT_IMAGE_CONFIG = PersonaImageConfig(
-    lora_filename="woman033.safetensors",
-    prompt_core=(
-        "woman033, photorealistic young woman, consistent face, natural body, natural skin texture, high detail"
-    ),
+    lora_filename="woman549-zit.safetensors",
+    prompt_core="woman549, athletic playful fitness model, toned fit body, photorealistic, high detail",
     negative_prompt=DEFAULT_NEGATIVE,
     lora_strength_model=0.7,
     lora_strength_clip=0.65,
+    quality_lora_filename="b3tternud3s_v3.safetensors",
+    quality_lora_strength=0.45,
     default_style=None,
 )
 
 
 PERSONA_IMAGE_CONFIGS: Dict[str, PersonaImageConfig] = {
-    # Лина: используем твою LoRA woman033 + триггер word "woman033"
-    # ВАЖНО: lora_filename только имя файла, без подпапок.
+    # Лина (woman549) для Z-Image Turbo
     "default_лина": PersonaImageConfig(
-        lora_filename="woman033.safetensors",
-        prompt_core=(
-            "woman033, photorealistic young woman, consistent face, natural body, natural skin texture, high detail"
-        ),
+        lora_filename="woman549-zit.safetensors",
+        prompt_core="woman549, athletic playful fitness model, toned fit body, photorealistic, high detail",
         negative_prompt=DEFAULT_NEGATIVE,
         lora_strength_model=0.7,
         lora_strength_clip=0.65,
+        quality_lora_filename="b3tternud3s_v3.safetensors",
+        quality_lora_strength=0.45,
         default_style=None,
     ),
-    # На всякий — алиасы по имени (если persona.key не префиксный)
     "лина": PersonaImageConfig(
-        lora_filename="woman033.safetensors",
-        prompt_core=(
-            "woman033, photorealistic young woman, consistent face, natural body, natural skin texture, high detail"
-        ),
+        lora_filename="woman549-zit.safetensors",
+        prompt_core="woman549, athletic playful fitness model, toned fit body, photorealistic, high detail",
         negative_prompt=DEFAULT_NEGATIVE,
         lora_strength_model=0.7,
         lora_strength_clip=0.65,
+        quality_lora_filename="b3tternud3s_v3.safetensors",
+        quality_lora_strength=0.45,
         default_style=None,
     ),
     "lina": PersonaImageConfig(
-        lora_filename="woman033.safetensors",
-        prompt_core=(
-            "woman033, photorealistic young woman, consistent face, natural body, natural skin texture, high detail"
-        ),
+        lora_filename="woman549-zit.safetensors",
+        prompt_core="woman549, athletic playful fitness model, toned fit body, photorealistic, high detail",
         negative_prompt=DEFAULT_NEGATIVE,
         lora_strength_model=0.7,
         lora_strength_clip=0.65,
+        quality_lora_filename="b3tternud3s_v3.safetensors",
+        quality_lora_strength=0.45,
+        default_style=None,
+    ),
+
+    "default_стейси": PersonaImageConfig(
+        lora_filename="woman037-zimage.safetensors",
+        prompt_core="woman037, warm masseuse with gentle smile, toned feminine figure, photorealistic, high detail",
+        negative_prompt=DEFAULT_NEGATIVE,
+        lora_strength_model=0.7,
+        lora_strength_clip=0.65,
+        quality_lora_filename="b3tternud3s_v3.safetensors",
+        quality_lora_strength=0.5,
+        default_style=None,
+    ),
+    "стейси": PersonaImageConfig(
+        lora_filename="woman037-zimage.safetensors",
+        prompt_core="woman037, warm masseuse with gentle smile, toned feminine figure, photorealistic, high detail",
+        negative_prompt=DEFAULT_NEGATIVE,
+        lora_strength_model=0.7,
+        lora_strength_clip=0.65,
+        quality_lora_filename="b3tternud3s_v3.safetensors",
+        quality_lora_strength=0.5,
+        default_style=None,
+    ),
+    "stacey": PersonaImageConfig(
+        lora_filename="woman037-zimage.safetensors",
+        prompt_core="woman037, warm masseuse with gentle smile, toned feminine figure, photorealistic, high detail",
+        negative_prompt=DEFAULT_NEGATIVE,
+        lora_strength_model=0.7,
+        lora_strength_clip=0.65,
+        quality_lora_filename="b3tternud3s_v3.safetensors",
+        quality_lora_strength=0.5,
+        default_style=None,
+    ),
+    "stacy": PersonaImageConfig(
+        lora_filename="woman037-zimage.safetensors",
+        prompt_core="woman037, warm masseuse with gentle smile, toned feminine figure, photorealistic, high detail",
+        negative_prompt=DEFAULT_NEGATIVE,
+        lora_strength_model=0.7,
+        lora_strength_clip=0.65,
+        quality_lora_filename="b3tternud3s_v3.safetensors",
+        quality_lora_strength=0.5,
         default_style=None,
     ),
 
     "default_марианна": PersonaImageConfig(
-        lora_filename="marianna.safetensors",
-        prompt_core="photorealistic mature confident woman, elegant look, natural skin, cinematic portrait, high detail",
+        lora_filename="woman041-zit.safetensors",
+        prompt_core="Woman041, mature confident woman, elegant natural skin, cinematic portrait, photorealistic, high detail",
         negative_prompt=DEFAULT_NEGATIVE,
         lora_strength_model=0.7,
         lora_strength_clip=0.65,
+        quality_lora_filename="b3tternud3s_v3.safetensors",
+        quality_lora_strength=0.45,
+        default_style=None,
+    ),
+    "марианна": PersonaImageConfig(
+        lora_filename="woman041-zit.safetensors",
+        prompt_core="Woman041, mature confident woman, elegant natural skin, cinematic portrait, photorealistic, high detail",
+        negative_prompt=DEFAULT_NEGATIVE,
+        lora_strength_model=0.7,
+        lora_strength_clip=0.65,
+        quality_lora_filename="b3tternud3s_v3.safetensors",
+        quality_lora_strength=0.45,
+        default_style=None,
+    ),
+    "marianna": PersonaImageConfig(
+        lora_filename="woman041-zit.safetensors",
+        prompt_core="Woman041, mature confident woman, elegant natural skin, cinematic portrait, photorealistic, high detail",
+        negative_prompt=DEFAULT_NEGATIVE,
+        lora_strength_model=0.7,
+        lora_strength_clip=0.65,
+        quality_lora_filename="b3tternud3s_v3.safetensors",
+        quality_lora_strength=0.45,
         default_style=None,
     ),
 }

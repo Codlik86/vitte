@@ -34,7 +34,11 @@ class Settings(BaseSettings):
     comfyui_base_url: str | None = None
     comfyui_timeout_seconds: int = 120
     comfyui_concurrency: int = 2
-    comfyui_default_checkpoint: str | None = None
+    comfyui_workflow_name: str | None = None
+    comfyui_default_checkpoint: str | None = "models/checkpoints/huslyorealismxl_v2.safetensors"
+    comfyui_default_diffusion_model: str | None = "models/diffusion_models/z_image_turbo_bf16.safetensors"
+    comfyui_default_text_encoder: str | None = "models/text_encoders/qwen_3_4b.safetensors"
+    comfyui_default_vae: str | None = "models/vae/ae.safetensors"
 
     image_every_n_bot_replies: int = 3
     image_cooldown_seconds: int = 120
