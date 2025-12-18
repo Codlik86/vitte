@@ -31,7 +31,7 @@
   },
   "4": {
     "inputs": {
-      "ckpt_name": "realism_illustrious.safetensors"
+      "ckpt_name": "huslyorealismxl_v2.safetensors"
     },
     "class_type": "CheckpointLoaderSimple",
     "_meta": {
