@@ -3,6 +3,7 @@ from __future__ import annotations
 import asyncio
 import os
 import time
+import re
 from typing import Optional, List
 
 from sqlalchemy import select
@@ -41,6 +42,25 @@ from ..config import settings
 
 MAX_RECENT_MESSAGES = 12
 ENABLE_PERF_LOGS = os.getenv("ENABLE_PERF_LOGS", "").lower() == "true"
+
+
+def _looks_russian(text: str) -> bool:
+    letters = re.findall(r"[A-Za-zА-Яа-яЁё]", text or "")
+    if not letters:
+        return False
+    cyr = sum(1 for ch in letters if "а" <= ch.lower() <= "я" or ch.lower() == "ё")
+    ratio = cyr / len(letters)
+    return ratio >= 0.35 or len(text) < 120
+
+
+async def _retry_russian(messages: list[dict], max_tokens: int | None) -> str | None:
+    retry_messages = list(messages)
+    retry_messages.append({"role": "system", "content": "Ответь заново на русском, нормально, без выдуманных языков."})
+    try:
+        return await simple_chat_completion(retry_messages, max_tokens=max_tokens)
+    except Exception as exc:  # noqa: BLE001
+        logger.error("LLM retry failed: %s", exc)
+        return None
 
 
 class ChatResult:
@@ -430,6 +450,15 @@ async def generate_chat_reply(
                 dialog.id if dialog else None,
                 user.id,
             )
+        if not _looks_russian(reply):
+            retry = await _retry_russian(messages, max_tokens=feature_max_tokens)
+            if retry and _looks_russian(retry):
+                reply = retry
+            else:
+                reply = (
+                    "Извини, ответ получился странным. Давай продолжим на русском: "
+                    "расскажи, что ты хочешь сейчас обсудить?"
+                )
     voice_id: str | None = None
     voice_url: str | None = None
     reply_kind = "text"

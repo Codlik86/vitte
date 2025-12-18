@@ -655,9 +655,7 @@ async def request_comfyui(*, workflow_payload: Dict[str, Any], client_id: str | 
 
         for attempt in range(1, RETRIES + 2):
             try:
-                payload: Dict[str, Any] = {"prompt": workflow_payload}
-                if client_id:
-                    payload["client_id"] = client_id
+                payload = _normalize_prompt_payload(workflow_payload, client_id)
 
                 resp = await client.post(f"{base_url}/prompt", json=payload)
                 logger.info(
@@ -753,6 +751,53 @@ async def _download_image(client: httpx.AsyncClient, base_url: str, image_info: 
     resp.raise_for_status()
     return resp.content
 
+
+def _normalize_prompt_payload(workflow_payload: Dict[str, Any] | None, client_id: str | None) -> Dict[str, Any]:
+    """
+    ComfyUI API expects {"prompt": <nodes_dict>, "client_id": "..."}.
+    Accepts raw nodes dict or already-wrapped payload; normalizes and validates.
+    """
+    payload: Dict[str, Any]
+    if not isinstance(workflow_payload, dict):
+        raise ImageGenerationConfigError("bad_workflow_template")
+
+    if "prompt" in workflow_payload and isinstance(workflow_payload.get("prompt"), dict):
+        payload = dict(workflow_payload)
+        if client_id:
+            payload["client_id"] = client_id
+    else:
+        # Sometimes exported workflows use other top-level keys; try to locate node map.
+        nodes = workflow_payload.get("nodes") if isinstance(workflow_payload.get("nodes"), dict) else None
+        if nodes:
+            payload = {"prompt": nodes}
+        else:
+            payload = {"prompt": workflow_payload}
+        if client_id:
+            payload["client_id"] = client_id
+
+    if not isinstance(payload.get("prompt"), dict):
+        raise ImageGenerationConfigError("bad_workflow_template")
+    _validate_prompt(payload["prompt"])
+    return payload
+
+
+def _validate_prompt(nodes: Dict[str, Any]) -> None:
+    if not isinstance(nodes, dict):
+        raise ImageGenerationConfigError("bad_workflow_template")
+
+    ids = {str(k) for k in nodes.keys()}
+    for node_id, node in nodes.items():
+        if not isinstance(node, dict):
+            raise ImageGenerationConfigError("bad_workflow_template")
+        inputs = node.get("inputs", {})
+        class_type = node.get("class_type")
+        if not class_type or not isinstance(inputs, dict):
+            raise ImageGenerationConfigError("bad_workflow_template")
+        for value in inputs.values():
+            if isinstance(value, list) and value:
+                ref_id = str(value[0])
+                if ref_id not in ids:
+                    raise ImageGenerationConfigError("bad_workflow_template")
 
 async def _deliver_image(plan: GenerationPlan, image_bytes: bytes, bot_instance: Bot) -> None:
     input_file = BufferedInputFile(image_bytes, filename="vitte_image.png")
@@ -916,6 +961,9 @@ class ImageRequestError(RuntimeError):
         super().__init__(reason)
 
 
+class ImageGenerationConfigError(ImageRequestError):
+    pass
+
 async def request_image_on_demand(
     user_id: int,
     chat_id: int,
@@ -930,6 +978,11 @@ async def request_image_on_demand(
         raise ImageRequestError("disabled")
 
     ctx = context or {}
+    success = False
+    image_bytes: bytes | None = None
+    plan: GenerationPlan | None = None
+    success = False
+    image_bytes: bytes | None = None
 
     async for session in get_session():
         user = await session.get(User, user_id)
@@ -1014,13 +1067,29 @@ async def request_image_on_demand(
                 has_subscription=has_subscription,
             )
 
-            image_bytes = await _generate_image_bytes(plan, ctx)
-            await _persist_image_usage(session, plan)
-            await session.commit()
+            try:
+                image_bytes = await _generate_image_bytes(plan, ctx)
+                await _persist_image_usage(session, plan)
+                await session.commit()
+                success = True
+            except Exception:  # noqa: BLE001
+                logger.exception("Image generation failed for user=%s persona=%s", user.id, persona.id)
+                await session.rollback()
+                success = False
         finally:
             await _release_advisory_lock(session, lock_key)
         break
     else:
         raise ImageRequestError("not_found")
 
-    await _deliver_image(plan, image_bytes, bot_instance)
+    if success:
+        await _deliver_image(plan, image_bytes, bot_instance)
+    else:
+        try:
+            await bot_instance.send_message(chat_id, "Не удалось сгенерировать изображение. Попробуй ещё раз через минуту.")
+        except Exception:  # noqa: BLE001
+            logger.exception(
+                "Failed to send image fallback message user=%s persona=%s",
+                plan.user_id if plan else user_id,
+                plan.persona_id if plan else persona_id,
+            )
