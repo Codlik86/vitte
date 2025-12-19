@@ -7,6 +7,9 @@ export type PersonaListItem = {
   is_owner: boolean;
   is_selected: boolean;
   is_custom: boolean;
+  avatar_url?: string | null;
+  avatar_chat_url?: string | null;
+  avatar_card_url?: string | null;
   gender?: string | null;
   kind?: string | null;
 };
@@ -141,8 +144,10 @@ export type StoreStatus = {
 };
 export type StoryCard = {
   id: string;
+  key: string;
   title: string;
   description: string;
   atmosphere: "flirt_romance" | "support" | "cozy_evening" | "serious_talk";
   prompt: string;
+  image?: string | null;
 };

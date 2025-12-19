@@ -129,7 +129,7 @@ export function CharacterDetails() {
           <section className="mt-6 flex flex-1 flex-col space-y-6">
             <div className="relative w-full overflow-hidden rounded-3xl pb-[100%]">
               <img
-                src={getAvatarPaths(persona.name, persona.is_custom).chat}
+                src={persona.avatar_chat_url ?? getAvatarPaths(persona.name, persona.is_custom).chat}
                 alt={persona.name}
                 className="absolute inset-0 h-full w-full rounded-3xl object-cover"
               />
@@ -309,6 +309,15 @@ function StoriesBlock({
               }`}
             >
               <div className="flex w-full flex-col gap-2 rounded-[22px] text-left px-4 py-4 sm:px-5 sm:py-5">
+                {card.image && (
+                  <div className="relative w-full overflow-hidden rounded-2xl pb-[55%]">
+                    <img
+                      src={card.image}
+                      alt={card.title}
+                      className="absolute inset-0 h-full w-full object-cover"
+                    />
+                  </div>
+                )}
                 <span
                   className="inline-flex max-w-full items-center justify-start truncate rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-white/80 md:px-4 md:text-xs"
                 >

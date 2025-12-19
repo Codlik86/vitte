@@ -49,10 +49,12 @@ class AccessStatusResponse(BaseModel):
 
 class StoryCardSchema(BaseModel):
     id: str
+    key: str
     title: str
     description: str
     atmosphere: str
     prompt: str
+    image: str | None = None
 
 class PersonaListItem(BaseModel):
     id: int
@@ -65,6 +67,9 @@ class PersonaListItem(BaseModel):
     is_owner: bool
     is_selected: bool
     is_custom: bool = False
+    avatar_url: str | None = None
+    avatar_chat_url: str | None = None
+    avatar_card_url: str | None = None
 
     class Config:
         from_attributes = True

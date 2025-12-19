@@ -105,7 +105,10 @@ export function CharactersList() {
             );
           }
 
-          const avatar = getAvatarPaths(p.name, p.is_custom);
+          const avatar = {
+            card: p.avatar_card_url ?? getAvatarPaths(p.name, p.is_custom).card,
+            chat: p.avatar_chat_url ?? getAvatarPaths(p.name, p.is_custom).chat,
+          };
           return (
             <PersonaCard
               key={p.id}

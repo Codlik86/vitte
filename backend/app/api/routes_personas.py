@@ -39,6 +39,7 @@ PERSONA_PHOTO_SLUGS = {
     "стейси": "stacey",
     "тая": "taya",
 }
+DEFAULT_SLUG = "custom"
 
 
 def _build_asset_url(path: str) -> str:
@@ -46,14 +47,37 @@ def _build_asset_url(path: str) -> str:
     return f"{base}{path}"
 
 
+def _story_image_url(card_image: str | None) -> str | None:
+    if not card_image:
+        return None
+    if card_image.startswith("http://") or card_image.startswith("https://"):
+        return card_image
+    return _build_asset_url(card_image)
+
+
 def _resolve_persona_photo(persona: Persona) -> str:
     if persona.is_custom:
         return _build_asset_url(CUSTOM_PERSONA_PHOTO)
     key = (persona.name or "").strip().lower()
-    slug = PERSONA_PHOTO_SLUGS.get(key)
-    if slug:
+    slug = PERSONA_PHOTO_SLUGS.get(key, DEFAULT_SLUG)
+    return build_persona_asset_url("chat", slug)
+
+
+def build_persona_asset_url(kind: str, slug: str, story_key: str | None = None) -> str:
+    if kind == "chat":
         return _build_asset_url(f"/personas/{slug}-chat.jpg")
+    if kind == "card":
+        return _build_asset_url(f"/personas/{slug}-card.jpg")
+    if kind == "story" and story_key:
+        return _build_asset_url(f"/personas/{slug}-story-{story_key}.jpg")
     return _build_asset_url(DEFAULT_PERSONA_PHOTO)
+
+
+def _resolve_persona_slug(persona: Persona) -> str:
+    if persona.is_custom:
+        return DEFAULT_SLUG
+    key = (persona.name or "").strip().lower()
+    return PERSONA_PHOTO_SLUGS.get(key, DEFAULT_SLUG)
 
 
 def _build_custom_key(user_id: int) -> str:
@@ -65,6 +89,9 @@ def _build_short_description(persona: Persona) -> str:
 
 
 def _build_list_item(persona: Persona, user_id: int | None, active_id: int | None) -> PersonaListItem:
+    slug = _resolve_persona_slug(persona)
+    avatar_chat = build_persona_asset_url("chat", slug)
+    avatar_card = build_persona_asset_url("card", slug)
     kind_value = None
     if hasattr(persona, "kind"):
         kind_raw = persona.kind
@@ -86,6 +113,9 @@ def _build_list_item(persona: Persona, user_id: int | None, active_id: int | Non
         is_owner=bool(user_id is not None and persona.owner_user_id == user_id),
         is_selected=bool(active_id is not None and persona.id == active_id),
         is_custom=bool(persona.is_custom),
+        avatar_url=avatar_chat,
+        avatar_chat_url=avatar_chat,
+        avatar_card_url=avatar_card,
     )
 
 
@@ -96,13 +126,16 @@ def _build_details(
     dialog_info: tuple[Dialog | None, int] | None = None,
 ) -> PersonaDetails:
     item = _build_list_item(persona, user_id, active_id)
+    slug = _resolve_persona_slug(persona)
     story_cards = [
         {
             "id": card.id,
+            "key": card.key,
             "title": card.title,
             "description": card.description,
             "atmosphere": card.atmosphere,
             "prompt": card.prompt,
+            "image": build_persona_asset_url("story", slug, card.key) if card.image else None,
         }
         for card in get_story_cards_for_persona(persona.archetype, persona.name)
     ]
