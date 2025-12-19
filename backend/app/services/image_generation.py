@@ -87,6 +87,16 @@ def _deepcopy_workflow(template: Dict[str, Any]) -> Dict[str, Any]:
     return json.loads(json.dumps(template))
 
 
+def normalize_model_ref(value: str | None) -> str | None:
+    """
+    Strips directory prefixes from model references to satisfy ComfyUI allowed lists.
+    """
+    if not value:
+        return value
+    basename = Path(str(value)).name
+    return basename
+
+
 def _resolve_workflow_name() -> str:
     name = (getattr(settings, "comfyui_workflow_name", None) or "").strip().lower()
     if name in WORKFLOW_FILES:
@@ -330,16 +340,20 @@ def _apply_template_values(
     sampler_inputs = workflow.get(sampler_node_id or "", {}).setdefault("inputs", {})
     positive_inputs = workflow.get(positive_clip_id or "", {}).setdefault("inputs", {})
 
-    checkpoint_name = settings.comfyui_default_checkpoint or checkpoint_inputs.get("ckpt_name") or DEFAULT_CHECKPOINT_NAME
-    diffusion_model_name = (
+    checkpoint_name = normalize_model_ref(
+        settings.comfyui_default_checkpoint or checkpoint_inputs.get("ckpt_name") or DEFAULT_CHECKPOINT_NAME
+    )
+    diffusion_model_name = normalize_model_ref(
         getattr(settings, "comfyui_default_diffusion_model", None)
         or unet_inputs.get("unet_name")
         or DEFAULT_DIFFUSION_MODEL
     )
-    clip_name = (
+    clip_name = normalize_model_ref(
         getattr(settings, "comfyui_default_text_encoder", None) or clip_inputs.get("clip_name") or DEFAULT_TEXT_ENCODER
     )
-    vae_name = getattr(settings, "comfyui_default_vae", None) or vae_inputs.get("vae_name") or DEFAULT_VAE
+    vae_name = normalize_model_ref(
+        getattr(settings, "comfyui_default_vae", None) or vae_inputs.get("vae_name") or DEFAULT_VAE
+    )
 
     if checkpoint_node_id:
         checkpoint_inputs["ckpt_name"] = checkpoint_name
@@ -350,7 +364,7 @@ def _apply_template_values(
     if vae_loader_id:
         vae_inputs["vae_name"] = vae_name
 
-    lora_filename = Path(config.lora_filename).name
+    lora_filename = normalize_model_ref(Path(config.lora_filename).name)
     if primary_lora_id:
         primary_inputs = workflow.get(primary_lora_id, {}).setdefault("inputs", {})
         primary_inputs["lora_name"] = lora_filename
@@ -362,7 +376,7 @@ def _apply_template_values(
     if secondary_lora_id:
         secondary_inputs = workflow.get(secondary_lora_id, {}).setdefault("inputs", {})
         if config.quality_lora_filename:
-            secondary_inputs["lora_name"] = Path(config.quality_lora_filename).name
+            secondary_inputs["lora_name"] = normalize_model_ref(Path(config.quality_lora_filename).name)
             if "strength_model" in secondary_inputs:
                 secondary_inputs["strength_model"] = float(config.quality_lora_strength)
             if "strength_clip" in secondary_inputs:
