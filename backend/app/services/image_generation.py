@@ -432,7 +432,7 @@ async def _build_context_hint_from_history(
         combined = ". ".join(m.replace("\n", " ").replace("\r", " ").strip() for m in messages if m)
         return _trim_hint_text(combined)
     except Exception as exc:  # noqa: BLE001
-        logger.warning("Failed to build history hint user=%s persona=%s err=%s", user_id, persona_id, exc)
+        logger.warning(f"Failed to build history hint user={user_id} persona={persona_id} err={exc}")
         return ""
 
 
@@ -648,7 +648,7 @@ async def request_comfyui(*, workflow_payload: Dict[str, Any], client_id: str | 
     timeout_seconds = float(getattr(settings, "comfyui_timeout_seconds", 90) or 90)
     timeout = httpx.Timeout(timeout_seconds, connect=10.0, read=timeout_seconds, write=timeout_seconds)
 
-    logger.info("ComfyUI prompt request base_url=%s", base_url)
+    logger.info(f"ComfyUI prompt request base_url={base_url}")
 
     async with httpx.AsyncClient(timeout=timeout) as client:
         last_error: Exception | None = None
@@ -659,10 +659,7 @@ async def request_comfyui(*, workflow_payload: Dict[str, Any], client_id: str | 
 
                 resp = await client.post(f"{base_url}/prompt", json=payload)
                 logger.info(
-                    "ComfyUI /prompt status=%s len=%s attempt=%s",
-                    resp.status_code,
-                    len(resp.content or b""),
-                    attempt,
+                    f"ComfyUI /prompt status={resp.status_code} len={len(resp.content or b'')} attempt={attempt}"
                 )
                 resp.raise_for_status()
 
@@ -671,27 +668,26 @@ async def request_comfyui(*, workflow_payload: Dict[str, Any], client_id: str | 
                 if not prompt_id:
                     raise RuntimeError(f"No prompt_id in ComfyUI response: {data}")
 
-                logger.info("ComfyUI prompt_id=%s received", prompt_id)
+                logger.info(f"ComfyUI prompt_id={prompt_id} received")
                 image_info = await _wait_for_image(client, base_url, str(prompt_id))
                 return await _download_image(client, base_url, image_info)
 
             except httpx.HTTPStatusError as exc:
+                body_preview = (exc.response.text or "")[:3000] if exc.response else ""
                 logger.exception(
-                    "ComfyUI HTTP error base_url=%s status=%s body=%s",
-                    base_url,
-                    getattr(exc.response, "status_code", None),
-                    (exc.response.text or "")[:3000] if exc.response else "",
+                    f"ComfyUI HTTP error base_url={base_url} status={getattr(exc.response, 'status_code', None)} "
+                    f"body={body_preview}"
                 )
                 last_error = exc
             except (httpx.ConnectError, httpx.ConnectTimeout) as exc:
-                logger.exception("COMFYUI_UNREACHABLE base_url=%s", base_url)
+                logger.exception(f"COMFYUI_UNREACHABLE base_url={base_url}")
                 last_error = exc
                 break
             except (httpx.ReadTimeout, TimeoutError) as exc:
-                logger.exception("ComfyUI timeout base_url=%s", base_url)
+                logger.exception(f"ComfyUI timeout base_url={base_url}")
                 last_error = exc
             except Exception as exc:  # noqa: BLE001
-                logger.exception("ComfyUI unknown error base_url=%s", base_url)
+                logger.exception(f"ComfyUI unknown error base_url={base_url}")
                 last_error = exc
 
             if attempt >= (RETRIES + 1):
@@ -706,14 +702,14 @@ async def _wait_for_image(client: httpx.AsyncClient, base_url: str, prompt_id: s
 
     while time.monotonic() < deadline:
         resp = await client.get(f"{base_url}/history/{prompt_id}")
-        logger.info("ComfyUI /history/%s status=%s", prompt_id, resp.status_code)
+        logger.info(f"ComfyUI /history/{prompt_id} status={resp.status_code}")
         resp.raise_for_status()
 
         try:
             data = resp.json() or {}
         except Exception as exc:  # noqa: BLE001
             # Occasionally (especially through tunnels) body can be non-JSON; retry.
-            logger.warning("ComfyUI history json parse failed prompt_id=%s err=%s", prompt_id, exc)
+            logger.warning(f"ComfyUI history json parse failed prompt_id={prompt_id} err={exc}")
             await asyncio.sleep(POLL_INTERVAL)
             continue
 
@@ -723,10 +719,10 @@ async def _wait_for_image(client: httpx.AsyncClient, base_url: str, prompt_id: s
         for node_id, node in outputs.items():
             images = node.get("images") or []
             if images:
-                logger.info("ComfyUI history got images from node=%s prompt_id=%s", node_id, prompt_id)
+                logger.info(f"ComfyUI history got images from node={node_id} prompt_id={prompt_id}")
                 return images[0]
 
-        logger.info("ComfyUI waiting images prompt_id=%s outputs=%s", prompt_id, list(outputs.keys()))
+        logger.info(f"ComfyUI waiting images prompt_id={prompt_id} outputs={list(outputs.keys())}")
         await asyncio.sleep(POLL_INTERVAL)
 
     raise TimeoutError("ComfyUI generation timed out")
@@ -747,7 +743,7 @@ async def _download_image(client: httpx.AsyncClient, base_url: str, image_info: 
         params["type"] = file_type
 
     resp = await client.get(f"{base_url}/view", params=params)
-    logger.info("ComfyUI /view status=%s file=%s", resp.status_code, filename)
+    logger.info(f"ComfyUI /view status={resp.status_code} file={filename}")
     resp.raise_for_status()
     return resp.content
 
@@ -840,15 +836,12 @@ async def _generate_and_send(plan: GenerationPlan, context: dict[str, Any], bot_
         )
     except ImageRequestError as exc:
         logger.error(
-            "Failed to apply workflow template user=%s persona=%s reason=%s",
-            plan.user_id,
-            plan.persona_id,
-            exc.reason,
+            f"Failed to apply workflow template user={plan.user_id} persona={plan.persona_id} reason={exc.reason}"
         )
         await _log_failure(plan, exc.reason or "bad_workflow_template")
         return False
     except Exception as exc:  # noqa: BLE001
-        logger.error("Failed to apply workflow template user=%s persona=%s: %s", plan.user_id, plan.persona_id, exc)
+        logger.error(f"Failed to apply workflow template user={plan.user_id} persona={plan.persona_id}: {exc}")
         await _log_failure(plan, "bad_workflow_template")
         return False
 
@@ -861,16 +854,10 @@ async def _generate_and_send(plan: GenerationPlan, context: dict[str, Any], bot_
     quality_name = Path(plan.config.quality_lora_filename).name if plan.config.quality_lora_filename else None
 
     logger.info(
-        "ComfyUI request user=%s persona=%s workflow=%s ckpt=%s lora=%s quality_lora=%s strengths=(%.2f/%.2f/%.2f)",
-        plan.user_id,
-        plan.persona_id,
-        workflow_name,
-        ckpt_name,
-        Path(plan.config.lora_filename).name,
-        quality_name,
-        plan.config.lora_strength_model,
-        plan.config.lora_strength_clip,
-        plan.config.quality_lora_strength if quality_name else 0.0,
+        f"ComfyUI request user={plan.user_id} persona={plan.persona_id} workflow={workflow_name} "
+        f"ckpt={ckpt_name} lora={Path(plan.config.lora_filename).name} quality_lora={quality_name} "
+        f"strengths=({plan.config.lora_strength_model:.2f}/{plan.config.lora_strength_clip:.2f}/"
+        f"{plan.config.quality_lora_strength if quality_name else 0.0:.2f})"
     )
 
     # Stable-ish client_id helps debugging and history tracking through tunnels.
@@ -883,7 +870,7 @@ async def _generate_and_send(plan: GenerationPlan, context: dict[str, Any], bot_
         return True
 
     except Exception:  # noqa: BLE001
-        logger.exception("Image generation/delivery failed user=%s persona=%s", plan.user_id, plan.persona_id)
+        logger.exception(f"Image generation/delivery failed user={plan.user_id} persona={plan.persona_id}")
         await _log_failure(plan, "generation_error")
         return False
 
@@ -911,15 +898,12 @@ async def _generate_image_bytes(plan: GenerationPlan, context: dict[str, Any]) -
         )
     except ImageRequestError as exc:
         logger.error(
-            "Failed to apply workflow template user=%s persona=%s reason=%s",
-            plan.user_id,
-            plan.persona_id,
-            exc.reason,
+            f"Failed to apply workflow template user={plan.user_id} persona={plan.persona_id} reason={exc.reason}"
         )
         await _log_failure(plan, exc.reason or "bad_workflow_template")
         raise
     except Exception as exc:  # noqa: BLE001
-        logger.error("Failed to apply workflow template user=%s persona=%s: %s", plan.user_id, plan.persona_id, exc)
+        logger.error(f"Failed to apply workflow template user={plan.user_id} persona={plan.persona_id}: {exc}")
         await _log_failure(plan, "bad_workflow_template")
         raise ImageRequestError("generation_failed")
 
@@ -932,16 +916,10 @@ async def _generate_image_bytes(plan: GenerationPlan, context: dict[str, Any]) -
     quality_name = Path(plan.config.quality_lora_filename).name if plan.config.quality_lora_filename else None
 
     logger.info(
-        "ComfyUI request user=%s persona=%s workflow=%s ckpt=%s lora=%s quality_lora=%s strengths=(%.2f/%.2f/%.2f)",
-        plan.user_id,
-        plan.persona_id,
-        workflow_name,
-        ckpt_name,
-        Path(plan.config.lora_filename).name,
-        quality_name,
-        plan.config.lora_strength_model,
-        plan.config.lora_strength_clip,
-        plan.config.quality_lora_strength if quality_name else 0.0,
+        f"ComfyUI request user={plan.user_id} persona={plan.persona_id} workflow={workflow_name} "
+        f"ckpt={ckpt_name} lora={Path(plan.config.lora_filename).name} quality_lora={quality_name} "
+        f"strengths=({plan.config.lora_strength_model:.2f}/{plan.config.lora_strength_clip:.2f}/"
+        f"{plan.config.quality_lora_strength if quality_name else 0.0:.2f})"
     )
 
     client_id = f"vitte-{plan.user_id}-{plan.persona_id}-{uuid.uuid4().hex[:8]}"
@@ -950,7 +928,7 @@ async def _generate_image_bytes(plan: GenerationPlan, context: dict[str, Any]) -
         try:
             return await request_comfyui(workflow_payload=workflow, client_id=client_id)
         except Exception:  # noqa: BLE001
-            logger.exception("Image generation failed user=%s persona=%s", plan.user_id, plan.persona_id)
+            logger.exception(f"Image generation failed user={plan.user_id} persona={plan.persona_id}")
             await _log_failure(plan, "generation_error")
             raise ImageRequestError("generation_failed")
 
@@ -1073,7 +1051,7 @@ async def request_image_on_demand(
                 await session.commit()
                 success = True
             except Exception:  # noqa: BLE001
-                logger.exception("Image generation failed for user=%s persona=%s", user.id, persona.id)
+                logger.exception(f"Image generation failed for user={user.id} persona={persona.id}")
                 await session.rollback()
                 success = False
         finally:
@@ -1089,7 +1067,6 @@ async def request_image_on_demand(
             await bot_instance.send_message(chat_id, "Не удалось сгенерировать изображение. Попробуй ещё раз через минуту.")
         except Exception:  # noqa: BLE001
             logger.exception(
-                "Failed to send image fallback message user=%s persona=%s",
-                plan.user_id if plan else user_id,
-                plan.persona_id if plan else persona_id,
+                f"Failed to send image fallback message user={plan.user_id if plan else user_id} "
+                f"persona={plan.persona_id if plan else persona_id}"
             )
