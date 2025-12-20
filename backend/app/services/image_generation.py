@@ -562,61 +562,39 @@ def _build_image_context(inputs: ImageRequestInputs, context: dict[str, Any]) ->
 
 
 def _compose_structured_prompt(img_ctx: ImageContext) -> str:
-    segments: list[str] = []
-    core = img_ctx.prompt_core.strip().strip(",")
-    if core:
-        segments.append(f"CORE SUBJECT: {core}")
-
-    if img_ctx.scene_text:
-        segments.append(f"SCENE: {img_ctx.scene_text}")
-
-    if img_ctx.user_intent_text:
-        segments.append(f"USER INTENT (follow precisely): {img_ctx.user_intent_text}")
-    elif img_ctx.semantic_context_text:
-        segments.append(f"SEMANTIC CONTEXT: {img_ctx.semantic_context_text}")
-    elif img_ctx.persona_fallback:
-        segments.append(f"FALLBACK: {img_ctx.persona_fallback}")
-
-    segments.append(f"CAMERA/STYLE: {img_ctx.camera_style_text}")
-
-    prompt = ". ".join(segments)
-
-    if len(prompt) > MAX_PROMPT_LEN:
-        # remove semantic/fallback first
-        segments = [s for s in segments if not s.startswith("SEMANTIC CONTEXT") and not s.startswith("FALLBACK")]
-        prompt = ". ".join(segments)
-    if len(prompt) > MAX_PROMPT_LEN and img_ctx.scene_text:
-        trimmed_scene = _trim_hint_text(img_ctx.scene_text[: max(30, MAX_HINT_LEN // 2)])
-        segments = [seg for seg in segments if not seg.startswith("SCENE")]
-        if trimmed_scene:
-            segments.insert(1, f"SCENE: {trimmed_scene}")
-        prompt = ". ".join(segments)
-    if len(prompt) > MAX_PROMPT_LEN:
-        prompt = prompt[:MAX_PROMPT_LEN]
-
-    logger.info(
-        "Image prompt parts user_intent=%s scene=%s semantic=%s len=%s preview=%s",
-        img_ctx.user_intent_text[:80],
-        img_ctx.scene_text[:80],
-        img_ctx.semantic_context_text[:80],
-        len(prompt),
-        prompt[:120],
-    )
-    return prompt
+    # Legacy wrapper kept for compatibility; replaced by _compose_image_prompt.
+    return ""
 
 
-def _build_full_prompt(config: PersonaImageConfig, hint: str) -> str:
-    """
-    prompt_core + (optional hint) + (optional default_style)
-    """
-    style = f", {config.default_style}" if config.default_style else ""
-    trimmed_hint = hint.strip(" .,")
+def _compose_image_prompt(img_ctx: ImageContext, config: PersonaImageConfig) -> str:
+    parts: list[str] = []
 
-    pieces = [config.prompt_core]
-    if trimmed_hint:
-        pieces.append(trimmed_hint)
+    def _clean(text: str | None) -> str:
+        return str(text or "").strip().strip(".")
 
-    prompt = ", ".join(pieces) + style
+    trigger = _clean(config.trigger_word)
+    if trigger:
+        parts.append(trigger)
+
+    master = _clean(config.master_prompt)
+    if master:
+        parts.append(master)
+
+    core = _clean(img_ctx.prompt_core)
+    if core and core.lower() not in master.lower():
+        parts.append(core)
+
+    request_text = _clean(img_ctx.user_intent_text or img_ctx.semantic_context_text)
+    if request_text:
+        parts.append(request_text)
+
+    context_text = _clean(img_ctx.scene_text or img_ctx.persona_fallback)
+    if context_text:
+        parts.append(context_text)
+
+    prompt = ". ".join(filter(None, parts))
+    if prompt:
+        prompt += "."
     return prompt[:MAX_PROMPT_LEN]
 
 
@@ -1036,7 +1014,7 @@ async def request_image_on_demand(
             if not ctx.get("user_request_text"):
                 ctx["user_request_text"] = inputs.last_user_messages[-1] if inputs.last_user_messages else ""
             img_ctx = _build_image_context(inputs, ctx)
-            prompt = _compose_structured_prompt(img_ctx)
+            prompt = _compose_image_prompt(img_ctx, config)
             negative_prompt = (img_ctx.negative_text or DEFAULT_NEGATIVE).strip()
 
             await log_event(
