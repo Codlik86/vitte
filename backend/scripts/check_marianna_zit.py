@@ -34,15 +34,15 @@ def main() -> None:
     if not workflow:
         raise SystemExit("workflow template is missing")
 
-    prompt = "SCENE: spa lounge. USER INTENT (follow precisely): расслабленный массаж"
+    prompt = "SCENE: spa lounge. USER INTENT (follow precisely): расслабленная обстановка"
     config = PersonaImageConfig(
         lora_filename="woman041-zit.safetensors",
         prompt_core="Woman041, mature confident woman, elegant natural skin, cinematic portrait, photorealistic, high detail",
         negative_prompt=DEFAULT_NEGATIVE,
         lora_strength_model=0.7,
         lora_strength_clip=0.65,
-        quality_lora_filename="b3tternud3s_v3.safetensors",
-        quality_lora_strength=0.45,
+        quality_lora_filename="Mystic-XXX-ZIT-v2.safetensors",
+        quality_lora_strength=0.7,
     )
 
     try:

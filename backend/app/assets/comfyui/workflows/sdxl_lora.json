@@ -153,8 +153,8 @@
   },
   "58": {
     "inputs": {
-      "lora_name": "b3tternud3s_v3.safetensors",
-      "strength_model": 0.5,
+      "lora_name": "Mystic-XXX-ZIT-v2.safetensors",
+      "strength_model": 0.7,
       "model": [
         "48",
         0

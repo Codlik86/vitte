@@ -39,8 +39,8 @@ def main() -> None:
         lora_filename="woman037-zimage.safetensors",
         prompt_core="woman037 smoke test",
         negative_prompt=DEFAULT_NEGATIVE,
-        quality_lora_filename="b3tternud3s_v3.safetensors",
-        quality_lora_strength=0.5,
+        quality_lora_filename="Mystic-XXX-ZIT-v2.safetensors",
+        quality_lora_strength=0.7,
     )
 
     try:
