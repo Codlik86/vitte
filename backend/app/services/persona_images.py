@@ -17,6 +17,8 @@ class PersonaImageConfig:
     quality_lora_filename: str | None = None
     quality_lora_strength: float = 0.7
     default_style: str | None = None
+    ksampler_steps: int | None = None
+    ksampler_sampler_name: str | None = None
 
 
 # Без NSFW-тегов в negative (как ты просил). Оставляем техничку против артефактов.
@@ -36,6 +38,8 @@ DEFAULT_IMAGE_CONFIG = PersonaImageConfig(
     quality_lora_filename="Mystic-XXX-ZIT-v2.safetensors",
     quality_lora_strength=0.7,
     default_style=None,
+    ksampler_steps=None,
+    ksampler_sampler_name=None,
 )
 
 
@@ -51,6 +55,8 @@ PERSONA_CONFIGS: Dict[str, PersonaImageConfig] = {
         quality_lora_filename="Mystic-XXX-ZIT-v2.safetensors",
         quality_lora_strength=0.7,
         default_style=None,
+        ksampler_steps=16,
+        ksampler_sampler_name="euler",
     ),
     "marianna": PersonaImageConfig(
         lora_filename="woman041-zit.safetensors",
@@ -63,6 +69,8 @@ PERSONA_CONFIGS: Dict[str, PersonaImageConfig] = {
         quality_lora_filename="Mystic-XXX-ZIT-v2.safetensors",
         quality_lora_strength=0.7,
         default_style=None,
+        ksampler_steps=16,
+        ksampler_sampler_name="euler",
     ),
     "stacey": PersonaImageConfig(
         lora_filename="woman037-zimage.safetensors",
@@ -75,6 +83,8 @@ PERSONA_CONFIGS: Dict[str, PersonaImageConfig] = {
         quality_lora_filename="Mystic-XXX-ZIT-v2.safetensors",
         quality_lora_strength=0.7,
         default_style=None,
+        ksampler_steps=16,
+        ksampler_sampler_name="euler",
     ),
     "mei": PersonaImageConfig(
         lora_filename="Character_Mix_DahliaMixerV2_ZIT.safetensors",
@@ -87,6 +97,8 @@ PERSONA_CONFIGS: Dict[str, PersonaImageConfig] = {
         quality_lora_filename="Mystic-XXX-ZIT-v2.safetensors",
         quality_lora_strength=0.15,
         default_style=None,
+        ksampler_steps=16,
+        ksampler_sampler_name="euler",
     ),
 }
 

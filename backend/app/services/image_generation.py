@@ -285,6 +285,29 @@ def _collect_node_ids(workflow: Dict[str, Any], class_types: Iterable[str]) -> l
     return found
 
 
+def _apply_ksampler_overrides(workflow: Dict[str, Any], steps: int | None, sampler_name: str | None) -> None:
+    if steps is None and sampler_name is None:
+        return
+    ks_ids = _collect_node_ids(workflow, ["KSampler"])
+    if not ks_ids:
+        logger.warning("KSampler override requested but no KSampler nodes found")
+        return
+
+    for node_id in ks_ids:
+        inputs = workflow.get(node_id, {}).setdefault("inputs", {})
+        if steps is not None:
+            inputs["steps"] = steps
+        if sampler_name is not None:
+            inputs["sampler_name"] = sampler_name
+
+    logger.info(
+        "KSampler overrides applied steps=%s sampler=%s nodes=%s",
+        steps,
+        sampler_name,
+        ",".join(ks_ids),
+    )
+
+
 def _apply_template_values(
     template: Dict[str, Any],
     *,
@@ -396,6 +419,8 @@ def _apply_template_values(
         logger.info("Workflow %s has no negative CLIP node; keeping template negative prompt", workflow_name)
 
     sampler_inputs["seed"] = random.randint(1, 2_000_000_000)
+
+    _apply_ksampler_overrides(workflow, config.ksampler_steps, config.ksampler_sampler_name)
 
     logger.info(
         "Workflow nodes workflow=%s ckpt=%s unet=%s clip=%s vae=%s loras=%s sampler=%s",
