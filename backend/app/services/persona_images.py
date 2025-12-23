@@ -28,10 +28,10 @@ DEFAULT_NEGATIVE = (
 )
 
 DEFAULT_IMAGE_CONFIG = PersonaImageConfig(
-    lora_filename="woman549-zit.safetensors",
-    trigger_word="woman549",
-    master_prompt="masterpiece, best quality, ultra detailed, 8k, photorealistic, cinematic lighting, sharp focus, 超高清, 极致细节, 电影感, 真实感爆棚, 顶级画质, 光影大师, 细腻皮肤, 质感拉满",
-    prompt_core="woman549, athletic playful fitness model, toned fit body",
+    lora_filename="Character_Mix_FarrahMixerV2_ZIT.safetensors",
+    trigger_word="FarrahMixer",
+    master_prompt="gorgeous fitness model",
+    prompt_core="ultra realistic, photorealistic, natural skin texture, realistic lighting, high dynamic range, fine details, true-to-life colors, cinematic realism",
     negative_prompt=DEFAULT_NEGATIVE,
     lora_strength_model=0.7,
     lora_strength_clip=0.65,
@@ -45,10 +45,10 @@ DEFAULT_IMAGE_CONFIG = PersonaImageConfig(
 
 PERSONA_CONFIGS: Dict[str, PersonaImageConfig] = {
     "lina": PersonaImageConfig(
-        lora_filename="woman549-zit.safetensors",
-        trigger_word="woman549",
-        master_prompt="Athletic playful fitness model with natural skin and consistent face.",
-        prompt_core="woman549, athletic playful fitness model, toned fit body, photorealistic, high detail, 超高清, 极致细节, 电影感, 真实感爆棚, 顶级画质, 光影大师, 细腻皮肤, 质感拉满",
+        lora_filename="Character_Mix_FarrahMixerV2_ZIT.safetensors",
+        trigger_word="FarrahMixer",
+        master_prompt="gorgeous fitness model",
+        prompt_core="ultra realistic, photorealistic, natural skin texture, realistic lighting, high dynamic range, fine details, true-to-life colors, cinematic realism",
         negative_prompt=DEFAULT_NEGATIVE,
         lora_strength_model=0.7,
         lora_strength_clip=0.65,
@@ -61,8 +61,8 @@ PERSONA_CONFIGS: Dict[str, PersonaImageConfig] = {
     "marianna": PersonaImageConfig(
         lora_filename="woman041-zit.safetensors",
         trigger_word="Woman041",
-        master_prompt="Mature confident woman with elegant natural skin and calm gaze.",
-        prompt_core="Woman041, mature confident woman, elegant natural skin, masterpiece, best quality, ultra detailed, 8k, photorealistic, cinematic lighting, sharp focus, 超高清, 极致细节, 电影感, 真实感爆棚, 顶级画质, 光影大师, 细腻皮肤, 质感拉满",
+        master_prompt="gorgeous woman",
+        prompt_core="ultra realistic, photorealistic, natural skin texture, realistic lighting, high dynamic range, fine details, true-to-life colors, cinematic realism",
         negative_prompt=DEFAULT_NEGATIVE,
         lora_strength_model=0.7,
         lora_strength_clip=0.65,
@@ -75,8 +75,8 @@ PERSONA_CONFIGS: Dict[str, PersonaImageConfig] = {
     "stacey": PersonaImageConfig(
         lora_filename="woman037-zimage.safetensors",
         trigger_word="woman037",
-        master_prompt="Playful romantic woman with warm smile and confident gaze, photorealistic.",
-        prompt_core="woman037, playful romantic woman, natural look, photorealistic, high detail, cinematic lighting, sharp focus",
+        master_prompt="gorgeous woman",
+        prompt_core="ultra realistic, photorealistic, natural skin texture, realistic lighting, high dynamic range, fine details, true-to-life colors, cinematic realism",
         negative_prompt=DEFAULT_NEGATIVE,
         lora_strength_model=0.7,
         lora_strength_clip=0.65,
@@ -89,8 +89,8 @@ PERSONA_CONFIGS: Dict[str, PersonaImageConfig] = {
     "mei": PersonaImageConfig(
         lora_filename="Character_Mix_DahliaMixerV2_ZIT.safetensors",
         trigger_word="dahliamixer",
-        master_prompt="Photorealistic look with natural skin texture and expressive eyes, realistic proportions.",
-        prompt_core="dahliamixer, HD photo of a gorgeous blonde supermodel, photorealistic, high detail",
+        master_prompt="gorgeous blonde supermodel",
+        prompt_core="ultra realistic, photorealistic, natural skin texture, realistic lighting, high dynamic range, fine details, true-to-life colors, cinematic realism",
         negative_prompt=DEFAULT_NEGATIVE,
         lora_strength_model=0.7,
         lora_strength_clip=0.65,
