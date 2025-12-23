@@ -22,15 +22,19 @@ export function CharactersList() {
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const hasSubscription = Boolean(accessStatus?.has_subscription);
-  const imagesAvailable = (accessStatus?.images?.remaining_free_today ?? 0) + (accessStatus?.images?.remaining_paid ?? 0);
+  const imagesAvailable = accessStatus
+    ? (accessStatus.images?.remaining_free_today ?? 0) + (accessStatus.images?.remaining_paid ?? 0)
+    : null;
   const messagesLeft = hasSubscription
     ? null
-    : Math.max(0, (accessStatus?.free_messages_limit ?? 15) - (accessStatus?.free_messages_used ?? 0));
+    : accessStatus
+      ? Math.max(0, (accessStatus.free_messages_limit ?? 15) - (accessStatus.free_messages_used ?? 0))
+      : null;
   const headerStats = {
     images: imagesAvailable,
     messagesLeft,
-    hasSubscription: hasSubscription,
-    isPremium: hasSubscription,
+    hasSubscription: accessStatus?.has_subscription,
+    isPremium: accessStatus?.has_subscription,
   };
 
   const load = async () => {

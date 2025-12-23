@@ -26,12 +26,15 @@ export function CharacterDetails() {
     setTitle(fallbackTitle);
   }, [fallbackTitle, id]);
 
-  const hasSubscription = Boolean(accessStatus?.has_subscription);
-  const imagesAvailable =
-    (accessStatus?.images?.remaining_free_today ?? 0) + (accessStatus?.images?.remaining_paid ?? 0);
+  const hasSubscription = accessStatus?.has_subscription;
+  const imagesAvailable = accessStatus
+    ? (accessStatus.images?.remaining_free_today ?? 0) + (accessStatus.images?.remaining_paid ?? 0)
+    : null;
   const messagesLeft = hasSubscription
     ? null
-    : Math.max(0, (accessStatus?.free_messages_limit ?? 15) - (accessStatus?.free_messages_used ?? 0));
+    : accessStatus
+      ? Math.max(0, (accessStatus.free_messages_limit ?? 15) - (accessStatus.free_messages_used ?? 0))
+      : null;
   const headerStats = {
     images: imagesAvailable,
     messagesLeft,

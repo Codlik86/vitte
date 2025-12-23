@@ -12,15 +12,21 @@ export function Paywall() {
   const { data: accessStatus, reload: reloadAccess } = useAccessStatus();
   const [busyCode, setBusyCode] = useState<string | null>(null);
 
-  const hasSubscription = Boolean(status?.has_active_subscription);
+  const hasSubscription = Boolean(status?.has_active_subscription || accessStatus?.has_subscription);
   const endDate = status?.subscription_ends_at
     ? new Date(status.subscription_ends_at).toLocaleDateString("ru-RU")
     : null;
   const plans = config?.subscription_plans ?? [];
-  const imagesAvailable = (status?.remaining_images_today ?? 0) + (status?.remaining_paid_images ?? 0);
+  const imagesAvailable = status
+    ? (status.remaining_images_today ?? 0) + (status.remaining_paid_images ?? 0)
+    : accessStatus?.images
+      ? (accessStatus.images.remaining_free_today ?? 0) + (accessStatus.images.remaining_paid ?? 0)
+      : null;
   const messagesLeft = hasSubscription
     ? null
-    : Math.max(0, (accessStatus?.free_messages_limit ?? 15) - (accessStatus?.free_messages_used ?? 0));
+    : accessStatus
+      ? Math.max(0, (accessStatus.free_messages_limit ?? 15) - (accessStatus.free_messages_used ?? 0))
+      : null;
   const headerStats = {
     images: imagesAvailable,
     messagesLeft,

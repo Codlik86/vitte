@@ -25,11 +25,14 @@ export function Settings() {
   const [error, setError] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
 
-  const imagesAvailable =
-    (accessStatus?.images?.remaining_free_today ?? 0) + (accessStatus?.images?.remaining_paid ?? 0);
+  const imagesAvailable = accessStatus
+    ? (accessStatus.images?.remaining_free_today ?? 0) + (accessStatus.images?.remaining_paid ?? 0)
+    : null;
   const messagesLeft = accessStatus?.has_subscription
     ? null
-    : Math.max(0, (accessStatus?.free_messages_limit ?? 15) - (accessStatus?.free_messages_used ?? 0));
+    : accessStatus
+      ? Math.max(0, (accessStatus.free_messages_limit ?? 15) - (accessStatus.free_messages_used ?? 0))
+      : null;
 
   const headerStats = {
     images: imagesAvailable,

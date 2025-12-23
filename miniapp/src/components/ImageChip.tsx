@@ -28,10 +28,10 @@ export function ImageChip({
   onSettingsClick,
   className = "",
 }: ImageChipProps) {
-  const displayImages = formatCounter(imagesRemaining ?? 0);
-  const displayMessages = formatCounter(messagesLeft);
+  const displayImages = formatCounter(imagesRemaining);
+  const displayMessages = formatCounter(messagesLeft ?? null);
   const labelText = isPremium || hasSubscription ? "Premium" : "Free";
-  const showMessages = !hasSubscription;
+  const showMessages = hasSubscription === false && messagesLeft !== null;
   const iconClass = "leading-none relative top-[-1px]";
 
   const chipMetricClass = "inline-flex items-center gap-1 text-sm font-semibold text-white/90 tabular-nums leading-none";

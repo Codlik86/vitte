@@ -20,14 +20,21 @@ export function StoreLayout({ title, showBack = true }: StoreLayoutProps) {
   const { data: accessStatus, reload: reloadAccess } = useAccessStatus();
   const { config, status, loading, error, reload } = useStoreData();
   const [busy, setBusy] = useState<BusyMap>({});
-  const hasSubscription = Boolean(status?.has_active_subscription);
-  const imagesAvailable = useMemo(
-    () => (status?.remaining_images_today ?? 0) + (status?.remaining_paid_images ?? 0),
-    [status?.remaining_images_today, status?.remaining_paid_images],
-  );
+  const hasSubscription = Boolean(status?.has_active_subscription || accessStatus?.has_subscription);
+  const imagesAvailable = useMemo(() => {
+    if (status) {
+      return (status.remaining_images_today ?? 0) + (status.remaining_paid_images ?? 0);
+    }
+    if (accessStatus?.images) {
+      return (accessStatus.images.remaining_free_today ?? 0) + (accessStatus.images.remaining_paid ?? 0);
+    }
+    return null;
+  }, [status, accessStatus?.images]);
   const messagesLeft = hasSubscription
     ? null
-    : Math.max(0, (accessStatus?.free_messages_limit ?? 15) - (accessStatus?.free_messages_used ?? 0));
+    : accessStatus
+      ? Math.max(0, (accessStatus.free_messages_limit ?? 15) - (accessStatus.free_messages_used ?? 0))
+      : null;
   const headerStats = {
     images: imagesAvailable,
     messagesLeft,
