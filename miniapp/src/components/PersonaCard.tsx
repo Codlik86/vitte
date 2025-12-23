@@ -43,7 +43,7 @@ export function PersonaCard({
           <img
             src={avatarUrl}
             alt={title}
-            className="absolute inset-0 h-full w-full rounded-3xl object-cover"
+            className="absolute inset-0 h-full w-full rounded-3xl object-cover object-[50%_0%]"
           />
         ) : (
           <>

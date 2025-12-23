@@ -7,6 +7,7 @@ const AVATARS: Record<string, { card: string; chat: string }> = {
   "мей": { card: pub("personas/mei-card.jpg"), chat: pub("personas/mei-chat.jpg") },
   "стейси": { card: pub("personas/stacey-card.jpg"), chat: pub("personas/stacey-chat.jpg") },
   "тая": { card: pub("personas/taya-card.jpg"), chat: pub("personas/taya-chat.jpg") },
+  "юна": { card: pub("personas/yuna-card.jpg"), chat: pub("personas/yuna-chat.jpg") },
 };
 
 const DEFAULT_AVATAR = {

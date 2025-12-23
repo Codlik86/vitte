@@ -131,7 +131,7 @@ export function CharacterDetails() {
               <img
                 src={persona.avatar_chat_url ?? getAvatarPaths(persona.name, persona.is_custom).chat}
                 alt={persona.name}
-                className="absolute inset-0 h-full w-full rounded-3xl object-cover"
+                className="absolute inset-0 h-full w-full rounded-3xl object-cover object-[50%_0%]"
               />
             </div>
 
@@ -314,7 +314,7 @@ function StoriesBlock({
                     <img
                       src={card.image}
                       alt={card.title}
-                      className="absolute inset-0 h-full w-full object-cover"
+                      className="absolute inset-0 h-full w-full object-cover object-[50%_0%]"
                     />
                   </div>
                 )}

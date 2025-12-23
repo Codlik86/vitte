@@ -100,6 +100,20 @@ PERSONA_CONFIGS: Dict[str, PersonaImageConfig] = {
         ksampler_steps=16,
         ksampler_sampler_name="euler",
     ),
+    "yuna": PersonaImageConfig(
+        lora_filename="nano_Korean.safetensors",
+        trigger_word="e1st_asn",
+        master_prompt="e1st_asn gentle Korean-looking young woman, natural skin texture, consistent face, photorealistic.",
+        prompt_core="e1st_asn, gentle obedient korean woman, soft smile, photorealistic, high detail",
+        negative_prompt=DEFAULT_NEGATIVE,
+        lora_strength_model=0.7,
+        lora_strength_clip=0.65,
+        quality_lora_filename="Mystic-XXX-ZIT-v2.safetensors",
+        quality_lora_strength=0.7,
+        default_style=None,
+        ksampler_steps=16,
+        ksampler_sampler_name="euler",
+    ),
 }
 
 PERSONA_ALIASES: Dict[str, str] = {
@@ -119,6 +133,9 @@ PERSONA_ALIASES: Dict[str, str] = {
     "default_мей": "mei",
     "мей": "mei",
     "mei": "mei",
+    "юна": "yuna",
+    "yuna": "yuna",
+    "default_юна": "yuna",
 }
 
 
