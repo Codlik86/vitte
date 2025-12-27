@@ -30,6 +30,7 @@ WORKFLOW_DIR = Path(__file__).resolve().parent.parent / "assets" / "comfyui" / "
 WORKFLOW_FILES = {
     "sdxl_lora": WORKFLOW_DIR / "sdxl_lora.json",
     "zimage_turbo_lora": WORKFLOW_DIR / "zimage_turbo_lora.json",
+    "zimage_turbo_multi_lora": WORKFLOW_DIR / "zimage_turbo_multi_lora.json",
 }
 DEFAULT_WORKFLOW_NAME = "zimage_turbo_lora"
 DEFAULT_CHECKPOINT_NAME = "models/checkpoints/huslyorealismxl_v2.safetensors"
@@ -78,6 +79,15 @@ USER_INTENT_KEYWORDS = {
     "покажи руку",
 }
 CUT_PHRASES = ("ENVIRONMENT:", "USER INTENT", "SEMANTIC CONTEXT", "CAMERA/STYLE")
+ILLEGAL_KEYWORDS = {
+    "несовершеннолет",
+    "child",
+    "underage",
+    "детское",
+    "детский",
+    "loli",
+    "shota",
+}
 
 _workflow_cache: Dict[str, Dict[str, Any]] = {}
 _semaphore = asyncio.Semaphore(max(int(getattr(settings, "comfyui_concurrency", 1) or 1), 1))
@@ -85,6 +95,11 @@ _semaphore = asyncio.Semaphore(max(int(getattr(settings, "comfyui_concurrency", 
 
 def _deepcopy_workflow(template: Dict[str, Any]) -> Dict[str, Any]:
     return json.loads(json.dumps(template))
+
+
+def _is_illegal(text: str) -> bool:
+    lowered = text.lower()
+    return any(word in lowered for word in ILLEGAL_KEYWORDS)
 
 
 def normalize_model_ref(value: str | None) -> str | None:
@@ -97,12 +112,19 @@ def normalize_model_ref(value: str | None) -> str | None:
     return basename
 
 
-def _resolve_workflow_name() -> str:
-    name = (getattr(settings, "comfyui_workflow_name", None) or "").strip().lower()
-    if name in WORKFLOW_FILES:
-        return name
-    if name:
-        logger.warning("Unknown ComfyUI workflow '%s', falling back to %s", name, DEFAULT_WORKFLOW_NAME)
+def _resolve_workflow_name(preferred: str | None = None) -> str:
+    candidates = []
+    if preferred:
+        candidates.append(preferred.strip().lower())
+    env_name = (getattr(settings, "comfyui_workflow_name", None) or "").strip().lower()
+    if env_name:
+        candidates.append(env_name)
+    candidates.append(DEFAULT_WORKFLOW_NAME)
+
+    for name in candidates:
+        if name in WORKFLOW_FILES:
+            return name
+    logger.warning("No matching workflow name found in %s, using default %s", candidates, DEFAULT_WORKFLOW_NAME)
     return DEFAULT_WORKFLOW_NAME
 
 
@@ -162,6 +184,7 @@ class GenerationPlan:
     negative_prompt: str
     config: PersonaImageConfig
     has_subscription: bool
+    variant: str = "default"
 
 
 @dataclass
@@ -285,6 +308,14 @@ def _collect_node_ids(workflow: Dict[str, Any], class_types: Iterable[str]) -> l
     return found
 
 
+def _find_lora_nodes(workflow: Dict[str, Any]) -> list[str]:
+    loras = _collect_node_ids(workflow, ["LoraLoader", "LoraLoaderModelOnly"])
+    try:
+        return sorted(loras, key=lambda x: int(x))
+    except Exception:
+        return sorted(loras)
+
+
 def _apply_ksampler_overrides(workflow: Dict[str, Any], steps: int | None, sampler_name: str | None) -> None:
     if steps is None and sampler_name is None:
         return
@@ -308,6 +339,28 @@ def _apply_ksampler_overrides(workflow: Dict[str, Any], steps: int | None, sampl
     )
 
 
+def _apply_lora_slots(
+    workflow: Dict[str, Any],
+    slots: list[dict],
+) -> None:
+    lora_ids = _find_lora_nodes(workflow)
+    if not lora_ids:
+        logger.warning("No LoraLoader nodes found to apply slots")
+        return
+    for idx, node_id in enumerate(lora_ids):
+        inputs = workflow.get(node_id, {}).setdefault("inputs", {})
+        slot = slots[idx] if idx < len(slots) else None
+        if not slot:
+            continue
+        name = slot.get("name")
+        if name:
+            inputs["lora_name"] = normalize_model_ref(Path(name).name)
+        if "strength_model" in inputs and slot.get("strength_model") is not None:
+            inputs["strength_model"] = float(slot["strength_model"])
+        if "strength_clip" in inputs and slot.get("strength_clip") is not None:
+            inputs["strength_clip"] = float(slot["strength_clip"])
+
+
 def _apply_template_values(
     template: Dict[str, Any],
     *,
@@ -315,6 +368,7 @@ def _apply_template_values(
     negative_prompt: str,
     config: PersonaImageConfig,
     workflow_name: str,
+    variant: str = "default",
 ) -> Dict[str, Any]:
     workflow = template
 
@@ -327,7 +381,7 @@ def _apply_template_values(
     clip_loader_id = find_first_node_id(workflow, "CLIPLoader", title_hints=["clip", "text encoder", "load clip"])
     vae_loader_id = find_first_node_id(workflow, "VAELoader", title_hints=["vae"])
     sampler_node_id = find_first_node_id(workflow, "KSampler", title_hints=["ksampler", "sampler"])
-    lora_node_ids = _collect_node_ids(workflow, ["LoraLoader", "LoraLoaderModelOnly"])
+    lora_node_ids = _find_lora_nodes(workflow)
     positive_clip_id, negative_clip_id = _find_clip_text_nodes(workflow, sampler_node_id)
 
     missing = []
@@ -352,9 +406,6 @@ def _apply_template_values(
             ", ".join(sorted(missing)),
         )
         raise ImageRequestError("bad_workflow_template")
-
-    primary_lora_id = lora_node_ids[0] if lora_node_ids else None
-    secondary_lora_id = lora_node_ids[1] if len(lora_node_ids) > 1 else None
 
     checkpoint_inputs = workflow.get(checkpoint_node_id or "", {}).setdefault("inputs", {})
     unet_inputs = workflow.get(unet_node_id or "", {}).setdefault("inputs", {})
@@ -387,27 +438,23 @@ def _apply_template_values(
     if vae_loader_id:
         vae_inputs["vae_name"] = vae_name
 
-    lora_filename = normalize_model_ref(Path(config.lora_filename).name)
-    if primary_lora_id:
-        primary_inputs = workflow.get(primary_lora_id, {}).setdefault("inputs", {})
-        primary_inputs["lora_name"] = lora_filename
-        if "strength_model" in primary_inputs:
-            primary_inputs["strength_model"] = float(config.lora_strength_model)
-        if "strength_clip" in primary_inputs:
-            primary_inputs["strength_clip"] = float(config.lora_strength_clip)
+    use_hot = variant == "hot"
+    hot_name = config.hot_lora_filename
 
-    if secondary_lora_id:
-        secondary_inputs = workflow.get(secondary_lora_id, {}).setdefault("inputs", {})
-        if config.quality_lora_filename:
-            secondary_inputs["lora_name"] = normalize_model_ref(Path(config.quality_lora_filename).name)
-            if "strength_model" in secondary_inputs:
-                secondary_inputs["strength_model"] = float(config.quality_lora_strength)
-            if "strength_clip" in secondary_inputs:
-                secondary_inputs["strength_clip"] = float(config.quality_lora_strength)
-        elif "strength_model" in secondary_inputs:
-            secondary_inputs["strength_model"] = 0.0
-            if "strength_clip" in secondary_inputs:
-                secondary_inputs["strength_clip"] = 0.0
+    persona_slot = {
+        "name": config.lora_filename,
+        "strength_model": config.lora_strength_model if not (use_hot and hot_name) else 0.0,
+        "strength_clip": config.lora_strength_clip if not (use_hot and hot_name) else 0.0,
+    }
+    hot_slot = {
+        "name": hot_name,
+        "strength_model": config.hot_lora_strength_model if use_hot and hot_name else 0.0,
+        "strength_clip": config.hot_lora_strength_clip if use_hot and hot_name else 0.0,
+    }
+    if not hot_name:
+        hot_slot["strength_model"] = 0.0
+        hot_slot["strength_clip"] = 0.0
+    _apply_lora_slots(workflow, [persona_slot, hot_slot])
 
     positive_inputs["text"] = prompt
 
@@ -621,6 +668,62 @@ def _compose_image_prompt(img_ctx: ImageContext, config: PersonaImageConfig) -> 
     if prompt:
         prompt += "."
     return prompt[:MAX_PROMPT_LEN]
+
+
+def _trim_to_limit(lines: list[str], max_chars: int = 1000, max_lines: int = 14) -> list[str]:
+    if len(lines) > max_lines:
+        lines = lines[:max_lines]
+    text = "\n".join(lines)
+    if len(text) <= max_chars:
+        return lines
+
+    # Prefer trimming scene/persona lines first if overflow.
+    for idx, prefix in enumerate(["SCENE:", "PERSONA:"]):
+        for i, line in enumerate(lines):
+            if line.startswith(prefix) and len("\n".join(lines)) > max_chars:
+                trimmed = line[: max(0, max_chars // 2)].rstrip()
+                lines[i] = trimmed
+    # Final hard trim
+    text = "\n".join(lines)
+    if len(text) > max_chars:
+        text = text[:max_chars].rsplit("\n", 1)[0]
+        lines = text.split("\n")
+    return lines
+
+
+def build_structured_image_prompt(
+    *,
+    trigger_word: str,
+    master_prompt: str,
+    prompt_core: str,
+    scene_text: str,
+    user_request: str,
+    persona_fallback: str | None = None,
+    style_hint: str | None = None,
+) -> str:
+    def clean(text: str | None) -> str:
+        return str(text or "").strip()
+
+    trigger = clean(trigger_word)
+    master = clean(master_prompt)
+    core = clean(prompt_core)
+    scene = clean(scene_text)
+    request = clean(user_request)
+    persona_extra = clean(persona_fallback)
+    style = clean(style_hint or "photorealistic, natural skin texture, realistic lighting, high detail")
+
+    subject_bits = [part for part in [trigger, master or core] if part]
+    subject_line = f"SUBJECT: {' '.join(subject_bits)}" if subject_bits else ""
+
+    user_line = f"USER REQUEST: {request}" if request else ""
+    scene_line = f"SCENE: {scene}" if scene else ""
+    persona_parts = [p for p in [master, core, persona_extra] if p]
+    persona_line = f"PERSONA: {' '.join(dict.fromkeys(' '.join(persona_parts).split()))}" if persona_parts else ""
+    style_line = f"STYLE: {style}" if style else ""
+
+    lines = [line for line in [subject_line, user_line, scene_line, persona_line, style_line] if line]
+    lines = _trim_to_limit(lines)
+    return "\n".join(lines)
 
 
 async def ping_comfyui(base_url: str | None = None) -> bool:
@@ -837,7 +940,8 @@ async def _generate_and_send(plan: GenerationPlan, context: dict[str, Any], bot_
         await _log_failure(plan, "not_configured")
         return False
 
-    workflow_name = _resolve_workflow_name()
+    preferred_workflow = "zimage_turbo_multi_lora" if plan.variant == "hot" else "zimage_turbo_multi_lora"
+    workflow_name = _resolve_workflow_name(preferred_workflow)
     template = _load_workflow_template(workflow_name)
     if not template:
         logger.error("Workflow template %s is empty or missing", workflow_name)
@@ -850,6 +954,7 @@ async def _generate_and_send(plan: GenerationPlan, context: dict[str, Any], bot_
             negative_prompt=plan.negative_prompt,
             config=plan.config,
             workflow_name=workflow_name,
+            variant=plan.variant,
         )
     except ImageRequestError as exc:
         logger.error(
@@ -868,13 +973,13 @@ async def _generate_and_send(plan: GenerationPlan, context: dict[str, Any], bot_
         if checkpoint_node_id
         else None
     )
-    quality_name = Path(plan.config.quality_lora_filename).name if plan.config.quality_lora_filename else None
+    hot_name = Path(plan.config.hot_lora_filename).name if plan.config.hot_lora_filename else None
 
     logger.info(
-        f"ComfyUI request user={plan.user_id} persona={plan.persona_id} workflow={workflow_name} "
-        f"ckpt={ckpt_name} lora={Path(plan.config.lora_filename).name} quality_lora={quality_name} "
+        f"ComfyUI request user={plan.user_id} persona={plan.persona_id} workflow={workflow_name} variant={plan.variant} "
+        f"ckpt={ckpt_name} lora={Path(plan.config.lora_filename).name} hot_lora={hot_name} "
         f"strengths=({plan.config.lora_strength_model:.2f}/{plan.config.lora_strength_clip:.2f}/"
-        f"{plan.config.quality_lora_strength if quality_name else 0.0:.2f})"
+        f"{plan.config.hot_lora_strength_model if hot_name else 0.0:.2f})"
     )
 
     # Stable-ish client_id helps debugging and history tracking through tunnels.
@@ -898,7 +1003,8 @@ async def _generate_image_bytes(plan: GenerationPlan, context: dict[str, Any]) -
         await _log_failure(plan, "not_configured")
         raise ImageRequestError("generation_failed")
 
-    workflow_name = _resolve_workflow_name()
+    preferred_workflow = "zimage_turbo_multi_lora" if plan.variant == "hot" else "zimage_turbo_multi_lora"
+    workflow_name = _resolve_workflow_name(preferred_workflow)
     template = _load_workflow_template(workflow_name)
     if not template:
         logger.error("Workflow template %s is empty or missing", workflow_name)
@@ -912,6 +1018,7 @@ async def _generate_image_bytes(plan: GenerationPlan, context: dict[str, Any]) -
             negative_prompt=plan.negative_prompt,
             config=plan.config,
             workflow_name=workflow_name,
+            variant=plan.variant,
         )
     except ImageRequestError as exc:
         logger.error(
@@ -930,13 +1037,13 @@ async def _generate_image_bytes(plan: GenerationPlan, context: dict[str, Any]) -
         if checkpoint_node_id
         else None
     )
-    quality_name = Path(plan.config.quality_lora_filename).name if plan.config.quality_lora_filename else None
+    hot_name = Path(plan.config.hot_lora_filename).name if plan.config.hot_lora_filename else None
 
     logger.info(
-        f"ComfyUI request user={plan.user_id} persona={plan.persona_id} workflow={workflow_name} "
-        f"ckpt={ckpt_name} lora={Path(plan.config.lora_filename).name} quality_lora={quality_name} "
+        f"ComfyUI request user={plan.user_id} persona={plan.persona_id} workflow={workflow_name} variant={plan.variant} "
+        f"ckpt={ckpt_name} lora={Path(plan.config.lora_filename).name} hot_lora={hot_name} "
         f"strengths=({plan.config.lora_strength_model:.2f}/{plan.config.lora_strength_clip:.2f}/"
-        f"{plan.config.quality_lora_strength if quality_name else 0.0:.2f})"
+        f"{plan.config.hot_lora_strength_model if hot_name else 0.0:.2f})"
     )
 
     client_id = f"vitte-{plan.user_id}-{plan.persona_id}-{uuid.uuid4().hex[:8]}"
@@ -965,6 +1072,7 @@ async def request_image_on_demand(
     persona_id: int,
     bot_instance: Bot,
     context: dict[str, Any] | None = None,
+    variant: str = "default",
 ) -> None:
     """
     Generate and send image on explicit user action.
@@ -1039,14 +1147,34 @@ async def request_image_on_demand(
             if not ctx.get("user_request_text"):
                 ctx["user_request_text"] = inputs.last_user_messages[-1] if inputs.last_user_messages else ""
             img_ctx = _build_image_context(inputs, ctx)
-            prompt = _compose_image_prompt(img_ctx, config)
+            # Safety: block illegal content requests.
+            req_text = ctx.get("user_request_text") or ""
+            if _is_illegal(req_text):
+                await bot_instance.send_message(chat_id, "Запрос отклонён. Попробуй сформулировать иначе.")
+                return
+
+            style_hint = "photorealistic, natural skin texture, realistic lighting, high detail"
+            if variant == "hot":
+                style_hint = style_hint + "; close-up body framing, minimal face"
+                # Encourage close framing to reduce face drift when persona LoRA is muted.
+                if img_ctx.prompt_core:
+                    img_ctx.prompt_core += " close-up body framing"
+            prompt = build_structured_image_prompt(
+                trigger_word=config.trigger_word,
+                master_prompt=config.master_prompt,
+                prompt_core=img_ctx.prompt_core,
+                scene_text=img_ctx.scene_text,
+                user_request=ctx.get("user_request_text") or "",
+                persona_fallback=img_ctx.persona_fallback,
+                style_hint=style_hint,
+            )
             negative_prompt = (img_ctx.negative_text or DEFAULT_NEGATIVE).strip()
 
             await log_event(
                 session,
                 user.id,
                 "image_requested",
-                {"persona_id": persona.id, "persona_key": persona.key, "trigger": "button"},
+                {"persona_id": persona.id, "persona_key": persona.key, "trigger": "button", "variant": variant},
             )
             await session.commit()
 
@@ -1060,6 +1188,7 @@ async def request_image_on_demand(
                 negative_prompt=negative_prompt,
                 config=config,
                 has_subscription=has_subscription,
+                variant=variant,
             )
 
             try:
