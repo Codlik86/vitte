@@ -497,32 +497,11 @@ async def _build_context_hint_from_history(
     limit: int = 5,
     dialog: Dialog | None = None,
 ) -> str:
-    try:
-        target_dialog = dialog
-        if target_dialog is None:
-            target_dialog = await _get_latest_dialog(session, user_id, persona_id)
-        if not target_dialog:
-            return ""
-
-        msg_res = await session.execute(
-            select(Message.content)
-            .where(Message.dialog_id == target_dialog.id, Message.role == "user")
-            .order_by(Message.id.desc())
-            .limit(limit)
-        )
-        messages = [row[0] for row in msg_res.fetchall() if row[0]]
-        if not messages:
-            return ""
-
-        messages = list(reversed(messages))
-        combined = ". ".join(m.replace("\n", " ").replace("\r", " ").strip() for m in messages if m)
-        return _trim_hint_text(combined)
-    except Exception as exc:  # noqa: BLE001
-        logger.warning(f"Failed to build history hint user={user_id} persona={persona_id} err={exc}")
-        return ""
+    # For testing: disable history-based hints to rely only on the latest user request.
+    return ""
 
 
-async def _load_user_request_text(session, dialog: Dialog | None, limit: int = 2) -> str:
+async def _load_user_request_text(session, dialog: Dialog | None, limit: int = 1) -> str:
     if not dialog:
         return ""
     try:
