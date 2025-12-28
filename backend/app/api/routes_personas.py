@@ -196,8 +196,7 @@ async def list_personas(
     result = await session.execute(
         select(Persona).where(
             (
-                (Persona.is_default.is_(True))
-                & (Persona.is_active.is_(True))
+                (Persona.is_active.is_(True))
                 & (Persona.name.in_(ALLOWED_DEFAULT_PERSONA_NAMES))
             )
             | (Persona.owner_user_id == user.id)
