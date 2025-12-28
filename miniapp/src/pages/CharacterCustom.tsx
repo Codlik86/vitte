@@ -3,11 +3,13 @@ import { Link, useNavigate } from "react-router-dom";
 import { createCustomPersona, fetchPersona, fetchPersonas, selectPersonaAndGreet } from "../api/client";
 import { PageHeader } from "../components/layout/PageHeader";
 import { useAccessStatus } from "../hooks/useAccessStatus";
+import { useImagesLeft } from "../hooks/useImagesLeft";
 import { tg } from "../lib/telegram";
 
 export function CharacterCustom() {
   const navigate = useNavigate();
   const { data: accessStatus } = useAccessStatus();
+  const { imagesLeft } = useImagesLeft();
   const [loading, setLoading] = useState(true);
   const [name, setName] = useState("");
   const [shortDescription, setShortDescription] = useState("");
@@ -18,9 +20,7 @@ export function CharacterCustom() {
   const [initialForm, setInitialForm] = useState({ name: "", shortDescription: "", vibe: "" });
   const [hasHistory, setHasHistory] = useState(false);
   const hasSubscription = accessStatus?.has_subscription;
-  const imagesAvailable = accessStatus
-    ? (accessStatus.images?.remaining_free_today ?? 0) + (accessStatus.images?.remaining_paid ?? 0)
-    : null;
+  const imagesAvailable = imagesLeft;
   const messagesLeft = hasSubscription
     ? null
     : accessStatus

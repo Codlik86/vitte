@@ -4,6 +4,7 @@ import type { PersonaListItem } from "../api/types";
 import { fetchPersonas } from "../api/client";
 import { PageHeader } from "../components/layout/PageHeader";
 import { useAccessStatus } from "../hooks/useAccessStatus";
+import { useImagesLeft } from "../hooks/useImagesLeft";
 import { PersonaCard } from "../components/PersonaCard";
 import { DebugTelegramBanner } from "../components/DebugTelegramBanner";
 import { getAvatarPaths } from "../lib/avatars";
@@ -18,13 +19,12 @@ type CustomPersonaEntry = {
 export function CharactersList() {
   const navigate = useNavigate();
   const { data: accessStatus } = useAccessStatus();
+  const { imagesLeft } = useImagesLeft();
   const [items, setItems] = useState<PersonaListItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const hasSubscription = Boolean(accessStatus?.has_subscription);
-  const imagesAvailable = accessStatus
-    ? (accessStatus.images?.remaining_free_today ?? 0) + (accessStatus.images?.remaining_paid ?? 0)
-    : null;
+  const imagesAvailable = imagesLeft;
   const messagesLeft = hasSubscription
     ? null
     : accessStatus
@@ -55,7 +55,6 @@ export function CharactersList() {
   }, []);
 
   const renderCards = () => {
-    const allowedNames = new Set(["лина", "марианна", "аки", "мей", "стейси", "тая", "юна", "джули", "эш"]);
     const personasWithCustom: Array<PersonaListItem | CustomPersonaEntry> = [
       {
         id: "custom",
@@ -63,9 +62,7 @@ export function CharactersList() {
         short_description: "Создай собственного персонажа",
         isCustomEntry: true,
       },
-      ...items.filter(
-        (p) => !p.is_custom && allowedNames.has(p.name.trim().toLowerCase())
-      ),
+      ...items.filter((p) => !p.is_custom),
     ];
 
     if (loading) {

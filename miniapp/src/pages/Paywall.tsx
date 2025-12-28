@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { PageHeader } from "../components/layout/PageHeader";
 import { useStoreData } from "../hooks/useStoreData";
 import { useAccessStatus } from "../hooks/useAccessStatus";
+import { useImagesLeft } from "../hooks/useImagesLeft";
 import { buySubscription } from "../api/client";
 import { tg } from "../lib/telegram";
 
@@ -10,6 +11,7 @@ export function Paywall() {
   const navigate = useNavigate();
   const { status, config, loading, reload } = useStoreData();
   const { data: accessStatus, reload: reloadAccess } = useAccessStatus();
+  const { imagesLeft } = useImagesLeft();
   const [busyCode, setBusyCode] = useState<string | null>(null);
 
   const hasSubscription = Boolean(status?.has_active_subscription || accessStatus?.has_subscription);
@@ -17,11 +19,7 @@ export function Paywall() {
     ? new Date(status.subscription_ends_at).toLocaleDateString("ru-RU")
     : null;
   const plans = config?.subscription_plans ?? [];
-  const imagesAvailable = status
-    ? (status.remaining_images_today ?? 0) + (status.remaining_paid_images ?? 0)
-    : accessStatus?.images
-      ? (accessStatus.images.remaining_free_today ?? 0) + (accessStatus.images.remaining_paid ?? 0)
-      : null;
+  const imagesAvailable = imagesLeft;
   const messagesLeft = hasSubscription
     ? null
     : accessStatus

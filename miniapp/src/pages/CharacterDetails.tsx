@@ -4,6 +4,7 @@ import type { PersonaDetails, StoryCard } from "../api/types";
 import { fetchPersona, selectPersonaAndGreet } from "../api/client";
 import { PageHeader } from "../components/layout/PageHeader";
 import { useAccessStatus } from "../hooks/useAccessStatus";
+import { useImagesLeft } from "../hooks/useImagesLeft";
 import { tg } from "../lib/telegram";
 import { getAvatarPaths } from "../lib/avatars";
 
@@ -14,6 +15,7 @@ export function CharacterDetails() {
   const fallbackTitle = locationState?.name ?? "Персонаж";
   const navigate = useNavigate();
   const { data: accessStatus } = useAccessStatus();
+   const { imagesLeft } = useImagesLeft();
   const [persona, setPersona] = useState<PersonaDetails | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -27,9 +29,7 @@ export function CharacterDetails() {
   }, [fallbackTitle, id]);
 
   const hasSubscription = accessStatus?.has_subscription;
-  const imagesAvailable = accessStatus
-    ? (accessStatus.images?.remaining_free_today ?? 0) + (accessStatus.images?.remaining_paid ?? 0)
-    : null;
+  const imagesAvailable = imagesLeft;
   const messagesLeft = hasSubscription
     ? null
     : accessStatus

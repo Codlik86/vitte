@@ -11,6 +11,7 @@ import {
 } from "../api/client";
 import type { FeatureStatusItem } from "../api/types";
 import { useAccessStatus } from "../hooks/useAccessStatus";
+import { useImagesLeft } from "../hooks/useImagesLeft";
 import { tg } from "../lib/telegram";
 
 type TabKey = "upgrades" | "base";
@@ -19,15 +20,14 @@ const FEATURE_CODES = ["intense_mode", "fantasy_scenes"];
 export function Settings() {
   const navigate = useNavigate();
   const { data: accessStatus, reload: reloadAccess } = useAccessStatus();
+  const { imagesLeft } = useImagesLeft();
   const [activeTab, setActiveTab] = useState<TabKey>("upgrades");
   const [features, setFeatures] = useState<FeatureStatusItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [actionMessage, setActionMessage] = useState<string | null>(null);
 
-  const imagesAvailable = accessStatus
-    ? (accessStatus.images?.remaining_free_today ?? 0) + (accessStatus.images?.remaining_paid ?? 0)
-    : null;
+  const imagesAvailable = imagesLeft;
   const messagesLeft = accessStatus?.has_subscription
     ? null
     : accessStatus
