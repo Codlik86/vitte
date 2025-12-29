@@ -28,7 +28,7 @@ router = APIRouter(prefix="/api/personas", tags=["personas"])
 DEFAULT_SHORT_DESCRIPTION = "Базовый персонаж"
 DEFAULT_PERSONA_PHOTO = "/personas/custom-chat.jpg"
 CUSTOM_PERSONA_PHOTO = "/personas/custom-chat.jpg"
-ALLOWED_DEFAULT_PERSONA_NAMES = ("Лина", "Марианна", "Мей", "Стейси", "Тая", "Юна", "Джули", "Эш")
+ALLOWED_DEFAULT_PERSONA_NAMES = ("Лина", "Марианна", "Мей", "Стейси", "Тая", "Юна", "Джули", "Эш", "Ash", "Julie")
 PERSONA_PHOTO_SLUGS = {
     "лина": "lina",
     "марианна": "marianna",
@@ -193,6 +193,27 @@ async def list_personas(
     telegram_id = await get_or_raise_telegram_id(request, explicit=telegram_id)
     user = await get_or_create_user_by_telegram_id(session, telegram_id)
 
+    defaults_result = await session.execute(select(Persona).where(Persona.is_default.is_(True)))
+    default_personas = defaults_result.scalars().all()
+    active_defaults = [p for p in default_personas if p.is_active]
+    allowed_set = set(ALLOWED_DEFAULT_PERSONA_NAMES)
+    blocked: list[tuple[int, str, str]] = []
+    for p in active_defaults:
+        if p.name not in allowed_set:
+            blocked.append((p.id, p.name or "", "name_not_allowed"))
+    if blocked:
+        logger.info(
+            "personas.list filtered_out count=%s details=%s",
+            len(blocked),
+            blocked,
+        )
+    logger.info(
+        "personas.list defaults total=%s active=%s allowed_names=%s",
+        len(default_personas),
+        len(active_defaults),
+        sorted(allowed_set),
+    )
+
     result = await session.execute(
         select(Persona).where(
             (
@@ -203,6 +224,11 @@ async def list_personas(
         ).order_by(Persona.id)
     )
     personas = result.scalars().all()
+    logger.info(
+        "personas.list selected count=%s user_owned=%s",
+        len(personas),
+        len([p for p in personas if p.owner_user_id == user.id]),
+    )
 
     items = [
         _build_list_item(p, user.id, user.active_persona_id)

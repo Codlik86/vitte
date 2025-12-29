@@ -28,15 +28,16 @@ from .persona_images import PersonaImageConfig, get_persona_image_config
 
 WORKFLOW_DIR = Path(__file__).resolve().parent.parent / "assets" / "comfyui" / "workflows"
 WORKFLOW_FILES = {
+    "z-image_moody": WORKFLOW_DIR / "z-image_moody.json",
     "sdxl_lora": WORKFLOW_DIR / "sdxl_lora.json",
     "zimage_turbo_lora": WORKFLOW_DIR / "zimage_turbo_lora.json",
     "zimage_turbo_multi_lora": WORKFLOW_DIR / "zimage_turbo_multi_lora.json",
 }
-DEFAULT_WORKFLOW_NAME = "zimage_turbo_lora"
+DEFAULT_WORKFLOW_NAME = "z-image_moody"
 DEFAULT_CHECKPOINT_NAME = "models/checkpoints/huslyorealismxl_v2.safetensors"
-DEFAULT_DIFFUSION_MODEL = "models/diffusion_models/z_image_turbo_bf16.safetensors"
-DEFAULT_TEXT_ENCODER = "models/text_encoders/qwen_3_4b.safetensors"
-DEFAULT_VAE = "models/vae/ae.safetensors"
+DEFAULT_DIFFUSION_MODEL = "moodyPornMix_zitV3.safetensors"
+DEFAULT_TEXT_ENCODER = "qwen_3_4b.safetensors"
+DEFAULT_VAE = "ae.safetensors"
 
 # Без NSFW-тегов — только техничка.
 DEFAULT_NEGATIVE = (
@@ -184,7 +185,6 @@ class GenerationPlan:
     negative_prompt: str
     config: PersonaImageConfig
     has_subscription: bool
-    variant: str = "default"
 
 
 @dataclass
@@ -316,8 +316,13 @@ def _find_lora_nodes(workflow: Dict[str, Any]) -> list[str]:
         return sorted(loras)
 
 
-def _apply_ksampler_overrides(workflow: Dict[str, Any], steps: int | None, sampler_name: str | None) -> None:
-    if steps is None and sampler_name is None:
+def _apply_ksampler_overrides(
+    workflow: Dict[str, Any],
+    steps: int | None,
+    sampler_name: str | None,
+    scheduler: str | None,
+) -> None:
+    if steps is None and sampler_name is None and scheduler is None:
         return
     ks_ids = _collect_node_ids(workflow, ["KSampler"])
     if not ks_ids:
@@ -330,13 +335,28 @@ def _apply_ksampler_overrides(workflow: Dict[str, Any], steps: int | None, sampl
             inputs["steps"] = steps
         if sampler_name is not None:
             inputs["sampler_name"] = sampler_name
+        if scheduler is not None:
+            inputs["scheduler"] = scheduler
 
     logger.info(
-        "KSampler overrides applied steps=%s sampler=%s nodes=%s",
+        "KSampler overrides applied steps=%s sampler=%s scheduler=%s nodes=%s",
         steps,
         sampler_name,
+        scheduler,
         ",".join(ks_ids),
     )
+
+
+def _apply_auraflow_shift(workflow: Dict[str, Any], shift: float | int | None) -> None:
+    if shift is None:
+        return
+    node_id = find_first_node_id(workflow, "ModelSamplingAuraFlow", title_hints=["aura", "auraflow"])
+    if not node_id:
+        logger.warning("AuraFlow shift override requested but node not found")
+        return
+    inputs = workflow.get(node_id, {}).setdefault("inputs", {})
+    inputs["shift"] = shift
+    logger.info("AuraFlow shift applied shift=%s node=%s", shift, node_id)
 
 
 def _apply_lora_slots(
@@ -368,7 +388,6 @@ def _apply_template_values(
     negative_prompt: str,
     config: PersonaImageConfig,
     workflow_name: str,
-    variant: str = "default",
 ) -> Dict[str, Any]:
     workflow = template
 
@@ -381,6 +400,7 @@ def _apply_template_values(
     clip_loader_id = find_first_node_id(workflow, "CLIPLoader", title_hints=["clip", "text encoder", "load clip"])
     vae_loader_id = find_first_node_id(workflow, "VAELoader", title_hints=["vae"])
     sampler_node_id = find_first_node_id(workflow, "KSampler", title_hints=["ksampler", "sampler"])
+    auraflow_node_id = find_first_node_id(workflow, "ModelSamplingAuraFlow", title_hints=["aura", "auraflow"])
     lora_node_ids = _find_lora_nodes(workflow)
     positive_clip_id, negative_clip_id = _find_clip_text_nodes(workflow, sampler_node_id)
 
@@ -400,8 +420,7 @@ def _apply_template_values(
 
     if missing:
         logger.error(
-            "Workflow %s missing nodes (expected CheckpointLoaderSimple/UNETLoader, LoraLoader/LoraLoaderModelOnly, "
-            "CLIPTextEncode, CLIPLoader, VAELoader, KSampler): %s",
+            "Workflow %s missing nodes (expected UNETLoader, LoraLoader, CLIPTextEncode, CLIPLoader, VAELoader, KSampler): %s",
             workflow_name,
             ", ".join(sorted(missing)),
         )
@@ -417,11 +436,7 @@ def _apply_template_values(
     checkpoint_name = normalize_model_ref(
         settings.comfyui_default_checkpoint or checkpoint_inputs.get("ckpt_name") or DEFAULT_CHECKPOINT_NAME
     )
-    diffusion_model_name = normalize_model_ref(
-        getattr(settings, "comfyui_default_diffusion_model", None)
-        or unet_inputs.get("unet_name")
-        or DEFAULT_DIFFUSION_MODEL
-    )
+    diffusion_model_name = DEFAULT_DIFFUSION_MODEL
     clip_name = normalize_model_ref(
         getattr(settings, "comfyui_default_text_encoder", None) or clip_inputs.get("clip_name") or DEFAULT_TEXT_ENCODER
     )
@@ -438,23 +453,12 @@ def _apply_template_values(
     if vae_loader_id:
         vae_inputs["vae_name"] = vae_name
 
-    use_hot = variant == "hot"
-    hot_name = config.hot_lora_filename
-
     persona_slot = {
         "name": config.lora_filename,
-        "strength_model": config.lora_strength_model if not (use_hot and hot_name) else 0.0,
-        "strength_clip": config.lora_strength_clip if not (use_hot and hot_name) else 0.0,
+        "strength_model": config.lora_strength_model,
+        "strength_clip": config.lora_strength_clip,
     }
-    hot_slot = {
-        "name": hot_name,
-        "strength_model": config.hot_lora_strength_model if use_hot and hot_name else 0.0,
-        "strength_clip": config.hot_lora_strength_clip if use_hot and hot_name else 0.0,
-    }
-    if not hot_name:
-        hot_slot["strength_model"] = 0.0
-        hot_slot["strength_clip"] = 0.0
-    _apply_lora_slots(workflow, [persona_slot, hot_slot])
+    _apply_lora_slots(workflow, [persona_slot])
 
     positive_inputs["text"] = prompt
 
@@ -467,10 +471,11 @@ def _apply_template_values(
 
     sampler_inputs["seed"] = random.randint(1, 2_000_000_000)
 
-    _apply_ksampler_overrides(workflow, config.ksampler_steps, config.ksampler_sampler_name)
+    _apply_ksampler_overrides(workflow, config.ksampler_steps, config.ksampler_sampler_name, config.ksampler_scheduler)
+    _apply_auraflow_shift(workflow, config.auraflow_shift)
 
     logger.info(
-        "Workflow nodes workflow=%s ckpt=%s unet=%s clip=%s vae=%s loras=%s sampler=%s",
+        "Workflow nodes workflow=%s ckpt=%s unet=%s clip=%s vae=%s loras=%s sampler=%s auraflow=%s",
         workflow_name,
         checkpoint_node_id,
         unet_node_id,
@@ -478,6 +483,7 @@ def _apply_template_values(
         vae_loader_id,
         ",".join(lora_node_ids),
         sampler_node_id,
+        auraflow_node_id,
     )
 
     return workflow
@@ -940,8 +946,7 @@ async def _generate_and_send(plan: GenerationPlan, context: dict[str, Any], bot_
         await _log_failure(plan, "not_configured")
         return False
 
-    preferred_workflow = "zimage_turbo_multi_lora" if plan.variant == "hot" else "zimage_turbo_multi_lora"
-    workflow_name = _resolve_workflow_name(preferred_workflow)
+    workflow_name = _resolve_workflow_name(DEFAULT_WORKFLOW_NAME)
     template = _load_workflow_template(workflow_name)
     if not template:
         logger.error("Workflow template %s is empty or missing", workflow_name)
@@ -954,7 +959,6 @@ async def _generate_and_send(plan: GenerationPlan, context: dict[str, Any], bot_
             negative_prompt=plan.negative_prompt,
             config=plan.config,
             workflow_name=workflow_name,
-            variant=plan.variant,
         )
     except ImageRequestError as exc:
         logger.error(
@@ -973,13 +977,23 @@ async def _generate_and_send(plan: GenerationPlan, context: dict[str, Any], bot_
         if checkpoint_node_id
         else None
     )
-    hot_name = Path(plan.config.hot_lora_filename).name if plan.config.hot_lora_filename else None
 
     logger.info(
-        f"ComfyUI request user={plan.user_id} persona={plan.persona_id} workflow={workflow_name} variant={plan.variant} "
-        f"ckpt={ckpt_name} lora={Path(plan.config.lora_filename).name} hot_lora={hot_name} "
-        f"strengths=({plan.config.lora_strength_model:.2f}/{plan.config.lora_strength_clip:.2f}/"
-        f"{plan.config.hot_lora_strength_model if hot_name else 0.0:.2f})"
+        "ComfyUI request user=%s persona=%s persona_key=%s workflow=%s ckpt=%s lora=%s strengths=(%.2f/%.2f) "
+        "steps=%s sampler=%s scheduler=%s shift=%s prompt_len=%s",
+        plan.user_id,
+        plan.persona_id,
+        plan.persona_key,
+        workflow_name,
+        ckpt_name,
+        Path(plan.config.lora_filename).name,
+        plan.config.lora_strength_model,
+        plan.config.lora_strength_clip,
+        plan.config.ksampler_steps,
+        plan.config.ksampler_sampler_name,
+        plan.config.ksampler_scheduler,
+        plan.config.auraflow_shift,
+        len(plan.prompt),
     )
 
     # Stable-ish client_id helps debugging and history tracking through tunnels.
@@ -1003,8 +1017,7 @@ async def _generate_image_bytes(plan: GenerationPlan, context: dict[str, Any]) -
         await _log_failure(plan, "not_configured")
         raise ImageRequestError("generation_failed")
 
-    preferred_workflow = "zimage_turbo_multi_lora" if plan.variant == "hot" else "zimage_turbo_multi_lora"
-    workflow_name = _resolve_workflow_name(preferred_workflow)
+    workflow_name = _resolve_workflow_name(DEFAULT_WORKFLOW_NAME)
     template = _load_workflow_template(workflow_name)
     if not template:
         logger.error("Workflow template %s is empty or missing", workflow_name)
@@ -1018,7 +1031,6 @@ async def _generate_image_bytes(plan: GenerationPlan, context: dict[str, Any]) -
             negative_prompt=plan.negative_prompt,
             config=plan.config,
             workflow_name=workflow_name,
-            variant=plan.variant,
         )
     except ImageRequestError as exc:
         logger.error(
@@ -1037,13 +1049,23 @@ async def _generate_image_bytes(plan: GenerationPlan, context: dict[str, Any]) -
         if checkpoint_node_id
         else None
     )
-    hot_name = Path(plan.config.hot_lora_filename).name if plan.config.hot_lora_filename else None
 
     logger.info(
-        f"ComfyUI request user={plan.user_id} persona={plan.persona_id} workflow={workflow_name} variant={plan.variant} "
-        f"ckpt={ckpt_name} lora={Path(plan.config.lora_filename).name} hot_lora={hot_name} "
-        f"strengths=({plan.config.lora_strength_model:.2f}/{plan.config.lora_strength_clip:.2f}/"
-        f"{plan.config.hot_lora_strength_model if hot_name else 0.0:.2f})"
+        "ComfyUI request user=%s persona=%s persona_key=%s workflow=%s ckpt=%s lora=%s strengths=(%.2f/%.2f) "
+        "steps=%s sampler=%s scheduler=%s shift=%s prompt_len=%s",
+        plan.user_id,
+        plan.persona_id,
+        plan.persona_key,
+        workflow_name,
+        ckpt_name,
+        Path(plan.config.lora_filename).name,
+        plan.config.lora_strength_model,
+        plan.config.lora_strength_clip,
+        plan.config.ksampler_steps,
+        plan.config.ksampler_sampler_name,
+        plan.config.ksampler_scheduler,
+        plan.config.auraflow_shift,
+        len(plan.prompt),
     )
 
     client_id = f"vitte-{plan.user_id}-{plan.persona_id}-{uuid.uuid4().hex[:8]}"
@@ -1072,7 +1094,6 @@ async def request_image_on_demand(
     persona_id: int,
     bot_instance: Bot,
     context: dict[str, Any] | None = None,
-    variant: str = "default",
 ) -> None:
     """
     Generate and send image on explicit user action.
@@ -1153,12 +1174,6 @@ async def request_image_on_demand(
                 await bot_instance.send_message(chat_id, "Запрос отклонён. Попробуй сформулировать иначе.")
                 return
 
-            style_hint = "photorealistic, natural skin texture, realistic lighting, high detail"
-            if variant == "hot":
-                style_hint = style_hint + "; close-up body framing, minimal face"
-                # Encourage close framing to reduce face drift when persona LoRA is muted.
-                if img_ctx.prompt_core:
-                    img_ctx.prompt_core += " close-up body framing"
             prompt = build_structured_image_prompt(
                 trigger_word=config.trigger_word,
                 master_prompt=config.master_prompt,
@@ -1166,7 +1181,7 @@ async def request_image_on_demand(
                 scene_text=img_ctx.scene_text,
                 user_request=ctx.get("user_request_text") or "",
                 persona_fallback=img_ctx.persona_fallback,
-                style_hint=style_hint,
+                style_hint="photorealistic, natural skin texture, realistic lighting, high detail",
             )
             negative_prompt = (img_ctx.negative_text or DEFAULT_NEGATIVE).strip()
 
@@ -1174,7 +1189,7 @@ async def request_image_on_demand(
                 session,
                 user.id,
                 "image_requested",
-                {"persona_id": persona.id, "persona_key": persona.key, "trigger": "button", "variant": variant},
+                {"persona_id": persona.id, "persona_key": persona.key, "trigger": "button"},
             )
             await session.commit()
 
@@ -1188,7 +1203,6 @@ async def request_image_on_demand(
                 negative_prompt=negative_prompt,
                 config=config,
                 has_subscription=has_subscription,
-                variant=variant,
             )
 
             try:

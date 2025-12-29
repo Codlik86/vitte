@@ -14,14 +14,14 @@ export function useImagesLeft(): UseImagesLeftResult {
   const { status: storeStatus } = useStoreData(true);
 
   const imagesLeft = useMemo(() => {
-    if (accessStatus?.images) {
-      const free = accessStatus.images.remaining_free_today ?? 0;
-      const paid = accessStatus.images.remaining_paid ?? 0;
-      return free + paid;
-    }
     if (storeStatus) {
       const free = storeStatus.remaining_images_today ?? 0;
       const paid = storeStatus.remaining_paid_images ?? 0;
+      return free + paid;
+    }
+    if (accessStatus?.images) {
+      const free = accessStatus.images.remaining_free_today ?? 0;
+      const paid = accessStatus.images.remaining_paid ?? 0;
       return free + paid;
     }
     return null;
@@ -40,6 +40,10 @@ export function useImagesLeft(): UseImagesLeftResult {
     imagesLeft,
     loading,
     reload,
-    source: accessStatus?.images ? "access_status" : storeStatus ? "store_status" : "none",
+    source: storeStatus
+      ? "store_status"
+      : accessStatus?.images
+        ? "access_status"
+        : "none",
   };
 }

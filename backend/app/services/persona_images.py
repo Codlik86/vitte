@@ -14,12 +14,11 @@ class PersonaImageConfig:
     negative_prompt: str
     lora_strength_model: float = 1.0
     lora_strength_clip: float = 1.0
-    hot_lora_filename: str | None = None
-    hot_lora_strength_model: float = 1.0
-    hot_lora_strength_clip: float = 1.0
     default_style: str | None = None
     ksampler_steps: int | None = None
     ksampler_sampler_name: str | None = None
+    ksampler_scheduler: str | None = None
+    auraflow_shift: float | int | None = None
 
 
 # Без NSFW-тегов в negative (как ты просил). Оставляем техничку против артефактов.
@@ -36,12 +35,11 @@ DEFAULT_IMAGE_CONFIG = PersonaImageConfig(
     negative_prompt=DEFAULT_NEGATIVE,
     lora_strength_model=1.0,
     lora_strength_clip=1.0,
-    hot_lora_filename="Mystic-XXX-ZIT-v3.safetensors",
-    hot_lora_strength_model=1.0,
-    hot_lora_strength_clip=1.0,
     default_style=None,
     ksampler_steps=None,
     ksampler_sampler_name=None,
+    ksampler_scheduler="simple",
+    auraflow_shift=7.0,
 )
 
 
@@ -54,12 +52,11 @@ PERSONA_CONFIGS: Dict[str, PersonaImageConfig] = {
         negative_prompt=DEFAULT_NEGATIVE,
         lora_strength_model=1.0,
         lora_strength_clip=1.0,
-        hot_lora_filename="Mystic-XXX-ZIT-v3.safetensors",
-        hot_lora_strength_model=1.0,
-        hot_lora_strength_clip=1.0,
         default_style=None,
         ksampler_steps=16,
         ksampler_sampler_name="euler",
+        ksampler_scheduler="simple",
+        auraflow_shift=7.0,
     ),
     "marianna": PersonaImageConfig(
         lora_filename="woman041-zit.safetensors",
@@ -69,12 +66,11 @@ PERSONA_CONFIGS: Dict[str, PersonaImageConfig] = {
         negative_prompt=DEFAULT_NEGATIVE,
         lora_strength_model=1.0,
         lora_strength_clip=1.0,
-        hot_lora_filename="Mystic-XXX-ZIT-v3.safetensors",
-        hot_lora_strength_model=1.0,
-        hot_lora_strength_clip=1.0,
         default_style=None,
         ksampler_steps=16,
         ksampler_sampler_name="euler",
+        ksampler_scheduler="simple",
+        auraflow_shift=7.0,
     ),
     "stacey": PersonaImageConfig(
         lora_filename="woman037-zimage.safetensors",
@@ -84,12 +80,11 @@ PERSONA_CONFIGS: Dict[str, PersonaImageConfig] = {
         negative_prompt=DEFAULT_NEGATIVE,
         lora_strength_model=1.0,
         lora_strength_clip=1.0,
-        hot_lora_filename="Mystic-XXX-ZIT-v3.safetensors",
-        hot_lora_strength_model=1.0,
-        hot_lora_strength_clip=1.0,
         default_style=None,
         ksampler_steps=16,
         ksampler_sampler_name="euler",
+        ksampler_scheduler="simple",
+        auraflow_shift=7.0,
     ),
     "mei": PersonaImageConfig(
         lora_filename="Character_Mix_DahliaMixerV2_ZIT.safetensors",
@@ -99,12 +94,11 @@ PERSONA_CONFIGS: Dict[str, PersonaImageConfig] = {
         negative_prompt=DEFAULT_NEGATIVE,
         lora_strength_model=1.0,
         lora_strength_clip=1.0,
-        hot_lora_filename="Mystic-XXX-ZIT-v3.safetensors",
-        hot_lora_strength_model=1.0,
-        hot_lora_strength_clip=1.0,
         default_style=None,
         ksampler_steps=16,
         ksampler_sampler_name="euler",
+        ksampler_scheduler="simple",
+        auraflow_shift=7.0,
     ),
     "taya": PersonaImageConfig(
         lora_filename="isabella.safetensors",
@@ -114,12 +108,11 @@ PERSONA_CONFIGS: Dict[str, PersonaImageConfig] = {
         negative_prompt=DEFAULT_NEGATIVE,
         lora_strength_model=1.0,
         lora_strength_clip=1.0,
-        hot_lora_filename="Mystic-XXX-ZIT-v3.safetensors",
-        hot_lora_strength_model=1.0,
-        hot_lora_strength_clip=1.0,
         default_style=None,
         ksampler_steps=16,
         ksampler_sampler_name="euler",
+        ksampler_scheduler="simple",
+        auraflow_shift=7.0,
     ),
     "ash": PersonaImageConfig(
         lora_filename="KawaiiKinkyNE_extracted_lora_ratio_rank_adaptive_ratio_0.15_fp16.safetensors",
@@ -129,27 +122,25 @@ PERSONA_CONFIGS: Dict[str, PersonaImageConfig] = {
         negative_prompt=DEFAULT_NEGATIVE,
         lora_strength_model=1.0,
         lora_strength_clip=1.0,
-        hot_lora_filename="Mystic-XXX-ZIT-v3.safetensors",
-        hot_lora_strength_model=1.0,
-        hot_lora_strength_clip=1.0,
         default_style=None,
         ksampler_steps=16,
         ksampler_sampler_name="euler",
+        ksampler_scheduler="simple",
+        auraflow_shift=7.0,
     ),
     "julie": PersonaImageConfig(
         lora_filename="EmmaNotreal - Z-Image-Turbo.safetensors",
-        trigger_word="young Dutch woman",
+        trigger_word="young Dutch blondy woman",
         master_prompt="cheerful curious young Dutch student, natural skin, photorealistic.",
         prompt_core="young Dutch woman, photorealistic, high detail, cinematic lighting",
         negative_prompt=DEFAULT_NEGATIVE,
-        lora_strength_model=1.0,
-        lora_strength_clip=1.0,
-        hot_lora_filename="Mystic-XXX-ZIT-v3.safetensors",
-        hot_lora_strength_model=1.0,
-        hot_lora_strength_clip=1.0,
+        lora_strength_model=0.7,
+        lora_strength_clip=0.8,
         default_style=None,
         ksampler_steps=16,
         ksampler_sampler_name="euler",
+        ksampler_scheduler="simple",
+        auraflow_shift=7.0,
     ),
     "yuna": PersonaImageConfig(
         lora_filename="nano_Korean.safetensors",
@@ -159,12 +150,11 @@ PERSONA_CONFIGS: Dict[str, PersonaImageConfig] = {
         negative_prompt=DEFAULT_NEGATIVE,
         lora_strength_model=1.0,
         lora_strength_clip=1.0,
-        hot_lora_filename="Mystic-XXX-ZIT-v3.safetensors",
-        hot_lora_strength_model=1.0,
-        hot_lora_strength_clip=1.0,
         default_style=None,
         ksampler_steps=16,
         ksampler_sampler_name="euler",
+        ksampler_scheduler="simple",
+        auraflow_shift=7.0,
     ),
 }
 

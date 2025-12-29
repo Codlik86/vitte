@@ -396,51 +396,7 @@ async def on_image_hot_requested(cb: CallbackQuery):
         await _safe_answer(cb, "Некорректный запрос", show_alert=False)
         return
 
-    await _safe_answer(cb, "Готовлю горячее…")
-    try:
-        await cb.message.edit_reply_markup(reply_markup=None)
-    except Exception:
-        pass
-
-    user_id: int | None = None
-    async for session in get_session():
-        user = await get_or_create_user_by_telegram_id(session, cb.from_user.id)
-        await session.commit()
-        user_id = user.id
-        break
-
-    if user_id is None:
-        await cb.answer("Пользователь не найден", show_alert=False)
-        return
-
-    context = {
-        "reply_text": (cb.message.text or cb.message.caption or "").strip(),
-        "user_message": "",
-    }
-
-    try:
-        await request_image_on_demand(
-            user_id=user_id,
-            chat_id=cb.message.chat.id,
-            persona_id=persona_id,
-            bot_instance=bot,
-            context=context,
-            variant="hot",
-        )
-    except ImageRequestError as exc:
-        if exc.reason == "no_quota":
-            await _safe_answer(cb, "Лимит изображений закончился", show_alert=True)
-        elif exc.reason == "disabled":
-            await _safe_answer(cb, "Генерация изображений отключена", show_alert=False)
-        elif exc.reason == "generation_failed":
-            await _safe_answer(cb, "Не получилось сгенерировать изображение", show_alert=False)
-        elif exc.reason == "busy":
-            await _safe_answer(cb, "Уже генерирую…", show_alert=False)
-        else:
-            await _safe_answer(cb, "Не получилось сгенерировать изображение", show_alert=False)
-    except Exception as exc:  # noqa: BLE001
-        logger.error("Failed to handle hot image request: %s", exc)
-        await _safe_answer(cb, "Не получилось сгенерировать изображение", show_alert=False)
+    await _safe_answer(cb, "Скоро будет доступно", show_alert=False)
 
 
 @dp.callback_query(F.data.startswith("pay_sub:"))
