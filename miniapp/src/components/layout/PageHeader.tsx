@@ -3,7 +3,6 @@ import { ImageChip } from "../ImageChip";
 
 export type PageHeaderStats = {
   images: number | null;
-  messagesLeft?: number | null;
   hasSubscription?: boolean;
   isPremium?: boolean;
 };
@@ -49,11 +48,9 @@ export function PageHeader({
         <div className="w-full min-[420px]:w-auto min-[420px]:justify-end flex justify-start">
           <ImageChip
             imagesRemaining={stats.images ?? null}
-            messagesLeft={stats.messagesLeft ?? null}
             hasSubscription={stats.hasSubscription}
             isPremium={stats.isPremium}
             onImagesClick={() => navigate("/store")}
-            onMessagesClick={() => navigate("/paywall")}
             onBadgeClick={() => navigate("/paywall")}
             onSettingsClick={() => navigate("/settings")}
           />

@@ -1,10 +1,8 @@
 type ImageChipProps = {
   imagesRemaining: number | null;
-  messagesLeft?: number | null;
   hasSubscription?: boolean;
   isPremium?: boolean;
   onImagesClick?: () => void;
-  onMessagesClick?: () => void;
   onBadgeClick?: () => void;
   onSettingsClick?: () => void;
   className?: string;
@@ -19,11 +17,9 @@ function formatCounter(value: number | null): string {
 
 export function ImageChip({
   imagesRemaining,
-  messagesLeft = null,
   hasSubscription = false,
   isPremium = false,
   onImagesClick,
-  onMessagesClick,
   onBadgeClick,
   onSettingsClick,
   className = "",

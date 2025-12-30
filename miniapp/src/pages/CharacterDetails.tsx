@@ -30,14 +30,8 @@ export function CharacterDetails() {
 
   const hasSubscription = accessStatus?.has_subscription;
   const imagesAvailable = imagesLeft;
-  const messagesLeft = hasSubscription
-    ? null
-    : accessStatus
-      ? Math.max(0, (accessStatus.free_messages_limit ?? 15) - (accessStatus.free_messages_used ?? 0))
-      : null;
   const headerStats = {
     images: imagesAvailable,
-    messagesLeft,
     hasSubscription: hasSubscription,
     isPremium: hasSubscription,
   };

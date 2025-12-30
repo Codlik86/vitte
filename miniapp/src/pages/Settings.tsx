@@ -28,15 +28,9 @@ export function Settings() {
   const [actionMessage, setActionMessage] = useState<string | null>(null);
 
   const imagesAvailable = imagesLeft;
-  const messagesLeft = accessStatus?.has_subscription
-    ? null
-    : accessStatus
-      ? Math.max(0, (accessStatus.free_messages_limit ?? 15) - (accessStatus.free_messages_used ?? 0))
-      : null;
 
   const headerStats = {
     images: imagesAvailable,
-    messagesLeft,
     hasSubscription: Boolean(accessStatus?.has_subscription),
     isPremium: Boolean(accessStatus?.has_subscription),
   };

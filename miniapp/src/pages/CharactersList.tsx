@@ -24,16 +24,9 @@ export function CharactersList() {
   const [items, setItems] = useState<PersonaListItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
-  const hasSubscription = Boolean(accessStatus?.has_subscription);
   const imagesAvailable = imagesLeft;
-  const messagesLeft = hasSubscription
-    ? null
-    : accessStatus
-      ? Math.max(0, (accessStatus.free_messages_limit ?? 15) - (accessStatus.free_messages_used ?? 0))
-      : null;
   const headerStats = {
     images: imagesAvailable,
-    messagesLeft,
     hasSubscription: accessStatus?.has_subscription,
     isPremium: accessStatus?.has_subscription,
   };

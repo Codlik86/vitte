@@ -30,14 +30,8 @@ export function StoreLayout({ title, showBack = true }: StoreLayoutProps) {
     }
     return null;
   }, [status, accessStatus?.images]);
-  const messagesLeft = hasSubscription
-    ? null
-    : accessStatus
-      ? Math.max(0, (accessStatus.free_messages_limit ?? 15) - (accessStatus.free_messages_used ?? 0))
-      : null;
   const headerStats = {
     images: imagesAvailable,
-    messagesLeft,
     hasSubscription,
     isPremium: hasSubscription,
   };
