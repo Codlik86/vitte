@@ -1,3 +1,5 @@
+import os
+
 from fastapi import APIRouter, Depends, HTTPException, Query, Request
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -28,7 +30,18 @@ router = APIRouter(prefix="/api/personas", tags=["personas"])
 DEFAULT_SHORT_DESCRIPTION = "Базовый персонаж"
 DEFAULT_PERSONA_PHOTO = "/personas/custom-chat.jpg"
 CUSTOM_PERSONA_PHOTO = "/personas/custom-chat.jpg"
-ALLOWED_DEFAULT_PERSONA_NAMES = ("Лина", "Марианна", "Мей", "Стейси", "Тая", "Юна", "Джули", "Эш", "Ash", "Julie")
+ALLOWED_DEFAULT_PERSONA_NAMES = (
+    "Лина",
+    "Марианна",
+    "Мей",
+    "Стейси",
+    "Тая",
+    "Юна",
+    "Джули",
+    "Эш",
+    "Ash",
+    "Julie",
+)
 PERSONA_PHOTO_SLUGS = {
     "лина": "lina",
     "марианна": "marianna",
@@ -190,45 +203,55 @@ async def list_personas(
     telegram_id: int | None = Query(default=None, ge=1),
     session: AsyncSession = Depends(get_session),
 ):
+    debug_personas = os.getenv("DEBUG_PERSONAS") == "1"
     telegram_id = await get_or_raise_telegram_id(request, explicit=telegram_id)
     user = await get_or_create_user_by_telegram_id(session, telegram_id)
 
     defaults_result = await session.execute(select(Persona).where(Persona.is_default.is_(True)))
     default_personas = defaults_result.scalars().all()
     active_defaults = [p for p in default_personas if p.is_active]
-    allowed_set = set(ALLOWED_DEFAULT_PERSONA_NAMES)
+    allowed_set = {name.strip() for name in ALLOWED_DEFAULT_PERSONA_NAMES}
+    allowed_lower = {name.lower() for name in allowed_set}
     blocked: list[tuple[int, str, str]] = []
     for p in active_defaults:
-        if p.name not in allowed_set:
+        normalized = (p.name or "").strip().lower()
+        if normalized not in allowed_lower:
             blocked.append((p.id, p.name or "", "name_not_allowed"))
-    if blocked:
+    if debug_personas:
         logger.info(
-            "personas.list filtered_out count=%s details=%s",
-            len(blocked),
+            "personas.list debug telegram_id=%s defaults_total=%s active_defaults=%s blocked=%s allowed=%s",
+            telegram_id,
+            len(default_personas),
+            len(active_defaults),
             blocked,
+            sorted(allowed_set),
         )
-    logger.info(
-        "personas.list defaults total=%s active=%s allowed_names=%s",
-        len(default_personas),
-        len(active_defaults),
-        sorted(allowed_set),
-    )
 
     result = await session.execute(
         select(Persona).where(
             (
                 (Persona.is_active.is_(True))
-                & (Persona.name.in_(ALLOWED_DEFAULT_PERSONA_NAMES))
+                & (func.lower(func.trim(Persona.name)).in_(allowed_lower))
             )
             | (Persona.owner_user_id == user.id)
         ).order_by(Persona.id)
     )
     personas = result.scalars().all()
-    logger.info(
-        "personas.list selected count=%s user_owned=%s",
-        len(personas),
-        len([p for p in personas if p.owner_user_id == user.id]),
-    )
+    if debug_personas:
+        ash_present = any((p.name or "").strip().lower() == "ash" for p in personas)
+        julie_present = any((p.name or "").strip().lower() == "julie" for p in personas)
+        ash_db = any((p.name or "").strip().lower() == "ash" for p in default_personas)
+        julie_db = any((p.name or "").strip().lower() == "julie" for p in default_personas)
+        logger.info(
+            "personas.list result count=%s user_owned=%s ash=%s julie=%s ash_db=%s julie_db=%s personas=%s",
+            len(personas),
+            len([p for p in personas if p.owner_user_id == user.id]),
+            ash_present,
+            julie_present,
+            ash_db,
+            julie_db,
+            [(p.id, p.name, p.is_active, p.is_default) for p in personas],
+        )
 
     items = [
         _build_list_item(p, user.id, user.active_persona_id)
@@ -259,7 +282,9 @@ async def get_persona(
     persona = result.scalar_one_or_none()
     if persona is None:
         raise HTTPException(status_code=404, detail="Persona not found")
-    if persona.is_default and (not persona.is_active or persona.name not in ALLOWED_DEFAULT_PERSONA_NAMES):
+    normalized_name = (persona.name or "").strip().lower()
+    allowed_lower = {name.lower() for name in ALLOWED_DEFAULT_PERSONA_NAMES}
+    if persona.is_default and (not persona.is_active or normalized_name not in allowed_lower):
         raise HTTPException(status_code=404, detail="Persona not available")
 
     user_id = user.id if user else None
@@ -284,9 +309,11 @@ async def select_persona(
         select(Persona).where(Persona.id == persona_id)
     )
     persona = persona_result.scalar_one_or_none()
+    normalized_name = (persona.name or "").strip().lower() if persona else ""
+    allowed_lower = {name.lower() for name in ALLOWED_DEFAULT_PERSONA_NAMES}
     if (
         persona is None
-        or (persona.is_default and (not persona.is_active or persona.name not in ALLOWED_DEFAULT_PERSONA_NAMES))
+        or (persona.is_default and (not persona.is_active or normalized_name not in allowed_lower))
         or not _is_persona_owned_or_default(persona, user.id)
     ):
         raise HTTPException(status_code=404, detail="Persona not found")
@@ -310,9 +337,11 @@ async def select_persona_and_greet(
         select(Persona).where(Persona.id == payload.persona_id)
     )
     persona = persona_result.scalar_one_or_none()
+    normalized_name = (persona.name or "").strip().lower() if persona else ""
+    allowed_lower = {name.lower() for name in ALLOWED_DEFAULT_PERSONA_NAMES}
     if (
         persona is None
-        or (persona.is_default and (not persona.is_active or persona.name not in ALLOWED_DEFAULT_PERSONA_NAMES))
+        or (persona.is_default and (not persona.is_active or normalized_name not in allowed_lower))
         or not _is_persona_owned_or_default(persona, user.id)
     ):
         raise HTTPException(status_code=404, detail="Persona not found")

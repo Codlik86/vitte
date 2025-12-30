@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import os
+
 from fastapi import APIRouter, Depends, HTTPException, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -15,7 +17,7 @@ from ..logging_config import logger
 from ..bot import bot
 from ..services.stars import send_stars_invoice_for_subscription, send_stars_invoice_for_feature, create_invoice_link
 from ..services.analytics import log_event
-from ..models import Purchase, PurchaseStatus
+from ..models import Purchase, PurchaseStatus, AccessStatus
 from ..schemas import StoreBuyRequest, StoreBuyResponse
 
 router = APIRouter(prefix="/api/store", tags=["store"])
@@ -38,15 +40,25 @@ async def store_status(
     telegram_id = await get_or_raise_telegram_id(request, allow_debug=True)
     user = await get_or_create_user_by_telegram_id(session, telegram_id)
     subscription = await get_active_subscription(session, user.id)
-    quota = await get_image_quota(session, user, has_subscription=bool(subscription))
+    has_subscription = bool(subscription) or user.access_status == AccessStatus.SUBSCRIPTION_ACTIVE
+    quota = await get_image_quota(session, user, has_subscription=has_subscription)
     features = await collect_feature_states(session, user)
+    if os.getenv("DEBUG_LIMITS") == "1":
+        logger.info(
+            "store_status debug telegram_id=%s has_subscription=%s access_status=%s quota=%s subscription=%s",
+            telegram_id,
+            has_subscription,
+            user.access_status,
+            quota,
+            subscription.plan_code if subscription else None,
+        )
     return {
-        "has_active_subscription": bool(subscription),
+        "has_active_subscription": has_subscription,
         "subscription_ends_at": subscription.valid_until if subscription else None,
         "remaining_images_today": quota["remaining_free_today"] + quota["remaining_paid"],
         "remaining_paid_images": quota["remaining_paid"],
         "unlocked_features": [code for code, state in features.items() if state.unlocked],
-        "is_free_user": not bool(subscription),
+        "is_free_user": not has_subscription,
     }
 
 

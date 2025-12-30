@@ -20,6 +20,7 @@ export function CharactersList() {
   const navigate = useNavigate();
   const { data: accessStatus } = useAccessStatus();
   const { imagesLeft } = useImagesLeft();
+  const debugMiniapp = import.meta.env.VITE_DEBUG_MINIAPP === "1";
   const [items, setItems] = useState<PersonaListItem[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -43,6 +44,15 @@ export function CharactersList() {
       setLoading(true);
       const data = await fetchPersonas();
       setItems(data.items);
+      if (debugMiniapp) {
+        const names = data.items.map((p) => (p.name || "").toLowerCase());
+        console.info("[Vitte][DEBUG_MINIAPP] personas fetched", {
+          count: data.items.length,
+          hasAsh: names.includes("ash"),
+          hasJulie: names.includes("julie"),
+          names,
+        });
+      }
     } catch (e: any) {
       setError(e.message ?? "Не удалось загрузить персонажей");
     } finally {

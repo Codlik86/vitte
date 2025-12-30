@@ -15,6 +15,7 @@ export function useStoreData(auto = true): StoreData {
   const [status, setStatus] = useState<StoreStatus | null>(null);
   const [loading, setLoading] = useState<boolean>(auto);
   const [error, setError] = useState<string | null>(null);
+  const debugMiniapp = import.meta.env.VITE_DEBUG_MINIAPP === "1";
 
   const reload = useCallback(async () => {
     try {
@@ -23,6 +24,12 @@ export function useStoreData(auto = true): StoreData {
       const [configRes, statusRes] = await Promise.all([fetchStoreConfig(), fetchStoreStatus()]);
       setConfig(configRes);
       setStatus(statusRes);
+      if (debugMiniapp) {
+        console.info("[Vitte][DEBUG_MINIAPP][storeData]", {
+          status: statusRes,
+          configPlans: configRes?.subscription_plans?.length ?? 0,
+        });
+      }
     } catch (e: any) {
       setError(e.message ?? "Не удалось загрузить магазин");
     } finally {

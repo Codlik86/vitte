@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useAccessStatus } from "./useAccessStatus";
 import { useStoreData } from "./useStoreData";
 
@@ -12,32 +12,57 @@ type UseImagesLeftResult = {
 export function useImagesLeft(): UseImagesLeftResult {
   const { data: accessStatus, loading, reload } = useAccessStatus();
   const { status: storeStatus } = useStoreData(true);
+  const [lastValue, setLastValue] = useState<number | null>(null);
+
+  const calculateFromStore = () => {
+    if (!storeStatus) return null;
+    const { remaining_images_today, remaining_paid_images } = storeStatus;
+    const hasData =
+      typeof remaining_images_today === "number" || typeof remaining_paid_images === "number";
+    if (!hasData) return null;
+    const free = typeof remaining_images_today === "number" ? remaining_images_today : 0;
+    const paid = typeof remaining_paid_images === "number" ? remaining_paid_images : 0;
+    return free + paid;
+  };
+
+  const calculateFromAccess = () => {
+    if (!accessStatus?.images) return null;
+    const { remaining_free_today, remaining_paid } = accessStatus.images;
+    const hasData =
+      typeof remaining_free_today === "number" || typeof remaining_paid === "number";
+    if (!hasData) return null;
+    const free = typeof remaining_free_today === "number" ? remaining_free_today : 0;
+    const paid = typeof remaining_paid === "number" ? remaining_paid : 0;
+    return free + paid;
+  };
 
   const imagesLeft = useMemo(() => {
-    if (storeStatus) {
-      const free = storeStatus.remaining_images_today ?? 0;
-      const paid = storeStatus.remaining_paid_images ?? 0;
-      return free + paid;
-    }
-    if (accessStatus?.images) {
-      const free = accessStatus.images.remaining_free_today ?? 0;
-      const paid = accessStatus.images.remaining_paid ?? 0;
-      return free + paid;
-    }
-    return null;
+    return calculateFromStore() ?? calculateFromAccess() ?? null;
   }, [accessStatus, storeStatus]);
 
   useEffect(() => {
-    if (process.env.NODE_ENV === "development") {
-      console.info("[Vitte][imagesLeft] updated", {
-        imagesLeft,
-        source: accessStatus?.images ? "access_status" : storeStatus ? "store_status" : "none",
+    if (imagesLeft !== null) {
+      setLastValue(imagesLeft);
+    }
+  }, [imagesLeft]);
+
+  useEffect(() => {
+    if (import.meta.env.VITE_DEBUG_MINIAPP === "1") {
+      console.info("[Vitte][DEBUG_MINIAPP][imagesLeft]", {
+        imagesLeft: imagesLeft ?? lastValue,
+        source: storeStatus
+          ? "store_status"
+          : accessStatus?.images
+            ? "access_status"
+            : "none",
+        storeStatus,
+        accessImages: accessStatus?.images,
       });
     }
-  }, [imagesLeft, accessStatus?.images, storeStatus]);
+  }, [imagesLeft, accessStatus?.images, storeStatus, lastValue]);
 
   return {
-    imagesLeft,
+    imagesLeft: imagesLeft ?? lastValue,
     loading,
     reload,
     source: storeStatus
