@@ -39,24 +39,25 @@ async def store_status(
 ):
     telegram_id = await get_or_raise_telegram_id(request, allow_debug=True)
     user = await get_or_create_user_by_telegram_id(session, telegram_id)
+    access = await build_access_status(session, user)
     subscription = await get_active_subscription(session, user.id)
-    has_subscription = bool(subscription) or user.access_status == AccessStatus.SUBSCRIPTION_ACTIVE
-    quota = await get_image_quota(session, user, has_subscription=has_subscription)
+    has_subscription = bool(access.get("has_subscription"))
+    quota = access.get("images") or await get_image_quota(session, user, has_subscription=has_subscription)
     features = await collect_feature_states(session, user)
     if os.getenv("DEBUG_LIMITS") == "1":
         logger.info(
             "store_status debug telegram_id=%s has_subscription=%s access_status=%s quota=%s subscription=%s",
             telegram_id,
             has_subscription,
-            user.access_status,
+            access.get("access_status"),
             quota,
             subscription.plan_code if subscription else None,
         )
     return {
         "has_active_subscription": has_subscription,
         "subscription_ends_at": subscription.valid_until if subscription else None,
-        "remaining_images_today": quota["remaining_free_today"] + quota["remaining_paid"],
-        "remaining_paid_images": quota["remaining_paid"],
+        "remaining_images_today": (quota.get("remaining_free_today") or 0) + (quota.get("remaining_paid") or 0),
+        "remaining_paid_images": quota.get("remaining_paid") or 0,
         "unlocked_features": [code for code, state in features.items() if state.unlocked],
         "is_free_user": not has_subscription,
     }

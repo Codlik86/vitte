@@ -231,7 +231,7 @@ async def list_personas(
         select(Persona).where(
             (
                 (Persona.is_active.is_(True))
-                & (func.lower(func.trim(Persona.name)).in_(allowed_lower))
+                & (Persona.is_default.is_(True))
             )
             | (Persona.owner_user_id == user.id)
         ).order_by(Persona.id)
@@ -243,7 +243,7 @@ async def list_personas(
         ash_db = any((p.name or "").strip().lower() == "ash" for p in default_personas)
         julie_db = any((p.name or "").strip().lower() == "julie" for p in default_personas)
         logger.info(
-            "personas.list result count=%s user_owned=%s ash=%s julie=%s ash_db=%s julie_db=%s personas=%s",
+            "personas.list result count=%s user_owned=%s ash=%s julie=%s ash_db=%s julie_db=%s personas=%s allowlist=%s",
             len(personas),
             len([p for p in personas if p.owner_user_id == user.id]),
             ash_present,
@@ -251,6 +251,7 @@ async def list_personas(
             ash_db,
             julie_db,
             [(p.id, p.name, p.is_active, p.is_default) for p in personas],
+            sorted(allowed_set),
         )
 
     items = [

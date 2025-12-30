@@ -12,7 +12,17 @@ type UseImagesLeftResult = {
 export function useImagesLeft(): UseImagesLeftResult {
   const { data: accessStatus, loading, reload } = useAccessStatus();
   const { status: storeStatus } = useStoreData(true);
-  const [lastValue, setLastValue] = useState<number | null>(null);
+  const [lastValue, setLastValue] = useState<number | null>(() => {
+    const raw = sessionStorage.getItem("vitte_images_left_cache");
+    if (!raw) return null;
+    try {
+      const parsed = JSON.parse(raw) as { value: number; ts: number };
+      const fresh = Date.now() - parsed.ts < 120_000;
+      return fresh ? parsed.value : null;
+    } catch {
+      return null;
+    }
+  });
 
   const calculateFromStore = () => {
     if (!storeStatus) return null;
@@ -43,6 +53,14 @@ export function useImagesLeft(): UseImagesLeftResult {
   useEffect(() => {
     if (imagesLeft !== null) {
       setLastValue(imagesLeft);
+      try {
+        sessionStorage.setItem(
+          "vitte_images_left_cache",
+          JSON.stringify({ value: imagesLeft, ts: Date.now() })
+        );
+      } catch {
+        // ignore storage errors
+      }
     }
   }, [imagesLeft]);
 

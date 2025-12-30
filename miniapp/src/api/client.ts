@@ -46,6 +46,9 @@ function buildUrlWithTelegramId(path: string, telegramId?: number | null): strin
 
 export async function fetchPersonas(): Promise<PersonasListResponse> {
   const telegramId = await getTelegramIdOptional();
+  if (import.meta.env.VITE_DEBUG_MINIAPP === "1") {
+    console.info("[Vitte][DEBUG_MINIAPP][api] fetchPersonas telegramId=", telegramId, "base", BASE_URL);
+  }
   const url = buildUrlWithTelegramId(`${BASE_URL}/api/personas`, telegramId);
   const res = await fetch(url, { headers: buildHeaders() });
   if (!res.ok) {
@@ -212,7 +215,16 @@ export async function fetchStoreConfig(): Promise<StoreConfig> {
 
 export async function fetchStoreStatus(): Promise<StoreStatus> {
   const telegramId = await getTelegramIdOptional();
+  if (telegramId === undefined) {
+    if (import.meta.env.VITE_DEBUG_MINIAPP === "1") {
+      console.info("[Vitte][DEBUG_MINIAPP][api] fetchStoreStatus skipped: no telegramId");
+    }
+    throw new Error("Не удалось определить Telegram ID");
+  }
   const url = buildUrlWithTelegramId(`${BASE_URL}/api/store/status`, telegramId);
+  if (import.meta.env.VITE_DEBUG_MINIAPP === "1") {
+    console.info("[Vitte][DEBUG_MINIAPP][api] fetchStoreStatus url=", url, "base", BASE_URL);
+  }
   const res = await fetch(url, { headers: buildHeaders() });
   if (!res.ok) {
     throw new Error("Не удалось загрузить статус магазина");
