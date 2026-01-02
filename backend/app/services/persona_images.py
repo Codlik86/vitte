@@ -145,16 +145,16 @@ PERSONA_CONFIGS: Dict[str, PersonaImageConfig] = {
     "yuna": PersonaImageConfig(
         lora_filename="nano_Korean.safetensors",
         trigger_word="e1st_asn",
-        master_prompt="gentle Korean-looking young woman, natural skin texture, consistent face, photorealistic.",
+        master_prompt="gentle Korean-looking young woman",
         prompt_core="medium long shot, upper body to thighs",
         negative_prompt=DEFAULT_NEGATIVE,
-        lora_strength_model=1.0,
+        lora_strength_model=0.8,
         lora_strength_clip=1.0,
         default_style=None,
-        ksampler_steps=16,
-        ksampler_sampler_name="euler",
-        ksampler_scheduler="simple",
-        auraflow_shift=7.0,
+        ksampler_steps=9,
+        ksampler_sampler_name="dpmpp_2m_sde",
+        ksampler_scheduler="beta",
+        auraflow_shift=6.0,
     ),
 }
 
