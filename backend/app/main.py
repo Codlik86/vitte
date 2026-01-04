@@ -61,11 +61,11 @@ app.add_middleware(
 @app.on_event("startup")
 async def on_startup():
     logger.info("Starting Vitte backend...")
+    # All raw schema/data tweaks stay within a live connection
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-    # Separate transaction to ensure enum exists and has all values
-    async with engine.begin() as conn:
+        # Ensure enums exist
         await conn.execute(
             text(
                 """
@@ -116,8 +116,7 @@ async def on_startup():
             )
         )
 
-    # Separate transaction so new enum values are committed before use in defaults
-    async with engine.begin() as conn:
+        # Schema alignments (users, personas, dialogs) and data backfills
         await conn.execute(
             text(
                 """
@@ -136,10 +135,6 @@ async def on_startup():
                 """
             )
         )
-
-    # Ensure default personas are synced from code on each startup
-    async with async_session_factory() as session:
-        await ensure_default_personas(session)
         await conn.execute(
             text(
                 """
@@ -221,6 +216,8 @@ async def on_startup():
                 """
             )
         )
+
+    # Ensure default personas are synced from code on each startup (separate session)
     async with async_session_factory() as session:
         await ensure_default_personas(session)
     logger.info("Default personas ensured.")
