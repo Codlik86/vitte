@@ -12,7 +12,7 @@ from ..services.image_quota import get_image_quota, _ensure_balance
 from ..services.features import unlock_feature, collect_feature_states
 from ..services.telegram_id import get_or_raise_telegram_id
 from ..users_service import get_or_create_user_by_telegram_id
-from ..services.access import get_active_subscription
+from ..services.access import build_access_status, get_active_subscription
 from ..logging_config import logger
 from ..bot import bot
 from ..services.stars import send_stars_invoice_for_subscription, send_stars_invoice_for_feature, create_invoice_link
