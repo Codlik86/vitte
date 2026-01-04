@@ -231,8 +231,8 @@ async def on_startup():
     try:
         await cleanup_processed_updates()
         logger.info("Processed updates cleanup executed on startup.")
-    except Exception as exc:  # noqa: BLE001
-        logger.error("Processed updates cleanup failed: %s", exc)
+    except Exception:
+        logger.exception("Processed updates cleanup failed")
 
 
 @app.get("/", include_in_schema=False)

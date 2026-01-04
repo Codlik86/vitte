@@ -29,17 +29,28 @@ async def process_update_safe(update: dict, start_time: float, update_id: int | 
 
 
 async def cleanup_processed_updates(ttl_days: int = 14) -> None:
-    async with async_session_factory() as session:
-        await session.execute(
-            text(
-                """
-                DELETE FROM processed_updates
-                WHERE created_at < now() - (:ttl_days || ' days')::interval
-                """
-            ),
-            {"ttl_days": ttl_days},
-        )
-        await session.commit()
+    try:
+        async with async_session_factory() as session:
+            try:
+                await session.execute(
+                    text(
+                        """
+                        DELETE FROM processed_updates
+                        WHERE created_at < now() - (:ttl_days || ' days')::interval
+                        """
+                    ),
+                    {"ttl_days": ttl_days},
+                )
+                await session.commit()
+            except Exception:
+                await session.rollback()
+                raise
+    except Exception as exc:  # noqa: BLE001
+        # If table is missing or any other error occurs, log and continue
+        if "processed_updates" in str(exc):
+            logger.warning("processed_updates cleanup skipped (table missing?): {}", exc)
+        else:
+            logger.exception("processed_updates cleanup failed: {}", exc)
 
 
 @router.post(WEBHOOK_PATH)
