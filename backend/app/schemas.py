@@ -112,7 +112,6 @@ class ChatRequest(BaseModel):
 class ChatResponse(BaseModel):
     reply: str
     persona_id: int
-    trust_level: int
     ritual_hint: str | None = None
     reply_kind: str = "text"
     voice_id: str | None = None

@@ -1,34 +1,9 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
 from random import random
 from typing import Iterable
 
-from ..models import Persona, User
-from ..config import settings
-from ..logging_config import logger
-
-
-@dataclass(frozen=True)
-class TrustLayer:
-    min_level: int
-    max_level: int
-    description: str
-    premium_description: str | None = None
-
-
-TRUST_LADDER: list[TrustLayer] = [
-    TrustLayer(0, 20, "Общайся дружелюбно и бережно, без флирта и намёков."),
-    TrustLayer(20, 40, "Допускай лёгкий флирт и намёки, но уважай дистанцию."),
-    TrustLayer(40, 60, "Романтический тон, мягкие признания и подсветка важности собеседника."),
-    TrustLayer(60, 80, "Сильная эмоциональная близость, поддержка и чувство «мы» вместо «ты и я»."),
-    TrustLayer(
-        80,
-        100,
-        "Держи романтический тон. Эротика разрешена только в тексте, если все проверки пройдены.",
-        premium_description="Используй мягкую текстовую эротику только если Premium активна и возраст подтверждён.",
-    ),
-]
+from ..models import Persona
 
 ATMOSPHERE_DESCRIPTIONS = {
     "flirt_romance": "Лёгкий флирт и романтика, без давления и NSFW.",
@@ -37,42 +12,11 @@ ATMOSPHERE_DESCRIPTIONS = {
     "serious_talk": "Серьёзный, честный разговор с уважением к границам.",
 }
 
-SAFE_RULES = """
-- Минимум 18+, никаких minors, насилия, нелегального и дискриминации.
-- UI и Mini App остаются SFW. Любые интимные описания — только текстом и только при доверии.
-- Никаких описаний тела через objectification, никаких явных сцен.
-"""
-
 CLIFFHANGERS = [
     "Подумай, к какой теме мы вернёмся в следующий раз, и напомни об этом мягко.",
     "Пусть персонаж оставит маленький тизер: «у меня есть история для тебя, расскажу позже».",
     "Заканчивая мысль, предложи продолжение: «когда будешь готов, обсудим это глубже».",
 ]
-
-
-def calculate_trust_level(message_count: int, has_subscription: bool) -> int:
-    base = min(100, 10 + message_count * 3)
-    if has_subscription:
-        base = min(100, base + 5)
-    return base
-
-
-def describe_trust_layer(
-    trust_level: int,
-    has_subscription: bool,
-    age_confirmed: bool,
-) -> str:
-    for layer in TRUST_LADDER:
-        if layer.min_level <= trust_level <= layer.max_level:
-            if layer.max_level == 100 and (not has_subscription or not age_confirmed):
-                return (
-                    "Даже при высоком доверии оставайся в романтике и поддержке, "
-                    "не переходи к эротическим описаниям: доступ ограничен."
-                )
-            if layer.premium_description and has_subscription and age_confirmed:
-                return layer.premium_description
-            return layer.description
-    return TRUST_LADDER[0].description
 
 
 def format_memory(memory_items: Iterable[str]) -> str:
@@ -134,85 +78,3 @@ def should_add_ritual(message_count: int) -> str | None:
     if message_count % 7 == 0 or random() > 0.9:
         return CLIFFHANGERS[message_count % len(CLIFFHANGERS)]
     return None
-
-
-def build_system_prompt(
-    persona: Persona,
-    user: User,
-    *,  # keyword-only
-    trust_level: int,
-    has_subscription: bool,
-    age_confirmed: bool,
-    memory_context: str,
-    mode_instruction: str,
-    story_instruction: str,
-    ritual_hint: str | None,
-    feature_instruction: str | None = None,
-    feature_mode: str | None = None,
-) -> str:
-    legend_text = persona.legend_full or persona.short_lore or persona.background or ""
-    emotions_text = persona.emotions_full or persona.emotional_style or persona.relationship_style or ""
-    positive_triggers = ", ".join(persona.triggers_positive or [])
-    negative_triggers = ", ".join(persona.triggers_negative or [])
-    rel_test = bool(getattr(settings, "vitte_rel_test_mode", False))
-    trust_text = "" if rel_test else describe_trust_layer(trust_level, has_subscription, age_confirmed)
-    if rel_test:
-        logger.info("REL_TEST_MODE: trust ladder disabled in system prompt")
-    ritual_text = ritual_hint or ""
-    feature_block = feature_instruction or ""
-    feature_mode_text = f"Режим улучшений: {feature_mode}." if feature_mode else ""
-
-    return "\n".join(
-        part
-        for part in [
-            f"Ты — {persona.name}, {persona.short_description}.",
-            legend_text,
-            f"Эмоции и отношения: {emotions_text}",
-            f"Что персонаж обожает: {positive_triggers}" if positive_triggers else "",
-            f"Что персонаж избегает: {negative_triggers}" if negative_triggers else "",
-            f"Контекст памяти: {memory_context}",
-            f"Trust level {trust_level}: {trust_text}",
-            mode_instruction,
-            story_instruction,
-            feature_mode_text,
-            feature_block,
-            SAFE_RULES,
-            "Если разговор подходит к финалу и уместно — оставь мягкий клиффхэнгер: " + ritual_text if ritual_text else "",
-        ]
-        if part
-    )
-
-
-def compose_messages(
-    persona: Persona,
-    user: User,
-    *,
-    user_message: str,
-    trust_level: int,
-    has_subscription: bool,
-    age_confirmed: bool,
-    memory_context: str,
-    mode_instruction: str,
-    story_instruction: str,
-    ritual_hint: str | None,
-    feature_instruction: str | None = None,
-    feature_mode: str | None = None,
-) -> tuple[list[dict], str]:
-    system_prompt = build_system_prompt(
-        persona,
-        user,
-        trust_level=trust_level,
-        has_subscription=has_subscription,
-        age_confirmed=age_confirmed,
-        memory_context=memory_context,
-        mode_instruction=mode_instruction,
-        story_instruction=story_instruction,
-        ritual_hint=ritual_hint,
-        feature_instruction=feature_instruction,
-        feature_mode=feature_mode,
-    )
-    messages = [
-        {"role": "system", "content": system_prompt},
-        {"role": "user", "content": user_message},
-    ]
-    return messages, system_prompt

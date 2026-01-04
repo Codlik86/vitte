@@ -54,7 +54,6 @@ async def chat(payload: ChatRequest, request: Request, session: AsyncSession = D
     return ChatResponse(
         reply=result.reply,
         persona_id=result.persona_id,
-        trust_level=result.trust_level,
         ritual_hint=result.ritual_hint,
         reply_kind=result.reply_kind,
         voice_id=result.voice_id,

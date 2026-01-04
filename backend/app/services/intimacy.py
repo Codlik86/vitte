@@ -4,45 +4,33 @@ from dataclasses import dataclass
 
 
 @dataclass
-class IntimacyResult:
-    level: int  # 0-3
-    can_engage_intimately: bool
-    label: str
+class IntimacyDecision:
+    allow_intimate: bool
+    soft_block: bool
+    paywall: bool
+    is_sexting: bool
 
 
-def evaluate_intimacy(
+def decide_intimacy(
     *,
-    trust_level: int,
     message_count: int,
-    user_flags: dict | None = None,
-) -> IntimacyResult:
+    has_subscription: bool,
+    is_sexting: bool,
+) -> IntimacyDecision:
     """
-    Простая лестница: до 10-15 сообщений — мягкий флирт и узнавание,
-    дальше — можно идти в близость при достаточном доверии.
+    Simplified gate:
+    - If no sexting intent -> allow.
+    - If <10 messages and sexting -> soft block.
+    - If no premium and sexting -> paywall prompt.
+    - Otherwise allow.
     """
-    premium = bool(user_flags.get("has_subscription")) if user_flags else False
-    closeness_level = user_flags.get("closeness_level") if user_flags else None
-    respect_score = user_flags.get("respect_score") if user_flags else None
+    if not is_sexting:
+        return IntimacyDecision(allow_intimate=True, soft_block=False, paywall=False, is_sexting=False)
 
-    if respect_score is not None and respect_score < -3:
-        return IntimacyResult(level=0, can_engage_intimately=False, label="обижена поведением")
+    if message_count < 10:
+        return IntimacyDecision(allow_intimate=False, soft_block=True, paywall=False, is_sexting=True)
 
-    effective_closeness = closeness_level if closeness_level is not None else trust_level
+    if not has_subscription:
+        return IntimacyDecision(allow_intimate=False, soft_block=False, paywall=True, is_sexting=True)
 
-    if message_count < 5 or effective_closeness < 10:
-        return IntimacyResult(level=0, can_engage_intimately=False, label="знакомство")
-    if message_count < 12 or trust_level < 35 or effective_closeness < 20:
-        return IntimacyResult(level=1, can_engage_intimately=False, label="лёгкий флирт")
-
-    if message_count < 18 or trust_level < 60 or effective_closeness < 40:
-        return IntimacyResult(
-            level=2,
-            can_engage_intimately=premium or (trust_level >= 55 and effective_closeness >= 35),
-            label="близость",
-        )
-
-    return IntimacyResult(
-        level=3,
-        can_engage_intimately=True,
-        label="глубокие отношения",
-    )
+    return IntimacyDecision(allow_intimate=True, soft_block=False, paywall=False, is_sexting=True)

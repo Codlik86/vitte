@@ -136,6 +136,10 @@ async def on_startup():
                 """
             )
         )
+
+    # Ensure default personas are synced from code on each startup
+    async with async_session_factory() as session:
+        await ensure_default_personas(session)
         await conn.execute(
             text(
                 """

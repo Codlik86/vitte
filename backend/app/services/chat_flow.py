@@ -24,21 +24,10 @@ from ..story_cards import get_story_cards_for_persona, resolve_story_id, StoryCa
 from ..services.features import collect_feature_states, build_feature_instruction
 from ..integrations.tts_client import synthesize_voice
 from ..services.safety import run_safety_check, SafetyContext, supportive_reply
-from ..services.intimacy import evaluate_intimacy
+from ..services.intimacy import decide_intimacy
 from ..services.prompt_builder import ChatPromptContext, build_chat_messages
 from ..services.subscriptions import get_user_subscription_status
-from ..services.relationship_state import (
-    RelationshipState,
-    get_relationship_state,
-    save_relationship_state,
-    update_relationship_state,
-    derive_level_from_state,
-    transition_level,
-    level_to_state,
-    RelationshipLevel,
-)
 from ..services.message_analysis import analyze_message
-from ..config import settings
 
 MAX_RECENT_MESSAGES = 12
 ENABLE_PERF_LOGS = os.getenv("ENABLE_PERF_LOGS", "").lower() == "true"
@@ -68,7 +57,6 @@ class ChatResult:
         self,
         reply: str,
         persona_id: int,
-        trust_level: int,
         ritual_hint: Optional[str],
         reply_kind: str = "text",
         voice_id: str | None = None,
@@ -77,7 +65,6 @@ class ChatResult:
     ):
         self.reply = reply
         self.persona_id = persona_id
-        self.trust_level = trust_level
         self.ritual_hint = ritual_hint
         self.reply_kind = reply_kind
         self.voice_id = voice_id
@@ -86,12 +73,11 @@ class ChatResult:
 
 
 class GreetingResult:
-    def __init__(self, text: str, persona_id: int, dialog_id: int, mode: str, trust_level: int):
+    def __init__(self, text: str, persona_id: int, dialog_id: int, mode: str):
         self.text = text
         self.persona_id = persona_id
         self.dialog_id = dialog_id
         self.mode = mode
-        self.trust_level = trust_level
 
 
 async def _get_active_persona(session: AsyncSession, user: User) -> Persona:
@@ -198,47 +184,6 @@ def _recent_dialogue_from_messages(messages: List[Message]) -> str | None:
     return "\n".join(lines).strip()
 
 
-def _apply_relationship_deltas(
-    state: RelationshipState,
-    analysis,
-    message_count: int,
-) -> RelationshipState:
-    trust_delta = 0
-    respect_delta = 0
-    closeness_delta = 0
-
-    if analysis.is_polite or analysis.shares_feelings:
-        trust_delta += 2
-        respect_delta += 1
-        closeness_delta += 1
-    if analysis.is_romantic or analysis.is_flirty:
-        trust_delta += 2
-        closeness_delta += 3
-    if analysis.is_rude:
-        trust_delta -= 3
-        respect_delta -= 2
-        closeness_delta -= 3
-    if analysis.is_pushy:
-        respect_delta -= 2
-        closeness_delta -= 2
-    if analysis.asks_for_intimacy and state.closeness_level > 25:
-        closeness_delta += 1
-
-    if not analysis.is_rude and not analysis.is_pushy and state.respect_score < 0:
-        respect_delta += 1  # мягкое восстановление
-
-    if message_count > 3 and not analysis.is_rude and not analysis.is_pushy:
-        closeness_delta += 1
-        trust_delta += 1
-
-    return update_relationship_state(
-        state,
-        trust_delta=trust_delta,
-        respect_delta=respect_delta,
-        closeness_delta=closeness_delta,
-    )
-
-
 def _story_prompt_with_meta(card: StoryCard | None) -> tuple[str | None, str | None]:
     if not card:
         return None, None
@@ -259,7 +204,6 @@ def _build_greeting_user_message(
     story_card: StoryCard | None,
     persona_name: str,
     recent_dialogue: str | None,
-    relationship_state: RelationshipState | None,
 ) -> str:
     prompt_extra = (
         f" Дополнительный контекст от пользователя: {extra_description.strip()}."
@@ -321,7 +265,6 @@ async def generate_chat_reply(
     """
     perf_enabled = ENABLE_PERF_LOGS
     t_start = time.monotonic()
-    cache: dict[str, object] = {}
     # Resolve persona
     try:
         persona = await _resolve_persona(session, user, persona_id)
@@ -340,7 +283,6 @@ async def generate_chat_reply(
     message_count = 0
     memory_context = "Нет особых воспоминаний, но персонаж открыт к новым."
     recent_messages: list[Message] = []
-    relationship_state_task = asyncio.create_task(get_relationship_state(session, user.id, persona.id))
     feature_states_task = asyncio.create_task(collect_feature_states(session, user))
 
     if not preview_story:
@@ -355,37 +297,8 @@ async def generate_chat_reply(
     story_prompt, story_meta = _story_prompt_with_meta(story_card)
     recent_dialogue = _recent_dialogue_from_messages(recent_messages) if message_count > 0 else None
 
-    relationship_state = cache.get("relationship_state") or await relationship_state_task
-    cache["relationship_state"] = relationship_state
-    feature_states = cache.get("feature_states") or await feature_states_task
-    cache["feature_states"] = feature_states
-
-    rel_test = bool(getattr(settings, "vitte_rel_test_mode", False))
+    feature_states = await feature_states_task
     analysis = analyze_message(input_text)
-    current_level = derive_level_from_state(relationship_state)
-    target_level = current_level
-    manual_override = getattr(relationship_state, "manual_override", False)
-    if not preview_story and not rel_test and not manual_override:
-        target_level = transition_level(current_level, message_count=message_count, analysis=analysis)
-    if rel_test:
-        target_level = RelationshipLevel.ROMANTIC
-        logger.info("REL_TEST_MODE enabled: forcing relationship level to ROMANTIC; skipping persistence")
-
-    if manual_override and not rel_test:
-        updated_relationship = RelationshipState(
-            trust_level=relationship_state.trust_level,
-            respect_score=relationship_state.respect_score,
-            closeness_level=relationship_state.closeness_level,
-            updated_at=relationship_state.updated_at,
-            relationship_level=target_level,
-            manual_override=True,
-        )
-    else:
-        updated_relationship = level_to_state(target_level)
-        updated_relationship.manual_override = False
-        updated_relationship.relationship_level = target_level
-
-    trust_level = updated_relationship.trust_level
     mode_instruction = describe_mode(mode, atmosphere)
     story_instruction = build_story_context(story_prompt, reentry=bool(story_prompt and message_count > 0))
     if story_meta:
@@ -394,25 +307,35 @@ async def generate_chat_reply(
     feature_instruction, feature_mode, feature_max_tokens = build_feature_instruction(feature_states)
     voice_state = None
 
-    feature_flags = {
-        "has_subscription": access.get("has_subscription", False),
-        "closeness_level": updated_relationship.closeness_level,
-        "respect_score": updated_relationship.respect_score,
-    }
+    has_subscription = bool(access.get("has_subscription", False))
     safety_result = run_safety_check(
         input_text,
-        SafetyContext(persona=persona, trust_level=trust_level, message_count=message_count, user_flags=feature_flags),
+        SafetyContext(persona=persona, message_count=message_count, user_flags={"has_subscription": has_subscription}),
     )
-    intimacy = evaluate_intimacy(
-        trust_level=trust_level,
+    intimacy_decision = decide_intimacy(
         message_count=message_count,
-        user_flags=feature_flags,
+        has_subscription=has_subscription,
+        is_sexting=bool(analysis.asks_for_intimacy),
+    )
+    logger.info(
+        "intimacy_gate user=%s persona=%s msg_count=%s premium=%s sexting=%s decision=%s",
+        user.id,
+        persona.id,
+        message_count,
+        has_subscription,
+        intimacy_decision.is_sexting,
+        (
+            "PAYWALL"
+            if intimacy_decision.paywall
+            else "SOFT_BLOCK"
+            if intimacy_decision.soft_block
+            else "ALLOW"
+        ),
     )
 
     prompt_ctx = ChatPromptContext(
         persona=persona,
         user=user,
-        trust_level=trust_level,
         mode_instruction=mode_instruction,
         memory_short=memory_context,
         memory_long=None,
@@ -423,15 +346,13 @@ async def generate_chat_reply(
         feature_instruction=feature_instruction,
         feature_mode=feature_mode,
         voice_enabled=False,
-        intimacy_level=intimacy.level,
-        intimacy_label=intimacy.label,
-        can_engage_intimately=intimacy.can_engage_intimately,
-        safety_needs_warmup=safety_result.needs_warmup,
-        relationship_state=updated_relationship,
-        relationship_level=target_level,
+        allow_intimate=intimacy_decision.allow_intimate,
+        soft_block_intimacy=intimacy_decision.soft_block,
+        message_count=message_count,
     )
     messages, _ = build_chat_messages(prompt_ctx, input_text)
 
+    reply = None
     if safety_result.is_harm or safety_result.is_illegal:
         reply = supportive_reply(persona)
         logger.info(
@@ -439,6 +360,15 @@ async def generate_chat_reply(
             user.id,
             persona.id,
             safety_result.reason,
+        )
+    elif intimacy_decision.paywall:
+        reply = (
+            "Могу говорить откровенно в премиум-режиме — он снимает ограничения на темы. "
+            "Оформи подписку, и продолжим без фильтров."
+        )
+    elif intimacy_decision.soft_block:
+        reply = (
+            "Давай ещё чуть-чуть поболтаем и почувствуем друг друга, а потом можем перейти к более смелым темам."
         )
     else:
         t_llm_start = time.monotonic()
@@ -480,8 +410,6 @@ async def generate_chat_reply(
         if not skip_increment and not access.get("has_subscription", False):
             user.free_messages_used += 1
         user.bot_reply_counter = (user.bot_reply_counter or 0) + 1
-        if not rel_test and not manual_override:
-            await save_relationship_state(session, user.id, persona.id, updated_relationship)
         await session.commit()
 
     if perf_enabled:
@@ -497,7 +425,6 @@ async def generate_chat_reply(
     return ChatResult(
         reply=reply,
         persona_id=persona.id,
-        trust_level=trust_level,
         ritual_hint=ritual_hint,
         reply_kind=reply_kind,
         voice_id=voice_id,
@@ -526,8 +453,6 @@ async def generate_greeting_reply(
     perf_enabled = ENABLE_PERF_LOGS
     t_start = time.monotonic()
     cache: dict[str, object] = {}
-
-    relationship_state_task = asyncio.create_task(get_relationship_state(session, user.id, persona.id))
     feature_states_task = asyncio.create_task(collect_feature_states(session, user))
 
     recent_messages: list[Message] = []
@@ -555,9 +480,6 @@ async def generate_greeting_reply(
     story_prompt, story_meta = _story_prompt_with_meta(story_card)
     if story_meta:
         memory_context = f"{story_meta} {memory_context}"
-    relationship_state = cache.get("relationship_state") or await relationship_state_task
-    cache["relationship_state"] = relationship_state
-    trust_level = relationship_state.trust_level
     mode_instruction = describe_mode(llm_mode, atmosphere)
     story_instruction = build_story_context(
         story_prompt,
@@ -566,29 +488,16 @@ async def generate_greeting_reply(
     feature_states = cache.get("feature_states") or await feature_states_task
     cache["feature_states"] = feature_states
     feature_instruction, feature_mode, feature_max_tokens = build_feature_instruction(feature_states)
-    feature_flags = {
-        "has_subscription": has_subscription,
-        "closeness_level": relationship_state.closeness_level,
-        "respect_score": relationship_state.respect_score,
-    }
     user_message = _build_greeting_user_message(
         llm_mode,
         extra_description,
         story_card=story_card if message_count == 0 else None,
         persona_name=persona.name,
         recent_dialogue=recent_dialogue,
-        relationship_state=relationship_state,
     )
-    intimacy = evaluate_intimacy(
-        trust_level=trust_level,
-        message_count=message_count,
-        user_flags=feature_flags,
-    )
-    rel_level = derive_level_from_state(relationship_state)
     prompt_ctx = ChatPromptContext(
         persona=persona,
         user=user,
-        trust_level=trust_level,
         mode_instruction=mode_instruction,
         memory_short=memory_context,
         memory_long=None,
@@ -599,12 +508,9 @@ async def generate_greeting_reply(
         feature_instruction=feature_instruction,
         feature_mode=feature_mode,
         voice_enabled=False,
-        intimacy_level=intimacy.level,
-        intimacy_label=intimacy.label,
-        can_engage_intimately=intimacy.can_engage_intimately,
-        safety_needs_warmup=False,
-        relationship_state=relationship_state,
-        relationship_level=rel_level,
+        allow_intimate=True,
+        soft_block_intimacy=False,
+        message_count=message_count,
     )
     messages, _ = build_chat_messages(prompt_ctx, user_message)
 
@@ -620,5 +526,4 @@ async def generate_greeting_reply(
         persona_id=persona.id,
         dialog_id=dialog.id,
         mode=greeting_mode,
-        trust_level=trust_level,
     )

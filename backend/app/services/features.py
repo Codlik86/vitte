@@ -117,7 +117,7 @@ def build_feature_instruction(states: Dict[str, FeatureState]) -> tuple[str, str
     max_tokens: int | None = None
 
     if states.get("intense_mode") and states["intense_mode"].unlocked:
-        parts.append("Если доверие и уважение позволяют, персонаж может общаться смелее и чувственнее.")
+        parts.append("Режим страсти активен: персонаж общается смелее и чувственнее.")
     if states.get("fantasy_scenes") and states["fantasy_scenes"].unlocked:
         parts.append("Фантазии и сцены доступны: допускай более образные сценарии, когда это уместно.")
 

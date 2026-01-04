@@ -88,7 +88,6 @@ export type AccessStatusResponse = {
 export type ChatResponse = {
   reply: string;
   persona_id: number;
-  trust_level: number;
   ritual_hint?: string | null;
   reply_kind?: string;
   voice_id?: string | null;

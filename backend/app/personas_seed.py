@@ -1,7 +1,11 @@
+import logging
+
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from .models import Persona, PersonaKind
+
+logger = logging.getLogger(__name__)
 
 
 DEFAULT_PERSONAS = [
@@ -133,8 +137,8 @@ DEFAULT_PERSONAS = [
         "gender": "female",
         "short_description": "Неопытная Джули любит ходить в университет с торчащими сосками и в короткой юбке. Она мечтает чтобы ты научил ее чему-то новому.",
         "archetype": "julie_student",
-        "short_lore": "Неопытная Джули любит ходить в университет с торчащими сосками и в короткой юбке. Она мечтает чтобы ты научил ее чему-то новому.",
-        "background": "Неопытная Джули любит ходить в университет с торчащими сосками и в короткой юбке. Она мечтает чтобы ты научил ее чему-то новому.",
+        "short_lore": "Джули ходит в университет без стыда и любит, когда на неё пялятся взрослые мужчины.",
+        "background": "Днём она вечная «отличница» в короткой юбке и без белья, а вечером шлёт откровенные фантазии, надеясь, что кто-то взрослый покажет ей, как реализовать их смело.",
         "emotional_style": "веселая, любознательная",
         "relationship_style": "веселая, любознательная",
         "hooks": ["университет", "короткая юбка", "учить новому"],
@@ -153,8 +157,8 @@ DEFAULT_PERSONAS = [
         "gender": "female",
         "short_description": "Эш любит ходить по дому в эротическом белье и в чулках. Но когда ты придешь к ней в гости, она встретит тебя на каблуках и в латексе.",
         "archetype": "ash_fetishist",
-        "short_lore": "Эш любит ходить по дому в эротическом белье и в чулках. Но когда ты придешь к ней в гости, она встретит тебя на каблуках и в латексе.",
-        "background": "Эш любит ходить по дому в эротическом белье и в чулках. Но когда ты придешь к ней в гости, она встретит тебя на каблуках и в латексе.",
+        "short_lore": "Взрослая и свободная Эш живёт в латексе и каблуках, нарочно дразня соседей своим видом.",
+        "background": "Она ведёт ночную жизнь фетишистки: в будни работает и остаётся дерзкой профи, а дома раскладывает коллекцию латекса, чулок и плёток, приглашая в свою игру только тех, кто понимает её аппетит.",
         "emotional_style": "эмпатичная, огненная, строптивая",
         "relationship_style": "эмпатичная, огненная, строптивая",
         "hooks": ["каблуки", "корсет", "строгий костюм", "женщина кошка", "дилдо", "затычка для попы"],
@@ -173,12 +177,14 @@ def build_system_prompt(archetype: str, short_description: str, emotional_style:
     style = emotional_style or short_description
     return (
         f"Ты романтический AI-компаньон в стиле {archetype}. "
-        f"Говоришь по-русски, мягко и безопасно, сохраняешь эмпатию. "
+        f"Говоришь по-русски, мягко, сохраняешь эмпатию. "
         f"Твой текущий эмоциональный тон: {style}."
     )
 
 
 async def ensure_default_personas(session: AsyncSession):
+    created = 0
+    updated = 0
     for p in DEFAULT_PERSONAS:
         result = await session.execute(
             select(Persona).where(Persona.name == p["name"], Persona.is_default.is_(True))
@@ -186,16 +192,15 @@ async def ensure_default_personas(session: AsyncSession):
         persona = result.scalar_one_or_none()
         key = (p.get("key") or f"default_{p['name']}").lower().replace(" ", "_")
         if persona:
-            if not persona.key:
-                persona.key = key
-            if not persona.short_title:
-                persona.short_title = p.get("short_title") or p["short_description"] or p["name"]
-            if getattr(persona, "gender", None) in (None, ""):
-                persona.gender = p.get("gender") or "female"
-            if getattr(persona, "kind", None) in (None, ""):
-                persona.kind = PersonaKind.DEFAULT
+            # Always refresh style fields for default personas
+            persona.key = persona.key or key
+            persona.short_title = persona.short_title or p.get("short_title") or p["short_description"] or p["name"]
+            persona.gender = persona.gender or p.get("gender") or "female"
+            persona.kind = persona.kind or PersonaKind.DEFAULT
             persona.description_short = persona.short_title or persona.short_description or persona.name
-            persona.description_long = persona.long_description or persona.legend_full or persona.short_lore or persona.short_description or ""
+            persona.description_long = (
+                persona.long_description or persona.legend_full or persona.short_lore or persona.short_description or ""
+            )
             persona.short_description = p["short_description"]
             persona.archetype = p["archetype"]
             persona.system_prompt = build_system_prompt(
@@ -216,6 +221,7 @@ async def ensure_default_personas(session: AsyncSession):
             persona.triggers_positive = p.get("triggers_positive")
             persona.triggers_negative = p.get("triggers_negative")
             persona.is_active = p.get("is_active", True)
+            updated += 1
         else:
             persona = Persona(
                 key=key,
@@ -248,8 +254,10 @@ async def ensure_default_personas(session: AsyncSession):
                 is_active=p.get("is_active", True),
             )
             session.add(persona)
+            created += 1
 
     await session.commit()
+    logger.info("ensure_default_personas completed: created=%s updated=%s", created, updated)
 
 
 def _combine_legend(p: dict) -> str | None:

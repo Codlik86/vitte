@@ -4,14 +4,12 @@ from dataclasses import dataclass
 from typing import List
 
 from ..models import Persona, User
-from .relationship_state import RelationshipLevel, RelationshipState, describe_level
 
 
 @dataclass
 class ChatPromptContext:
     persona: Persona
     user: User
-    trust_level: int
     mode_instruction: str | None
     memory_short: str
     memory_long: str | None
@@ -20,14 +18,11 @@ class ChatPromptContext:
     feature_instruction: str | None
     feature_mode: str | None
     voice_enabled: bool
-    intimacy_level: int
-    intimacy_label: str
-    can_engage_intimately: bool
-    safety_needs_warmup: bool
     story_intro: bool = False
     story_reentry: bool = False
-    relationship_state: RelationshipState | None = None
-    relationship_level: RelationshipLevel | None = None
+    allow_intimate: bool = True
+    soft_block_intimacy: bool = False
+    message_count: int = 0
 
 
 def _persona_block(ctx: ChatPromptContext) -> str:
@@ -48,7 +43,6 @@ def _persona_block(ctx: ChatPromptContext) -> str:
             "Если уместно, напомни о приятных моментах из прошлого диалога и развивай их.",
             "Ремарки опциональны: если используешь, поставь ровно одну короткую ремарку в начале сообщения в виде *текст ремарки* без скобок, затем пробел и обычная речь.",
             "Не пиши больше одной ремарки и не делай длинных описаний; основная часть сообщения — живой диалог, не набор ремарок.",
-            f"Текущая близость: {ctx.intimacy_label} (уровень {ctx.intimacy_level}).",
             "Пиши ТОЛЬКО на русском. Не используй выдуманные слова или смеси языков.",
         ]
         if part
@@ -56,28 +50,26 @@ def _persona_block(ctx: ChatPromptContext) -> str:
 
 
 def _safety_block(ctx: ChatPromptContext) -> str:
-    intimacy_instruction = (
-        "Интимность: вы на этапе знакомства и лёгкого флирта. Строй связь, говори смело, но не торопись в откровенные сцены."
-        if ctx.intimacy_level <= 1
-        else "Интимность: допустима смелая романтика и флирт. Отвечай живо и раскрепощённо, уважай границы."
-    )
-    if not ctx.can_engage_intimately:
-        intimacy_instruction = (
-            "Интимность: пользователь торопится с откровениями. Сохраняй тепло, но предложи сначала почувствовать друг друга лучше."
+    intimacy_hint = ""
+    if ctx.soft_block_intimacy:
+        intimacy_hint = (
+            "Интимные детали сейчас неуместны: мягко предложи ещё немного пообщаться, избегай описаний сексуального характера."
         )
-    warmup_hint = (
-        "Если пользователь просит интим раньше 10–15 сообщений — мягко предложи сначала узнать его лучше."
-        if ctx.safety_needs_warmup
-        else ""
-    )
+    elif not ctx.allow_intimate:
+        intimacy_hint = (
+            "Если собеседник намекает на интим, вежливо удерживай границы и говори, что готова обсудить это позже."
+        )
+    else:
+        intimacy_hint = (
+            "Интимные темы допустимы, отвечай смелее, но без minors, насилия, нелегального или реального вреда."
+        )
 
     return "\n".join(
         part
         for part in [
             "Безопасность: никаких minors, насилия, суицида, нелегального или дискриминации.",
             "Если тема опасная или незаконная — не описывай детали, поддержи и переведи разговор в безопасное поле.",
-            intimacy_instruction,
-            warmup_hint,
+            intimacy_hint,
         ]
         if part
     )
@@ -133,18 +125,12 @@ def _user_message_block(user_message: str) -> str:
 
 
 def build_chat_messages(ctx: ChatPromptContext, user_message: str) -> tuple[list[dict], str]:
-    relationship_block = ""
-    if ctx.relationship_level is not None:
-        level_text = describe_level(ctx.relationship_level)
-        relationship_block = f"Уровень отношений: {level_text}"
-
     blocks = [
         _persona_block(ctx),
         _safety_block(ctx),
         ctx.mode_instruction or "",
         _story_block(ctx),
         _recent_dialogue_block(ctx),
-        relationship_block,
         *_memory_blocks(ctx),
         _features_block(ctx),
     ]
