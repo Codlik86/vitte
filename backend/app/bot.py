@@ -20,7 +20,9 @@ from datetime import datetime
 from .config import settings
 from .db import get_session
 from .logging_config import logger
-from .models import User
+from sqlalchemy import text
+
+from .models import User, Persona
 from .middlewares.access import AccessMiddleware
 from .middlewares.terms_gate import TermsGateMiddleware
 from .services.chat_flow import generate_chat_reply
@@ -36,6 +38,7 @@ from .services.subscriptions import ensure_premium_for_user, get_user_subscripti
 from .services.telegram_id import get_debug_telegram_id
 from .users_service import get_or_create_user_by_telegram_id
 from .utils.async_helpers import ensure_async_iter
+from .utils.telegram_actions import ChatActionHandle, start_chat_action, stop_chat_action
 from .services.image_generation import ImageRequestError, request_image_on_demand
 from .services.store import SUBSCRIPTION_PLANS, IMAGE_PACKS, EMOTIONAL_FEATURES, get_plan, get_image_pack, get_feature
 from .services.image_quota import _ensure_balance
@@ -49,6 +52,7 @@ dp.update.middleware(TermsGateMiddleware())
 dp.update.middleware(AccessMiddleware())
 
 STAR_MULTIPLIER = 1_000_000_000  # 1 XTR minimal units
+AUTO_CONTINUE_PROMPT = "Продолжи диалог от лица персонажа, логично развивая текущую сцену."
 
 
 async def setup_bot_commands(bot: Bot) -> None:
@@ -107,13 +111,33 @@ def pay_images_keyboard() -> InlineKeyboardMarkup:
     buttons.append([InlineKeyboardButton(text="⬅️ Назад", callback_data="pay_menu:root")])
     return InlineKeyboardMarkup(inline_keyboard=buttons)
 
+def _continuation_lock_key(user_id: int, persona_id: int) -> int:
+    return (int(user_id) << 20) + int(persona_id)
+
+
+async def _try_acquire_continuation_lock(session, key: int) -> bool:
+    try:
+        result = await session.execute(text("SELECT pg_try_advisory_lock(:key) AS locked"), {"key": key})
+        row = result.fetchone()
+        return bool(row and row[0])
+    except Exception as exc:  # noqa: BLE001
+        logger.warning("Continuation lock unavailable: %s", exc)
+        return False
+
+
+async def _release_continuation_lock(session, key: int) -> None:
+    try:
+        await session.execute(text("SELECT pg_advisory_unlock(:key)"), {"key": key})
+    except Exception as exc:  # noqa: BLE001
+        logger.debug("Continuation unlock failed (ignored): %s", exc)
+
 
 def build_image_button(persona_id: int) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(
         inline_keyboard=[
             [
                 InlineKeyboardButton(text="👁️ Посмотреть", callback_data=f"img:{persona_id}"),
-                InlineKeyboardButton(text="Hot🔥", callback_data=f"img_hot:{persona_id}"),
+                InlineKeyboardButton(text="Продолжить", callback_data=f"img_hot:{persona_id}"),
             ]
         ]
     )
@@ -290,6 +314,9 @@ async def on_user_message(message: Message, current_user: User | None = None, db
     if message.from_user is None:
         return
     telegram_id = message.from_user.id
+    typing_handle: ChatActionHandle | None = None
+    if message.chat:
+        typing_handle = start_chat_action(bot, message.chat.id, "typing")
     session_iter_raw = [db_session] if db_session is not None and current_user is not None else get_session()
     session_iter = ensure_async_iter(session_iter_raw)
     logger.debug(
@@ -297,36 +324,39 @@ async def on_user_message(message: Message, current_user: User | None = None, db
         type(session_iter_raw),
         str(session_iter_raw)[:400],
     )
-    async for session in session_iter:
-        user = current_user or await get_or_create_user_by_telegram_id(session, telegram_id)
-        if user.active_persona_id is None:
-            await message.answer(
-                "Выбери персонажа в мини-приложении, чтобы начать общение. "
-                "Это нужно, чтобы приветствие и ответы были в стиле выбранного героя.",
-            )
-            continue
-        try:
-            result = await generate_chat_reply(
-                session=session,
-                user=user,
-                input_text=message.text or "",
-                mode="default",
-                skip_limits=True,  # AccessMiddleware уже ограничил
-                skip_increment=True,  # уже инкрементировано в middleware
-            )
-            reply_markup = None
-            if message.chat and getattr(message.chat, "type", None) == "private" and getattr(
-                settings, "image_enabled", False
-            ):
-                reply_markup = build_image_button(result.persona_id)
-            await message.answer(result.reply, reply_markup=reply_markup)
-        except PermissionError:
-            await message.answer(
-                "Похоже, бесплатный лимит исчерпан. Открой мини-приложение Vitte, чтобы оформить подписку.",
-            )
-        except Exception as exc:
-            logger.error("Failed to handle user message: %s", exc)
-            await message.answer("Не получилось ответить, попробуй ещё раз или открой мини-приложение.")
+    try:
+        async for session in session_iter:
+            user = current_user or await get_or_create_user_by_telegram_id(session, telegram_id)
+            if user.active_persona_id is None:
+                await message.answer(
+                    "Выбери персонажа в мини-приложении, чтобы начать общение. "
+                    "Это нужно, чтобы приветствие и ответы были в стиле выбранного героя.",
+                )
+                continue
+            try:
+                result = await generate_chat_reply(
+                    session=session,
+                    user=user,
+                    input_text=message.text or "",
+                    mode="default",
+                    skip_limits=True,  # AccessMiddleware уже ограничил
+                    skip_increment=True,  # уже инкрементировано в middleware
+                )
+                reply_markup = None
+                if message.chat and getattr(message.chat, "type", None) == "private" and getattr(
+                    settings, "image_enabled", False
+                ):
+                    reply_markup = build_image_button(result.persona_id)
+                await message.answer(result.reply, reply_markup=reply_markup)
+            except PermissionError:
+                await message.answer(
+                    "Похоже, бесплатный лимит исчерпан. Открой мини-приложение Vitte, чтобы оформить подписку.",
+                )
+            except Exception as exc:
+                logger.error("Failed to handle user message: %s", exc)
+                await message.answer("Не получилось ответить, попробуй ещё раз или открой мини-приложение.")
+    finally:
+        await stop_chat_action(typing_handle)
 
 
 @dp.callback_query(F.data.startswith("img:"))
@@ -362,6 +392,17 @@ async def on_image_requested(cb: CallbackQuery):
         "user_message": "",
     }
 
+    upload_handle: ChatActionHandle | None = None
+    status_message = None
+
+    async def _on_generation_started() -> None:
+        nonlocal upload_handle, status_message
+        upload_handle = start_chat_action(bot, cb.message.chat.id, "upload_photo")
+        try:
+            status_message = await bot.send_message(cb.message.chat.id, "Отправляю фото✨")
+        except Exception as exc:  # noqa: BLE001
+            logger.debug("Failed to send upload status message: %s", exc)
+
     try:
         await request_image_on_demand(
             user_id=user_id,
@@ -369,6 +410,7 @@ async def on_image_requested(cb: CallbackQuery):
             persona_id=persona_id,
             bot_instance=bot,
             context=context,
+            on_start=_on_generation_started,
         )
     except ImageRequestError as exc:
         if exc.reason == "no_quota":
@@ -378,12 +420,21 @@ async def on_image_requested(cb: CallbackQuery):
         elif exc.reason == "generation_failed":
             await _safe_answer(cb, "Не получилось сгенерировать изображение", show_alert=False)
         elif exc.reason == "busy":
-            await _safe_answer(cb, "Уже генерирую…", show_alert=False)
+            await _safe_answer(cb, "Давай дождёмся предыдущего фото 🙂", show_alert=False)
         else:
             await _safe_answer(cb, "Не получилось сгенерировать изображение", show_alert=False)
     except Exception as exc:  # noqa: BLE001
         logger.error("Failed to handle image request: %s", exc)
         await _safe_answer(cb, "Не получилось сгенерировать изображение", show_alert=False)
+    finally:
+        await stop_chat_action(upload_handle)
+        if status_message:
+            try:
+                await bot.delete_message(status_message.chat.id, status_message.message_id)
+            except TelegramBadRequest:
+                logger.debug("Temporary upload status message already gone")
+            except Exception as exc:  # noqa: BLE001
+                logger.debug("Failed to delete upload status message: %s", exc)
 
 
 @dp.callback_query(F.data.startswith("img_hot:"))
@@ -396,7 +447,56 @@ async def on_image_hot_requested(cb: CallbackQuery):
         await _safe_answer(cb, "Некорректный запрос", show_alert=False)
         return
 
-    await _safe_answer(cb, "Скоро будет доступно", show_alert=False)
+    await _safe_answer(cb, "Продолжаю…", show_alert=False)
+
+    typing_handle: ChatActionHandle | None = None
+    if cb.message.chat:
+        typing_handle = start_chat_action(bot, cb.message.chat.id, "typing")
+
+    async for session in get_session():
+        try:
+            user = await get_or_create_user_by_telegram_id(session, cb.from_user.id)
+            persona = await session.get(Persona, persona_id)
+            if not persona:
+                await cb.message.answer("Персонаж не найден.")
+                break
+
+            lock_key = _continuation_lock_key(user.id, persona.id)
+            lock_acquired = await _try_acquire_continuation_lock(session, lock_key)
+            if not lock_acquired:
+                await cb.message.answer("Секунду, я думаю…")
+                break
+
+            try:
+                result = await generate_chat_reply(
+                    session=session,
+                    user=user,
+                    input_text=AUTO_CONTINUE_PROMPT,
+                    persona_id=persona.id,
+                    mode="auto_continue",
+                    skip_limits=False,
+                    skip_increment=False,
+                    auto_continue=True,
+                )
+                reply_markup = None
+                if cb.message.chat and getattr(cb.message.chat, "type", None) == "private" and getattr(
+                    settings, "image_enabled", False
+                ):
+                    reply_markup = build_image_button(result.persona_id)
+                await cb.message.answer(result.reply, reply_markup=reply_markup)
+            finally:
+                await _release_continuation_lock(session, lock_key)
+            await session.commit()
+        except PermissionError:
+            await cb.message.answer(
+                "Похоже, бесплатный лимит исчерпан. Открой мини-приложение Vitte, чтобы оформить подписку."
+            )
+        except Exception as exc:  # noqa: BLE001
+            logger.error("Failed to handle auto-continue: %s", exc)
+            await cb.message.answer("Не получилось продолжить, попробуй ещё раз.")
+        finally:
+            await stop_chat_action(typing_handle)
+        break
 
 
 @dp.callback_query(F.data.startswith("pay_sub:"))

@@ -9,7 +9,7 @@ import uuid
 from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
-from typing import Any, Dict, Iterable, List
+from typing import Any, Awaitable, Callable, Dict, Iterable, List
 
 import httpx
 from aiogram import Bot
@@ -163,8 +163,8 @@ async def _try_acquire_advisory_lock(session, key: int) -> bool:
         row = result.fetchone()
         return bool(row and row[0])
     except Exception as exc:  # noqa: BLE001
-        logger.warning("Advisory lock unavailable, continuing without lock: %s", exc)
-        return True
+        logger.warning("Advisory lock unavailable, rejecting request: %s", exc)
+        return False
 
 
 async def _release_advisory_lock(session, key: int) -> None:
@@ -1094,6 +1094,7 @@ async def request_image_on_demand(
     persona_id: int,
     bot_instance: Bot,
     context: dict[str, Any] | None = None,
+    on_start: Callable[[], Awaitable[None]] | None = None,
 ) -> None:
     """
     Generate and send image on explicit user action.
@@ -1204,6 +1205,11 @@ async def request_image_on_demand(
                 config=config,
                 has_subscription=has_subscription,
             )
+            if on_start:
+                try:
+                    await on_start()
+                except Exception as exc:  # noqa: BLE001
+                    logger.debug("Image generation on_start hook failed user=%s persona=%s: %s", user.id, persona.id, exc)
 
             try:
                 image_bytes = await _generate_image_bytes(plan, ctx)

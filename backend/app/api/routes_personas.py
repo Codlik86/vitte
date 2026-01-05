@@ -24,6 +24,8 @@ from ..logging_config import logger
 from ..services.chat_flow import generate_greeting_reply
 from ..config import settings
 from ..services.telegram_id import get_or_raise_telegram_id
+from ..api.miniapp_story_guard import is_miniapp_request, require_story_for_miniapp, validate_story_for_persona
+from ..story_cards import resolve_story_id
 
 router = APIRouter(prefix="/api/personas", tags=["personas"])
 
@@ -333,6 +335,8 @@ async def select_persona_and_greet(
     session: AsyncSession = Depends(get_session),
 ):
     telegram_id = await get_or_raise_telegram_id(request, explicit=telegram_id)
+    if is_miniapp_request(request):
+        require_story_for_miniapp(request, payload.story_id)
     user = await get_or_create_user_by_telegram_id(session, telegram_id)
     persona_result = await session.execute(
         select(Persona).where(Persona.id == payload.persona_id)
@@ -347,6 +351,10 @@ async def select_persona_and_greet(
     ):
         raise HTTPException(status_code=404, detail="Persona not found")
 
+    resolved_story_id = resolve_story_id(payload.story_id)
+    if is_miniapp_request(request):
+        resolved_story_id = validate_story_for_persona(persona, payload.story_id)
+
     await _apply_persona_selection(session, user, persona)
     access = await build_access_status(session, user)
 
@@ -358,7 +366,7 @@ async def select_persona_and_greet(
     if payload.send_greeting:
         dialog, message_count = dialog_info
         if dialog is None:
-            dialog = await _get_or_create_dialog(session, user, persona, payload.story_id)
+            dialog = await _get_or_create_dialog(session, user, persona, resolved_story_id)
             dialog_info = (dialog, 0)
             message_count = 0
         dialog_id = dialog.id
@@ -370,7 +378,7 @@ async def select_persona_and_greet(
             message_count=message_count,
             has_subscription=bool(access.get("has_subscription")),
             atmosphere=payload.atmosphere,
-            story_id=payload.story_id,
+            story_id=resolved_story_id,
             extra_description=payload.extra_description,
             settings_changed=payload.settings_changed,
         )

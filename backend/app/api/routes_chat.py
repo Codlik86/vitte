@@ -8,6 +8,8 @@ from ..users_service import get_or_create_user_by_telegram_id
 from ..schemas import ChatRequest, ChatResponse
 from ..services.chat_flow import generate_chat_reply
 from ..services.telegram_id import get_or_raise_telegram_id
+from ..api.miniapp_story_guard import is_miniapp_request, require_story_for_miniapp, validate_story_for_persona
+from ..story_cards import resolve_story_id
 
 router = APIRouter(prefix="/api/chat", tags=["chat"])
 
@@ -34,6 +36,19 @@ async def _get_active_persona(session: AsyncSession, user: User) -> Persona:
 async def chat(payload: ChatRequest, request: Request, session: AsyncSession = Depends(get_session)):
     telegram_id = await get_or_raise_telegram_id(request, explicit=payload.telegram_id)
     user = await get_or_create_user_by_telegram_id(session, telegram_id)
+    resolved_story_id = payload.story_id
+    if is_miniapp_request(request):
+        require_story_for_miniapp(request, payload.story_id)
+        if payload.persona_id is None:
+            raise HTTPException(status_code=400, detail="persona_required")
+        persona_check = await session.execute(select(Persona).where(Persona.id == payload.persona_id))
+        persona = persona_check.scalar_one_or_none()
+        if persona is None:
+            raise HTTPException(status_code=404, detail="Persona not found")
+        resolved_story_id = validate_story_for_persona(persona, payload.story_id)
+    else:
+        resolved_story_id = resolve_story_id(payload.story_id)
+
     try:
         result = await generate_chat_reply(
             session=session,
@@ -42,7 +57,7 @@ async def chat(payload: ChatRequest, request: Request, session: AsyncSession = D
             persona_id=payload.persona_id,
             mode=payload.mode or "default",
             atmosphere=payload.atmosphere,
-            story_id=payload.story_id,
+            story_id=resolved_story_id,
             skip_limits=False,
             skip_increment=False,
         )

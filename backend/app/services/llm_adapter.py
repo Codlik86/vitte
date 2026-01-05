@@ -56,6 +56,11 @@ def describe_mode(mode: str | None, atmosphere: str | None) -> str:
         return "Сделай ответы более развёрнутыми, глубоко проживай эмоции и их причины."
     if mode == "atmosphere" and atmosphere:
         return ATMOSPHERE_DESCRIPTIONS.get(atmosphere, "")
+    if mode == "auto_continue":
+        return (
+            "Продолжи диалог от лица персонажа, опираясь на последние реплики, сохраняя текущий тон и сцену. "
+            "Не делай паузы и не проси ввода, просто развивай разговор и можешь задать 1 короткий вопрос."
+        )
     return ""
 
 

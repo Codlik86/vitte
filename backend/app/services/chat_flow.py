@@ -251,7 +251,7 @@ def _build_greeting_user_message(
 async def generate_chat_reply(
     session: AsyncSession,
     user: User,
-    input_text: str,
+    input_text: str | None,
     *,
     persona_id: int | None = None,
     mode: str = "default",
@@ -259,6 +259,7 @@ async def generate_chat_reply(
     story_id: str | None = None,
     skip_limits: bool = False,
     skip_increment: bool = False,
+    auto_continue: bool = False,
 ) -> ChatResult:
     """
     Общая точка генерации ответа: используется и /api/chat, и ботовым хендлером.
@@ -298,7 +299,8 @@ async def generate_chat_reply(
     recent_dialogue = _recent_dialogue_from_messages(recent_messages) if message_count > 0 else None
 
     feature_states = await feature_states_task
-    analysis = analyze_message(input_text)
+    normalized_input = input_text or ""
+    analysis = analyze_message(normalized_input)
     mode_instruction = describe_mode(mode, atmosphere)
     story_instruction = build_story_context(story_prompt, reentry=bool(story_prompt and message_count > 0))
     if story_meta:
@@ -350,7 +352,7 @@ async def generate_chat_reply(
         soft_block_intimacy=intimacy_decision.soft_block,
         message_count=message_count,
     )
-    messages, _ = build_chat_messages(prompt_ctx, input_text)
+    messages, _ = build_chat_messages(prompt_ctx, normalized_input)
 
     reply = None
     if safety_result.is_harm or safety_result.is_illegal:
@@ -405,7 +407,8 @@ async def generate_chat_reply(
             logger.info("Voice synthesis unavailable, sending text fallback for user %s dialog %s", user.id, dialog.id if dialog else None)
 
     if not preview_story and dialog:
-        session.add(Message(dialog_id=dialog.id, role="user", content=input_text))
+        if not auto_continue:
+            session.add(Message(dialog_id=dialog.id, role="user", content=normalized_input))
         session.add(Message(dialog_id=dialog.id, role="assistant", content=reply))
         if not skip_increment and not access.get("has_subscription", False):
             user.free_messages_used += 1

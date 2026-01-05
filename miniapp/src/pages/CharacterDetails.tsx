@@ -55,6 +55,10 @@ export function CharacterDetails() {
 
   const handleSelect = async () => {
     if (!persona) return;
+    if (!selectedStoryId) {
+      setSelectError("Сначала выбери историю");
+      return;
+    }
     const hasHistory = Boolean(persona.has_history);
     const hasChanges = Boolean(selectedStoryId);
     try {
@@ -95,11 +99,11 @@ export function CharacterDetails() {
   }, [persona]);
   const hasHistory = Boolean(persona?.has_history);
   const hasChanges = Boolean(selectedStoryId);
-  const actionLabel = hasHistory
-    ? hasChanges
+  const actionLabel = selectedStoryId
+    ? hasHistory
       ? "Обновить и продолжить"
-      : "Продолжить разговор"
-    : "Начать разговор";
+      : "Начать разговор"
+    : "Выбери историю";
 
   return (
     <div className="min-h-dvh bg-bg-dark text-text-main pt-6">
@@ -159,7 +163,7 @@ export function CharacterDetails() {
               <button
                 className={`w-full rounded-full bg-white px-4 py-4 text-base font-semibold text-bg-dark transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-70 ${busy ? "loading-pulse" : ""}`}
                 onClick={handleSelect}
-                disabled={busy}
+                disabled={busy || !selectedStoryId}
               >
                 {busy ? (
                   <span className="inline-flex items-center gap-1 leading-none">
