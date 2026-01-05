@@ -12,6 +12,12 @@ from ..logging_config import logger
 router = APIRouter(tags=["telegram"])
 
 WEBHOOK_PATH = f"/webhook/{settings.telegram_webhook_secret or 'telegram'}"
+CLEANUP_SQL = text(
+    """
+    DELETE FROM processed_updates
+    WHERE created_at < now() - (:ttl_days * INTERVAL '1 day')
+    """
+)
 
 
 async def _log_stage(update_id: int | None, start_time: float, stage: str) -> None:
@@ -32,15 +38,7 @@ async def cleanup_processed_updates(ttl_days: int = 14) -> None:
     try:
         async with async_session_factory() as session:
             try:
-                await session.execute(
-                    text(
-                        """
-                        DELETE FROM processed_updates
-                        WHERE created_at < now() - (:ttl_days || ' days')::interval
-                        """
-                    ),
-                    {"ttl_days": ttl_days},
-                )
+                await session.execute(CLEANUP_SQL, {"ttl_days": ttl_days})
                 await session.commit()
             except Exception:
                 await session.rollback()
