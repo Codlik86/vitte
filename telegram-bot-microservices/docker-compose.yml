@@ -25,6 +25,14 @@ services:
       - vitte_network
     security_opt:
       - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 1G
 
   # Redis Cache & Broker
   redis:
@@ -34,7 +42,7 @@ services:
       redis-server
       --appendonly yes
       --requirepass ${REDIS_PASSWORD}
-      --maxmemory 512mb
+      --maxmemory 2gb
       --maxmemory-policy allkeys-lru
     volumes:
       - redis_data:/data
@@ -51,6 +59,14 @@ services:
       - vitte_network
     security_opt:
       - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2.5G
+        reservations:
+          cpus: '0.5'
+          memory: 2G
 
   # Database Migrations (run once)
   migrations:
@@ -99,6 +115,14 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
 
   # FastAPI Service
   api:
@@ -134,6 +158,14 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 1.5G
+        reservations:
+          cpus: '1'
+          memory: 1G
 
   # Celery Worker
   worker:
@@ -166,6 +198,14 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 2G
+        reservations:
+          cpus: '1'
+          memory: 1G
 
   # Admin Panel
   admin:
@@ -201,6 +241,14 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
 
   # Nginx Reverse Proxy
   nginx:
@@ -225,6 +273,14 @@ services:
       options:
         max-size: "10m"
         max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
 
   # Prometheus (Monitoring)
   prometheus:
@@ -247,6 +303,14 @@ services:
       - vitte_network
     security_opt:
       - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
 
   # Grafana (Dashboards)
   grafana:
@@ -269,6 +333,14 @@ services:
       - vitte_network
     security_opt:
       - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 512M
+        reservations:
+          cpus: '0.25'
+          memory: 256M
 
 networks:
   vitte_network:

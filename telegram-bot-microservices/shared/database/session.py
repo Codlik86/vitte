@@ -10,9 +10,9 @@ import os
 # Get database URL from environment
 DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://vitte_user:password@postgres:5432/vitte_bot")
 
-# Connection pool settings
-POOL_SIZE = int(os.getenv("DB_POOL_SIZE", 20))
-MAX_OVERFLOW = int(os.getenv("DB_MAX_OVERFLOW", 40))
+# Connection pool settings (optimized for 10k+ users)
+POOL_SIZE = int(os.getenv("DB_POOL_SIZE", 50))
+MAX_OVERFLOW = int(os.getenv("DB_MAX_OVERFLOW", 100))
 POOL_PRE_PING = os.getenv("DB_POOL_PRE_PING", "True").lower() == "true"
 
 
