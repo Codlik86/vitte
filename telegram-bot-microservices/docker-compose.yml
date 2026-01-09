@@ -52,6 +52,23 @@ services:
     security_opt:
       - no-new-privileges:true
 
+  # Database Migrations (run once)
+  migrations:
+    build:
+      context: .
+      dockerfile: Dockerfile.migrations
+    container_name: vitte_migrations
+    env_file:
+      - .env
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    networks:
+      - vitte_network
+    restart: "no"
+
   # Telegram Bot Service
   bot:
     build:
@@ -68,6 +85,8 @@ services:
     depends_on:
       postgres:
         condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
       redis:
         condition: service_healthy
     restart: unless-stopped
@@ -103,6 +122,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
     restart: unless-stopped
     networks:
       - vitte_network
@@ -133,6 +154,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      migrations:
+        condition: service_completed_successfully
     restart: unless-stopped
     networks:
       - vitte_network
@@ -162,6 +185,8 @@ services:
     expose:
       - "8080"
     depends_on:
+      migrations:
+        condition: service_completed_successfully
       postgres:
         condition: service_healthy
       redis:

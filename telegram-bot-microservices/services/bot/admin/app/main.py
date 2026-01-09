@@ -17,14 +17,10 @@ async def lifespan(app: FastAPI):
     """Lifespan context manager for startup/shutdown"""
     # Startup
     logger.info(f"Starting Admin Panel in {config.environment} mode...")
-    try:
-        await init_db()
-        logger.info("Database initialized")
-    except Exception as e:
-        logger.error(f"Failed to initialize database: {e}")
-    
+    logger.info("Database migrations should be run separately before starting services")
+
     yield
-    
+
     # Shutdown
     logger.info("Shutting down Admin Panel...")
     await close_db()
