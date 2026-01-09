@@ -1,0 +1,27 @@
+# Shared dependencies for all services
+
+# Database
+sqlalchemy[asyncio]==2.0.25
+asyncpg==0.29.0
+alembic==1.13.1
+
+# Redis
+redis==5.0.1
+aioredis==2.0.1
+
+# Utilities
+pydantic==2.5.3
+pydantic-settings==2.1.0
+python-dotenv==1.0.0
+
+# Logging
+structlog==24.1.0
+python-json-logger==2.0.7
+
+# Date/Time
+python-dateutil==2.8.2
+pytz==2024.1
+
+# S3/MinIO
+minio==7.2.3
+boto3==1.34.21
