@@ -134,6 +134,159 @@
 
 ---
 
+## ✅ Этап 3: Production Deployment (ЗАВЕРШЕН)
+
+**Сервер:** VPS 4 vCPU + 8 GB RAM + 60 GB SSD
+**IP:** 195.209.210.96
+**Статус:** 🟢 **БОТ РАБОТАЕТ В PRODUCTION**
+
+### Проблемы и их решения
+
+#### 1. Redis версия конфликт с Celery
+**Проблема:** Celery 5.3.4 требует redis<5.0.0, но был установлен redis==5.0.1
+```
+ERROR: celery[redis] 5.3.4 depends on redis!=4.5.5, <5.0.0 and >=4.5.2
+```
+**Решение:** Downgrade redis с 5.0.1 → 4.6.0 в `shared/requirements.txt`
+
+#### 2. Aiogram устаревшая версия
+**Проблема:** Модуль `aiogram.client.default` отсутствует в aiogram 3.3.0
+```
+ModuleNotFoundError: No module named 'aiogram.client.default'
+```
+**Решение:** Upgrade aiogram с 3.3.0 → 3.15.0 в `services/bot/requirements.txt`
+
+#### 3. Editable install не работает в Docker
+**Проблема:** Строки `-e ../../shared` в requirements.txt блокируют установку
+```
+ERROR: ../../shared is not a valid editable requirement
+```
+**Решение:** Удалены все строки `-e` из:
+- `services/bot/requirements.txt`
+- `services/bot/api/requirements.txt`
+- `services/bot/worker/requirements.txt`
+- `services/bot/admin/requirements.txt`
+
+#### 4. URL-encoding пароля Redis для Celery
+**Проблема:** Celery не может распарсить пароль со спецсимволами `!` и `#`
+```
+ValueError: Port could not be cast to integer value as 'Vt!R3d1s'
+```
+**Решение:**
+- Удалены environment переменные с `${REDIS_PASSWORD}` из `docker-compose.yml`
+- Все сервисы теперь читают URL-encoded пароль напрямую из `.env`:
+  ```bash
+  CELERY_BROKER_URL=redis://:Vt%21R3d1s%23Cache_2026_7nB5wL@redis:6379/1
+  CELERY_RESULT_BACKEND=redis://:Vt%21R3d1s%23Cache_2026_7nB5wL@redis:6379/2
+  ```
+  (`!` → `%21`, `#` → `%23`)
+
+#### 5. Nginx permission denied для PID файла
+**Проблема:** Non-root user не может писать в `/var/run/nginx.pid`
+```
+nginx: [emerg] open() "/var/run/nginx.pid" failed (13: Permission denied)
+```
+**Решение:** Изменен путь PID в `infrastructure/nginx/nginx.conf`:
+```nginx
+pid /tmp/nginx.pid;  # было: /var/run/nginx.pid
+```
+
+#### 6. SQLAlchemy reserved keyword
+**Проблема:** Колонка `metadata` зарезервирована в SQLAlchemy
+```
+❌ Migration failed: Attribute name 'metadata' is reserved
+```
+**Решение:** Переименована колонка в `shared/database/models.py`:
+```python
+extra_data = Column(JSON, nullable=True)  # было: metadata
+```
+
+#### 7. Дубликаты зависимостей
+**Проблема:** Redis указан дважды (в shared и service requirements)
+**Решение:** Удалены дубликаты `redis==5.0.1` из всех service requirements
+
+### Deployment процесс
+
+```bash
+# 1. Подключение к серверу
+ssh -i ~/.ssh/vitte.pem ubuntu@195.209.210.96
+
+# 2. Установка Docker и Docker Compose
+sudo apt update && sudo apt install -y docker.io docker-compose git
+sudo usermod -aG docker ubuntu
+
+# 3. Клонирование репозитория
+git clone https://ghp_TOKEN@github.com/dmitriianisimovworks/vitte_dev_for_deploy.git
+cd vitte_dev_for_deploy/telegram-bot-microservices
+
+# 4. Настройка .env
+cp .env.example .env
+nano .env  # Установить пароли и BOT_TOKEN
+
+# 5. Исправление конфликтов зависимостей (описаны выше)
+
+# 6. Сборка и запуск
+docker compose build --no-cache
+docker compose up -d
+
+# 7. Проверка статусов
+docker compose ps
+docker logs vitte_bot
+```
+
+### Production конфигурация
+
+**Пароли (сгенерированы):**
+- PostgreSQL: `Vt!P0stgr#Sql_2026_9kX3mQ`
+- Redis: `Vt!R3d1s#Cache_2026_7nB5wL` (URL-encoded в .env)
+- Grafana: `Vt!Gr4f4n4#Mon_2026_4pY8jR`
+- Admin Secret: `ebc02656dbac6d5458d757f31bfefa3d43771335800a1010e3d5e3979b159721`
+
+**Admin ID:** 5575533898 (Dmitrii)
+
+**Bot Token:** 8523015926:AAECpyIbj4TTQ9Ymx1DBCfReHtu24gL54jg
+
+### Результаты deployment
+
+```bash
+NAME               STATUS
+vitte_bot          Up (healthy) ✅
+vitte_worker       Up (healthy) ✅
+vitte_postgres     Up (healthy) ✅
+vitte_redis        Up (healthy) ✅
+vitte_api          Up (unhealthy) ⚠️ - нет /health endpoint
+vitte_admin        Up (unhealthy) ⚠️ - нет /health endpoint
+vitte_nginx        Up (unhealthy) ⚠️ - нет /health endpoint
+vitte_prometheus   Up ✅
+vitte_grafana      Up ✅
+```
+
+**Примечание:** API/Admin/Nginx unhealthy из-за отсутствия `/health` endpoint в коде (404), но **не влияет на работу бота**.
+
+### Первый запуск - SUCCESS! 🎉
+
+```
+docker logs vitte_bot --tail 50
+{"asctime": "2026-01-10T16:59:04", "levelname": "INFO", "message": "Bot started successfully"}
+{"asctime": "2026-01-10T17:11:22", "levelname": "INFO", "message": "New user registered: 5575533898"}
+```
+
+**Бот ответил:**
+```
+👋 Привет, Dmitrii!
+
+Я бот Vitte - твой AI-ассистент.
+
+Используй /help для списка команд.
+```
+
+✅ **Пользователь успешно зарегистрирован в БД**
+✅ **Бот работает и отвечает на команды**
+✅ **Миграции применены корректно**
+✅ **Celery worker подключен к Redis**
+
+---
+
 ## 📁 Структура проекта
 
 ```
@@ -269,23 +422,23 @@ docker-compose logs admin
 
 ## 📊 Что дальше
 
-### Этап 3: Кеширование (PENDING)
+### Этап 4: Кеширование (PENDING)
 - Redis декораторы `@cached`
 - Кеширование User (TTL 5 мин)
 - Кеширование Subscription (TTL 1 час)
 - Cache-Aside pattern
 
-### Этап 4: Разбиваем монолиты (PENDING)
+### Этап 5: Разбиваем монолиты (PENDING)
 - Разделить handlers на модули (start.py, chat.py, payments.py, images.py)
 - Service Layer pattern
 - Dependency Injection
 
-### Этап 5: Очереди для тяжёлых задач (PENDING)
+### Этап 6: Очереди для тяжёлых задач (PENDING)
 - Celery задачи для генерации изображений (ComfyUI)
 - Retention задачи
 - Рассылки
 
-### Этап 6: Rate Limiting + Monitoring (PENDING)
+### Этап 7: Rate Limiting + Monitoring (PENDING)
 - slowapi/aiolimiter
 - Sentry error tracking
 - Structured logging
@@ -297,11 +450,13 @@ docker-compose logs admin
 ### Реализовано:
 ✅ **Этап 1** - Docker + разделение сервисов
 ✅ **Этап 2** - Alembic миграции + Connection Pool
+✅ **Этап 3** - Production Deployment
 ✅ **Оптимизация под бюджетный сервер** - 4 vCPU + 8 GB RAM (3,000-5,000 пользователей)
 
 ### Текущий статус:
-- 🟢 **ГОТОВО К ДЕПЛОЮ** - оптимизировано для 4 vCPU + 8 GB RAM
-- 🟢 **Миграции БД** - версионируемые, откатываемые
+- 🟢 **БОТ РАБОТАЕТ В PRODUCTION** - успешно задеплоен на VPS
+- 🟢 **Первый пользователь зарегистрирован** - ID: 5575533898
+- 🟢 **Миграции БД** - версионируемые, откатываемые, применены в production
 - 🟢 **Безопасность** - сильные пароли, закрытые порты, internal network
 - 🟢 **Масштабируемость** - микросервисная архитектура + resource limits
 - 🟢 **Connection Pool** - 50 connections (20+30)
@@ -309,24 +464,24 @@ docker-compose logs admin
 - 🟢 **Celery** - 4 workers для параллельной обработки
 - 🟢 **API** - 2 Uvicorn workers
 
-### Арендованный сервер:
+### Production сервер:
+- **IP**: 195.209.210.96
 - **vCPU**: 4 ядра
 - **RAM**: 8 GB
 - **Диск**: 60+ GB SSD
 - **Поддержка**: 3,000-5,000 активных пользователей
+- **Статус**: 🚀 **LIVE**
 
 ### Следующие шаги:
-1. ⚠️ **Сменить пароли** в `.env` перед деплоем на сервер
-2. 📦 **Деплой на сервер** - клонировать через SSH или Personal Access Token
-3. ✅ **Создать .env** - скопировать из `.env.example`
-4. 🚀 **Запустить** - `docker-compose up -d`
-5. 🧪 Протестировать базовые команды (/start, /help)
-6. 📈 **Этап 3: Кеширование** - снизить нагрузку на БД в 3-5 раз
+1. ✅ **Production deployment** - ЗАВЕРШЕН
+2. 🔧 **Добавить /health endpoints** - для корректных healthchecks API/Admin/Nginx (опционально)
+3. 📈 **Этап 4: Кеширование** - снизить нагрузку на БД в 3-5 раз
+4. 🎨 **Этап 5+** - разделение handlers, очереди для изображений, мониторинг
 
 ---
 
-**Версия документа:** 1.2
-**Дата:** 2025-01-10
+**Версия документа:** 1.3
+**Дата:** 2026-01-10
 **Проект:** Vitte Telegram Bot - Microservices Architecture
 **Конфигурация:** Budget Server (4 vCPU + 8 GB RAM)
-**Статус:** 🚀 READY FOR DEPLOYMENT
+**Статус:** 🚀 **DEPLOYED & LIVE IN PRODUCTION**
