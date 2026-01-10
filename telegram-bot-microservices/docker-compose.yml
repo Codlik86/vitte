@@ -28,10 +28,10 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '2'
-          memory: 2G
-        reservations:
           cpus: '1'
+          memory: 1.5G
+        reservations:
+          cpus: '0.5'
           memory: 1G
 
   # Redis Cache & Broker
@@ -42,7 +42,7 @@ services:
       redis-server
       --appendonly yes
       --requirepass ${REDIS_PASSWORD}
-      --maxmemory 2gb
+      --maxmemory 1gb
       --maxmemory-policy allkeys-lru
     volumes:
       - redis_data:/data
@@ -62,11 +62,11 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '2'
-          memory: 2.5G
+          cpus: '1'
+          memory: 1.3G
         reservations:
-          cpus: '0.5'
-          memory: 2G
+          cpus: '0.25'
+          memory: 1G
 
   # Database Migrations (run once)
   migrations:
@@ -161,11 +161,11 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '2'
-          memory: 1.5G
-        reservations:
           cpus: '1'
           memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 700M
 
   # Celery Worker
   worker:
@@ -201,11 +201,11 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '2'
-          memory: 2G
-        reservations:
           cpus: '1'
-          memory: 1G
+          memory: 1.2G
+        reservations:
+          cpus: '0.5'
+          memory: 800M
 
   # Admin Panel
   admin:
@@ -244,11 +244,11 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '1'
-          memory: 1G
-        reservations:
           cpus: '0.5'
-          memory: 512M
+          memory: 600M
+        reservations:
+          cpus: '0.25'
+          memory: 400M
 
   # Nginx Reverse Proxy
   nginx:
@@ -306,11 +306,11 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '1'
-          memory: 1G
-        reservations:
           cpus: '0.5'
-          memory: 512M
+          memory: 700M
+        reservations:
+          cpus: '0.25'
+          memory: 500M
 
   # Grafana (Dashboards)
   grafana:
@@ -336,8 +336,8 @@ services:
     deploy:
       resources:
         limits:
-          cpus: '1'
-          memory: 512M
+          cpus: '0.5'
+          memory: 400M
         reservations:
           cpus: '0.25'
           memory: 256M
