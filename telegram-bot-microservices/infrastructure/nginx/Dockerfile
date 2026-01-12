@@ -14,9 +14,6 @@ RUN chown -R nginx:nginx /var/cache/nginx && \
     chown -R nginx:nginx /var/log/nginx && \
     chown -R nginx:nginx /etc/nginx/conf.d
 
-# Security: Run as non-root
-USER nginx
-
 # Expose ports
 EXPOSE 80 443
 
