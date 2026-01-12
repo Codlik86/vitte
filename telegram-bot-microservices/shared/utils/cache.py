@@ -12,6 +12,8 @@ def generate_cache_key(prefix: str, *args, **kwargs) -> str:
     """
     Generate cache key from function arguments
 
+    Filters out AsyncSession objects from args
+
     Args:
         prefix: Key prefix (e.g., 'user', 'subscription')
         *args: Positional arguments
@@ -20,14 +22,22 @@ def generate_cache_key(prefix: str, *args, **kwargs) -> str:
     Returns:
         Cache key string like 'user:123' or 'subscription:456'
     """
+    from sqlalchemy.ext.asyncio import AsyncSession
+
+    # Filter out AsyncSession objects
+    filtered_args = [
+        arg for arg in args
+        if not isinstance(arg, AsyncSession)
+    ]
+
     # Extract simple ID arguments
-    if args:
+    if filtered_args:
         # If first arg is simple type (int, str), use it directly
-        if len(args) == 1 and isinstance(args[0], (int, str)):
-            return f"{prefix}:{args[0]}"
+        if len(filtered_args) == 1 and isinstance(filtered_args[0], (int, str)):
+            return f"{prefix}:{filtered_args[0]}"
 
     # For complex arguments, create hash
-    key_parts = [str(arg) for arg in args]
+    key_parts = [str(arg) for arg in filtered_args]
     key_parts.extend(f"{k}={v}" for k, v in sorted(kwargs.items()))
     key_string = ":".join(key_parts)
 

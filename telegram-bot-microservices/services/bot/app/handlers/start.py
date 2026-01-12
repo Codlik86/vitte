@@ -9,7 +9,8 @@ from shared.database import (
     get_db,
     get_user_by_id,
     create_user,
-    create_subscription
+    create_subscription,
+    get_subscription_by_user_id
 )
 from shared.utils import get_logger
 
