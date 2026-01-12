@@ -97,7 +97,6 @@ services:
       - ENVIRONMENT=${ENVIRONMENT:-production}
       - BOT_TOKEN=${BOT_TOKEN}
       - DATABASE_URL=${DATABASE_URL}
-      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
     depends_on:
       postgres:
         condition: service_healthy
@@ -137,7 +136,6 @@ services:
       - API_HOST=${API_HOST:-0.0.0.0}
       - API_PORT=${API_PORT:-8000}
       - DATABASE_URL=${DATABASE_URL}
-      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
     # Internal only - access via Nginx
     expose:
       - "8000"
@@ -178,9 +176,6 @@ services:
     environment:
       - ENVIRONMENT=${ENVIRONMENT:-production}
       - DATABASE_URL=${DATABASE_URL}
-      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
-      - CELERY_BROKER_URL=redis://:${REDIS_PASSWORD}@redis:6379/1
-      - CELERY_RESULT_BACKEND=redis://:${REDIS_PASSWORD}@redis:6379/2
     depends_on:
       postgres:
         condition: service_healthy
@@ -220,7 +215,6 @@ services:
       - ADMIN_HOST=${ADMIN_HOST:-0.0.0.0}
       - ADMIN_PORT=${ADMIN_PORT:-8080}
       - DATABASE_URL=${DATABASE_URL}
-      - REDIS_URL=redis://:${REDIS_PASSWORD}@redis:6379/0
     # Internal only - access via Nginx
     expose:
       - "8080"
