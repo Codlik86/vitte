@@ -6,6 +6,7 @@ from contextlib import asynccontextmanager
 
 from app.config import config
 from app.routes import dashboard_router, users_router
+from app.routes.health import router as health_router
 from shared.database import init_db, close_db
 from shared.utils import get_logger
 
@@ -36,6 +37,7 @@ app = FastAPI(
 )
 
 # Include routers
+app.include_router(health_router, tags=["health"])
 app.include_router(dashboard_router, tags=["dashboard"])
 app.include_router(users_router, tags=["users"])
 
