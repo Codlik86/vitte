@@ -9,10 +9,6 @@ COPY infrastructure/nginx/nginx.conf /etc/nginx/nginx.conf
 # Create directories for SSL (if needed)
 RUN mkdir -p /etc/nginx/ssl
 
-# Create non-root user
-RUN addgroup -g 101 -S nginx && \
-    adduser -S -D -H -u 101 -h /var/cache/nginx -s /sbin/nologin -G nginx -g nginx nginx
-
 # Set correct permissions
 RUN chown -R nginx:nginx /var/cache/nginx && \
     chown -R nginx:nginx /var/log/nginx && \
