@@ -453,22 +453,63 @@ KEYS *
 
 ---
 
+## ✅ Этап 5: Backend Infrastructure - Rate Limiting + Celery Tasks (ЗАВЕРШЕН)
+
+### Заход 1: Rate Limiting + Middleware ✅
+- ✅ **RateLimiter** - Token Bucket algorithm на Redis
+- ✅ **ThrottlingMiddleware** - 10 сообщений/мин, 20 callbacks/мин
+- ✅ **AntiFloodMiddleware** - защита от спама (3 req/5 сек)
+- ✅ **Configuration** - настройки через env variables
+- ✅ **Integration** - middlewares подключены к bot dispatcher
+
+### Заход 2: Service Layer + API Endpoints ✅
+**Dialog Service:**
+- ✅ `get_dialog_by_id()`, `get_user_dialogs()`, `create_dialog()`, `update_dialog()`, `delete_dialog()` (soft)
+
+**Message Service:**
+- ✅ `get_dialog_messages()`, `create_message()`, `get_message_count()`, `delete_old_messages()`
+
+**API Endpoints:**
+- ✅ `/api/v1/subscriptions/{user_id}` - GET/PATCH подписки
+- ✅ `/api/v1/dialogs/*` - CRUD для диалогов + сообщения
+- ✅ Schemas: SubscriptionUpdate, DialogUpdate, DialogListResponse, MessageListResponse
+
+### Заход 3: Celery Tasks + Beat Scheduler ✅
+**Cleanup Tasks:**
+- ✅ `cleanup_old_messages` - удаление старых сообщений (keep_last=50)
+- ✅ `cleanup_inactive_dialogs` - архивация неактивных диалогов (>30 days)
+
+**Report Tasks:**
+- ✅ `generate_user_stats` - статистика пользователей (total, active, blocked, dialogs, messages)
+- ✅ `generate_subscription_report` - отчет по подпискам (free/premium/enterprise, usage, expiring)
+
+**Notification Tasks:**
+- ✅ `send_subscription_expiry_reminder` - напоминания о конце подписки (3 дня)
+- ✅ `send_admin_alert` - алерты для админа
+
+**Celery Beat Schedule:**
+- ✅ Daily cleanup 3:00 UTC, Weekly dialog cleanup Monday 4:00 UTC
+- ✅ Daily stats 6:00 UTC, Daily subscription report 6:30 UTC
+- ✅ Daily expiry reminders 10:00 UTC
+
+**Beat Container:**
+- ✅ Отдельный контейнер `vitte_beat` (0.5 CPU / 512MB RAM)
+- ✅ Healthcheck через `celerybeat-schedule` file
+- ✅ Синхронизация с worker через `celery_app.py`
+
+---
+
 ## 📊 Что дальше
 
-### Этап 5: Разбиваем монолиты (PENDING)
-- Разделить handlers на модули (start.py, chat.py, payments.py, images.py)
-- Service Layer pattern
-- Dependency Injection
+### Этап 6: AI Integration (FUTURE)
+- Разделить bot handlers на модули (start.py, chat.py, payments.py, images.py)
+- Service Layer для chat_flow.py (LLMService, SafetyService, MemoryService)
+- Celery задачи для AI генерации (DeepSeek/GPT, ComfyUI)
 
-### Этап 6: Очереди для тяжёлых задач (PENDING)
-- Celery задачи для генерации изображений (ComfyUI)
-- Retention задачи
-- Рассылки
-
-### Этап 7: Rate Limiting + Monitoring (PENDING)
-- slowapi/aiolimiter
+### Этап 7: Advanced Monitoring (FUTURE)
 - Sentry error tracking
-- Structured logging
+- Custom Prometheus metrics
+- Grafana dashboards
 
 ---
 
@@ -479,6 +520,7 @@ KEYS *
 ✅ **Этап 2** - Alembic миграции + Connection Pool
 ✅ **Этап 3** - Production Deployment
 ✅ **Этап 4** - Redis Caching + Health Checks
+✅ **Этап 5** - Rate Limiting + Celery Tasks + Beat Scheduler
 ✅ **Оптимизация под бюджетный сервер** - 4 vCPU + 8 GB RAM (3,000-5,000 пользователей)
 
 ### Текущий статус:
@@ -490,15 +532,20 @@ KEYS *
 - 🟢 **Connection Pool** - 50 connections (20+30)
 - 🟢 **Redis** - 1GB памяти для кеширования (работает в production)
 - 🟢 **Redis Caching** - User (TTL 5 min) + Subscription (TTL 1 hour), 80% DB load reduction
-- 🟢 **Health Checks** - все сервисы healthy (/health, /health/db, /health/redis)
-- 🟢 **Celery** - 4 workers для параллельной обработки
-- 🟢 **API** - 2 Uvicorn workers
+- 🟢 **Rate Limiting** - Token Bucket algorithm, защита от спама
+- 🟢 **Health Checks** - все 10 сервисов healthy (включая beat)
+- 🟢 **Celery Worker** - 4 workers для параллельной обработки
+- 🟢 **Celery Beat** - автоматические задачи (cleanup, reports, notifications)
+- 🟢 **Service Layer** - Dialog & Message services с кешированием
+- 🟢 **API Endpoints** - CRUD для subscriptions, dialogs, messages
+- 🟢 **API Workers** - 2 Uvicorn workers
 
 ### Production сервер:
 - **IP**: 195.209.210.96
 - **vCPU**: 4 ядра
 - **RAM**: 8 GB
 - **Диск**: 60+ GB SSD
+- **Контейнеры**: 10 сервисов (bot, api, admin, worker, beat, postgres, redis, nginx, prometheus, grafana)
 - **Поддержка**: 3,000-5,000 активных пользователей
 - **Статус**: 🚀 **LIVE**
 
@@ -506,12 +553,13 @@ KEYS *
 1. ✅ **Production deployment** - ЗАВЕРШЕН
 2. ✅ **Health endpoints** - ЗАВЕРШЕН
 3. ✅ **Redis Caching** - ЗАВЕРШЕН
-4. 🎯 **Этап 5: Разбить монолиты** - handlers, service layer
-5. 🎨 **Этап 6+** - очереди для изображений, LLM интеграция, мониторинг
+4. ✅ **Rate Limiting + Celery Tasks** - ЗАВЕРШЕН
+5. 🎯 **AI Integration** - LLM services, image generation (FUTURE)
+6. 🎨 **Advanced Monitoring** - Sentry, custom metrics (FUTURE)
 
 ---
 
-**Версия документа:** 1.4
+**Версия документа:** 1.5
 **Дата:** 2026-01-13
 **Проект:** Vitte Telegram Bot - Microservices Architecture
 **Конфигурация:** Budget Server (4 vCPU + 8 GB RAM)
