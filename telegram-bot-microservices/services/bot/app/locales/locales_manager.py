@@ -17,65 +17,57 @@ from aiogram_i18n.cores import FluentRuntimeCore
 LOCALES_DIR = Path(__file__).parent
 
 
-class DatabaseUserLocale:
+# Locale cache for performance
+_locale_cache: Dict[int, str] = {}
+
+
+async def get_user_locale(event_from_user: User, **kwargs) -> str:
     """
-    Custom locale getter that fetches user's language preference from database.
+    Get user's preferred locale.
 
-    Falls back to Telegram's language_code if not set in DB.
+    Priority:
+    1. Cache
+    2. Telegram user language_code
+    3. Default: "ru"
+
+    Args:
+        event_from_user: Telegram user object
+
+    Returns:
+        Language code (e.g., "ru", "en")
     """
+    user_id = event_from_user.id
 
-    def __init__(self):
-        self.cache: Dict[int, str] = {}
+    # Check cache first
+    if user_id in _locale_cache:
+        return _locale_cache[user_id]
 
-    async def get_locale(self, event_from_user: User, **kwargs) -> str:
-        """
-        Get user's preferred locale.
+    # TODO: Fetch from database when User model has language_code field
+    # from shared.database import get_user_by_id, get_db
+    # async for db in get_db():
+    #     user = await get_user_by_id(db, user_id)
+    #     if user and user.language_code:
+    #         _locale_cache[user_id] = user.language_code
+    #         return user.language_code
+    #     break
 
-        Priority:
-        1. Database language_code (future implementation)
-        2. Telegram user language_code
-        3. Default: "ru"
+    # Fallback to Telegram language or default
+    locale = event_from_user.language_code or "ru"
 
-        Args:
-            event_from_user: Telegram user object
+    # Normalize locale (support "ru-RU" -> "ru", "en-US" -> "en")
+    locale = locale.split("-")[0].lower()
 
-        Returns:
-            Language code (e.g., "ru", "en")
-        """
-        user_id = event_from_user.id
+    # Only support ru/en for now
+    if locale not in ["ru", "en"]:
+        locale = "ru"
 
-        # Check cache first
-        if user_id in self.cache:
-            return self.cache[user_id]
-
-        # TODO: Fetch from database when User model has language_code field
-        # from shared.database import get_user_by_id
-        # async with get_db() as db:
-        #     user = await get_user_by_id(db, user_id)
-        #     if user and user.language_code:
-        #         self.cache[user_id] = user.language_code
-        #         return user.language_code
-
-        # Fallback to Telegram language or default
-        locale = event_from_user.language_code or "ru"
-
-        # Normalize locale (support "ru-RU" -> "ru", "en-US" -> "en")
-        locale = locale.split("-")[0].lower()
-
-        # Only support ru/en for now
-        if locale not in ["ru", "en"]:
-            locale = "ru"
-
-        self.cache[user_id] = locale
-        return locale
-
-    def invalidate(self, user_id: int):
-        """Invalidate cache when user changes language"""
-        self.cache.pop(user_id, None)
+    _locale_cache[user_id] = locale
+    return locale
 
 
-# Initialize locale getter
-locale_getter = DatabaseUserLocale()
+def invalidate_locale_cache(user_id: int):
+    """Invalidate cache when user changes language"""
+    _locale_cache.pop(user_id, None)
 
 
 # Initialize i18n core with Fluent
@@ -90,11 +82,10 @@ i18n_core = FluentRuntimeCore(
 )
 
 
-# Create i18n middleware
+# Create i18n middleware with function-based locale getter
 i18n_middleware = I18nMiddleware(
     core=i18n_core,
-    manager=locale_getter,
-    default_locale="ru",
+    manager=get_user_locale,  # Pass function directly
 )
 
 
