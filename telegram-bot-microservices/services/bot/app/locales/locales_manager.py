@@ -11,6 +11,7 @@ from aiogram import Bot
 from aiogram.types import User
 from aiogram_i18n import I18nMiddleware
 from aiogram_i18n.cores import FluentRuntimeCore
+from aiogram_i18n.managers import BaseManager
 
 
 # Get locales directory path
@@ -82,25 +83,53 @@ i18n_core = FluentRuntimeCore(
 )
 
 
-# Custom locale getter for middleware
-async def middleware_get_locale(event, data):
+# Custom locale manager for i18n middleware
+class CustomLocaleManager(BaseManager):
     """
-    Custom locale getter for i18n middleware.
+    Custom locale manager with caching support.
 
-    Used by I18nMiddleware to determine user's language.
-    Delegates to get_user_locale() function.
+    This manager determines user's language from:
+    1. Cache (for performance)
+    2. Telegram user's language_code
+    3. Fallback to default "ru"
     """
-    if hasattr(event, 'from_user') and event.from_user:
-        return await get_user_locale(event.from_user)
-    # Fallback to default
-    return "ru"
+
+    async def get_locale(self, event, data: Dict[str, Any]) -> str:
+        """
+        Get user's locale from event.
+
+        Args:
+            event: Telegram event (Message, CallbackQuery, etc.)
+            data: Middleware data dictionary
+
+        Returns:
+            Language code (e.g., "ru", "en")
+        """
+        if hasattr(event, 'from_user') and event.from_user:
+            return await get_user_locale(event.from_user)
+        # Fallback to default
+        return "ru"
+
+    async def set_locale(self, locale: str, event, data: Dict[str, Any]) -> None:
+        """
+        Set user's locale (optional - for future language selection feature).
+
+        Args:
+            locale: Language code to set
+            event: Telegram event
+            data: Middleware data dictionary
+        """
+        if hasattr(event, 'from_user') and event.from_user:
+            user_id = event.from_user.id
+            _locale_cache[user_id] = locale
+            # TODO: Save to database when language selection is implemented
 
 
-# Create i18n middleware with default locale and custom getter
+# Create i18n middleware with custom locale manager
 i18n_middleware = I18nMiddleware(
     core=i18n_core,
-    default_locale="ru",
-    get_locale=middleware_get_locale  # Pass custom locale getter function
+    manager=CustomLocaleManager(default_locale="ru"),
+    default_locale="ru"
 )
 
 
