@@ -24,6 +24,7 @@ python-json-logger==2.0.7
 # i18n (Internationalization)
 babel==2.14.0
 fluent-runtime==0.4.0
+aiogram-i18n==1.4
 
 # Rate Limiting
 aiolimiter==1.1.0

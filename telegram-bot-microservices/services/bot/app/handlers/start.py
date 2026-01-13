@@ -1,26 +1,36 @@
 """
-/start and /help command handlers
+/start command handler
+
+Handles user registration and welcome message with i18n support.
 """
-from aiogram import Router, F
+from aiogram import Router
 from aiogram.types import Message
 from aiogram.filters import Command
+from aiogram_i18n import I18nContext
 
 from shared.database import (
     get_db,
     get_user_by_id,
     create_user,
     create_subscription,
-    get_subscription_by_user_id
 )
 from shared.utils import get_logger
 
 logger = get_logger(__name__)
-router = Router()
+router = Router(name="start")
 
 
 @router.message(Command("start"))
-async def cmd_start(message: Message):
-    """Handle /start command with caching"""
+async def cmd_start(message: Message, i18n: I18nContext):
+    """
+    Handle /start command with caching
+
+    Actions:
+    1. Check if user exists in database (cached, 5 min TTL)
+    2. Create user if not exists
+    3. Create free subscription for new users
+    4. Send welcome message in user's language
+    """
     user = message.from_user
 
     try:
@@ -50,61 +60,16 @@ async def cmd_start(message: Message):
                     images_limit=10
                 )
 
+                logger.info(f"New user registered: {user.id} (@{user.username})")
+
             break  # Exit async for loop
 
-        # Send welcome message
-        await message.answer(
-            f"👋 Привет, {user.first_name}!\n\n"
-            "Я бот Vitte - твой AI-ассистент.\n\n"
-            "Используй /help для списка команд."
-        )
+        # Send welcome message in user's language
+        welcome_text = i18n.get("start-greeting", name=user.first_name)
+        await message.answer(welcome_text)
+
+        logger.debug(f"Start command processed for user {user.id}")
 
     except Exception as e:
-        logger.error(f"Error in /start handler: {e}")
-        await message.answer("❌ Произошла ошибка. Попробуйте позже.")
-
-
-@router.message(Command("help"))
-async def cmd_help(message: Message):
-    """Handle /help command"""
-    help_text = (
-        "📚 <b>Доступные команды:</b>\n\n"
-        "/start - Начать работу с ботом\n"
-        "/help - Показать это сообщение\n"
-        "/status - Показать статус подписки\n\n"
-        "Просто отправь мне сообщение, и я отвечу!"
-    )
-    
-    await message.answer(help_text, parse_mode="HTML")
-
-
-@router.message(Command("status"))
-async def cmd_status(message: Message):
-    """Handle /status command - show subscription status with caching"""
-    user = message.from_user
-
-    try:
-        async for db in get_db():
-            # Get user subscription (CACHED - 1 hour TTL)
-            subscription = await get_subscription_by_user_id(db, user.id)
-
-            if not subscription:
-                await message.answer("❌ Подписка не найдена. Используйте /start")
-                break
-
-            # Format subscription info
-            status_text = (
-                f"📊 <b>Ваша подписка:</b>\n\n"
-                f"План: {subscription.plan}\n"
-                f"Статус: {'✅ Активна' if subscription.is_active else '❌ Неактивна'}\n\n"
-                f"<b>Лимиты:</b>\n"
-                f"Сообщения: {subscription.messages_used}/{subscription.messages_limit}\n"
-                f"Изображения: {subscription.images_used}/{subscription.images_limit}"
-            )
-
-            await message.answer(status_text, parse_mode="HTML")
-            break
-
-    except Exception as e:
-        logger.error(f"Error in /status handler: {e}")
-        await message.answer("❌ Произошла ошибка. Попробуйте позже.")
+        logger.error(f"Error in /start handler: {e}", exc_info=True)
+        await message.answer(i18n.get("error-general"))
