@@ -94,13 +94,13 @@ class CustomLocaleManager(BaseManager):
     3. Fallback to default "ru"
     """
 
-    async def get_locale(self, event, data: Dict[str, Any]) -> str:
+    async def get_locale(self, *, event, **kwargs) -> str:
         """
         Get user's locale from event.
 
         Args:
             event: Telegram event (Message, CallbackQuery, etc.)
-            data: Middleware data dictionary
+            **kwargs: Additional middleware data
 
         Returns:
             Language code (e.g., "ru", "en")
@@ -110,14 +110,14 @@ class CustomLocaleManager(BaseManager):
         # Fallback to default
         return "ru"
 
-    async def set_locale(self, locale: str, event, data: Dict[str, Any]) -> None:
+    async def set_locale(self, *, locale: str, event, **kwargs) -> None:
         """
         Set user's locale (optional - for future language selection feature).
 
         Args:
             locale: Language code to set
             event: Telegram event
-            data: Middleware data dictionary
+            **kwargs: Additional middleware data
         """
         if hasattr(event, 'from_user') and event.from_user:
             user_id = event.from_user.id
