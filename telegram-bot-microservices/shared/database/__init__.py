@@ -25,6 +25,17 @@ from shared.database.services import (
     create_subscription,
     update_subscription,
     increment_subscription_usage,
+    # Dialog services
+    get_dialog_by_id,
+    get_user_dialogs,
+    create_dialog,
+    update_dialog,
+    delete_dialog,
+    # Message services
+    get_dialog_messages,
+    create_message,
+    get_message_count,
+    delete_old_messages,
     # Cache utilities
     invalidate_user_cache,
     invalidate_subscription_cache
@@ -45,15 +56,28 @@ __all__ = [
     "Dialog",
     "Message",
     "Settings",
-    # Services (cached)
+    # User services
     "get_user_by_id",
     "get_user_by_username",
     "create_user",
     "update_user",
+    # Subscription services
     "get_subscription_by_user_id",
     "create_subscription",
     "update_subscription",
     "increment_subscription_usage",
+    # Dialog services
+    "get_dialog_by_id",
+    "get_user_dialogs",
+    "create_dialog",
+    "update_dialog",
+    "delete_dialog",
+    # Message services
+    "get_dialog_messages",
+    "create_message",
+    "get_message_count",
+    "delete_old_messages",
+    # Cache utilities
     "invalidate_user_cache",
     "invalidate_subscription_cache"
 ]
