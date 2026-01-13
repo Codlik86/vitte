@@ -4,9 +4,13 @@ from shared.schemas.common import (
     UserCreate,
     UserResponse,
     SubscriptionResponse,
+    SubscriptionUpdate,
     DialogResponse,
+    DialogUpdate,
+    DialogListResponse,
     MessageCreate,
     MessageResponse,
+    MessageListResponse,
     HealthResponse
 )
 
@@ -15,8 +19,12 @@ __all__ = [
     "UserCreate",
     "UserResponse",
     "SubscriptionResponse",
+    "SubscriptionUpdate",
     "DialogResponse",
+    "DialogUpdate",
+    "DialogListResponse",
     "MessageCreate",
     "MessageResponse",
+    "MessageListResponse",
     "HealthResponse"
 ]
