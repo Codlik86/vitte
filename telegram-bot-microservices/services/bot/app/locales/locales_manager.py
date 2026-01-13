@@ -82,8 +82,11 @@ i18n_core = FluentRuntimeCore(
 )
 
 
-# Create i18n middleware
-i18n_middleware = I18nMiddleware(core=i18n_core)
+# Create i18n middleware with default locale
+i18n_middleware = I18nMiddleware(
+    core=i18n_core,
+    default_locale="ru"  # REQUIRED: default_locale parameter
+)
 
 # Override get_locale method to use our custom logic
 original_get_locale = i18n_middleware.get_locale
