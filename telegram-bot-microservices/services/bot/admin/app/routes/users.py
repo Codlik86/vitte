@@ -6,7 +6,7 @@ from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 
-from shared.database import User, get_db
+from shared.database import User, get_db, get_user_by_id
 from shared.schemas import UserResponse
 from shared.utils import get_logger
 
@@ -16,7 +16,7 @@ router = APIRouter()
 
 @router.get("/users", response_model=List[UserResponse])
 async def list_users(skip: int = 0, limit: int = 100):
-    """List all users"""
+    """List all users (NOT cached - listing is dynamic)"""
     try:
         async for db in get_db():
             result = await db.execute(
@@ -35,19 +35,17 @@ async def list_users(skip: int = 0, limit: int = 100):
 
 @router.get("/users/{user_id}", response_model=UserResponse)
 async def get_user(user_id: int):
-    """Get user by ID"""
+    """Get user by ID (CACHED - 5 min TTL)"""
     try:
         async for db in get_db():
-            result = await db.execute(
-                select(User).where(User.id == user_id)
-            )
-            user = result.scalar_one_or_none()
-            
+            # Use cached service function
+            user = await get_user_by_id(db, user_id)
+
             if not user:
                 raise HTTPException(status_code=404, detail="User not found")
-            
+
             return user
-            
+
     except HTTPException:
         raise
     except Exception as e:
