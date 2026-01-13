@@ -2,6 +2,7 @@
 Celery application configuration
 """
 from celery import Celery
+from celery.schedules import crontab
 from app.config import config
 from shared.utils import get_logger
 
@@ -13,6 +14,57 @@ celery_app = Celery(
     broker=config.celery_broker_url,
     backend=config.celery_result_backend
 )
+
+# Celery Beat schedule for periodic tasks
+beat_schedule = {
+    # Cleanup old messages daily at 3 AM UTC
+    "cleanup-old-messages-daily": {
+        "task": "cleanup.old_messages",
+        "schedule": crontab(hour=3, minute=0),
+        "args": (50, 30),  # keep_last=50, days_threshold=30
+        "options": {
+            "expires": 3600,  # Task expires after 1 hour if not executed
+        }
+    },
+
+    # Cleanup inactive dialogs weekly (every Monday at 4 AM UTC)
+    "cleanup-inactive-dialogs-weekly": {
+        "task": "cleanup.inactive_dialogs",
+        "schedule": crontab(hour=4, minute=0, day_of_week=1),
+        "args": (30,),  # days_inactive=30
+        "options": {
+            "expires": 3600,
+        }
+    },
+
+    # Generate user stats daily at 6 AM UTC
+    "generate-user-stats-daily": {
+        "task": "reports.user_stats",
+        "schedule": crontab(hour=6, minute=0),
+        "options": {
+            "expires": 1800,  # Task expires after 30 minutes
+        }
+    },
+
+    # Generate subscription report daily at 6:30 AM UTC
+    "generate-subscription-report-daily": {
+        "task": "reports.subscription_report",
+        "schedule": crontab(hour=6, minute=30),
+        "options": {
+            "expires": 1800,
+        }
+    },
+
+    # Send subscription expiry reminders daily at 10 AM UTC
+    "subscription-expiry-reminders-daily": {
+        "task": "notifications.subscription_expiry_reminder",
+        "schedule": crontab(hour=10, minute=0),
+        "args": (3,),  # days_before=3 (remind 3 days before expiration)
+        "options": {
+            "expires": 3600,
+        }
+    },
+}
 
 # Configure Celery
 celery_app.conf.update(
@@ -26,9 +78,11 @@ celery_app.conf.update(
     task_soft_time_limit=config.celery_task_soft_time_limit,
     worker_prefetch_multiplier=1,
     worker_max_tasks_per_child=1000,
+    # Beat schedule
+    beat_schedule=beat_schedule,
 )
 
 # Auto-discover tasks
 celery_app.autodiscover_tasks(["app.tasks"])
 
-logger.info("Celery app configured")
+logger.info("Celery app configured with beat schedule")
