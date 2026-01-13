@@ -82,26 +82,26 @@ i18n_core = FluentRuntimeCore(
 )
 
 
-# Create i18n middleware with default locale
-i18n_middleware = I18nMiddleware(
-    core=i18n_core,
-    default_locale="ru"  # REQUIRED: default_locale parameter
-)
+# Custom locale getter for middleware
+async def middleware_get_locale(event, data):
+    """
+    Custom locale getter for i18n middleware.
 
-# Override get_locale method to use our custom logic
-original_get_locale = i18n_middleware.get_locale
-
-
-async def custom_get_locale(event, data):
-    """Custom locale getter with caching"""
+    Used by I18nMiddleware to determine user's language.
+    Delegates to get_user_locale() function.
+    """
     if hasattr(event, 'from_user') and event.from_user:
         return await get_user_locale(event.from_user)
-    # Fallback to original implementation
-    return await original_get_locale(event, data)
+    # Fallback to default
+    return "ru"
 
 
-# Replace the method
-i18n_middleware.get_locale = custom_get_locale
+# Create i18n middleware with default locale and custom getter
+i18n_middleware = I18nMiddleware(
+    core=i18n_core,
+    default_locale="ru",
+    get_locale=middleware_get_locale  # Pass custom locale getter function
+)
 
 
 def setup_i18n(bot: Bot):
