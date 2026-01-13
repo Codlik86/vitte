@@ -81,3 +81,46 @@ class HealthResponse(BaseModel):
     service: str
     version: str = "1.0.0"
     timestamp: datetime
+
+
+# ==================== UPDATE SCHEMAS ====================
+
+class SubscriptionUpdate(BaseModel):
+    """Schema for updating subscription"""
+    plan: Optional[str] = None
+    is_active: Optional[bool] = None
+    messages_limit: Optional[int] = None
+    images_limit: Optional[int] = None
+
+
+class DialogUpdate(BaseModel):
+    """Schema for updating dialog"""
+    title: Optional[str] = None
+    is_active: Optional[bool] = None
+
+
+# ==================== LIST RESPONSES ====================
+
+class DialogListResponse(BaseModel):
+    """Schema for list of dialogs"""
+    dialogs: list[DialogResponse]
+    total: int
+
+
+class MessageListResponse(BaseModel):
+    """Schema for list of messages"""
+    messages: list[MessageResponse]
+    total: int
+    dialog_id: int
+
+
+# ==================== STATS SCHEMAS ====================
+
+class BotStatsResponse(BaseModel):
+    """Schema for bot statistics"""
+    total_users: int
+    active_users: int
+    total_dialogs: int
+    total_messages: int
+    free_users: int
+    premium_users: int

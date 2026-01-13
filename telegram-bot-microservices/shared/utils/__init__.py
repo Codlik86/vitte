@@ -2,6 +2,7 @@
 from shared.utils.logger import get_logger
 from shared.utils.redis import RedisClient, redis_client, DateTimeEncoder
 from shared.utils.minio import MinIOClient, minio_client
+from shared.utils.rate_limiter import RateLimiter, rate_limiter
 from shared.utils.cache import (
     cached,
     cache_invalidate,
@@ -30,6 +31,9 @@ __all__ = [
     "RedisClient",
     "redis_client",
     "DateTimeEncoder",
+    # Rate Limiter
+    "RateLimiter",
+    "rate_limiter",
     # Cache decorators and utilities
     "cached",
     "cache_invalidate",

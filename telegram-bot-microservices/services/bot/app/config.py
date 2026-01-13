@@ -22,7 +22,15 @@ class BotConfig(BaseSettings):
     environment: str = os.getenv("ENVIRONMENT", "production")
     debug: bool = os.getenv("DEBUG", "False").lower() == "true"
     log_level: str = os.getenv("LOG_LEVEL", "INFO")
-    
+
+    # Rate Limiting
+    rate_limit_messages: int = int(os.getenv("RATE_LIMIT_MESSAGES", "10"))  # per minute
+    rate_limit_messages_window: int = int(os.getenv("RATE_LIMIT_MESSAGES_WINDOW", "60"))  # seconds
+    rate_limit_callbacks: int = int(os.getenv("RATE_LIMIT_CALLBACKS", "20"))  # per minute
+    rate_limit_callbacks_window: int = int(os.getenv("RATE_LIMIT_CALLBACKS_WINDOW", "60"))  # seconds
+    antiflood_limit: int = int(os.getenv("ANTIFLOOD_LIMIT", "3"))  # per 5 seconds
+    antiflood_window: int = int(os.getenv("ANTIFLOOD_WINDOW", "5"))  # seconds
+
     @property
     def admin_list(self) -> list[int]:
         """Parse admin IDs from comma-separated string"""

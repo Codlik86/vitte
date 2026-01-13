@@ -8,11 +8,12 @@ from typing import Optional
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from shared.database.models import User, Subscription
+from shared.database.models import User, Subscription, Dialog, Message
 from shared.utils import (
     cached,
     cache_invalidate,
     TTL_5_MINUTES,
+    TTL_10_MINUTES,
     TTL_1_HOUR,
     get_logger
 )
@@ -326,3 +327,290 @@ async def invalidate_subscription_cache(user_id: int):
     """
     await cache_invalidate("subscription", user_id)
     logger.debug(f"Subscription cache invalidated for user {user_id}")
+
+
+# ==================== DIALOG SERVICES ====================
+
+@cached(ttl=TTL_10_MINUTES, prefix="dialog")
+async def get_dialog_by_id(db: AsyncSession, dialog_id: int) -> Optional[Dialog]:
+    """
+    Get dialog by ID with 10-minute cache
+
+    Args:
+        db: Database session
+        dialog_id: Dialog ID
+
+    Returns:
+        Dialog object or None
+
+    Cache key: dialog:{dialog_id}
+    TTL: 10 minutes
+    """
+    result = await db.execute(
+        select(Dialog).where(Dialog.id == dialog_id)
+    )
+    dialog = result.scalar_one_or_none()
+
+    if dialog:
+        logger.debug(f"Dialog {dialog_id} loaded from DB (will be cached)")
+
+    return dialog
+
+
+async def get_user_dialogs(
+    db: AsyncSession,
+    user_id: int,
+    active_only: bool = True,
+    limit: int = 50
+) -> list[Dialog]:
+    """
+    Get all dialogs for user
+
+    Args:
+        db: Database session
+        user_id: User ID
+        active_only: Return only active dialogs
+        limit: Maximum dialogs to return
+
+    Returns:
+        List of Dialog objects
+    """
+    query = select(Dialog).where(Dialog.user_id == user_id)
+
+    if active_only:
+        query = query.where(Dialog.is_active == True)
+
+    query = query.order_by(Dialog.updated_at.desc()).limit(limit)
+
+    result = await db.execute(query)
+    dialogs = result.scalars().all()
+
+    logger.debug(f"Loaded {len(dialogs)} dialogs for user {user_id}")
+    return list(dialogs)
+
+
+async def create_dialog(
+    db: AsyncSession,
+    user_id: int,
+    title: Optional[str] = None
+) -> Dialog:
+    """
+    Create new dialog
+
+    Args:
+        db: Database session
+        user_id: User ID
+        title: Dialog title (optional)
+
+    Returns:
+        Created Dialog object
+    """
+    dialog = Dialog(
+        user_id=user_id,
+        title=title or f"Dialog {int(time.time())}"
+    )
+    db.add(dialog)
+    await db.commit()
+    await db.refresh(dialog)
+
+    logger.info(f"Dialog created: id={dialog.id}, user_id={user_id}")
+
+    # Cache the newly created dialog
+    from shared.utils import redis_client, model_to_dict
+    import time
+    dialog_dict = model_to_dict(dialog)
+    await redis_client.set_json(f"dialog:{dialog.id}", dialog_dict, expire=TTL_10_MINUTES)
+
+    return dialog
+
+
+async def update_dialog(
+    db: AsyncSession,
+    dialog_id: int,
+    **kwargs
+) -> Optional[Dialog]:
+    """
+    Update dialog and invalidate cache
+
+    Args:
+        db: Database session
+        dialog_id: Dialog ID
+        **kwargs: Fields to update
+
+    Returns:
+        Updated Dialog object or None
+    """
+    result = await db.execute(
+        select(Dialog).where(Dialog.id == dialog_id)
+    )
+    dialog = result.scalar_one_or_none()
+
+    if not dialog:
+        return None
+
+    # Update fields
+    for key, value in kwargs.items():
+        if hasattr(dialog, key):
+            setattr(dialog, key, value)
+
+    await db.commit()
+    await db.refresh(dialog)
+
+    # Invalidate cache
+    await cache_invalidate("dialog", dialog_id)
+
+    logger.info(f"Dialog {dialog_id} updated and cache invalidated")
+
+    return dialog
+
+
+async def delete_dialog(db: AsyncSession, dialog_id: int) -> bool:
+    """
+    Mark dialog as inactive (soft delete)
+
+    Args:
+        db: Database session
+        dialog_id: Dialog ID
+
+    Returns:
+        True if deleted successfully
+    """
+    dialog = await update_dialog(db, dialog_id, is_active=False)
+    return dialog is not None
+
+
+# ==================== MESSAGE SERVICES ====================
+
+async def get_dialog_messages(
+    db: AsyncSession,
+    dialog_id: int,
+    limit: int = 100,
+    offset: int = 0
+) -> list[Message]:
+    """
+    Get messages for dialog
+
+    Args:
+        db: Database session
+        dialog_id: Dialog ID
+        limit: Maximum messages to return
+        offset: Offset for pagination
+
+    Returns:
+        List of Message objects (ordered by created_at ASC)
+    """
+    query = (
+        select(Message)
+        .where(Message.dialog_id == dialog_id)
+        .order_by(Message.created_at.asc())
+        .limit(limit)
+        .offset(offset)
+    )
+
+    result = await db.execute(query)
+    messages = result.scalars().all()
+
+    logger.debug(f"Loaded {len(messages)} messages for dialog {dialog_id}")
+    return list(messages)
+
+
+async def create_message(
+    db: AsyncSession,
+    dialog_id: int,
+    role: str,
+    content: str,
+    extra_data: Optional[dict] = None
+) -> Message:
+    """
+    Create new message in dialog
+
+    Args:
+        db: Database session
+        dialog_id: Dialog ID
+        role: Message role (user, assistant, system)
+        content: Message content
+        extra_data: Optional metadata
+
+    Returns:
+        Created Message object
+    """
+    message = Message(
+        dialog_id=dialog_id,
+        role=role,
+        content=content,
+        extra_data=extra_data
+    )
+    db.add(message)
+    await db.commit()
+    await db.refresh(message)
+
+    logger.debug(f"Message created: id={message.id}, dialog_id={dialog_id}, role={role}")
+
+    return message
+
+
+async def get_message_count(db: AsyncSession, dialog_id: int) -> int:
+    """
+    Get total message count for dialog
+
+    Args:
+        db: Database session
+        dialog_id: Dialog ID
+
+    Returns:
+        Total message count
+    """
+    from sqlalchemy import func
+
+    query = select(func.count(Message.id)).where(Message.dialog_id == dialog_id)
+    result = await db.execute(query)
+    count = result.scalar() or 0
+
+    return count
+
+
+async def delete_old_messages(
+    db: AsyncSession,
+    dialog_id: int,
+    keep_last: int = 50
+) -> int:
+    """
+    Delete old messages from dialog (keep last N)
+
+    Args:
+        db: Database session
+        dialog_id: Dialog ID
+        keep_last: Number of messages to keep
+
+    Returns:
+        Number of deleted messages
+    """
+    from sqlalchemy import delete
+
+    # Get IDs of messages to keep
+    keep_query = (
+        select(Message.id)
+        .where(Message.dialog_id == dialog_id)
+        .order_by(Message.created_at.desc())
+        .limit(keep_last)
+    )
+    result = await db.execute(keep_query)
+    keep_ids = [row[0] for row in result.all()]
+
+    if not keep_ids:
+        return 0
+
+    # Delete messages not in keep list
+    delete_query = (
+        delete(Message)
+        .where(Message.dialog_id == dialog_id)
+        .where(Message.id.notin_(keep_ids))
+    )
+    result = await db.execute(delete_query)
+    deleted_count = result.rowcount
+
+    await db.commit()
+
+    logger.info(f"Deleted {deleted_count} old messages from dialog {dialog_id}")
+
+    return deleted_count
