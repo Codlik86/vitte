@@ -521,6 +521,7 @@ KEYS *
 ✅ **Этап 3** - Production Deployment
 ✅ **Этап 4** - Redis Caching + Health Checks
 ✅ **Этап 5** - Rate Limiting + Celery Tasks + Beat Scheduler
+✅ **Этап 6** - Internationalization (i18n) - мультиязычность с автоопределением
 ✅ **Оптимизация под бюджетный сервер** - 4 vCPU + 8 GB RAM (3,000-5,000 пользователей)
 
 ### Текущий статус:
@@ -539,6 +540,7 @@ KEYS *
 - 🟢 **Service Layer** - Dialog & Message services с кешированием
 - 🟢 **API Endpoints** - CRUD для subscriptions, dialogs, messages
 - 🟢 **API Workers** - 2 Uvicorn workers
+- 🟢 **Internationalization** - ru/en переводы, автоопределение языка, handler refactoring
 
 ### Production сервер:
 - **IP**: 195.209.210.96
@@ -554,13 +556,53 @@ KEYS *
 2. ✅ **Health endpoints** - ЗАВЕРШЕН
 3. ✅ **Redis Caching** - ЗАВЕРШЕН
 4. ✅ **Rate Limiting + Celery Tasks** - ЗАВЕРШЕН
-5. 🎯 **AI Integration** - LLM services, image generation (FUTURE)
-6. 🎨 **Advanced Monitoring** - Sentry, custom metrics (FUTURE)
+5. ✅ **Internationalization (i18n)** - ЗАВЕРШЕН
+6. 🎯 **AI Integration** - LLM services, image generation (FUTURE)
+7. 🎨 **Advanced Monitoring** - Sentry, custom metrics (FUTURE)
 
 ---
 
-**Версия документа:** 1.5
-**Дата:** 2026-01-13
+## ✅ Этап 6: Internationalization (i18n) (ЗАВЕРШЕН)
+
+### Backend Infrastructure
+- ✅ **aiogram-i18n 1.4** - библиотека для мультиязычности
+- ✅ **FluentRuntimeCore** - translation backend с Fluent формат (.ftl файлы)
+- ✅ **CustomLocaleManager** - кастомный менеджер локалей на базе BaseManager
+- ✅ **Locale detection** - автоматическое определение языка из Telegram `user.language_code`
+- ✅ **Locale caching** - кеширование языка пользователя для производительности
+- ✅ **Fallback chain** - ru → en, en → ru (если перевод не найден)
+
+### Translation Files
+- ✅ **locales/ru/ru.ftl** - полные переводы на русский (start, help, status, errors)
+- ✅ **locales/en/en.ftl** - полные переводы на английский
+- ✅ **Directory structure** - `locales/{locale}/*.ftl` как требует FluentRuntimeCore
+
+### Handler Refactoring
+- ✅ **start.py** - команда /start с i18n поддержкой
+- ✅ **help.py** - команда /help с переводами
+- ✅ **status.py** - команда /status с динамическими параметрами (plan, limits)
+- ✅ **I18nContext** - автоматическая инъекция в handlers через middleware
+
+### Middleware Integration
+- ✅ **I18nMiddleware** - зарегистрирован ПЕРВЫМ в middleware chain
+- ✅ **get_locale()** - кастомная логика определения языка через CustomLocaleManager
+- ✅ **set_locale()** - подготовка для будущей функции смены языка
+
+### Production Status
+```bash
+✅ Бот работает (healthy)
+✅ Автоматический перевод на русский/английский
+✅ Команды /start, /help, /status работают с переводами
+```
+
+**Что НЕ реализовано (будет потом):**
+- ❌ UI для смены языка (команда /language, inline кнопки)
+- ❌ Сохранение выбранного языка в БД (поле `language_code` в таблице `users`)
+
+---
+
+**Версия документа:** 1.6
+**Дата:** 2026-01-14
 **Проект:** Vitte Telegram Bot - Microservices Architecture
 **Конфигурация:** Budget Server (4 vCPU + 8 GB RAM)
 **Статус:** 🚀 **DEPLOYED & LIVE IN PRODUCTION**
