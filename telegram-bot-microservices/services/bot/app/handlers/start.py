@@ -1,7 +1,7 @@
 """
 /start command handler
 
-Handles user registration and welcome message with i18n support.
+Handles user registration and onboarding flow.
 """
 from aiogram import Router
 from aiogram.types import Message
@@ -15,6 +15,7 @@ from shared.database import (
     create_subscription,
 )
 from shared.utils import get_logger
+from app.handlers.onboarding import get_language_keyboard, WELCOME_TEXT
 
 logger = get_logger(__name__)
 router = Router(name="start")
@@ -23,24 +24,22 @@ router = Router(name="start")
 @router.message(Command("start"))
 async def cmd_start(message: Message, i18n: I18nContext):
     """
-    Handle /start command with caching
+    Handle /start command
 
-    Actions:
-    1. Check if user exists in database (cached, 5 min TTL)
-    2. Create user if not exists
-    3. Create free subscription for new users
-    4. Send welcome message in user's language
+    New users: Show language selection -> onboarding flow
+    Existing users: Show welcome back message
     """
     user = message.from_user
+    is_new_user = False
 
     try:
-        # Get database session
         async for db in get_db():
             # Check if user exists (CACHED - 5 min TTL)
             db_user = await get_user_by_id(db, user.id)
 
             # Create user if not exists
             if not db_user:
+                is_new_user = True
                 db_user = await create_user(
                     db,
                     user_id=user.id,
@@ -62,13 +61,20 @@ async def cmd_start(message: Message, i18n: I18nContext):
 
                 logger.info(f"New user registered: {user.id} (@{user.username})")
 
-            break  # Exit async for loop
+            break
 
-        # Send welcome message in user's language
-        welcome_text = i18n.get("start-greeting", name=user.first_name)
-        await message.answer(welcome_text)
+        if is_new_user:
+            # New user: start onboarding with language selection
+            await message.answer(
+                WELCOME_TEXT,
+                reply_markup=get_language_keyboard()
+            )
+        else:
+            # Existing user: welcome back
+            welcome_text = i18n.get("start-greeting", name=user.first_name)
+            await message.answer(welcome_text)
 
-        logger.debug(f"Start command processed for user {user.id}")
+        logger.debug(f"Start command processed for user {user.id}, new={is_new_user}")
 
     except Exception as e:
         logger.error(f"Error in /start handler: {e}", exc_info=True)
