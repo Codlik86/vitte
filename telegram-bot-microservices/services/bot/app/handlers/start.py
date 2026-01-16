@@ -70,9 +70,9 @@ async def cmd_start(message: Message, i18n: I18nContext):
                 reply_markup=get_language_keyboard()
             )
         else:
-            # Existing user: welcome back
-            welcome_text = i18n.get("start-greeting", name=user.first_name)
-            await message.answer(welcome_text)
+            # Existing user: show main menu
+            from app.handlers.menu import show_main_menu
+            await show_main_menu(message, lang="ru", edit=False)
 
         logger.debug(f"Start command processed for user {user.id}, new={is_new_user}")
 
