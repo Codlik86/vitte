@@ -36,20 +36,36 @@ async def cmd_status(message: Message, i18n: I18nContext):
                 await message.answer(i18n.get("error-general"))
                 break
 
+            # Handle both dict (from cache) and SQLAlchemy object
+            if isinstance(subscription, dict):
+                is_active = subscription.get("is_active", False)
+                plan = subscription.get("plan", "free")
+                messages_used = subscription.get("messages_used", 0)
+                messages_limit = subscription.get("messages_limit", 100)
+                images_used = subscription.get("images_used", 0)
+                images_limit = subscription.get("images_limit", 10)
+            else:
+                is_active = subscription.is_active
+                plan = subscription.plan
+                messages_used = subscription.messages_used
+                messages_limit = subscription.messages_limit
+                images_used = subscription.images_used
+                images_limit = subscription.images_limit
+
             # Format subscription info with translations
-            status_active = i18n.get("status-active") if subscription.is_active else i18n.get("status-inactive")
+            status_active = i18n.get("status-active") if is_active else i18n.get("status-inactive")
 
             status_text = (
                 f"{i18n.get('status-title')}\n\n"
-                f"{i18n.get('status-plan', plan=subscription.plan)}\n"
+                f"{i18n.get('status-plan', plan=plan)}\n"
                 f"{status_active}\n\n"
                 f"{i18n.get('status-limits')}\n"
-                f"{i18n.get('status-messages', used=subscription.messages_used, limit=subscription.messages_limit)}\n"
-                f"{i18n.get('status-images', used=subscription.images_used, limit=subscription.images_limit)}"
+                f"{i18n.get('status-messages', used=messages_used, limit=messages_limit)}\n"
+                f"{i18n.get('status-images', used=images_used, limit=images_limit)}"
             )
 
             await message.answer(status_text, parse_mode="HTML")
-            logger.debug(f"Status shown to user {user.id}: plan={subscription.plan}, active={subscription.is_active}")
+            logger.debug(f"Status shown to user {user.id}: plan={plan}, active={is_active}")
             break
 
     except Exception as e:
