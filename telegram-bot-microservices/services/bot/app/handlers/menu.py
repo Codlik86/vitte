@@ -42,7 +42,18 @@ def get_main_menu_keyboard_ru() -> InlineKeyboardMarkup:
     """Main menu keyboard (Russian)"""
     return InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="Открыть Vitte 💌", callback_data="menu:open_webapp"),
+            InlineKeyboardButton(text="💕 Начать общение", callback_data="menu:start_chat"),
+            InlineKeyboardButton(text="💖 Подписка", callback_data="menu:subscription"),
+        ],
+        [
+            InlineKeyboardButton(text="💌 Открыть приложение", callback_data="menu:open_webapp"),
+        ],
+        [
+            InlineKeyboardButton(text="💝 Магазин", callback_data="menu:shop"),
+            InlineKeyboardButton(text="💗 Улучшения", callback_data="menu:upgrades"),
+        ],
+        [
+            InlineKeyboardButton(text="⚙️ Основные настройки", callback_data="menu:settings"),
         ]
     ])
 
@@ -51,33 +62,40 @@ def get_main_menu_keyboard_en() -> InlineKeyboardMarkup:
     """Main menu keyboard (English)"""
     return InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="Open Vitte 💌", callback_data="menu:open_webapp"),
+            InlineKeyboardButton(text="💕 Start Chat", callback_data="menu:start_chat"),
+            InlineKeyboardButton(text="💖 Subscription", callback_data="menu:subscription"),
+        ],
+        [
+            InlineKeyboardButton(text="💌 Open App", callback_data="menu:open_webapp"),
+        ],
+        [
+            InlineKeyboardButton(text="💝 Shop", callback_data="menu:shop"),
+            InlineKeyboardButton(text="💗 Upgrades", callback_data="menu:upgrades"),
+        ],
+        [
+            InlineKeyboardButton(text="⚙️ Settings", callback_data="menu:settings"),
         ]
     ])
 
 
 # ==================== HELPER FUNCTIONS ====================
 
-async def show_main_menu(target, lang: str = "ru", edit: bool = False):
+async def show_main_menu(target, lang: str = "ru"):
     """
-    Show main menu to user
+    Show main menu to user (always sends new message)
 
     Args:
         target: Message or CallbackQuery to respond to
         lang: Language code ('ru' or 'en')
-        edit: If True, edit existing message; if False, send new message
     """
     text = MAIN_MENU_RU if lang == "ru" else MAIN_MENU_EN
     keyboard = get_main_menu_keyboard_ru() if lang == "ru" else get_main_menu_keyboard_en()
 
-    if edit and hasattr(target, 'message'):
-        # CallbackQuery - edit message
-        await target.message.edit_text(text, reply_markup=keyboard)
-    elif hasattr(target, 'edit_text'):
-        # Message object with edit capability
-        await target.edit_text(text, reply_markup=keyboard)
+    if hasattr(target, 'message'):
+        # CallbackQuery - send new message
+        await target.message.answer(text, reply_markup=keyboard)
     else:
-        # Send new message
+        # Message object
         await target.answer(text, reply_markup=keyboard)
 
 

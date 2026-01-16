@@ -93,6 +93,6 @@ async def on_age_confirmed(callback: CallbackQuery):
     from app.handlers.menu import show_main_menu
 
     # Show main menu (Russian for now)
-    await show_main_menu(callback, lang="ru", edit=True)
+    await show_main_menu(callback, lang="ru")
 
     logger.info(f"User {callback.from_user.id} confirmed 18+ -> main menu")

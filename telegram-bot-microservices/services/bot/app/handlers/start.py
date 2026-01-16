@@ -72,7 +72,7 @@ async def cmd_start(message: Message, i18n: I18nContext):
         else:
             # Existing user: show main menu
             from app.handlers.menu import show_main_menu
-            await show_main_menu(message, lang="ru", edit=False)
+            await show_main_menu(message, lang="ru")
 
         logger.debug(f"Start command processed for user {user.id}, new={is_new_user}")
 
