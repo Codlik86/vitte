@@ -17,12 +17,12 @@ router = Router(name="shop")
 
 # ==================== TEXTS ====================
 
-SHOP_RU = """🖼 <b>Изображения</b>
+SHOP_RU = """💛 <b>Изображения</b>
 
 У тебя <b>{images_count}</b> изображений.
 Докупи ещё — выбери нужный пакет ниже."""
 
-SHOP_EN = """🖼 <b>Images</b>
+SHOP_EN = """💛 <b>Images</b>
 
 You have <b>{images_count}</b> images.
 Buy more — choose a pack below."""

@@ -41,23 +41,27 @@ class Subscription(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(BigInteger, ForeignKey("users.id"), unique=True, nullable=False)
-    
+
     # Subscription details
     plan = Column(String(50), default="free")  # free, premium, enterprise
     is_active = Column(Boolean, default=False)
     started_at = Column(DateTime(timezone=True), nullable=True)
     expires_at = Column(DateTime(timezone=True), nullable=True)
-    
+
     # Limits
     messages_limit = Column(Integer, default=100)
     messages_used = Column(Integer, default=0)
     images_limit = Column(Integer, default=10)
     images_used = Column(Integer, default=0)
-    
+
+    # Upgrades
+    intense_mode = Column(Boolean, default=False)
+    fantasy_scenes = Column(Boolean, default=False)
+
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    
+
     # Relationships
     user = relationship("User", back_populates="subscription")
 
