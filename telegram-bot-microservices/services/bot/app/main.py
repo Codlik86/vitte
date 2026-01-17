@@ -3,6 +3,7 @@ Main entry point for the Telegram bot
 """
 import asyncio
 from app.bot import create_bot, create_dispatcher
+from app.commands import setup_bot_commands
 from app.config import config
 from shared.database import close_db
 from shared.utils import get_logger
@@ -20,6 +21,9 @@ async def main():
     dp = create_dispatcher()
 
     try:
+        # Setup bot commands (menu button)
+        await setup_bot_commands(bot)
+
         # Start bot
         logger.info("Bot started successfully")
         await dp.start_polling(bot)
