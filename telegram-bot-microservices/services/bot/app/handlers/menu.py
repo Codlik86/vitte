@@ -26,7 +26,7 @@ MAIN_MENU_RU = """Добро пожаловать в Vitte 💜
 
 Есть ежедневный бесплатный лимит сообщений и расширенный доступ по подписке.
 
-Чтобы продолжить, нажми «Открыть Vitte 💌» или воспользуйся командами в правом меню."""
+Чтобы начать, выбери персонажа в приложении Vitte 💌"""
 
 MAIN_MENU_EN = """Welcome to Vitte 💜
 
@@ -36,7 +36,7 @@ In the mini-app you can choose your character, manage subscription and enable co
 
 There's a free daily message limit and extended access with subscription.
 
-To continue, tap "Open Vitte 💌" or use the commands in the right menu."""
+To get started, choose a character in the Vitte app 💌"""
 
 
 # ==================== KEYBOARDS ====================
