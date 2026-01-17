@@ -23,6 +23,9 @@ class BotConfig(BaseSettings):
     debug: bool = os.getenv("DEBUG", "False").lower() == "true"
     log_level: str = os.getenv("LOG_LEVEL", "INFO")
 
+    # Web App
+    webapp_url: str = os.getenv("WEBAPP_URL", "")
+
     # Rate Limiting
     rate_limit_messages: int = int(os.getenv("RATE_LIMIT_MESSAGES", "10"))  # per minute
     rate_limit_messages_window: int = int(os.getenv("RATE_LIMIT_MESSAGES_WINDOW", "60"))  # seconds

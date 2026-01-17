@@ -5,8 +5,9 @@ This is where users land after onboarding or when returning to the bot.
 Contains main menu text and webapp button.
 """
 from aiogram import Router, F
-from aiogram.types import CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 
+from app.config import config
 from shared.utils import get_logger
 
 logger = get_logger(__name__)
@@ -40,13 +41,25 @@ To continue, tap "Open Vitte 💌" or use the commands in the right menu."""
 
 def get_main_menu_keyboard_ru() -> InlineKeyboardMarkup:
     """Main menu keyboard (Russian)"""
+    # WebApp button or fallback
+    if config.webapp_url:
+        webapp_btn = InlineKeyboardButton(
+            text="💌 Открыть приложение",
+            web_app=WebAppInfo(url=config.webapp_url)
+        )
+    else:
+        webapp_btn = InlineKeyboardButton(
+            text="💌 Открыть приложение",
+            callback_data="menu:open_webapp"
+        )
+
     return InlineKeyboardMarkup(inline_keyboard=[
         [
             InlineKeyboardButton(text="💕 Начать общение", callback_data="menu:start_chat"),
             InlineKeyboardButton(text="💖 Подписка", callback_data="menu:subscription"),
         ],
         [
-            InlineKeyboardButton(text="💌 Открыть приложение", callback_data="menu:open_webapp"),
+            webapp_btn,
         ],
         [
             InlineKeyboardButton(text="💝 Магазин", callback_data="menu:shop"),
@@ -60,13 +73,25 @@ def get_main_menu_keyboard_ru() -> InlineKeyboardMarkup:
 
 def get_main_menu_keyboard_en() -> InlineKeyboardMarkup:
     """Main menu keyboard (English)"""
+    # WebApp button or fallback
+    if config.webapp_url:
+        webapp_btn = InlineKeyboardButton(
+            text="💌 Open App",
+            web_app=WebAppInfo(url=config.webapp_url)
+        )
+    else:
+        webapp_btn = InlineKeyboardButton(
+            text="💌 Open App",
+            callback_data="menu:open_webapp"
+        )
+
     return InlineKeyboardMarkup(inline_keyboard=[
         [
             InlineKeyboardButton(text="💕 Start Chat", callback_data="menu:start_chat"),
             InlineKeyboardButton(text="💖 Subscription", callback_data="menu:subscription"),
         ],
         [
-            InlineKeyboardButton(text="💌 Open App", callback_data="menu:open_webapp"),
+            webapp_btn,
         ],
         [
             InlineKeyboardButton(text="💝 Shop", callback_data="menu:shop"),

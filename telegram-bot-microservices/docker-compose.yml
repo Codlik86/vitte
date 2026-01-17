@@ -196,6 +196,42 @@ services:
           cpus: '0.5'
           memory: 700M
 
+  # Web App (React Frontend)
+  webapp:
+    build:
+      context: ./services/webapp
+      dockerfile: Dockerfile
+      args:
+        - VITE_BACKEND_URL=${WEBAPP_BACKEND_URL:-/api}
+        - VITE_DEBUG_MINIAPP=${VITE_DEBUG_MINIAPP:-0}
+    container_name: vitte_webapp
+    # Internal only - access via Nginx
+    expose:
+      - "3000"
+    restart: unless-stopped
+    networks:
+      - vitte_network
+    security_opt:
+      - no-new-privileges:true
+    healthcheck:
+      test: ["CMD", "wget", "-q", "--spider", "http://localhost:3000/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '0.5'
+          memory: 256M
+        reservations:
+          cpus: '0.25'
+          memory: 128M
+
   # Celery Worker
   worker:
     build:
@@ -332,6 +368,7 @@ services:
     depends_on:
       - api
       - admin
+      - webapp
     restart: unless-stopped
     networks:
       - vitte_network
