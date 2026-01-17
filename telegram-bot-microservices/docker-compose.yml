@@ -68,6 +68,37 @@ services:
           cpus: '0.25'
           memory: 1G
 
+  # Qdrant Vector Database (Long-term Memory)
+  qdrant:
+    image: qdrant/qdrant:latest
+    container_name: vitte_qdrant
+    volumes:
+      - qdrant_data:/qdrant/storage
+    # NO EXTERNAL PORTS - internal network only
+    expose:
+      - "6333"
+      - "6334"
+    environment:
+      - QDRANT__SERVICE__GRPC_PORT=6334
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:6333/healthz"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - vitte_network
+    security_opt:
+      - no-new-privileges:true
+    deploy:
+      resources:
+        limits:
+          cpus: '1'
+          memory: 1G
+        reservations:
+          cpus: '0.25'
+          memory: 512M
+
   # Database Migrations (run once)
   migrations:
     build:
@@ -387,5 +418,6 @@ networks:
 volumes:
   postgres_data:
   redis_data:
+  qdrant_data:
   prometheus_data:
   grafana_data:

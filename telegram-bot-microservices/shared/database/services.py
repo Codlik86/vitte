@@ -519,7 +519,9 @@ async def create_message(
     dialog_id: int,
     role: str,
     content: str,
-    extra_data: Optional[dict] = None
+    extra_data: Optional[dict] = None,
+    user_id: Optional[int] = None,
+    index_memory: bool = True
 ) -> Message:
     """
     Create new message in dialog
@@ -530,6 +532,8 @@ async def create_message(
         role: Message role (user, assistant, system)
         content: Message content
         extra_data: Optional metadata
+        user_id: User ID (required for memory indexing)
+        index_memory: Whether to index in Qdrant for long-term memory
 
     Returns:
         Created Message object
@@ -545,6 +549,25 @@ async def create_message(
     await db.refresh(message)
 
     logger.debug(f"Message created: id={message.id}, dialog_id={dialog_id}, role={role}")
+
+    # Trigger async memory indexing via Celery
+    if index_memory and user_id and role in ("user", "assistant"):
+        try:
+            from celery import current_app
+            current_app.send_task(
+                "memory.index_message",
+                kwargs={
+                    "user_id": user_id,
+                    "content": content,
+                    "message_id": message.id,
+                    "dialog_id": dialog_id,
+                    "role": role
+                }
+            )
+            logger.debug(f"Memory indexing task queued for message {message.id}")
+        except Exception as e:
+            # Don't fail message creation if indexing fails
+            logger.warning(f"Failed to queue memory indexing: {e}")
 
     return message
 
@@ -614,3 +637,76 @@ async def delete_old_messages(
     logger.info(f"Deleted {deleted_count} old messages from dialog {dialog_id}")
 
     return deleted_count
+
+
+# ==================== MEMORY SERVICES ====================
+
+async def search_long_term_memory(
+    user_id: int,
+    query: str,
+    limit: int = 5,
+    score_threshold: float = 0.7
+) -> list[dict]:
+    """
+    Search for relevant memories in Qdrant vector database
+
+    Args:
+        user_id: User ID
+        query: Search query (current message context)
+        limit: Maximum results to return
+        score_threshold: Minimum similarity score (0-1)
+
+    Returns:
+        List of memory dicts with content and score
+    """
+    try:
+        from shared.utils import qdrant_client
+        memories = qdrant_client.search_memories(
+            user_id=user_id,
+            query=query,
+            limit=limit,
+            score_threshold=score_threshold
+        )
+        logger.debug(f"Found {len(memories)} relevant memories for user {user_id}")
+        return memories
+    except Exception as e:
+        logger.warning(f"Long-term memory search failed for user {user_id}: {e}")
+        return []
+
+
+async def clear_user_memories(user_id: int) -> int:
+    """
+    Clear all long-term memories for a user
+
+    Args:
+        user_id: User ID
+
+    Returns:
+        Number of deleted memories
+    """
+    try:
+        from shared.utils import qdrant_client
+        deleted = qdrant_client.delete_user_memories(user_id)
+        logger.info(f"Cleared {deleted} memories for user {user_id}")
+        return deleted
+    except Exception as e:
+        logger.error(f"Failed to clear memories for user {user_id}: {e}")
+        return 0
+
+
+async def get_user_memory_count(user_id: int) -> int:
+    """
+    Get count of memories stored for a user
+
+    Args:
+        user_id: User ID
+
+    Returns:
+        Memory count
+    """
+    try:
+        from shared.utils import qdrant_client
+        return qdrant_client.get_user_memory_count(user_id)
+    except Exception as e:
+        logger.warning(f"Failed to get memory count for user {user_id}: {e}")
+        return 0

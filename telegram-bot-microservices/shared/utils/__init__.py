@@ -3,6 +3,7 @@ from shared.utils.logger import get_logger
 from shared.utils.redis import RedisClient, redis_client, DateTimeEncoder
 from shared.utils.minio import MinIOClient, minio_client
 from shared.utils.rate_limiter import RateLimiter, rate_limiter
+from shared.utils.qdrant import QdrantMemoryClient, qdrant_client
 from shared.utils.cache import (
     cached,
     cache_invalidate,
@@ -55,5 +56,8 @@ __all__ = [
     "get_model_pattern",
     # MinIO
     "MinIOClient",
-    "minio_client"
+    "minio_client",
+    # Qdrant
+    "QdrantMemoryClient",
+    "qdrant_client"
 ]
