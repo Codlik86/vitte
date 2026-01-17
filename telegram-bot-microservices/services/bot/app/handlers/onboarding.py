@@ -7,9 +7,12 @@ Flow:
 3. ... (next steps)
 """
 from aiogram import Router, F
-from aiogram.types import CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton, BotCommandScopeChat
 
+from shared.database import get_db
+from shared.database.services import update_user
 from shared.utils import get_logger
+from app.commands import COMMANDS_RU, COMMANDS_EN
 
 logger = get_logger(__name__)
 router = Router(name="onboarding")
@@ -65,6 +68,17 @@ Please select Russian for now."""
 async def on_language_russian(callback: CallbackQuery):
     """Handle Russian language selection"""
     await callback.answer()
+    user_id = callback.from_user.id
+
+    # Save language to DB
+    async for db in get_db():
+        await update_user(db, user_id, language_code="ru")
+
+    # Set Russian commands for this user
+    await callback.bot.set_my_commands(
+        commands=COMMANDS_RU,
+        scope=BotCommandScopeChat(chat_id=user_id)
+    )
 
     # Edit message to show age verification
     await callback.message.edit_text(
@@ -73,15 +87,26 @@ async def on_language_russian(callback: CallbackQuery):
         parse_mode="HTML"
     )
 
-    logger.info(f"User {callback.from_user.id} selected Russian")
+    logger.info(f"User {user_id} selected Russian, commands set")
 
 
 @router.callback_query(F.data == "lang:en")
 async def on_language_english(callback: CallbackQuery):
     """Handle English language selection - WIP"""
     await callback.answer(ENGLISH_WIP, show_alert=True)
+    user_id = callback.from_user.id
 
-    logger.info(f"User {callback.from_user.id} tried English (WIP)")
+    # Save language to DB (for future when EN is ready)
+    async for db in get_db():
+        await update_user(db, user_id, language_code="en")
+
+    # Set English commands for this user
+    await callback.bot.set_my_commands(
+        commands=COMMANDS_EN,
+        scope=BotCommandScopeChat(chat_id=user_id)
+    )
+
+    logger.info(f"User {user_id} tried English (WIP), commands set")
 
 
 @router.callback_query(F.data == "age:confirmed")
