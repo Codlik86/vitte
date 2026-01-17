@@ -6,7 +6,7 @@ from aiogram.client.default import DefaultBotProperties
 from aiogram.enums import ParseMode
 
 from app.config import config
-from app.handlers import start_router, help_router, status_router, onboarding_router, menu_router, chat_router, subscription_router
+from app.handlers import start_router, help_router, status_router, onboarding_router, menu_router, chat_router, subscription_router, shop_router
 from app.middlewares import ThrottlingMiddleware, AntiFloodMiddleware, i18n_middleware
 from shared.utils import get_logger
 
@@ -57,6 +57,7 @@ def create_dispatcher() -> Dispatcher:
     dp.include_router(menu_router)
     dp.include_router(chat_router)
     dp.include_router(subscription_router)
+    dp.include_router(shop_router)
     dp.include_router(help_router)
     dp.include_router(status_router)
 
