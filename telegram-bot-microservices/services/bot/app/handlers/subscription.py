@@ -80,8 +80,12 @@ async def get_user_language(user_id: int) -> str:
     """Get user language from DB, default to 'ru'"""
     async for db in get_db():
         user = await get_user_by_id(db, user_id)
-        if user and user.language_code:
-            return user.language_code
+        if user:
+            # Handle both dict (from cache) and SQLAlchemy object
+            if isinstance(user, dict):
+                return user.get("language_code", "ru")
+            else:
+                return user.language_code or "ru"
     return "ru"
 
 
