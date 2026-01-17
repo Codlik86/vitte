@@ -5,7 +5,8 @@ Handles upgrades button from main menu.
 Shows available upgrades with Telegram Stars pricing.
 """
 from aiogram import Router, F
-from aiogram.types import CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.filters import Command
 
 from shared.database import get_db
 from shared.database.services import get_user_by_id, get_subscription_by_user_id
@@ -146,13 +147,8 @@ def build_status_text(upgrades: dict, lang: str) -> str:
 
 # ==================== HANDLERS ====================
 
-@router.callback_query(F.data == "menu:upgrades")
-async def on_upgrades(callback: CallbackQuery):
-    """Handle 'Upgrades' button from main menu"""
-    await callback.answer()
-    user_id = callback.from_user.id
-
-    # Get user language and upgrades
+async def _show_upgrades_screen(user_id: int, respond_func):
+    """Common logic for showing upgrades screen"""
     lang = await get_user_language(user_id)
     upgrades = await get_user_upgrades(user_id)
 
@@ -165,9 +161,21 @@ async def on_upgrades(callback: CallbackQuery):
         text = UPGRADES_EN.format(status_text=status_text)
         keyboard = get_upgrades_keyboard_en(upgrades["intense_mode"], upgrades["fantasy_scenes"])
 
-    await callback.message.answer(text, reply_markup=keyboard, parse_mode="HTML")
-
+    await respond_func(text, reply_markup=keyboard, parse_mode="HTML")
     logger.info(f"User {user_id} opened upgrades, intense={upgrades['intense_mode']}, fantasy={upgrades['fantasy_scenes']}")
+
+
+@router.message(Command("upgrades"))
+async def cmd_upgrades(message: Message):
+    """Handle /upgrades command"""
+    await _show_upgrades_screen(message.from_user.id, message.answer)
+
+
+@router.callback_query(F.data == "menu:upgrades")
+async def on_upgrades(callback: CallbackQuery):
+    """Handle 'Upgrades' button from main menu"""
+    await callback.answer()
+    await _show_upgrades_screen(callback.from_user.id, callback.message.answer)
 
 
 @router.callback_query(F.data == "upgrades:buy_intense")

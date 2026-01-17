@@ -5,7 +5,8 @@ Handles shop button from main menu.
 Shows available image packs with Telegram Stars pricing.
 """
 from aiogram import Router, F
-from aiogram.types import CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.filters import Command
 
 from shared.database import get_db
 from shared.database.services import get_user_by_id, get_subscription_by_user_id
@@ -105,13 +106,8 @@ async def get_user_images_count(user_id: int) -> int:
 
 # ==================== HANDLERS ====================
 
-@router.callback_query(F.data == "menu:shop")
-async def on_shop(callback: CallbackQuery):
-    """Handle 'Shop' button from main menu"""
-    await callback.answer()
-    user_id = callback.from_user.id
-
-    # Get user language and images count
+async def _show_shop_screen(user_id: int, respond_func):
+    """Common logic for showing shop screen"""
     lang = await get_user_language(user_id)
     images_count = await get_user_images_count(user_id)
 
@@ -122,9 +118,21 @@ async def on_shop(callback: CallbackQuery):
         text = SHOP_EN.format(images_count=images_count)
         keyboard = get_shop_keyboard_en()
 
-    await callback.message.answer(text, reply_markup=keyboard, parse_mode="HTML")
-
+    await respond_func(text, reply_markup=keyboard, parse_mode="HTML")
     logger.info(f"User {user_id} opened shop, images: {images_count}")
+
+
+@router.message(Command("shop"))
+async def cmd_shop(message: Message):
+    """Handle /shop command"""
+    await _show_shop_screen(message.from_user.id, message.answer)
+
+
+@router.callback_query(F.data == "menu:shop")
+async def on_shop(callback: CallbackQuery):
+    """Handle 'Shop' button from main menu"""
+    await callback.answer()
+    await _show_shop_screen(callback.from_user.id, callback.message.answer)
 
 
 @router.callback_query(F.data == "shop:pack_20")

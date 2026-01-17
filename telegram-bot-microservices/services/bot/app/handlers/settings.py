@@ -5,7 +5,8 @@ Handles settings button from main menu.
 Shows language selection and clear history options.
 """
 from aiogram import Router, F
-from aiogram.types import CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.filters import Command
 
 from shared.database import get_db
 from shared.database.services import get_user_by_id, update_user
@@ -107,13 +108,8 @@ async def get_user_language(user_id: int) -> str:
 
 # ==================== HANDLERS ====================
 
-@router.callback_query(F.data == "menu:settings")
-async def on_settings(callback: CallbackQuery):
-    """Handle 'Settings' button from main menu"""
-    await callback.answer()
-    user_id = callback.from_user.id
-
-    # Get user language
+async def _show_settings_screen(user_id: int, respond_func):
+    """Common logic for showing settings screen"""
     lang = await get_user_language(user_id)
 
     if lang == "ru":
@@ -122,10 +118,21 @@ async def on_settings(callback: CallbackQuery):
         text = SETTINGS_EN
 
     keyboard = get_settings_keyboard(lang=lang, current_lang=lang)
-
-    await callback.message.answer(text, reply_markup=keyboard, parse_mode="HTML")
-
+    await respond_func(text, reply_markup=keyboard, parse_mode="HTML")
     logger.info(f"User {user_id} opened settings")
+
+
+@router.message(Command("settings"))
+async def cmd_settings(message: Message):
+    """Handle /settings command"""
+    await _show_settings_screen(message.from_user.id, message.answer)
+
+
+@router.callback_query(F.data == "menu:settings")
+async def on_settings(callback: CallbackQuery):
+    """Handle 'Settings' button from main menu"""
+    await callback.answer()
+    await _show_settings_screen(callback.from_user.id, callback.message.answer)
 
 
 @router.callback_query(F.data == "settings:language")

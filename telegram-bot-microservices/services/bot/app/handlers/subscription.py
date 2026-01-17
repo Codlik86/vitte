@@ -5,7 +5,8 @@ Handles subscription button from main menu.
 Shows Vitte Premium plans with Telegram Stars pricing.
 """
 from aiogram import Router, F
-from aiogram.types import CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.filters import Command
 
 from shared.database import get_db
 from shared.database.services import get_user_by_id
@@ -91,13 +92,8 @@ async def get_user_language(user_id: int) -> str:
 
 # ==================== HANDLERS ====================
 
-@router.callback_query(F.data == "menu:subscription")
-async def on_subscription(callback: CallbackQuery):
-    """Handle 'Subscription' button from main menu"""
-    await callback.answer()
-    user_id = callback.from_user.id
-
-    # Get user language
+async def _show_subscription_screen(user_id: int, respond_func):
+    """Common logic for showing subscription screen"""
     lang = await get_user_language(user_id)
 
     if lang == "ru":
@@ -107,9 +103,21 @@ async def on_subscription(callback: CallbackQuery):
         text = SUBSCRIPTION_EN
         keyboard = get_subscription_keyboard_en()
 
-    await callback.message.answer(text, reply_markup=keyboard, parse_mode="HTML")
-
+    await respond_func(text, reply_markup=keyboard, parse_mode="HTML")
     logger.info(f"User {user_id} opened subscription menu")
+
+
+@router.message(Command("subscription"))
+async def cmd_subscription(message: Message):
+    """Handle /subscription command"""
+    await _show_subscription_screen(message.from_user.id, message.answer)
+
+
+@router.callback_query(F.data == "menu:subscription")
+async def on_subscription(callback: CallbackQuery):
+    """Handle 'Subscription' button from main menu"""
+    await callback.answer()
+    await _show_subscription_screen(callback.from_user.id, callback.message.answer)
 
 
 @router.callback_query(F.data == "sub:plus_2d")

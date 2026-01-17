@@ -6,6 +6,7 @@ Checks if user has active dialog and shows appropriate options.
 """
 from aiogram import Router, F
 from aiogram.types import CallbackQuery, Message, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.filters import Command
 
 from shared.database import get_db
 from shared.database.services import get_user_dialogs, get_user_by_id
@@ -124,42 +125,44 @@ async def get_active_dialog_info(user_id: int) -> dict | None:
 
 # ==================== HANDLERS ====================
 
-@router.callback_query(F.data == "menu:start_chat")
-async def on_start_chat(callback: CallbackQuery):
-    """Handle 'Start Chat' button from main menu"""
-    await callback.answer()
-    user_id = callback.from_user.id
-
-    # Get user language
+async def _show_chat_screen(user_id: int, respond_func):
+    """Common logic for showing chat screen"""
     lang = await get_user_language(user_id)
-
-    # Check for active dialog
     dialog_info = await get_active_dialog_info(user_id)
 
     if dialog_info:
-        # Has active dialog - show continue/restart options
         persona_name = dialog_info["persona_name"]
-
         if lang == "ru":
             text = CONTINUE_DIALOG_RU.format(persona_name=persona_name)
             keyboard = get_continue_dialog_keyboard_ru()
         else:
             text = CONTINUE_DIALOG_EN.format(persona_name=persona_name)
             keyboard = get_continue_dialog_keyboard_en()
-
         logger.info(f"User {user_id} has active dialog with {persona_name}")
     else:
-        # No active dialog - prompt to select persona
         if lang == "ru":
             text = NO_DIALOG_RU
             keyboard = get_no_dialog_keyboard_ru()
         else:
             text = NO_DIALOG_EN
             keyboard = get_no_dialog_keyboard_en()
-
         logger.info(f"User {user_id} has no active dialog")
 
-    await callback.message.answer(text, reply_markup=keyboard)
+    await respond_func(text, reply_markup=keyboard)
+
+
+@router.message(Command("chat"))
+async def cmd_chat(message: Message):
+    """Handle /chat command - start chat section"""
+    await _show_chat_screen(message.from_user.id, message.answer)
+    logger.info(f"User {message.from_user.id} opened chat via /chat command")
+
+
+@router.callback_query(F.data == "menu:start_chat")
+async def on_start_chat(callback: CallbackQuery):
+    """Handle 'Start Chat' button from main menu"""
+    await callback.answer()
+    await _show_chat_screen(callback.from_user.id, callback.message.answer)
 
 
 @router.callback_query(F.data == "chat:continue")

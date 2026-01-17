@@ -5,10 +5,12 @@ This is where users land after onboarding or when returning to the bot.
 Contains main menu text and webapp button.
 """
 from aiogram import Router, F
-from aiogram.types import CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
+from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
+from aiogram.filters import Command
 
 from app.config import config
 from shared.utils import get_logger
+from shared.database import get_db, get_user_by_id
 
 logger = get_logger(__name__)
 router = Router(name="menu")
@@ -124,11 +126,61 @@ async def show_main_menu(target, lang: str = "ru"):
         await target.answer(text, reply_markup=keyboard)
 
 
+# ==================== HELPER FUNCTIONS ====================
+
+async def get_user_language(user_id: int) -> str:
+    """Get user's preferred language from database"""
+    try:
+        async for db in get_db():
+            user = await get_user_by_id(db, user_id)
+            if user and user.language_code:
+                return user.language_code
+            break
+    except Exception as e:
+        logger.error(f"Error getting user language: {e}")
+    return "ru"
+
+
 # ==================== HANDLERS ====================
+
+@router.message(Command("menu"))
+async def cmd_menu(message: Message):
+    """Handle /menu command - show main menu"""
+    lang = await get_user_language(message.from_user.id)
+    await show_main_menu(message, lang=lang)
+    logger.info(f"User {message.from_user.id} opened main menu via /menu command")
+
+
+@router.message(Command("app"))
+async def cmd_app(message: Message):
+    """Handle /app command - open webapp"""
+    lang = await get_user_language(message.from_user.id)
+
+    if config.webapp_url:
+        # WebApp is configured - show button to open it
+        if lang == "ru":
+            text = "💌 Нажми на кнопку, чтобы открыть приложение Vitte"
+            keyboard = InlineKeyboardMarkup(inline_keyboard=[
+                [InlineKeyboardButton(text="Открыть Vitte 💜", web_app=WebAppInfo(url=config.webapp_url))]
+            ])
+        else:
+            text = "💌 Tap the button to open Vitte app"
+            keyboard = InlineKeyboardMarkup(inline_keyboard=[
+                [InlineKeyboardButton(text="Open Vitte 💜", web_app=WebAppInfo(url=config.webapp_url))]
+            ])
+        await message.answer(text, reply_markup=keyboard)
+    else:
+        # WebApp not configured
+        if lang == "ru":
+            await message.answer("🚧 Web App в разработке")
+        else:
+            await message.answer("🚧 Web App under development")
+
+    logger.info(f"User {message.from_user.id} opened app via /app command")
+
 
 @router.callback_query(F.data == "menu:open_webapp")
 async def on_open_webapp(callback: CallbackQuery):
-    """Handle webapp button click"""
+    """Handle webapp button click (fallback when webapp_url not configured)"""
     await callback.answer("🚧 Web App в разработке / Web App under development", show_alert=True)
-
     logger.info(f"User {callback.from_user.id} clicked Open Vitte button")
