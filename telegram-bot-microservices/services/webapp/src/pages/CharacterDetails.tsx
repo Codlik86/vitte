@@ -98,7 +98,6 @@ export function CharacterDetails() {
     });
   }, [persona]);
   const hasHistory = Boolean(persona?.has_history);
-  const hasChanges = Boolean(selectedStoryId);
   const actionLabel = selectedStoryId
     ? hasHistory
       ? "Обновить и продолжить"
