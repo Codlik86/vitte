@@ -128,6 +128,7 @@ services:
       - ENVIRONMENT=${ENVIRONMENT:-production}
       - BOT_TOKEN=${BOT_TOKEN}
       - DATABASE_URL=${DATABASE_URL}
+      - WEBAPP_URL=${WEBAPP_URL}
     depends_on:
       postgres:
         condition: service_healthy
