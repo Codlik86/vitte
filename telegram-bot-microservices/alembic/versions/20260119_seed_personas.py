@@ -170,7 +170,7 @@ def upgrade() -> None:
                     description_short, description_long, archetype, story_cards,
                     is_default, is_custom, is_active)
                 VALUES (:key, :name, :short_title, :gender, :kind, :short_description,
-                    :description_short, :description_long, :archetype, :story_cards::json,
+                    :description_short, :description_long, :archetype, CAST(:story_cards_val AS json),
                     true, false, true)
                 ON CONFLICT (key) DO UPDATE SET
                     name = EXCLUDED.name,
@@ -189,7 +189,7 @@ def upgrade() -> None:
                 description_short=p["description_short"],
                 description_long=p["description_long"],
                 archetype=p["archetype"],
-                story_cards=story_cards_json
+                story_cards_val=story_cards_json
             )
         )
 
