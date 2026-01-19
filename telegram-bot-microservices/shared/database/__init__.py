@@ -12,7 +12,17 @@ from shared.database.models import (
     Subscription,
     Dialog,
     Message,
-    Settings
+    Settings,
+    Persona,
+    UserPersona,
+    ImageBalance,
+    FeatureUnlock,
+    Purchase,
+    # Enums
+    AccessStatus,
+    PersonaKind,
+    SubscriptionStatus,
+    PurchaseStatus
 )
 from shared.database.services import (
     # User services
@@ -56,6 +66,16 @@ __all__ = [
     "Dialog",
     "Message",
     "Settings",
+    "Persona",
+    "UserPersona",
+    "ImageBalance",
+    "FeatureUnlock",
+    "Purchase",
+    # Enums
+    "AccessStatus",
+    "PersonaKind",
+    "SubscriptionStatus",
+    "PurchaseStatus",
     # User services
     "get_user_by_id",
     "get_user_by_username",
