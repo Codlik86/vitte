@@ -62,8 +62,8 @@ class User(Base):
 
     # Access status for webapp
     access_status = Column(
-        SAEnum(AccessStatus, name="access_status_enum", create_constraint=False, native_enum=False),
-        default=AccessStatus.TRIAL_USAGE,
+        String(50),
+        default="trial_usage",
         nullable=False
     )
     free_messages_used = Column(Integer, default=0, nullable=False)
