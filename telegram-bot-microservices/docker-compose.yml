@@ -366,6 +366,8 @@ services:
       # ONLY these ports are exposed externally
       - "80:80"
       - "443:443"
+    volumes:
+      - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
       - api
       - admin
