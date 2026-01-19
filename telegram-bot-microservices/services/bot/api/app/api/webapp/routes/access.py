@@ -3,6 +3,8 @@ Access status API routes for webapp
 """
 from fastapi import APIRouter, Depends, Query
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 from typing import Optional
 from datetime import datetime
 from pydantic import BaseModel
@@ -41,8 +43,13 @@ async def get_access_status(
     db: AsyncSession = Depends(get_db)
 ):
     """Get user access status"""
-    # Get user
-    user = await db.get(User, telegram_id)
+    # Get user with relationships
+    result = await db.execute(
+        select(User)
+        .options(selectinload(User.subscription), selectinload(User.image_balance))
+        .where(User.id == telegram_id)
+    )
+    user = result.scalar_one_or_none()
 
     if not user:
         # Return default status for new user

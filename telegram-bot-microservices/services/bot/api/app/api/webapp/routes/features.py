@@ -4,6 +4,7 @@ Features API routes for webapp
 from fastapi import APIRouter, Depends, Query, HTTPException
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, delete
+from sqlalchemy.orm import selectinload
 from typing import Optional
 from datetime import datetime
 from pydantic import BaseModel
@@ -73,8 +74,13 @@ async def get_features_status(
     db: AsyncSession = Depends(get_db)
 ):
     """Get user's features status"""
-    # Get user
-    user = await db.get(User, telegram_id)
+    # Get user with relationships
+    result = await db.execute(
+        select(User)
+        .options(selectinload(User.feature_unlocks))
+        .where(User.id == telegram_id)
+    )
+    user = result.scalar_one_or_none()
 
     # Get unlocked features
     unlocked_map = {}
