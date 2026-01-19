@@ -203,7 +203,7 @@ services:
       context: ./services/webapp
       dockerfile: Dockerfile
       args:
-        - VITE_BACKEND_URL=${WEBAPP_BACKEND_URL:-/api}
+        - VITE_BACKEND_URL=${WEBAPP_BACKEND_URL:-}
         - VITE_DEBUG_MINIAPP=${VITE_DEBUG_MINIAPP:-0}
     container_name: vitte_webapp
     # Internal only - access via Nginx
