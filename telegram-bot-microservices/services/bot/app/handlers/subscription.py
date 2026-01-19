@@ -275,6 +275,15 @@ async def on_pay_with_stars(callback: CallbackQuery, bot: Bot):
         "Unlimited messages, 20 images per day, advanced AI models"
     )
 
+    # Create keyboard with Pay button (must be first!) and Main Menu button
+    pay_button_text = f"⭐ Оплатить {plan['price_stars']} Stars" if lang == "ru" else f"⭐ Pay {plan['price_stars']} Stars"
+    menu_button_text = "🏠 Главное меню" if lang == "ru" else "🏠 Main Menu"
+
+    invoice_keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=pay_button_text, pay=True)],  # Pay button must be first!
+        [InlineKeyboardButton(text=menu_button_text, callback_data="sub:back_to_menu")]
+    ])
+
     # Send invoice
     await bot.send_invoice(
         chat_id=user_id,
@@ -283,6 +292,7 @@ async def on_pay_with_stars(callback: CallbackQuery, bot: Bot):
         payload=f"sub:{plan_id}:{user_id}",
         currency="XTR",  # Telegram Stars currency code
         prices=[LabeledPrice(label=plan_name, amount=plan["price_stars"])],
+        reply_markup=invoice_keyboard
     )
 
     logger.info(f"User {user_id} initiated Stars payment for {plan_id}")
