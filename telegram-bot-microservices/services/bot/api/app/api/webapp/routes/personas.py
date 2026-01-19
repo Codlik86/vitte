@@ -114,8 +114,8 @@ async def get_personas(
 
     items = []
     for p in personas:
-        is_selected = user and user.active_persona_id == p.id
-        is_owner = p.owner_user_id == telegram_id
+        is_selected = bool(user and user.active_persona_id == p.id)
+        is_owner = bool(p.owner_user_id and p.owner_user_id == telegram_id)
 
         items.append(PersonaListItem(
             id=p.id,
@@ -155,8 +155,8 @@ async def get_persona(
     if persona.is_custom and persona.owner_user_id != telegram_id:
         raise HTTPException(status_code=403, detail="Access denied")
 
-    is_selected = user and user.active_persona_id == persona.id
-    is_owner = persona.owner_user_id == telegram_id
+    is_selected = bool(user and user.active_persona_id == persona.id)
+    is_owner = bool(persona.owner_user_id and persona.owner_user_id == telegram_id)
 
     # Parse story cards from JSON
     story_cards = []
