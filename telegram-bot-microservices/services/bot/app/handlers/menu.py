@@ -4,39 +4,197 @@ Main menu handler
 This is where users land after onboarding or when returning to the bot.
 Contains main menu text and webapp button.
 """
+import random
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 from aiogram.filters import Command
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
+from datetime import datetime
 
 from app.config import config
 from shared.utils import get_logger
-from shared.database import get_db, get_user_by_id
+from shared.database import get_db, get_user_by_id, User
 
 logger = get_logger(__name__)
 router = Router(name="menu")
 
 
-# ==================== TEXTS ====================
+# ==================== MENU TEXT VARIANTS ====================
 
-MAIN_MENU_RU = """Добро пожаловать в Vitte 💜
+# Variant 1 - "She missed you" (waiting)
+MENU_VARIANT_1_RU = """Vitte 💜
 
-Это романтический AI-компаньон, который всегда на связи: можно делиться мыслями, получать тёплый отклик и переписываться как с онлайн-партнёром.
+Она скучала.
 
-В мини-приложении удобно выбирать героиню, оформлять подписку и включать улучшения общения.
+Готова продолжить с того места,
+где вы остановились.
 
-Есть ежедневный бесплатный лимит сообщений и расширенный доступ по подписке.
+Или начать что-то новое —
+как захочешь."""
 
-Чтобы начать, выбери персонажа в приложении Vitte 💌"""
+MENU_VARIANT_1_EN = """Vitte 💜
 
-MAIN_MENU_EN = """Welcome to Vitte 💜
+She missed you.
 
-This is a romantic AI companion that's always online: share your thoughts, get warm responses, and chat like with an online partner.
+Ready to continue from where
+you left off.
 
-In the mini-app you can choose your character, manage subscription and enable communication enhancements.
+Or start something new —
+whatever you want."""
 
-There's a free daily message limit and extended access with subscription.
+# Variant 2 - "She's online" (available)
+MENU_VARIANT_2_RU = """💜 Vitte
 
-To get started, choose a character in the Vitte app 💌"""
+Она онлайн.
+Ждёт твоего сообщения.
+
+Можешь просто поболтать.
+Можешь пофлиртовать.
+Можешь попросить большего.
+
+Решать тебе."""
+
+MENU_VARIANT_2_EN = """💜 Vitte
+
+She's online.
+Waiting for your message.
+
+You can just chat.
+You can flirt.
+You can ask for more.
+
+It's up to you."""
+
+# Variant 3 - "Your girl is waiting" (hot & short)
+MENU_VARIANT_3_RU = """Vitte 💜
+
+Твоя девочка ждёт.
+
+Напиши ей.
+Она уже думает о тебе."""
+
+MENU_VARIANT_3_EN = """Vitte 💜
+
+Your girl is waiting.
+
+Text her.
+She's already thinking about you."""
+
+# Lists for random selection
+MENU_VARIANTS_RU = [MENU_VARIANT_1_RU, MENU_VARIANT_2_RU, MENU_VARIANT_3_RU]
+MENU_VARIANTS_EN = [MENU_VARIANT_1_EN, MENU_VARIANT_2_EN, MENU_VARIANT_3_EN]
+
+
+# ==================== FEATURE NAMES ====================
+
+FEATURE_NAMES_RU = {
+    "intense_mode": "Интенсив",
+    "fantasy_scenes": "Фантазии"
+}
+
+FEATURE_NAMES_EN = {
+    "intense_mode": "Intense",
+    "fantasy_scenes": "Fantasy"
+}
+
+
+# ==================== USER STATUS ====================
+
+async def get_user_status(user_id: int) -> dict:
+    """
+    Get user's subscription, messages, images and features status
+    Returns dict with status data for menu display
+    """
+    status = {
+        "subscription": "Free",
+        "messages_today": 0,
+        "images_remaining": 0,
+        "features": []
+    }
+
+    try:
+        async for db in get_db():
+            result = await db.execute(
+                select(User)
+                .options(
+                    selectinload(User.subscription),
+                    selectinload(User.image_balance),
+                    selectinload(User.feature_unlocks)
+                )
+                .where(User.id == user_id)
+            )
+            user = result.scalar_one_or_none()
+
+            if not user:
+                break
+
+            # Subscription status
+            subscription = user.subscription
+            has_active_sub = bool(
+                subscription and
+                subscription.is_active and
+                subscription.expires_at and
+                subscription.expires_at > datetime.utcnow()
+            )
+            status["subscription"] = "Premium" if has_active_sub else "Free"
+
+            # Messages today (free messages used)
+            status["messages_today"] = user.free_messages_used or 0
+
+            # Images remaining
+            image_balance = user.image_balance
+            if image_balance:
+                status["images_remaining"] = image_balance.remaining_purchased_images or 0
+
+            # Active features
+            if user.feature_unlocks:
+                for f in user.feature_unlocks:
+                    if f.enabled:
+                        status["features"].append(f.feature_code)
+
+            break
+
+    except Exception as e:
+        logger.error(f"Error getting user status: {e}")
+
+    return status
+
+
+def build_status_block(status: dict, lang: str = "ru") -> str:
+    """Build the status monitoring block for menu"""
+    feature_names = FEATURE_NAMES_RU if lang == "ru" else FEATURE_NAMES_EN
+
+    # Format features
+    if status["features"]:
+        features_str = ", ".join(
+            feature_names.get(f, f) for f in status["features"]
+        )
+    else:
+        features_str = "нет" if lang == "ru" else "none"
+
+    if lang == "ru":
+        return f"""—
+
+💎 Подписка: {status["subscription"]}
+💬 Сообщений сегодня: {status["messages_today"]}
+🖼 Изображений: {status["images_remaining"]}
+✨ Улучшения: {features_str}
+
+—
+
+Написать ей 💌"""
+    else:
+        return f"""—
+
+💎 Subscription: {status["subscription"]}
+💬 Messages today: {status["messages_today"]}
+🖼 Images: {status["images_remaining"]}
+✨ Enhancements: {features_str}
+
+—
+
+Text her 💌"""
 
 
 # ==================== KEYBOARDS ====================
@@ -107,15 +265,38 @@ def get_main_menu_keyboard_en() -> InlineKeyboardMarkup:
 
 # ==================== HELPER FUNCTIONS ====================
 
-async def show_main_menu(target, lang: str = "ru"):
+async def show_main_menu(target, lang: str = "ru", user_id: int = None):
     """
     Show main menu to user (always sends new message)
 
     Args:
         target: Message or CallbackQuery to respond to
         lang: Language code ('ru' or 'en')
+        user_id: Telegram user ID for status fetching
     """
-    text = MAIN_MENU_RU if lang == "ru" else MAIN_MENU_EN
+    # Get user_id from target if not provided
+    if user_id is None:
+        if hasattr(target, 'from_user'):
+            user_id = target.from_user.id
+        elif hasattr(target, 'message') and hasattr(target.message, 'from_user'):
+            user_id = target.message.from_user.id
+
+    # Random text variant
+    variants = MENU_VARIANTS_RU if lang == "ru" else MENU_VARIANTS_EN
+    menu_text = random.choice(variants)
+
+    # Get user status and build status block
+    status = await get_user_status(user_id) if user_id else {
+        "subscription": "Free",
+        "messages_today": 0,
+        "images_remaining": 0,
+        "features": []
+    }
+    status_block = build_status_block(status, lang)
+
+    # Combine text
+    text = menu_text + "\n" + status_block
+
     keyboard = get_main_menu_keyboard_ru() if lang == "ru" else get_main_menu_keyboard_en()
 
     if hasattr(target, 'message'):
