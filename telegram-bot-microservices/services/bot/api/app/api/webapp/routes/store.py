@@ -155,7 +155,7 @@ async def get_store_status(
 
     # Check subscription
     subscription = user.subscription
-    has_subscription = subscription and subscription.is_active and subscription.expires_at and subscription.expires_at > datetime.utcnow()
+    has_subscription = bool(subscription and subscription.is_active and subscription.expires_at and subscription.expires_at > datetime.utcnow())
 
     # Get image balance
     image_balance = user.image_balance
