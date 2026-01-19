@@ -4,29 +4,85 @@ Shop handler - Image packs store
 Handles shop button from main menu.
 Shows available image packs with Telegram Stars pricing.
 """
-from aiogram import Router, F
-from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram import Router, F, Bot
+from aiogram.types import (
+    Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton,
+    LabeledPrice, PreCheckoutQuery
+)
 from aiogram.filters import Command
+from datetime import datetime
 
-from shared.database import get_db
+from shared.database import get_db, User, ImageBalance, Purchase
 from shared.database.services import get_user_by_id, get_subscription_by_user_id
 from shared.utils import get_logger
+from sqlalchemy import select
 
 logger = get_logger(__name__)
 router = Router(name="shop")
 
 
+# ==================== IMAGE PACKS ====================
+
+IMAGE_PACKS = {
+    "pack_20": {
+        "name_ru": "20 изображений",
+        "name_en": "20 images",
+        "images": 20,
+        "price_stars": 50,
+        "product_code": "images_pack_20"
+    },
+    "pack_50": {
+        "name_ru": "50 изображений",
+        "name_en": "50 images",
+        "images": 50,
+        "price_stars": 120,
+        "product_code": "images_pack_50"
+    },
+    "pack_100": {
+        "name_ru": "100 изображений",
+        "name_en": "100 images",
+        "images": 100,
+        "price_stars": 250,
+        "product_code": "images_pack_100"
+    },
+    "pack_200": {
+        "name_ru": "200 изображений",
+        "name_en": "200 images",
+        "images": 200,
+        "price_stars": 500,
+        "product_code": "images_pack_200"
+    }
+}
+
+
 # ==================== TEXTS ====================
 
-SHOP_RU = """💛 <b>Изображения</b>
+SHOP_RU = """🖼 <b>Магазин изображений</b>
 
 У тебя <b>{images_count}</b> изображений.
-Докупи ещё — выбери нужный пакет ниже."""
 
-SHOP_EN = """💛 <b>Images</b>
+Докупи ещё — выбери нужный пакет:"""
+
+SHOP_EN = """🖼 <b>Image Shop</b>
 
 You have <b>{images_count}</b> images.
-Buy more — choose a pack below."""
+
+Buy more — choose a pack:"""
+
+
+PAYMENT_METHOD_RU = """💳 <b>Выбери способ оплаты</b>
+
+Ты выбрал: <b>{pack_name}</b>
+Стоимость: <b>{price} ⭐</b>
+
+Как будешь оплачивать?"""
+
+PAYMENT_METHOD_EN = """💳 <b>Choose payment method</b>
+
+You selected: <b>{pack_name}</b>
+Price: <b>{price} ⭐</b>
+
+How would you like to pay?"""
 
 
 # ==================== KEYBOARDS ====================
@@ -73,6 +129,30 @@ def get_shop_keyboard_en() -> InlineKeyboardMarkup:
     ])
 
 
+def get_payment_method_keyboard_ru(pack_id: str) -> InlineKeyboardMarkup:
+    """Payment method selection keyboard (Russian)"""
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="⭐ Telegram Stars", callback_data=f"shop_pay:stars:{pack_id}"),
+        ],
+        [
+            InlineKeyboardButton(text="⬅️ Назад к пакетам", callback_data="shop:back_to_packs"),
+        ]
+    ])
+
+
+def get_payment_method_keyboard_en(pack_id: str) -> InlineKeyboardMarkup:
+    """Payment method selection keyboard (English)"""
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="⭐ Telegram Stars", callback_data=f"shop_pay:stars:{pack_id}"),
+        ],
+        [
+            InlineKeyboardButton(text="⬅️ Back to packs", callback_data="shop:back_to_packs"),
+        ]
+    ])
+
+
 # ==================== HELPER FUNCTIONS ====================
 
 async def get_user_language(user_id: int) -> str:
@@ -91,16 +171,13 @@ async def get_user_language(user_id: int) -> str:
 async def get_user_images_count(user_id: int) -> int:
     """Get remaining images count for user"""
     async for db in get_db():
-        subscription = await get_subscription_by_user_id(db, user_id)
-        if subscription:
-            # Handle both dict (from cache) and SQLAlchemy object
-            if isinstance(subscription, dict):
-                images_limit = subscription.get("images_limit", 0)
-                images_used = subscription.get("images_used", 0)
-            else:
-                images_limit = subscription.images_limit or 0
-                images_used = subscription.images_used or 0
-            return max(0, images_limit - images_used)
+        # Check image balance
+        result = await db.execute(
+            select(ImageBalance).where(ImageBalance.user_id == user_id)
+        )
+        image_balance = result.scalar_one_or_none()
+        if image_balance:
+            return image_balance.remaining_purchased_images or 0
     return 0
 
 
@@ -135,32 +212,44 @@ async def on_shop(callback: CallbackQuery):
     await _show_shop_screen(callback.from_user.id, callback.message.answer)
 
 
-@router.callback_query(F.data == "shop:pack_20")
-async def on_pack_20(callback: CallbackQuery):
-    """Handle 20 images pack purchase"""
-    await callback.answer("🚧 Оплата в разработке / Payment coming soon", show_alert=True)
-    logger.info(f"User {callback.from_user.id} selected 20 images pack")
+@router.callback_query(F.data.startswith("shop:pack_"))
+async def on_select_pack(callback: CallbackQuery):
+    """Handle image pack selection - show payment method"""
+    await callback.answer()
+
+    # Extract pack_id from callback data (shop:pack_20 -> pack_20)
+    pack_id = callback.data.replace("shop:", "")
+    pack = IMAGE_PACKS.get(pack_id)
+
+    if not pack:
+        await callback.answer("❌ Пакет не найден", show_alert=True)
+        return
+
+    user_id = callback.from_user.id
+    lang = await get_user_language(user_id)
+
+    if lang == "ru":
+        text = PAYMENT_METHOD_RU.format(
+            pack_name=pack["name_ru"],
+            price=pack["price_stars"]
+        )
+        keyboard = get_payment_method_keyboard_ru(pack_id)
+    else:
+        text = PAYMENT_METHOD_EN.format(
+            pack_name=pack["name_en"],
+            price=pack["price_stars"]
+        )
+        keyboard = get_payment_method_keyboard_en(pack_id)
+
+    await callback.message.answer(text, reply_markup=keyboard, parse_mode="HTML")
+    logger.info(f"User {user_id} selected pack {pack_id}, showing payment methods")
 
 
-@router.callback_query(F.data == "shop:pack_50")
-async def on_pack_50(callback: CallbackQuery):
-    """Handle 50 images pack purchase"""
-    await callback.answer("🚧 Оплата в разработке / Payment coming soon", show_alert=True)
-    logger.info(f"User {callback.from_user.id} selected 50 images pack")
-
-
-@router.callback_query(F.data == "shop:pack_100")
-async def on_pack_100(callback: CallbackQuery):
-    """Handle 100 images pack purchase"""
-    await callback.answer("🚧 Оплата в разработке / Payment coming soon", show_alert=True)
-    logger.info(f"User {callback.from_user.id} selected 100 images pack")
-
-
-@router.callback_query(F.data == "shop:pack_200")
-async def on_pack_200(callback: CallbackQuery):
-    """Handle 200 images pack purchase"""
-    await callback.answer("🚧 Оплата в разработке / Payment coming soon", show_alert=True)
-    logger.info(f"User {callback.from_user.id} selected 200 images pack")
+@router.callback_query(F.data == "shop:back_to_packs")
+async def on_back_to_packs(callback: CallbackQuery):
+    """Handle 'Back to packs' button"""
+    await callback.answer()
+    await _show_shop_screen(callback.from_user.id, callback.message.answer)
 
 
 @router.callback_query(F.data == "shop:back_to_menu")
@@ -177,3 +266,163 @@ async def on_back_to_menu(callback: CallbackQuery):
     await show_main_menu(callback, lang=lang)
 
     logger.info(f"User {user_id} returned to main menu from shop")
+
+
+# ==================== PAYMENT HANDLERS ====================
+
+@router.callback_query(F.data.startswith("shop_pay:stars:"))
+async def on_pay_with_stars(callback: CallbackQuery, bot: Bot):
+    """Handle Telegram Stars payment - send invoice"""
+    await callback.answer()
+
+    # Extract pack_id from callback data (shop_pay:stars:pack_20 -> pack_20)
+    pack_id = callback.data.replace("shop_pay:stars:", "")
+    pack = IMAGE_PACKS.get(pack_id)
+
+    if not pack:
+        await callback.answer("❌ Пакет не найден", show_alert=True)
+        return
+
+    user_id = callback.from_user.id
+    lang = await get_user_language(user_id)
+
+    # Create invoice
+    pack_name = pack["name_ru"] if lang == "ru" else pack["name_en"]
+
+    title = f"🖼 {pack_name}"
+    description = (
+        f"Пакет из {pack['images']} изображений для генерации"
+        if lang == "ru" else
+        f"Pack of {pack['images']} images for generation"
+    )
+
+    # Create keyboard with Pay button (must be first!) and Main Menu button
+    pay_button_text = f"⭐ Оплатить {pack['price_stars']} Stars" if lang == "ru" else f"⭐ Pay {pack['price_stars']} Stars"
+    menu_button_text = "🏠 Главное меню" if lang == "ru" else "🏠 Main Menu"
+
+    invoice_keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=pay_button_text, pay=True)],  # Pay button must be first!
+        [InlineKeyboardButton(text=menu_button_text, callback_data="shop:back_to_menu")]
+    ])
+
+    # Send invoice
+    await bot.send_invoice(
+        chat_id=user_id,
+        title=title,
+        description=description,
+        payload=f"images:{pack_id}:{user_id}",
+        currency="XTR",  # Telegram Stars currency code
+        prices=[LabeledPrice(label=pack_name, amount=pack["price_stars"])],
+        reply_markup=invoice_keyboard
+    )
+
+    logger.info(f"User {user_id} initiated Stars payment for {pack_id}")
+
+
+@router.pre_checkout_query()
+async def on_pre_checkout(pre_checkout_query: PreCheckoutQuery):
+    """Handle pre-checkout query - validate the purchase"""
+    # Check if this is an images purchase
+    if not pre_checkout_query.invoice_payload.startswith("images:"):
+        return  # Let other handlers process it
+
+    # Always accept for now (can add validation logic later)
+    await pre_checkout_query.answer(ok=True)
+    logger.info(f"Pre-checkout approved for user {pre_checkout_query.from_user.id} (images)")
+
+
+@router.message(F.successful_payment)
+async def on_successful_payment(message: Message):
+    """Handle successful payment - add images to balance"""
+    payment = message.successful_payment
+    user_id = message.from_user.id
+
+    # Check if this is an images purchase
+    if not payment.invoice_payload.startswith("images:"):
+        return  # Let other handlers process it
+
+    # Parse payload
+    payload_parts = payment.invoice_payload.split(":")
+    if len(payload_parts) < 2:
+        logger.error(f"Invalid payment payload: {payment.invoice_payload}")
+        return
+
+    pack_id = payload_parts[1]  # images:pack_20:user_id -> pack_20
+    pack = IMAGE_PACKS.get(pack_id)
+
+    if not pack:
+        logger.error(f"Unknown pack in payment: {pack_id}")
+        return
+
+    lang = await get_user_language(user_id)
+
+    # Add images to balance in database
+    async for db in get_db():
+        # Get or create user
+        user = await db.get(User, user_id)
+        if not user:
+            logger.error(f"User {user_id} not found for payment")
+            return
+
+        # Get or create image balance
+        result = await db.execute(
+            select(ImageBalance).where(ImageBalance.user_id == user_id)
+        )
+        image_balance = result.scalar_one_or_none()
+
+        if image_balance:
+            # Add to existing balance
+            image_balance.total_purchased_images += pack["images"]
+            image_balance.remaining_purchased_images += pack["images"]
+        else:
+            # Create new image balance
+            image_balance = ImageBalance(
+                user_id=user_id,
+                total_purchased_images=pack["images"],
+                remaining_purchased_images=pack["images"]
+            )
+            db.add(image_balance)
+
+        # Record purchase
+        purchase = Purchase(
+            user_id=user_id,
+            product_code=pack["product_code"],
+            provider="telegram_stars",
+            amount=pack["price_stars"],
+            currency="XTR",
+            status="success",
+            meta={
+                "telegram_payment_charge_id": payment.telegram_payment_charge_id,
+                "provider_payment_charge_id": payment.provider_payment_charge_id,
+                "images_count": pack["images"]
+            }
+        )
+        db.add(purchase)
+
+        await db.commit()
+
+        new_balance = image_balance.remaining_purchased_images
+        break
+
+    # Send success message
+    pack_name = pack["name_ru"] if lang == "ru" else pack["name_en"]
+
+    if lang == "ru":
+        success_text = f"""🎉 <b>Оплата прошла успешно!</b>
+
+Ты купил <b>{pack_name}</b>
+
+Теперь у тебя <b>{new_balance}</b> изображений для генерации.
+
+Приятного использования! 💜"""
+    else:
+        success_text = f"""🎉 <b>Payment successful!</b>
+
+You purchased <b>{pack_name}</b>
+
+Now you have <b>{new_balance}</b> images for generation.
+
+Enjoy! 💜"""
+
+    await message.answer(success_text, parse_mode="HTML")
+    logger.info(f"User {user_id} successfully purchased {pack_id}, new balance: {new_balance}")
