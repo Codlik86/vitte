@@ -30,8 +30,8 @@ MENU_VARIANT_1_RU = """Vitte 💜
 Готова продолжить с того места,
 где вы остановились.
 
-Или начать что-то новое —
-как захочешь."""
+Или начать что-то новое.
+Как захочешь."""
 
 MENU_VARIANT_1_EN = """Vitte 💜
 
@@ -40,8 +40,8 @@ She missed you.
 Ready to continue from where
 you left off.
 
-Or start something new —
-whatever you want."""
+Or start something new.
+Whatever you want."""
 
 # Variant 2 - "She's online" (available)
 MENU_VARIANT_2_RU = """💜 Vitte
