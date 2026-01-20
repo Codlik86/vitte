@@ -57,13 +57,27 @@ IMAGE_PACKS = {
 
 # ==================== TEXTS ====================
 
-SHOP_RU = """🖼 <b>Магазин изображений</b>
+# Shop hub screen
+SHOP_HUB_RU = """🛒 <b>Магазин</b>
+
+Здесь можно докупить изображения или разблокировать улучшения общения.
+
+Выбери раздел:"""
+
+SHOP_HUB_EN = """🛒 <b>Shop</b>
+
+Here you can buy more images or unlock communication enhancements.
+
+Choose a section:"""
+
+# Images section
+SHOP_IMAGES_RU = """🖼 <b>Магазин изображений</b>
 
 У тебя <b>{images_count}</b> изображений.
 
 Докупи ещё — выбери нужный пакет:"""
 
-SHOP_EN = """🖼 <b>Image Shop</b>
+SHOP_IMAGES_EN = """🖼 <b>Image Shop</b>
 
 You have <b>{images_count}</b> images.
 
@@ -87,7 +101,37 @@ How would you like to pay?"""
 
 # ==================== KEYBOARDS ====================
 
-def get_shop_keyboard_ru() -> InlineKeyboardMarkup:
+def get_shop_hub_keyboard_ru() -> InlineKeyboardMarkup:
+    """Shop hub keyboard (Russian)"""
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="🖼 Купить изображения", callback_data="shop:images"),
+        ],
+        [
+            InlineKeyboardButton(text="✨ Купить улучшения", callback_data="shop:upgrades"),
+        ],
+        [
+            InlineKeyboardButton(text="⬅️ Назад", callback_data="shop:back_to_menu"),
+        ]
+    ])
+
+
+def get_shop_hub_keyboard_en() -> InlineKeyboardMarkup:
+    """Shop hub keyboard (English)"""
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="🖼 Buy Images", callback_data="shop:images"),
+        ],
+        [
+            InlineKeyboardButton(text="✨ Buy Upgrades", callback_data="shop:upgrades"),
+        ],
+        [
+            InlineKeyboardButton(text="⬅️ Back", callback_data="shop:back_to_menu"),
+        ]
+    ])
+
+
+def get_images_keyboard_ru() -> InlineKeyboardMarkup:
     """Image packs keyboard (Russian)"""
     return InlineKeyboardMarkup(inline_keyboard=[
         [
@@ -103,12 +147,12 @@ def get_shop_keyboard_ru() -> InlineKeyboardMarkup:
             InlineKeyboardButton(text="200 изображений — 500 ⭐", callback_data="shop:pack_200"),
         ],
         [
-            InlineKeyboardButton(text="⬅️ Назад", callback_data="shop:back_to_menu"),
+            InlineKeyboardButton(text="⬅️ Назад", callback_data="shop:back_to_hub"),
         ]
     ])
 
 
-def get_shop_keyboard_en() -> InlineKeyboardMarkup:
+def get_images_keyboard_en() -> InlineKeyboardMarkup:
     """Image packs keyboard (English)"""
     return InlineKeyboardMarkup(inline_keyboard=[
         [
@@ -124,7 +168,7 @@ def get_shop_keyboard_en() -> InlineKeyboardMarkup:
             InlineKeyboardButton(text="200 images — 500 ⭐", callback_data="shop:pack_200"),
         ],
         [
-            InlineKeyboardButton(text="⬅️ Back", callback_data="shop:back_to_menu"),
+            InlineKeyboardButton(text="⬅️ Back", callback_data="shop:back_to_hub"),
         ]
     ])
 
@@ -136,7 +180,7 @@ def get_payment_method_keyboard_ru(pack_id: str) -> InlineKeyboardMarkup:
             InlineKeyboardButton(text="⭐ Telegram Stars", callback_data=f"shop_pay:stars:{pack_id}"),
         ],
         [
-            InlineKeyboardButton(text="⬅️ Назад к пакетам", callback_data="shop:back_to_packs"),
+            InlineKeyboardButton(text="⬅️ Назад к пакетам", callback_data="shop:images"),
         ]
     ])
 
@@ -148,7 +192,7 @@ def get_payment_method_keyboard_en(pack_id: str) -> InlineKeyboardMarkup:
             InlineKeyboardButton(text="⭐ Telegram Stars", callback_data=f"shop_pay:stars:{pack_id}"),
         ],
         [
-            InlineKeyboardButton(text="⬅️ Back to packs", callback_data="shop:back_to_packs"),
+            InlineKeyboardButton(text="⬅️ Back to packs", callback_data="shop:images"),
         ]
     ])
 
@@ -183,33 +227,72 @@ async def get_user_images_count(user_id: int) -> int:
 
 # ==================== HANDLERS ====================
 
-async def _show_shop_screen(user_id: int, respond_func):
-    """Common logic for showing shop screen"""
+async def _show_shop_hub(user_id: int, respond_func):
+    """Show shop hub screen with categories"""
+    lang = await get_user_language(user_id)
+
+    if lang == "ru":
+        text = SHOP_HUB_RU
+        keyboard = get_shop_hub_keyboard_ru()
+    else:
+        text = SHOP_HUB_EN
+        keyboard = get_shop_hub_keyboard_en()
+
+    await respond_func(text, reply_markup=keyboard, parse_mode="HTML")
+    logger.info(f"User {user_id} opened shop hub")
+
+
+async def _show_images_screen(user_id: int, respond_func):
+    """Show images shop screen"""
     lang = await get_user_language(user_id)
     images_count = await get_user_images_count(user_id)
 
     if lang == "ru":
-        text = SHOP_RU.format(images_count=images_count)
-        keyboard = get_shop_keyboard_ru()
+        text = SHOP_IMAGES_RU.format(images_count=images_count)
+        keyboard = get_images_keyboard_ru()
     else:
-        text = SHOP_EN.format(images_count=images_count)
-        keyboard = get_shop_keyboard_en()
+        text = SHOP_IMAGES_EN.format(images_count=images_count)
+        keyboard = get_images_keyboard_en()
 
     await respond_func(text, reply_markup=keyboard, parse_mode="HTML")
-    logger.info(f"User {user_id} opened shop, images: {images_count}")
+    logger.info(f"User {user_id} opened images shop, balance: {images_count}")
 
 
 @router.message(Command("shop"))
 async def cmd_shop(message: Message):
     """Handle /shop command"""
-    await _show_shop_screen(message.from_user.id, message.answer)
+    await _show_shop_hub(message.from_user.id, message.answer)
 
 
 @router.callback_query(F.data == "menu:shop")
 async def on_shop(callback: CallbackQuery):
     """Handle 'Shop' button from main menu"""
     await callback.answer()
-    await _show_shop_screen(callback.from_user.id, callback.message.answer)
+    await _show_shop_hub(callback.from_user.id, callback.message.answer)
+
+
+@router.callback_query(F.data == "shop:images")
+async def on_shop_images(callback: CallbackQuery):
+    """Handle 'Buy Images' button from shop hub"""
+    await callback.answer()
+    await _show_images_screen(callback.from_user.id, callback.message.answer)
+
+
+@router.callback_query(F.data == "shop:upgrades")
+async def on_shop_upgrades(callback: CallbackQuery):
+    """Handle 'Buy Upgrades' button from shop hub - redirect to upgrades"""
+    await callback.answer()
+
+    # Import and show upgrades screen
+    from app.handlers.upgrades import _show_upgrades_screen
+    await _show_upgrades_screen(callback.from_user.id, callback.message.answer)
+
+
+@router.callback_query(F.data == "shop:back_to_hub")
+async def on_back_to_hub(callback: CallbackQuery):
+    """Handle 'Back' button - return to shop hub"""
+    await callback.answer()
+    await _show_shop_hub(callback.from_user.id, callback.message.answer)
 
 
 @router.callback_query(F.data.startswith("shop:pack_"))
@@ -243,13 +326,6 @@ async def on_select_pack(callback: CallbackQuery):
 
     await callback.message.answer(text, reply_markup=keyboard, parse_mode="HTML")
     logger.info(f"User {user_id} selected pack {pack_id}, showing payment methods")
-
-
-@router.callback_query(F.data == "shop:back_to_packs")
-async def on_back_to_packs(callback: CallbackQuery):
-    """Handle 'Back to packs' button"""
-    await callback.answer()
-    await _show_shop_screen(callback.from_user.id, callback.message.answer)
 
 
 @router.callback_query(F.data == "shop:back_to_menu")
