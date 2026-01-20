@@ -4,16 +4,45 @@ Upgrades handler - Communication enhancements
 Handles upgrades button from main menu.
 Shows available upgrades with Telegram Stars pricing.
 """
-from aiogram import Router, F
-from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram import Router, F, Bot
+from aiogram.types import (
+    Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton,
+    LabeledPrice, PreCheckoutQuery
+)
 from aiogram.filters import Command
+from datetime import datetime
 
-from shared.database import get_db
+from shared.database import get_db, User, FeatureUnlock, Purchase, Subscription
 from shared.database.services import get_user_by_id, get_subscription_by_user_id
 from shared.utils import get_logger
+from sqlalchemy import select
 
 logger = get_logger(__name__)
 router = Router(name="upgrades")
+
+
+# ==================== UPGRADES CONFIG ====================
+
+UPGRADES = {
+    "intense_mode": {
+        "name_ru": "Режим страсти",
+        "name_en": "Passion Mode",
+        "description_ru": "Персонаж общается смелее и чувственнее при достаточном доверии",
+        "description_en": "Character communicates more boldly and sensually with enough trust",
+        "price_stars": 150,
+        "product_code": "upgrade_intense_mode",
+        "feature_code": "intense_mode"
+    },
+    "fantasy_scenes": {
+        "name_ru": "Фантазии и сцены",
+        "name_en": "Fantasies & Scenes",
+        "description_ru": "Доступ к особым сценариям и фантазиям",
+        "description_en": "Access to special scenarios and fantasies",
+        "price_stars": 200,
+        "product_code": "upgrade_fantasy_scenes",
+        "feature_code": "fantasy_scenes"
+    }
+}
 
 
 # ==================== TEXTS ====================
@@ -46,6 +75,25 @@ UPGRADES_ACTIVE_RU = "Активные улучшения: {active_list}"
 UPGRADES_ACTIVE_EN = "Active upgrades: {active_list}"
 
 
+PAYMENT_METHOD_RU = """💳 <b>Выбери способ оплаты</b>
+
+Ты выбрал: <b>{upgrade_name}</b>
+Стоимость: <b>{price} ⭐</b>
+
+{description}
+
+Как будешь оплачивать?"""
+
+PAYMENT_METHOD_EN = """💳 <b>Choose payment method</b>
+
+You selected: <b>{upgrade_name}</b>
+Price: <b>{price} ⭐</b>
+
+{description}
+
+How would you like to pay?"""
+
+
 # ==================== KEYBOARDS ====================
 
 def get_upgrades_keyboard_ru(intense_active: bool, fantasy_active: bool) -> InlineKeyboardMarkup:
@@ -55,12 +103,12 @@ def get_upgrades_keyboard_ru(intense_active: bool, fantasy_active: bool) -> Inli
     if intense_active:
         buttons.append([InlineKeyboardButton(text="✅ Режим страсти", callback_data="upgrades:intense_info")])
     else:
-        buttons.append([InlineKeyboardButton(text="Режим страсти · 150 ⭐", callback_data="upgrades:buy_intense")])
+        buttons.append([InlineKeyboardButton(text="Режим страсти · 150 ⭐", callback_data="upgrades:buy_intense_mode")])
 
     if fantasy_active:
         buttons.append([InlineKeyboardButton(text="✅ Фантазии и сцены", callback_data="upgrades:fantasy_info")])
     else:
-        buttons.append([InlineKeyboardButton(text="Фантазии и сцены · 200 ⭐", callback_data="upgrades:buy_fantasy")])
+        buttons.append([InlineKeyboardButton(text="Фантазии и сцены · 200 ⭐", callback_data="upgrades:buy_fantasy_scenes")])
 
     buttons.append([InlineKeyboardButton(text="⬅️ Назад", callback_data="upgrades:back_to_menu")])
 
@@ -74,16 +122,40 @@ def get_upgrades_keyboard_en(intense_active: bool, fantasy_active: bool) -> Inli
     if intense_active:
         buttons.append([InlineKeyboardButton(text="✅ Passion Mode", callback_data="upgrades:intense_info")])
     else:
-        buttons.append([InlineKeyboardButton(text="Passion Mode · 150 ⭐", callback_data="upgrades:buy_intense")])
+        buttons.append([InlineKeyboardButton(text="Passion Mode · 150 ⭐", callback_data="upgrades:buy_intense_mode")])
 
     if fantasy_active:
         buttons.append([InlineKeyboardButton(text="✅ Fantasies & Scenes", callback_data="upgrades:fantasy_info")])
     else:
-        buttons.append([InlineKeyboardButton(text="Fantasies & Scenes · 200 ⭐", callback_data="upgrades:buy_fantasy")])
+        buttons.append([InlineKeyboardButton(text="Fantasies & Scenes · 200 ⭐", callback_data="upgrades:buy_fantasy_scenes")])
 
     buttons.append([InlineKeyboardButton(text="⬅️ Back", callback_data="upgrades:back_to_menu")])
 
     return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+
+def get_payment_method_keyboard_ru(upgrade_id: str) -> InlineKeyboardMarkup:
+    """Payment method selection keyboard (Russian)"""
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="⭐ Telegram Stars", callback_data=f"upgrades_pay:stars:{upgrade_id}"),
+        ],
+        [
+            InlineKeyboardButton(text="⬅️ Назад к улучшениям", callback_data="upgrades:back_to_list"),
+        ]
+    ])
+
+
+def get_payment_method_keyboard_en(upgrade_id: str) -> InlineKeyboardMarkup:
+    """Payment method selection keyboard (English)"""
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="⭐ Telegram Stars", callback_data=f"upgrades_pay:stars:{upgrade_id}"),
+        ],
+        [
+            InlineKeyboardButton(text="⬅️ Back to upgrades", callback_data="upgrades:back_to_list"),
+        ]
+    ])
 
 
 # ==================== HELPER FUNCTIONS ====================
@@ -103,28 +175,47 @@ async def get_user_language(user_id: int) -> str:
 
 async def get_user_upgrades(user_id: int) -> dict:
     """
-    Get user's active upgrades.
+    Get user's active upgrades from FeatureUnlock table.
 
     Returns dict with:
         - intense_mode: bool
         - fantasy_scenes: bool
     """
+    upgrades = {"intense_mode": False, "fantasy_scenes": False}
+
     async for db in get_db():
+        # Check FeatureUnlock table
+        result = await db.execute(
+            select(FeatureUnlock).where(
+                FeatureUnlock.user_id == user_id,
+                FeatureUnlock.enabled == True
+            )
+        )
+        feature_unlocks = result.scalars().all()
+
+        for unlock in feature_unlocks:
+            if unlock.feature_code == "intense_mode":
+                upgrades["intense_mode"] = True
+            elif unlock.feature_code == "fantasy_scenes":
+                upgrades["fantasy_scenes"] = True
+
+        # Also check Subscription table for legacy support
         subscription = await get_subscription_by_user_id(db, user_id)
         if subscription:
-            # Handle both dict (from cache) and SQLAlchemy object
             if isinstance(subscription, dict):
-                return {
-                    "intense_mode": subscription.get("intense_mode", False),
-                    "fantasy_scenes": subscription.get("fantasy_scenes", False),
-                }
+                if subscription.get("intense_mode"):
+                    upgrades["intense_mode"] = True
+                if subscription.get("fantasy_scenes"):
+                    upgrades["fantasy_scenes"] = True
             else:
-                # Fields may not exist yet - default to False
-                return {
-                    "intense_mode": getattr(subscription, "intense_mode", False) or False,
-                    "fantasy_scenes": getattr(subscription, "fantasy_scenes", False) or False,
-                }
-    return {"intense_mode": False, "fantasy_scenes": False}
+                if getattr(subscription, "intense_mode", False):
+                    upgrades["intense_mode"] = True
+                if getattr(subscription, "fantasy_scenes", False):
+                    upgrades["fantasy_scenes"] = True
+
+        break
+
+    return upgrades
 
 
 def build_status_text(upgrades: dict, lang: str) -> str:
@@ -178,18 +269,46 @@ async def on_upgrades(callback: CallbackQuery):
     await _show_upgrades_screen(callback.from_user.id, callback.message.answer)
 
 
-@router.callback_query(F.data == "upgrades:buy_intense")
-async def on_buy_intense(callback: CallbackQuery):
-    """Handle Passion Mode purchase"""
-    await callback.answer("🚧 Оплата в разработке / Payment coming soon", show_alert=True)
-    logger.info(f"User {callback.from_user.id} wants to buy Passion Mode")
+@router.callback_query(F.data.startswith("upgrades:buy_"))
+async def on_select_upgrade(callback: CallbackQuery):
+    """Handle upgrade selection - show payment method"""
+    await callback.answer()
+
+    # Extract upgrade_id from callback data (upgrades:buy_intense_mode -> intense_mode)
+    upgrade_id = callback.data.replace("upgrades:buy_", "")
+    upgrade = UPGRADES.get(upgrade_id)
+
+    if not upgrade:
+        await callback.answer("❌ Улучшение не найдено", show_alert=True)
+        return
+
+    user_id = callback.from_user.id
+    lang = await get_user_language(user_id)
+
+    if lang == "ru":
+        text = PAYMENT_METHOD_RU.format(
+            upgrade_name=upgrade["name_ru"],
+            price=upgrade["price_stars"],
+            description=upgrade["description_ru"]
+        )
+        keyboard = get_payment_method_keyboard_ru(upgrade_id)
+    else:
+        text = PAYMENT_METHOD_EN.format(
+            upgrade_name=upgrade["name_en"],
+            price=upgrade["price_stars"],
+            description=upgrade["description_en"]
+        )
+        keyboard = get_payment_method_keyboard_en(upgrade_id)
+
+    await callback.message.answer(text, reply_markup=keyboard, parse_mode="HTML")
+    logger.info(f"User {user_id} selected upgrade {upgrade_id}, showing payment methods")
 
 
-@router.callback_query(F.data == "upgrades:buy_fantasy")
-async def on_buy_fantasy(callback: CallbackQuery):
-    """Handle Fantasies & Scenes purchase"""
-    await callback.answer("🚧 Оплата в разработке / Payment coming soon", show_alert=True)
-    logger.info(f"User {callback.from_user.id} wants to buy Fantasies & Scenes")
+@router.callback_query(F.data == "upgrades:back_to_list")
+async def on_back_to_list(callback: CallbackQuery):
+    """Handle 'Back to upgrades' button"""
+    await callback.answer()
+    await _show_upgrades_screen(callback.from_user.id, callback.message.answer)
 
 
 @router.callback_query(F.data == "upgrades:intense_info")
@@ -226,3 +345,180 @@ async def on_back_to_menu(callback: CallbackQuery):
     await show_main_menu(callback, lang=lang)
 
     logger.info(f"User {user_id} returned to main menu from upgrades")
+
+
+# ==================== PAYMENT HANDLERS ====================
+
+@router.callback_query(F.data.startswith("upgrades_pay:stars:"))
+async def on_pay_with_stars(callback: CallbackQuery, bot: Bot):
+    """Handle Telegram Stars payment - send invoice"""
+    await callback.answer()
+
+    # Extract upgrade_id from callback data (upgrades_pay:stars:intense_mode -> intense_mode)
+    upgrade_id = callback.data.replace("upgrades_pay:stars:", "")
+    upgrade = UPGRADES.get(upgrade_id)
+
+    if not upgrade:
+        await callback.answer("❌ Улучшение не найдено", show_alert=True)
+        return
+
+    user_id = callback.from_user.id
+    lang = await get_user_language(user_id)
+
+    # Check if already purchased
+    user_upgrades = await get_user_upgrades(user_id)
+    if user_upgrades.get(upgrade_id):
+        if lang == "ru":
+            await callback.answer("✅ Это улучшение уже активно!", show_alert=True)
+        else:
+            await callback.answer("✅ This upgrade is already active!", show_alert=True)
+        return
+
+    # Create invoice
+    upgrade_name = upgrade["name_ru"] if lang == "ru" else upgrade["name_en"]
+    description = upgrade["description_ru"] if lang == "ru" else upgrade["description_en"]
+
+    title = f"✨ {upgrade_name}"
+
+    # Create keyboard with Pay button (must be first!) and Main Menu button
+    pay_button_text = f"⭐ Оплатить {upgrade['price_stars']} Stars" if lang == "ru" else f"⭐ Pay {upgrade['price_stars']} Stars"
+    menu_button_text = "🏠 Главное меню" if lang == "ru" else "🏠 Main Menu"
+
+    invoice_keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=pay_button_text, pay=True)],  # Pay button must be first!
+        [InlineKeyboardButton(text=menu_button_text, callback_data="upgrades:back_to_menu")]
+    ])
+
+    # Send invoice
+    await bot.send_invoice(
+        chat_id=user_id,
+        title=title,
+        description=description,
+        payload=f"upgrade:{upgrade_id}:{user_id}",
+        currency="XTR",  # Telegram Stars currency code
+        prices=[LabeledPrice(label=upgrade_name, amount=upgrade["price_stars"])],
+        reply_markup=invoice_keyboard
+    )
+
+    logger.info(f"User {user_id} initiated Stars payment for upgrade {upgrade_id}")
+
+
+@router.pre_checkout_query()
+async def on_pre_checkout(pre_checkout_query: PreCheckoutQuery):
+    """Handle pre-checkout query - validate the purchase"""
+    # Check if this is an upgrade purchase
+    if not pre_checkout_query.invoice_payload.startswith("upgrade:"):
+        return  # Let other handlers process it
+
+    # Always accept for now (can add validation logic later)
+    await pre_checkout_query.answer(ok=True)
+    logger.info(f"Pre-checkout approved for user {pre_checkout_query.from_user.id} (upgrade)")
+
+
+@router.message(F.successful_payment)
+async def on_successful_payment(message: Message):
+    """Handle successful payment - activate upgrade"""
+    payment = message.successful_payment
+    user_id = message.from_user.id
+
+    # Check if this is an upgrade purchase
+    if not payment.invoice_payload.startswith("upgrade:"):
+        return  # Let other handlers process it
+
+    # Parse payload
+    payload_parts = payment.invoice_payload.split(":")
+    if len(payload_parts) < 2:
+        logger.error(f"Invalid payment payload: {payment.invoice_payload}")
+        return
+
+    upgrade_id = payload_parts[1]  # upgrade:intense_mode:user_id -> intense_mode
+    upgrade = UPGRADES.get(upgrade_id)
+
+    if not upgrade:
+        logger.error(f"Unknown upgrade in payment: {upgrade_id}")
+        return
+
+    lang = await get_user_language(user_id)
+
+    # Activate upgrade in database
+    async for db in get_db():
+        # Get user
+        user = await db.get(User, user_id)
+        if not user:
+            logger.error(f"User {user_id} not found for payment")
+            return
+
+        # Check if already unlocked
+        result = await db.execute(
+            select(FeatureUnlock).where(
+                FeatureUnlock.user_id == user_id,
+                FeatureUnlock.feature_code == upgrade["feature_code"]
+            )
+        )
+        existing_unlock = result.scalar_one_or_none()
+
+        if existing_unlock:
+            # Already unlocked, just enable it
+            existing_unlock.enabled = True
+        else:
+            # Create new feature unlock
+            feature_unlock = FeatureUnlock(
+                user_id=user_id,
+                feature_code=upgrade["feature_code"],
+                enabled=True
+            )
+            db.add(feature_unlock)
+
+        # Also update Subscription for legacy support
+        result = await db.execute(
+            select(Subscription).where(Subscription.user_id == user_id)
+        )
+        subscription = result.scalar_one_or_none()
+
+        if subscription:
+            if upgrade_id == "intense_mode":
+                subscription.intense_mode = True
+            elif upgrade_id == "fantasy_scenes":
+                subscription.fantasy_scenes = True
+
+        # Record purchase
+        purchase = Purchase(
+            user_id=user_id,
+            product_code=upgrade["product_code"],
+            provider="telegram_stars",
+            amount=upgrade["price_stars"],
+            currency="XTR",
+            status="success",
+            meta={
+                "telegram_payment_charge_id": payment.telegram_payment_charge_id,
+                "provider_payment_charge_id": payment.provider_payment_charge_id,
+                "feature_code": upgrade["feature_code"]
+            }
+        )
+        db.add(purchase)
+
+        await db.commit()
+        break
+
+    # Send success message
+    upgrade_name = upgrade["name_ru"] if lang == "ru" else upgrade["name_en"]
+
+    if lang == "ru":
+        success_text = f"""🎉 <b>Оплата прошла успешно!</b>
+
+Ты разблокировал <b>{upgrade_name}</b>
+
+Теперь твои разговоры станут ещё интереснее и насыщеннее!
+
+Приятного общения! 💜"""
+    else:
+        success_text = f"""🎉 <b>Payment successful!</b>
+
+You unlocked <b>{upgrade_name}</b>
+
+Now your conversations will be even more interesting and rich!
+
+Enjoy! 💜"""
+
+    await message.answer(success_text, parse_mode="HTML")
+    logger.info(f"User {user_id} successfully purchased upgrade {upgrade_id}")
