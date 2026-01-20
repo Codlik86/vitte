@@ -242,7 +242,6 @@ def get_main_menu_keyboard_ru() -> InlineKeyboardMarkup:
         ],
         [
             InlineKeyboardButton(text="💝 Магазин", callback_data="menu:shop"),
-            InlineKeyboardButton(text="💗 Улучшения", callback_data="menu:upgrades"),
         ],
         [
             InlineKeyboardButton(text="⚙️ Основные настройки", callback_data="menu:settings"),
@@ -274,7 +273,6 @@ def get_main_menu_keyboard_en() -> InlineKeyboardMarkup:
         ],
         [
             InlineKeyboardButton(text="💝 Shop", callback_data="menu:shop"),
-            InlineKeyboardButton(text="💗 Upgrades", callback_data="menu:upgrades"),
         ],
         [
             InlineKeyboardButton(text="⚙️ Settings", callback_data="menu:settings"),
