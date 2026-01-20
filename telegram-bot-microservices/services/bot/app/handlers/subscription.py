@@ -24,26 +24,26 @@ router = Router(name="subscription")
 # ==================== SUBSCRIPTION PLANS ====================
 
 SUBSCRIPTION_PLANS = {
-    "plus_2d": {
-        "name_ru": "Vitte Plus 2 дня",
-        "name_en": "Vitte Plus 2 days",
-        "days": 2,
-        "price_stars": 199,
-        "product_code": "vitte_plus_2d"
-    },
     "plus_7d": {
-        "name_ru": "Vitte Plus 7 дней",
-        "name_en": "Vitte Plus 7 days",
+        "name_ru": "Неделя",
+        "name_en": "Week",
         "days": 7,
-        "price_stars": 399,
+        "price_stars": 150,
         "product_code": "vitte_plus_7d"
     },
     "plus_30d": {
-        "name_ru": "Vitte Plus 30 дней",
-        "name_en": "Vitte Plus 30 days",
+        "name_ru": "Месяц",
+        "name_en": "Month",
         "days": 30,
-        "price_stars": 999,
+        "price_stars": 450,
         "product_code": "vitte_plus_30d"
+    },
+    "plus_365d": {
+        "name_ru": "Год",
+        "name_en": "Year",
+        "days": 365,
+        "price_stars": 2990,
+        "product_code": "vitte_plus_365d"
     }
 }
 
@@ -90,13 +90,13 @@ def get_subscription_keyboard_ru() -> InlineKeyboardMarkup:
     """Subscription plans keyboard (Russian)"""
     return InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="Vitte Plus 2 дня — 199 ⭐", callback_data="sub:plus_2d"),
+            InlineKeyboardButton(text="Неделя · 7 дней — 150 ⭐", callback_data="sub:plus_7d"),
         ],
         [
-            InlineKeyboardButton(text="Vitte Plus 7 дней — 399 ⭐", callback_data="sub:plus_7d"),
+            InlineKeyboardButton(text="Месяц · 30 дней — 450 ⭐", callback_data="sub:plus_30d"),
         ],
         [
-            InlineKeyboardButton(text="Vitte Plus 30 дней — 999 ⭐", callback_data="sub:plus_30d"),
+            InlineKeyboardButton(text="Год · 365 дней — 2990 ⭐", callback_data="sub:plus_365d"),
         ],
         [
             InlineKeyboardButton(text="⬅️ Назад", callback_data="sub:back_to_menu"),
@@ -108,13 +108,13 @@ def get_subscription_keyboard_en() -> InlineKeyboardMarkup:
     """Subscription plans keyboard (English)"""
     return InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="Vitte Plus 2 days — 199 ⭐", callback_data="sub:plus_2d"),
+            InlineKeyboardButton(text="Week · 7 days — 150 ⭐", callback_data="sub:plus_7d"),
         ],
         [
-            InlineKeyboardButton(text="Vitte Plus 7 days — 399 ⭐", callback_data="sub:plus_7d"),
+            InlineKeyboardButton(text="Month · 30 days — 450 ⭐", callback_data="sub:plus_30d"),
         ],
         [
-            InlineKeyboardButton(text="Vitte Plus 30 days — 999 ⭐", callback_data="sub:plus_30d"),
+            InlineKeyboardButton(text="Year · 365 days — 2990 ⭐", callback_data="sub:plus_365d"),
         ],
         [
             InlineKeyboardButton(text="⬅️ Back", callback_data="sub:back_to_menu"),
