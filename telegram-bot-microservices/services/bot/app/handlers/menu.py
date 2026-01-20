@@ -223,12 +223,12 @@ def get_main_menu_keyboard_ru() -> InlineKeyboardMarkup:
     # WebApp button or fallback
     if config.webapp_url:
         webapp_btn = InlineKeyboardButton(
-            text="💌 Открыть приложение",
+            text="💌 Открыть Vitte",
             web_app=WebAppInfo(url=config.webapp_url)
         )
     else:
         webapp_btn = InlineKeyboardButton(
-            text="💌 Открыть приложение",
+            text="💌 Открыть Vitte",
             callback_data="menu:open_webapp"
         )
 

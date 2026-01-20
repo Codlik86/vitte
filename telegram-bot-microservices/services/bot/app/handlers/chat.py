@@ -5,9 +5,10 @@ Handles "Начать общение" button from main menu.
 Checks if user has active dialog and shows appropriate options.
 """
 from aiogram import Router, F
-from aiogram.types import CallbackQuery, Message, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import CallbackQuery, Message, InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 from aiogram.filters import Command
 
+from app.config import config
 from shared.database import get_db
 from shared.database.services import get_user_dialogs, get_user_by_id
 from shared.utils import get_logger
@@ -67,25 +68,39 @@ def get_continue_dialog_keyboard_en() -> InlineKeyboardMarkup:
 
 def get_no_dialog_keyboard_ru() -> InlineKeyboardMarkup:
     """Keyboard when no active dialog (Russian)"""
+    if config.webapp_url:
+        webapp_btn = InlineKeyboardButton(
+            text="Открыть Vitte 💜",
+            web_app=WebAppInfo(url=config.webapp_url)
+        )
+    else:
+        webapp_btn = InlineKeyboardButton(
+            text="Открыть Vitte 💜",
+            callback_data="menu:open_webapp"
+        )
+
     return InlineKeyboardMarkup(inline_keyboard=[
-        [
-            InlineKeyboardButton(text="Открыть Vitte 💜", callback_data="menu:open_webapp"),
-        ],
-        [
-            InlineKeyboardButton(text="⬅️ Назад", callback_data="chat:back_to_menu"),
-        ]
+        [webapp_btn],
+        [InlineKeyboardButton(text="⬅️ Назад", callback_data="chat:back_to_menu")]
     ])
 
 
 def get_no_dialog_keyboard_en() -> InlineKeyboardMarkup:
     """Keyboard when no active dialog (English)"""
+    if config.webapp_url:
+        webapp_btn = InlineKeyboardButton(
+            text="Open Vitte 💜",
+            web_app=WebAppInfo(url=config.webapp_url)
+        )
+    else:
+        webapp_btn = InlineKeyboardButton(
+            text="Open Vitte 💜",
+            callback_data="menu:open_webapp"
+        )
+
     return InlineKeyboardMarkup(inline_keyboard=[
-        [
-            InlineKeyboardButton(text="Open Vitte 💜", callback_data="menu:open_webapp"),
-        ],
-        [
-            InlineKeyboardButton(text="⬅️ Back", callback_data="chat:back_to_menu"),
-        ]
+        [webapp_btn],
+        [InlineKeyboardButton(text="⬅️ Back", callback_data="chat:back_to_menu")]
     ])
 
 
