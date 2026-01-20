@@ -200,7 +200,7 @@ def build_status_block(status: dict, lang: str = "ru", include_cta: bool = True)
 🖼 Изображений: {status["images_remaining"]}
 ✨ Улучшения: {features_str}"""
         if include_cta:
-            block += "\n\n—\n\nНаписать ей 💌"
+            block += "\n\nНаписать ей 💌"
         else:
             block += "\n\nЖми «Открыть Vitte 💌» — выбери ту, с кем хочешь познакомиться."
     else:
@@ -209,7 +209,7 @@ def build_status_block(status: dict, lang: str = "ru", include_cta: bool = True)
 🖼 Images: {status["images_remaining"]}
 ✨ Enhancements: {features_str}"""
         if include_cta:
-            block += "\n\n—\n\nText her 💌"
+            block += "\n\nText her 💌"
         else:
             block += "\n\nTap «Open Vitte 💌» — choose who you want to meet."
 
@@ -322,7 +322,7 @@ async def show_main_menu(target, lang: str = "ru", user_id: int = None, is_welco
         variants = MENU_VARIANTS_RU if lang == "ru" else MENU_VARIANTS_EN
         menu_text = random.choice(variants)
         status_block = build_status_block(status, lang, include_cta=True)
-        text = menu_text + "\n" + status_block
+        text = menu_text + "\n\n" + status_block
 
     keyboard = get_main_menu_keyboard_ru() if lang == "ru" else get_main_menu_keyboard_en()
 
