@@ -86,6 +86,21 @@ MENU_VARIANTS_RU = [MENU_VARIANT_1_RU, MENU_VARIANT_2_RU, MENU_VARIANT_3_RU]
 MENU_VARIANTS_EN = [MENU_VARIANT_1_EN, MENU_VARIANT_2_EN, MENU_VARIANT_3_EN]
 
 
+# ==================== WELCOME TEXT (FIRST TIME) ====================
+
+WELCOME_TEXT_RU = """Добро пожаловать в Vitte 💜
+
+Здесь тебя уже ждут. Это пространство для тёплых переписок, флирта и близости — с AI-персонажами, которые умеют слушать и отвечать по-настоящему.
+
+Героини с уникальными историями. Пиши когда хочется, открывай фото, включай режим страсти. Всё между вами."""
+
+WELCOME_TEXT_EN = """Welcome to Vitte 💜
+
+They're already waiting for you here. This is a space for warm conversations, flirting and intimacy — with AI characters who truly know how to listen and respond.
+
+Heroines with unique stories. Write whenever you want, unlock photos, turn on passion mode. Everything stays between you."""
+
+
 # ==================== FEATURE NAMES ====================
 
 FEATURE_NAMES_RU = {
@@ -161,8 +176,14 @@ async def get_user_status(user_id: int) -> dict:
     return status
 
 
-def build_status_block(status: dict, lang: str = "ru") -> str:
-    """Build the status monitoring block for menu"""
+def build_status_block(status: dict, lang: str = "ru", include_cta: bool = True) -> str:
+    """Build the status monitoring block for menu
+
+    Args:
+        status: User status dict
+        lang: Language code
+        include_cta: Include call-to-action text at the end
+    """
     feature_names = FEATURE_NAMES_RU if lang == "ru" else FEATURE_NAMES_EN
 
     # Format features
@@ -174,27 +195,25 @@ def build_status_block(status: dict, lang: str = "ru") -> str:
         features_str = "нет" if lang == "ru" else "none"
 
     if lang == "ru":
-        return f"""—
-
-💎 Подписка: {status["subscription"]}
+        block = f"""💎 Подписка: {status["subscription"]}
 💬 Сообщений сегодня: {status["messages_today"]}
 🖼 Изображений: {status["images_remaining"]}
-✨ Улучшения: {features_str}
-
-—
-
-Написать ей 💌"""
+✨ Улучшения: {features_str}"""
+        if include_cta:
+            block += "\n\n—\n\nНаписать ей 💌"
+        else:
+            block += "\n\nЖми «Открыть Vitte 💌» — выбери ту, с кем хочешь познакомиться."
     else:
-        return f"""—
-
-💎 Subscription: {status["subscription"]}
+        block = f"""💎 Subscription: {status["subscription"]}
 💬 Messages today: {status["messages_today"]}
 🖼 Images: {status["images_remaining"]}
-✨ Enhancements: {features_str}
+✨ Enhancements: {features_str}"""
+        if include_cta:
+            block += "\n\n—\n\nText her 💌"
+        else:
+            block += "\n\nTap «Open Vitte 💌» — choose who you want to meet."
 
-—
-
-Text her 💌"""
+    return block
 
 
 # ==================== KEYBOARDS ====================
@@ -265,7 +284,7 @@ def get_main_menu_keyboard_en() -> InlineKeyboardMarkup:
 
 # ==================== HELPER FUNCTIONS ====================
 
-async def show_main_menu(target, lang: str = "ru", user_id: int = None):
+async def show_main_menu(target, lang: str = "ru", user_id: int = None, is_welcome: bool = False):
     """
     Show main menu to user (always sends new message)
 
@@ -273,6 +292,7 @@ async def show_main_menu(target, lang: str = "ru", user_id: int = None):
         target: Message or CallbackQuery to respond to
         lang: Language code ('ru' or 'en')
         user_id: Telegram user ID for status fetching
+        is_welcome: If True, show welcome message for first-time users
     """
     # Get user_id from target if not provided
     if user_id is None:
@@ -281,21 +301,28 @@ async def show_main_menu(target, lang: str = "ru", user_id: int = None):
         elif hasattr(target, 'message') and hasattr(target.message, 'from_user'):
             user_id = target.message.from_user.id
 
-    # Random text variant
-    variants = MENU_VARIANTS_RU if lang == "ru" else MENU_VARIANTS_EN
-    menu_text = random.choice(variants)
-
-    # Get user status and build status block
+    # Get user status
     status = await get_user_status(user_id) if user_id else {
         "subscription": "Free",
         "messages_today": 0,
         "images_remaining": 0,
         "features": []
     }
-    status_block = build_status_block(status, lang)
 
-    # Combine text
-    text = menu_text + "\n" + status_block
+    if is_welcome:
+        # Welcome message for first-time users
+        welcome_text = WELCOME_TEXT_RU if lang == "ru" else WELCOME_TEXT_EN
+        status_block = build_status_block(status, lang, include_cta=False)
+        text = welcome_text + "\n\n" + status_block
+
+        # Mark user as having seen welcome
+        await mark_welcome_seen(user_id)
+    else:
+        # Random text variant for returning users
+        variants = MENU_VARIANTS_RU if lang == "ru" else MENU_VARIANTS_EN
+        menu_text = random.choice(variants)
+        status_block = build_status_block(status, lang, include_cta=True)
+        text = menu_text + "\n" + status_block
 
     keyboard = get_main_menu_keyboard_ru() if lang == "ru" else get_main_menu_keyboard_en()
 
@@ -305,6 +332,23 @@ async def show_main_menu(target, lang: str = "ru", user_id: int = None):
     else:
         # Message object
         await target.answer(text, reply_markup=keyboard)
+
+
+async def mark_welcome_seen(user_id: int) -> None:
+    """Mark user as having seen the welcome message"""
+    try:
+        async for db in get_db():
+            result = await db.execute(
+                select(User).where(User.id == user_id)
+            )
+            user = result.scalar_one_or_none()
+            if user:
+                user.has_seen_welcome = True
+                await db.commit()
+                logger.info(f"Marked has_seen_welcome=True for user {user_id}")
+            break
+    except Exception as e:
+        logger.error(f"Error marking welcome seen for user {user_id}: {e}")
 
 
 # ==================== HELPER FUNCTIONS ====================

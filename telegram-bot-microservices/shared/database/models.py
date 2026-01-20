@@ -59,6 +59,7 @@ class User(Base):
     is_active = Column(Boolean, default=True)
     is_blocked = Column(Boolean, default=False)
     is_admin = Column(Boolean, default=False)
+    has_seen_welcome = Column(Boolean, default=False, nullable=False)
 
     # Access status for webapp
     access_status = Column(

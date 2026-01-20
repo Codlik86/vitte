@@ -111,13 +111,13 @@ async def on_language_english(callback: CallbackQuery):
 
 @router.callback_query(F.data == "age:confirmed")
 async def on_age_confirmed(callback: CallbackQuery):
-    """Handle age confirmation (18+) -> show main menu"""
+    """Handle age confirmation (18+) -> show welcome menu"""
     await callback.answer()
 
     # Import here to avoid circular imports
     from app.handlers.menu import show_main_menu
 
-    # Show main menu (Russian for now)
-    await show_main_menu(callback, lang="ru")
+    # Show welcome menu for first-time users
+    await show_main_menu(callback, lang="ru", is_welcome=True)
 
-    logger.info(f"User {callback.from_user.id} confirmed 18+ -> main menu")
+    logger.info(f"User {callback.from_user.id} confirmed 18+ -> welcome menu")
