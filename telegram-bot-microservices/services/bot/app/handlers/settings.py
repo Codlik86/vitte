@@ -76,6 +76,20 @@ def get_language_select_keyboard(lang: str, current_lang: str) -> InlineKeyboard
     else:
         en_text += " (soon)" if lang == "en" else " (скоро)"
 
+    # Spanish button - in development
+    es_text = "🇪🇸 Español"
+    if current_lang == "es":
+        es_text += " ✓"
+    else:
+        es_text += " (in development)" if lang == "en" else " (в разработке)"
+
+    # German button - in development
+    de_text = "🇩🇪 Deutsch"
+    if current_lang == "de":
+        de_text += " ✓"
+    else:
+        de_text += " (in development)" if lang == "en" else " (в разработке)"
+
     back_text = "⬅️ Назад" if lang == "ru" else "⬅️ Back"
 
     return InlineKeyboardMarkup(inline_keyboard=[
@@ -84,6 +98,12 @@ def get_language_select_keyboard(lang: str, current_lang: str) -> InlineKeyboard
         ],
         [
             InlineKeyboardButton(text=en_text, callback_data="settings:lang_en"),
+        ],
+        [
+            InlineKeyboardButton(text=es_text, callback_data="settings:lang_es"),
+        ],
+        [
+            InlineKeyboardButton(text=de_text, callback_data="settings:lang_de"),
         ],
         [
             InlineKeyboardButton(text=back_text, callback_data="settings:back_to_settings"),
@@ -189,6 +209,32 @@ async def on_select_english(callback: CallbackQuery):
         await callback.answer("🚧 English is coming soon", show_alert=True)
 
     logger.info(f"User {callback.from_user.id} tried to select English (in development)")
+
+
+@router.callback_query(F.data == "settings:lang_es")
+async def on_select_spanish(callback: CallbackQuery):
+    """Handle Spanish language selection - in development"""
+    lang = await get_user_language(callback.from_user.id)
+
+    if lang == "ru":
+        await callback.answer("🚧 Испанский язык в разработке", show_alert=True)
+    else:
+        await callback.answer("🚧 Spanish is in development", show_alert=True)
+
+    logger.info(f"User {callback.from_user.id} tried to select Spanish (in development)")
+
+
+@router.callback_query(F.data == "settings:lang_de")
+async def on_select_german(callback: CallbackQuery):
+    """Handle German language selection - in development"""
+    lang = await get_user_language(callback.from_user.id)
+
+    if lang == "ru":
+        await callback.answer("🚧 Немецкий язык в разработке", show_alert=True)
+    else:
+        await callback.answer("🚧 German is in development", show_alert=True)
+
+    logger.info(f"User {callback.from_user.id} tried to select German (in development)")
 
 
 @router.callback_query(F.data == "settings:clear_history")

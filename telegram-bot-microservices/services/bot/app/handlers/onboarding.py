@@ -26,6 +26,10 @@ def get_language_keyboard() -> InlineKeyboardMarkup:
         [
             InlineKeyboardButton(text="🇷🇺 Русский", callback_data="lang:ru"),
             InlineKeyboardButton(text="🇬🇧 English", callback_data="lang:en"),
+        ],
+        [
+            InlineKeyboardButton(text="🇪🇸 Español", callback_data="lang:es"),
+            InlineKeyboardButton(text="🇩🇪 Deutsch", callback_data="lang:de"),
         ]
     ])
 
@@ -60,6 +64,14 @@ This is for adults only. If you're 18+ — let's get to know each other.
 ENGLISH_WIP = """🚧 English version is under development.
 
 Please select Russian for now."""
+
+SPANISH_WIP = """🚧 La versión en español está en desarrollo.
+
+Por favor selecciona Ruso por ahora."""
+
+GERMAN_WIP = """🚧 Die deutsche Version befindet sich in der Entwicklung.
+
+Bitte wähle vorerst Russisch."""
 
 
 # ==================== HANDLERS ====================
@@ -107,6 +119,20 @@ async def on_language_english(callback: CallbackQuery):
     )
 
     logger.info(f"User {user_id} tried English (WIP), commands set")
+
+
+@router.callback_query(F.data == "lang:es")
+async def on_language_spanish(callback: CallbackQuery):
+    """Handle Spanish language selection - WIP"""
+    await callback.answer(SPANISH_WIP, show_alert=True)
+    logger.info(f"User {callback.from_user.id} tried Spanish (in development)")
+
+
+@router.callback_query(F.data == "lang:de")
+async def on_language_german(callback: CallbackQuery):
+    """Handle German language selection - WIP"""
+    await callback.answer(GERMAN_WIP, show_alert=True)
+    logger.info(f"User {callback.from_user.id} tried German (in development)")
 
 
 @router.callback_query(F.data == "age:confirmed")
