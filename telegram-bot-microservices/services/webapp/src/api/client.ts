@@ -234,10 +234,10 @@ export async function fetchStoreStatus(): Promise<StoreStatus> {
 
 export async function buySubscription(planCode: string): Promise<StoreBuyResponse> {
   const telegramId = await getTelegramIdOptional();
-  const res = await fetch(`${BASE_URL}/api/store/buy/subscription/${planCode}`, {
+  const url = buildUrlWithTelegramId(`${BASE_URL}/api/store/buy/subscription/${planCode}`, telegramId);
+  const res = await fetch(url, {
     method: "POST",
-    headers: buildHeaders({ "Content-Type": "application/json" }),
-    body: JSON.stringify({ telegram_id: telegramId }),
+    headers: buildHeaders(),
   });
   if (!res.ok) {
     const text = await res.text();
@@ -248,10 +248,10 @@ export async function buySubscription(planCode: string): Promise<StoreBuyRespons
 
 export async function buyImagePack(packCode: string): Promise<StoreBuyResponse> {
   const telegramId = await getTelegramIdOptional();
-  const res = await fetch(`${BASE_URL}/api/store/buy/image_pack/${packCode}`, {
+  const url = buildUrlWithTelegramId(`${BASE_URL}/api/store/buy/image_pack/${packCode}`, telegramId);
+  const res = await fetch(url, {
     method: "POST",
-    headers: buildHeaders({ "Content-Type": "application/json" }),
-    body: JSON.stringify({ telegram_id: telegramId }),
+    headers: buildHeaders(),
   });
   if (!res.ok) {
     const text = await res.text();
@@ -262,10 +262,10 @@ export async function buyImagePack(packCode: string): Promise<StoreBuyResponse> 
 
 export async function buyFeature(featureCode: string): Promise<StoreBuyResponse> {
   const telegramId = await getTelegramIdOptional();
-  const res = await fetch(`${BASE_URL}/api/store/buy/feature/${featureCode}`, {
+  const url = buildUrlWithTelegramId(`${BASE_URL}/api/store/buy/feature/${featureCode}`, telegramId);
+  const res = await fetch(url, {
     method: "POST",
-    headers: buildHeaders({ "Content-Type": "application/json" }),
-    body: JSON.stringify({ telegram_id: telegramId }),
+    headers: buildHeaders(),
   });
   if (!res.ok) {
     const text = await res.text();
