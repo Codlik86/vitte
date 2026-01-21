@@ -7,6 +7,7 @@ import { useAccessStatus } from "../hooks/useAccessStatus";
 import { useImagesLeft } from "../hooks/useImagesLeft";
 import { tg } from "../lib/telegram";
 import { getAvatarPaths } from "../lib/avatars";
+import { pub } from "../lib/pub";
 
 export function CharacterDetails() {
   const { id } = useParams();
@@ -312,7 +313,7 @@ function StoriesBlock({
                 {card.image && (
                   <div className="relative w-full overflow-hidden rounded-2xl pb-[55%]">
                     <img
-                      src={card.image}
+                      src={pub(card.image)}
                       alt={card.title}
                       className="absolute inset-0 h-full w-full object-cover object-[50%_0%]"
                     />
