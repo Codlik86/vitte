@@ -25,19 +25,19 @@ router = Router(name="upgrades")
 
 UPGRADES = {
     "intense_mode": {
-        "name_ru": "Режим страсти",
-        "name_en": "Passion Mode",
-        "description_ru": "Персонаж общается смелее и чувственнее при достаточном доверии",
-        "description_en": "Character communicates more boldly and sensually with enough trust",
-        "price_stars": 150,
+        "name_ru": "Интенсивный режим",
+        "name_en": "Intense Mode",
+        "description_ru": "Более эмоциональные и глубокие ответы персонажей",
+        "description_en": "More emotional and deeper character responses",
+        "price_stars": 200,
         "product_code": "upgrade_intense_mode",
         "feature_code": "intense_mode"
     },
     "fantasy_scenes": {
-        "name_ru": "Фантазии и сцены",
-        "name_en": "Fantasies & Scenes",
-        "description_ru": "Доступ к особым сценариям и фантазиям",
-        "description_en": "Access to special scenarios and fantasies",
+        "name_ru": "Фантазийные сцены",
+        "name_en": "Fantasy Scenes",
+        "description_ru": "Разблокирует расширенные сценарии и истории",
+        "description_en": "Unlocks extended scenarios and stories",
         "price_stars": 200,
         "product_code": "upgrade_fantasy_scenes",
         "feature_code": "fantasy_scenes"
@@ -51,21 +51,21 @@ UPGRADES_RU = """💗 <b>Улучшения</b>
 
 {status_text}
 
-<b>Режим страсти</b>
-Персонаж общается смелее и чувственнее при достаточном доверии.
+<b>Интенсивный режим</b>
+Более эмоциональные и глубокие ответы персонажей.
 
-<b>Фантазии и сцены</b>
-Доступ к особым сценариям и фантазиям."""
+<b>Фантазийные сцены</b>
+Разблокирует расширенные сценарии и истории."""
 
 UPGRADES_EN = """💗 <b>Upgrades</b>
 
 {status_text}
 
-<b>Passion Mode</b>
-Character communicates more boldly and sensually with enough trust.
+<b>Intense Mode</b>
+More emotional and deeper character responses.
 
-<b>Fantasies & Scenes</b>
-Access to special scenarios and fantasies."""
+<b>Fantasy Scenes</b>
+Unlocks extended scenarios and stories."""
 
 # Status texts
 NO_UPGRADES_RU = "Пока нет активных улучшений. Подключи фичи, чтобы сделать общение богаче."
@@ -101,14 +101,14 @@ def get_upgrades_keyboard_ru(intense_active: bool, fantasy_active: bool) -> Inli
     buttons = []
 
     if intense_active:
-        buttons.append([InlineKeyboardButton(text="✅ Режим страсти", callback_data="upgrades:intense_info")])
+        buttons.append([InlineKeyboardButton(text="✅ Интенсивный режим", callback_data="upgrades:intense_info")])
     else:
-        buttons.append([InlineKeyboardButton(text="Режим страсти · 150 ⭐", callback_data="upgrades:buy_intense_mode")])
+        buttons.append([InlineKeyboardButton(text="Интенсивный режим · 200 ⭐", callback_data="upgrades:buy_intense_mode")])
 
     if fantasy_active:
-        buttons.append([InlineKeyboardButton(text="✅ Фантазии и сцены", callback_data="upgrades:fantasy_info")])
+        buttons.append([InlineKeyboardButton(text="✅ Фантазийные сцены", callback_data="upgrades:fantasy_info")])
     else:
-        buttons.append([InlineKeyboardButton(text="Фантазии и сцены · 200 ⭐", callback_data="upgrades:buy_fantasy_scenes")])
+        buttons.append([InlineKeyboardButton(text="Фантазийные сцены · 200 ⭐", callback_data="upgrades:buy_fantasy_scenes")])
 
     buttons.append([InlineKeyboardButton(text="⬅️ Назад", callback_data="upgrades:back_to_menu")])
 
@@ -120,14 +120,14 @@ def get_upgrades_keyboard_en(intense_active: bool, fantasy_active: bool) -> Inli
     buttons = []
 
     if intense_active:
-        buttons.append([InlineKeyboardButton(text="✅ Passion Mode", callback_data="upgrades:intense_info")])
+        buttons.append([InlineKeyboardButton(text="✅ Intense Mode", callback_data="upgrades:intense_info")])
     else:
-        buttons.append([InlineKeyboardButton(text="Passion Mode · 150 ⭐", callback_data="upgrades:buy_intense_mode")])
+        buttons.append([InlineKeyboardButton(text="Intense Mode · 200 ⭐", callback_data="upgrades:buy_intense_mode")])
 
     if fantasy_active:
-        buttons.append([InlineKeyboardButton(text="✅ Fantasies & Scenes", callback_data="upgrades:fantasy_info")])
+        buttons.append([InlineKeyboardButton(text="✅ Fantasy Scenes", callback_data="upgrades:fantasy_info")])
     else:
-        buttons.append([InlineKeyboardButton(text="Fantasies & Scenes · 200 ⭐", callback_data="upgrades:buy_fantasy_scenes")])
+        buttons.append([InlineKeyboardButton(text="Fantasy Scenes · 200 ⭐", callback_data="upgrades:buy_fantasy_scenes")])
 
     buttons.append([InlineKeyboardButton(text="⬅️ Back", callback_data="upgrades:back_to_menu")])
 
