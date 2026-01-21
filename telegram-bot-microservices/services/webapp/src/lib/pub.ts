@@ -3,7 +3,6 @@ export function pub(path: string): string {
   // Ensure path starts with / for absolute resolution from root
   const normalizedPath = path.startsWith("/") ? path : `/${path}`;
 
-  const base = import.meta.env.BASE_URL || "/";
   const origin =
     typeof window !== "undefined" && window.location?.origin
       ? window.location.origin
