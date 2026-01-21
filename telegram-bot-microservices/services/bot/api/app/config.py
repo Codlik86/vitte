@@ -7,12 +7,15 @@ from pydantic_settings import BaseSettings
 
 class APIConfig(BaseSettings):
     """API configuration from environment variables"""
-    
+
     # API settings
     api_host: str = os.getenv("API_HOST", "0.0.0.0")
     api_port: int = int(os.getenv("API_PORT", 8000))
     api_workers: int = int(os.getenv("API_WORKERS", 4))
-    
+
+    # Bot token for invoice creation
+    bot_token: str = os.getenv("BOT_TOKEN", "")
+
     # Database
     database_url: str = os.getenv("DATABASE_URL", "postgresql+asyncpg://vitte_user:password@postgres:5432/vitte_bot")
     

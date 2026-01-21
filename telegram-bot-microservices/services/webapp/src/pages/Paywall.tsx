@@ -5,7 +5,7 @@ import { useStoreData } from "../hooks/useStoreData";
 import { useAccessStatus } from "../hooks/useAccessStatus";
 import { useImagesLeft } from "../hooks/useImagesLeft";
 import { buySubscription } from "../api/client";
-import { tg } from "../lib/telegram";
+import { tg, type InvoiceStatus } from "../lib/telegram";
 
 export function Paywall() {
   const navigate = useNavigate();
@@ -30,30 +30,31 @@ export function Paywall() {
     reload();
   }, [reload]);
 
-  const openInvoice = (url?: string | null) => {
-    if (!url) return false;
-    try {
-      tg?.openTelegramLink?.(url);
-      tg?.close?.();
-      return true;
-    } catch {
-      return false;
-    }
-  };
-
   const handleBuy = async (code: string) => {
     setBusyCode(code);
     try {
       const res = await buySubscription(code);
-      const opened = openInvoice(res.invoice_url);
-      if (!opened) {
-        alert("Мы отправили счёт в Telegram. Оплати его в чате бота.");
+      if (!res.invoice_url) {
+        alert("Не удалось создать счёт. Попробуй позже.");
+        return;
       }
-      await reload();
-      await reloadAccess();
+
+      // Open invoice in Telegram WebApp overlay
+      if (tg?.openInvoice) {
+        tg.openInvoice(res.invoice_url, async (status: InvoiceStatus) => {
+          if (status === "paid") {
+            await reload();
+            await reloadAccess();
+          }
+          setBusyCode(null);
+        });
+      } else {
+        // Fallback for older versions
+        tg?.openTelegramLink?.(res.invoice_url);
+        tg?.close?.();
+      }
     } catch (e: any) {
       alert(e.message ?? "Не удалось оформить подписку");
-    } finally {
       setBusyCode(null);
     }
   };

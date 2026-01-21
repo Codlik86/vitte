@@ -6,7 +6,7 @@ import { useAccessStatus } from "../../hooks/useAccessStatus";
 import { useStoreData } from "../../hooks/useStoreData";
 import { PageHeader } from "../layout/PageHeader";
 import { DebugTelegramBanner } from "../DebugTelegramBanner";
-import { tg } from "../../lib/telegram";
+import { tg, type InvoiceStatus } from "../../lib/telegram";
 
 type BusyMap = Record<string, boolean>;
 
@@ -44,35 +44,29 @@ export function StoreLayout({ title, showBack = true }: StoreLayoutProps) {
     await Promise.all([reload(), reloadAccess()]);
   };
 
-  const openInvoiceLink = (url?: string | null) => {
-    if (!url) return false;
-    try {
-      tg?.openInvoice?.(url);
-      tg?.close?.();
-      return true;
-    } catch {
-      try {
-        tg?.openTelegramLink?.(url);
-        tg?.close?.();
-        return true;
-      } catch {
-        return false;
-      }
-    }
-  };
-
   const handleBuyPack = async (code: string) => {
     setBusyFlag(code, true);
     try {
       const res = await buyImagePack(code);
-      const opened = openInvoiceLink(res.invoice_url);
-      if (!opened) {
-        alert("Счёт отправлен в Telegram. Оплатите его в чате бота.");
+      if (!res.invoice_url) {
+        alert("Не удалось создать счёт. Попробуй позже.");
+        setBusyFlag(code, false);
+        return;
       }
-      await handleAfterPurchase();
+
+      if (tg?.openInvoice) {
+        tg.openInvoice(res.invoice_url, async (status: InvoiceStatus) => {
+          if (status === "paid") {
+            await handleAfterPurchase();
+          }
+          setBusyFlag(code, false);
+        });
+      } else {
+        tg?.openTelegramLink?.(res.invoice_url);
+        tg?.close?.();
+      }
     } catch (e: any) {
       alert(e.message ?? "Не удалось купить пакет изображений");
-    } finally {
       setBusyFlag(code, false);
     }
   };
@@ -81,14 +75,25 @@ export function StoreLayout({ title, showBack = true }: StoreLayoutProps) {
     setBusyFlag(code, true);
     try {
       const res = await buyFeature(code);
-      const opened = openInvoiceLink(res.invoice_url);
-      if (!opened) {
-        alert("Счёт отправлен в Telegram. Оплатите его в чате бота.");
+      if (!res.invoice_url) {
+        alert("Не удалось создать счёт. Попробуй позже.");
+        setBusyFlag(code, false);
+        return;
       }
-      await handleAfterPurchase();
+
+      if (tg?.openInvoice) {
+        tg.openInvoice(res.invoice_url, async (status: InvoiceStatus) => {
+          if (status === "paid") {
+            await handleAfterPurchase();
+          }
+          setBusyFlag(code, false);
+        });
+      } else {
+        tg?.openTelegramLink?.(res.invoice_url);
+        tg?.close?.();
+      }
     } catch (e: any) {
       alert(e.message ?? "Не удалось разблокировать улучшение");
-    } finally {
       setBusyFlag(code, false);
     }
   };

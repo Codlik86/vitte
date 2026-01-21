@@ -10,6 +10,11 @@ from datetime import datetime
 from pydantic import BaseModel
 
 from shared.database import get_db, User, Subscription, ImageBalance, FeatureUnlock
+from app.services.invoice_service import (
+    create_subscription_invoice,
+    create_image_pack_invoice,
+    create_feature_invoice,
+)
 
 router = APIRouter()
 
@@ -192,13 +197,26 @@ async def buy_subscription(
     if not plan:
         raise HTTPException(status_code=404, detail="Plan not found")
 
-    # TODO: Create Telegram Stars invoice
-    # For now, return placeholder
+    # Create Telegram Stars invoice
+    invoice_url = await create_subscription_invoice(
+        plan_code=plan_code,
+        plan_name=plan["title"],
+        duration_days=plan["duration_days"],
+        price_stars=plan["price_stars"],
+        user_id=telegram_id,
+    )
+
+    if not invoice_url:
+        return BuyResponse(
+            success=False,
+            invoice_url=None,
+            message="Failed to create invoice"
+        )
 
     return BuyResponse(
         success=True,
-        invoice_url=None,
-        message=f"Purchase initiated for plan: {plan['title']}"
+        invoice_url=invoice_url,
+        message=f"Invoice created for plan: {plan['title']}"
     )
 
 
@@ -214,12 +232,25 @@ async def buy_image_pack(
     if not pack:
         raise HTTPException(status_code=404, detail="Pack not found")
 
-    # TODO: Create Telegram Stars invoice
+    # Create Telegram Stars invoice
+    invoice_url = await create_image_pack_invoice(
+        pack_code=pack_code,
+        images_count=pack["images"],
+        price_stars=pack["price_stars"],
+        user_id=telegram_id,
+    )
+
+    if not invoice_url:
+        return BuyResponse(
+            success=False,
+            invoice_url=None,
+            message="Failed to create invoice"
+        )
 
     return BuyResponse(
         success=True,
-        invoice_url=None,
-        message=f"Purchase initiated for {pack['images']} images"
+        invoice_url=invoice_url,
+        message=f"Invoice created for {pack['images']} images"
     )
 
 
@@ -235,10 +266,24 @@ async def buy_feature(
     if not feature:
         raise HTTPException(status_code=404, detail="Feature not found")
 
-    # TODO: Create Telegram Stars invoice
+    # Create Telegram Stars invoice
+    invoice_url = await create_feature_invoice(
+        feature_code=feature_code,
+        feature_title=feature["title"],
+        feature_description=feature["description"],
+        price_stars=feature["price_stars"],
+        user_id=telegram_id,
+    )
+
+    if not invoice_url:
+        return BuyResponse(
+            success=False,
+            invoice_url=None,
+            message="Failed to create invoice"
+        )
 
     return BuyResponse(
         success=True,
-        invoice_url=None,
-        message=f"Purchase initiated for: {feature['title']}"
+        invoice_url=invoice_url,
+        message=f"Invoice created for: {feature['title']}"
     )

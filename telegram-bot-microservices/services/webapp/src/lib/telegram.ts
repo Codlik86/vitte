@@ -14,6 +14,8 @@ type TelegramInitData = {
   start_param?: string;
 };
 
+type InvoiceStatus = "paid" | "cancelled" | "failed" | "pending";
+
 type TelegramWebApp = {
   ready: () => void;
   expand?: () => void;
@@ -21,9 +23,11 @@ type TelegramWebApp = {
   initDataUnsafe?: TelegramInitData;
   initData?: TelegramInitData;
   openTelegramLink?: (url: string) => void;
-  openInvoice?: (invoicePayload: string | Record<string, unknown>) => void;
+  openInvoice?: (url: string, callback?: (status: InvoiceStatus) => void) => void;
   close?: () => void;
 };
+
+export type { InvoiceStatus };
 
 declare global {
   interface Window {
