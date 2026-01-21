@@ -86,8 +86,15 @@ export type AccessStatusResponse = {
 };
 
 export type ChatResponse = {
-  reply: string;
-  persona_id: number;
+  success: boolean;
+  response?: string | null;
+  error?: string | null;
+  dialog_id?: number | null;
+  is_safety_block?: boolean;
+  message_count?: number;
+  // Legacy fields for backwards compatibility
+  reply?: string;
+  persona_id?: number;
   ritual_hint?: string | null;
   reply_kind?: string;
   voice_id?: string | null;
@@ -96,10 +103,14 @@ export type ChatResponse = {
 };
 
 export type PersonaSelectResponse = {
-  ok: boolean;
-  persona_id: number;
+  success: boolean;
+  message?: string | null;
+  greeting?: string | null;
   dialog_id?: number | null;
-  greeting_sent: boolean;
+  // Legacy fields
+  ok?: boolean;
+  persona_id?: number;
+  greeting_sent?: boolean;
   greeting_mode?: "first" | "return" | "updated" | string | null;
 };
 
@@ -140,6 +151,58 @@ export type StoreStatus = {
   remaining_paid_images: number;
   unlocked_features: string[];
   is_free_user?: boolean;
+};
+
+// ==================== CHAT TYPES ====================
+
+export type ChatMessageRequest = {
+  telegram_id: number;
+  message: string;
+  persona_id?: number;
+  mode?: string;
+  atmosphere?: string;
+  story_id?: string;
+};
+
+export type ChatMessageResponse = {
+  success: boolean;
+  response?: string | null;
+  error?: string | null;
+  dialog_id?: number | null;
+  is_safety_block: boolean;
+  message_count: number;
+};
+
+export type ChatGreetingRequest = {
+  telegram_id: number;
+  persona_id: number;
+  story_id?: string | null;
+  atmosphere?: string | null;
+  is_return?: boolean;
+};
+
+export type ChatGreetingResponse = {
+  success: boolean;
+  response?: string | null;
+  error?: string | null;
+  dialog_id?: number | null;
+};
+
+export type DialogInfo = {
+  dialog_id: number;
+  slot_number: number;
+  persona_id: number;
+  persona_name: string;
+  persona_key: string;
+  story_id?: string | null;
+  atmosphere?: string | null;
+  message_count: number;
+  last_message?: string | null;
+  updated_at?: string | null;
+};
+
+export type DialogsListResponse = {
+  dialogs: DialogInfo[];
 };
 export type StoryCard = {
   id: string;

@@ -6,6 +6,8 @@ import { CharacterDetails } from "./pages/CharacterDetails";
 import { CharacterCustom } from "./pages/CharacterCustom";
 import { Store } from "./pages/Store";
 import { Settings } from "./pages/Settings";
+import { Chat } from "./pages/Chat";
+import { Dialogs } from "./pages/Dialogs";
 import { tg } from "./lib/telegram";
 import { useTrackMiniAppOpen } from "./hooks/useTrackMiniAppOpen";
 
@@ -51,6 +53,8 @@ function App() {
         <Route path="/characters/custom" element={<CharacterCustom />} />
         <Route path="/store" element={<Store />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/chat/:dialogId?" element={<Chat />} />
+        <Route path="/dialogs" element={<Dialogs />} />
         <Route
           path="*"
           element={

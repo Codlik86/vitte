@@ -130,21 +130,31 @@ class Dialog(Base):
 
     id = Column(Integer, primary_key=True, index=True)
     user_id = Column(BigInteger, ForeignKey("users.id"), nullable=False)
-    
+    persona_id = Column(Integer, ForeignKey("personas.id"), nullable=True)
+
     # Dialog details
     title = Column(String(255), nullable=True)
+    slot_number = Column(Integer, nullable=True)  # 1, 2, or 3 for active dialogs
     is_active = Column(Boolean, default=True)
-    
+
+    # Story/scenario context
+    story_id = Column(String(64), nullable=True)  # Current story/scenario
+    atmosphere = Column(String(64), nullable=True)  # Current atmosphere
+
+    # Stats
+    message_count = Column(Integer, default=0)
+
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
-    
+
     # Relationships
     user = relationship("User", back_populates="dialogs")
-    messages = relationship("Message", back_populates="dialog")
+    persona = relationship("Persona", back_populates="dialogs")
+    messages = relationship("Message", back_populates="dialog", cascade="all, delete-orphan")
 
     def __repr__(self):
-        return f"<Dialog(id={self.id}, user_id={self.user_id})>"
+        return f"<Dialog(id={self.id}, user_id={self.user_id}, persona_id={self.persona_id})>"
 
 
 class Message(Base):
@@ -238,6 +248,7 @@ class Persona(Base):
 
     # Relationships
     owner_user = relationship("User", foreign_keys=[owner_user_id])
+    dialogs = relationship("Dialog", back_populates="persona")
 
     def __repr__(self):
         return f"<Persona(id={self.id}, name={self.name})>"

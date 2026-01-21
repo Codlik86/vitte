@@ -5,7 +5,6 @@ import { fetchPersona, selectPersonaAndGreet } from "../api/client";
 import { PageHeader } from "../components/layout/PageHeader";
 import { useAccessStatus } from "../hooks/useAccessStatus";
 import { useImagesLeft } from "../hooks/useImagesLeft";
-import { tg } from "../lib/telegram";
 import { getAvatarPaths } from "../lib/avatars";
 import { pub } from "../lib/pub";
 
@@ -62,20 +61,34 @@ export function CharacterDetails() {
     }
     const hasHistory = Boolean(persona.has_history);
     const hasChanges = Boolean(selectedStoryId);
+
+    // Get selected story for atmosphere
+    const selectedStory = persona.story_cards?.find((s) => s.id === selectedStoryId);
+
     try {
       setBusy(true);
       setSelectError(null);
-      await selectPersonaAndGreet({
+      const result = await selectPersonaAndGreet({
         personaId: persona.id,
         storyId: selectedStoryId ?? undefined,
+        atmosphere: selectedStory?.atmosphere,
         settingsChanged: hasHistory && hasChanges,
         extraDescription: selectedStoryId ? `Выбран сюжет: ${selectedStoryId}` : undefined,
       });
-      if (tg?.close) {
-        tg.close();
-      } else {
-        navigate("/");
-      }
+
+      // Navigate to chat with greeting
+      navigate("/chat", {
+        state: {
+          personaId: persona.id,
+          personaName: persona.name,
+          personaKey: persona.name.toLowerCase(),
+          storyId: selectedStoryId,
+          atmosphere: selectedStory?.atmosphere,
+          greeting: result.greeting,
+          dialogId: result.dialog_id,
+          isReturn: false,
+        },
+      });
     } catch (e: any) {
       setSelectError(e.message ?? "Не удалось выбрать персонажа");
     } finally {

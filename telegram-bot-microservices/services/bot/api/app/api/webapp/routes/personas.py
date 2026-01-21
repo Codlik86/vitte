@@ -76,6 +76,8 @@ class SelectAndGreetRequest(BaseModel):
 class SelectAndGreetResponse(BaseModel):
     success: bool
     message: Optional[str] = None
+    greeting: Optional[str] = None
+    dialog_id: Optional[int] = None
 
 
 class CreateCustomPersonaRequest(BaseModel):
@@ -225,7 +227,9 @@ async def select_persona_and_greet(
     request: SelectAndGreetRequest,
     db: AsyncSession = Depends(get_db)
 ):
-    """Select a persona and send greeting message"""
+    """Select a persona and generate greeting message"""
+    from app.services.chat_flow import generate_persona_greeting
+
     # Get user
     user = await db.get(User, request.telegram_id)
     if not user:
@@ -244,12 +248,29 @@ async def select_persona_and_greet(
     user.active_persona_id = request.persona_id
     await db.commit()
 
-    # TODO: Send greeting via bot (needs integration with bot service)
-    # For now, just return success
+    # Generate greeting if requested
+    greeting = None
+    dialog_id = None
+
+    if request.sendGreeting:
+        result = await generate_persona_greeting(
+            db=db,
+            telegram_id=request.telegram_id,
+            persona_id=request.persona_id,
+            story_id=request.storyId,
+            atmosphere=request.atmosphere,
+            is_return=False,
+        )
+
+        if result.success:
+            greeting = result.response
+            dialog_id = result.dialog_id
 
     return SelectAndGreetResponse(
         success=True,
-        message=f"Selected persona: {persona.name}"
+        message=f"Selected persona: {persona.name}",
+        greeting=greeting,
+        dialog_id=dialog_id,
     )
 
 

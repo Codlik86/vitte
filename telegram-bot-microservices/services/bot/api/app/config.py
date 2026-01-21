@@ -21,6 +21,17 @@ class APIConfig(BaseSettings):
     
     # Redis
     redis_url: str = os.getenv("REDIS_URL", "redis://redis:6379/0")
+
+    # LLM Gateway
+    llm_gateway_url: str = os.getenv("LLM_GATEWAY_URL", "http://llm-gateway:8001")
+
+    # OpenRouter (for embeddings)
+    openrouter_api_key: str = os.getenv("OPENROUTER_API_KEY", "")
+    embedding_model: str = os.getenv("EMBEDDING_MODEL", "openai/text-embedding-3-small")
+
+    # Qdrant
+    qdrant_url: str = os.getenv("QDRANT_URL", "http://qdrant:6333")
+    qdrant_collection: str = os.getenv("QDRANT_COLLECTION", "vitte_memories")
     
     # CORS
     cors_origins: str = os.getenv("CORS_ORIGINS", "http://localhost:3000")

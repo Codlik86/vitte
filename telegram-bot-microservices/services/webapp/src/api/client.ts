@@ -8,6 +8,8 @@ import type {
   StoreBuyResponse,
   StoreConfig,
   StoreStatus,
+  ChatGreetingResponse,
+  DialogsListResponse,
 } from "./types";
 import { getTelegramIdOptional } from "../lib/telegramId";
 
@@ -354,4 +356,66 @@ export async function deleteAccount(): Promise<void> {
     method: "POST",
     headers: buildHeaders(),
   });
+}
+
+// ==================== CHAT API ====================
+
+export async function fetchDialogs(): Promise<DialogsListResponse> {
+  const telegramId = await getTelegramIdOptional();
+  if (!telegramId) {
+    throw new Error("Не удалось определить Telegram ID");
+  }
+  const url = buildUrlWithTelegramId(`${BASE_URL}/api/chat/dialogs`, telegramId);
+  const res = await fetch(url, { headers: buildHeaders() });
+  if (!res.ok) {
+    throw new Error("Не удалось загрузить диалоги");
+  }
+  return (await res.json()) as DialogsListResponse;
+}
+
+export async function getGreeting(payload: {
+  persona_id: number;
+  story_id?: string | null;
+  atmosphere?: string | null;
+  is_return?: boolean;
+}): Promise<ChatGreetingResponse> {
+  const telegramId = await getTelegramIdOptional();
+  if (!telegramId) {
+    throw new Error("Не удалось определить Telegram ID");
+  }
+  const res = await fetch(`${BASE_URL}/api/chat/greeting`, {
+    method: "POST",
+    headers: buildHeaders({ "Content-Type": "application/json" }),
+    body: JSON.stringify({
+      telegram_id: telegramId,
+      persona_id: payload.persona_id,
+      story_id: payload.story_id,
+      atmosphere: payload.atmosphere,
+      is_return: payload.is_return ?? false,
+    }),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || "Не удалось получить приветствие");
+  }
+  return (await res.json()) as ChatGreetingResponse;
+}
+
+export async function clearDialog(dialogId: number): Promise<void> {
+  const telegramId = await getTelegramIdOptional();
+  if (!telegramId) {
+    throw new Error("Не удалось определить Telegram ID");
+  }
+  const url = buildUrlWithTelegramId(
+    `${BASE_URL}/api/chat/dialogs/${dialogId}`,
+    telegramId
+  );
+  const res = await fetch(url, {
+    method: "DELETE",
+    headers: buildHeaders(),
+  });
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(text || "Не удалось очистить диалог");
+  }
 }
