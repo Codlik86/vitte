@@ -4,11 +4,13 @@ import { fetchDialogs, clearDialog } from "../api/client";
 import type { DialogInfo } from "../api/types";
 import { PageHeader } from "../components/layout/PageHeader";
 import { useAccessStatus } from "../hooks/useAccessStatus";
+import { useImagesLeft } from "../hooks/useImagesLeft";
 import { getAvatarPaths } from "../lib/avatars";
 
 export function Dialogs() {
   const navigate = useNavigate();
   const { data: accessStatus } = useAccessStatus();
+  const { imagesLeft } = useImagesLeft();
   const [dialogs, setDialogs] = useState<DialogInfo[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -73,7 +75,7 @@ export function Dialogs() {
           title="Диалоги"
           showBack
           onBack={() => navigate(-1)}
-          stats={{ hasSubscription }}
+          stats={{ images: imagesLeft, hasSubscription }}
         />
 
         <div className="mt-6 space-y-4">

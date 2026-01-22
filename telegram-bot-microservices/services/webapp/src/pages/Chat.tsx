@@ -1,9 +1,6 @@
 import { useEffect, useState, useRef } from "react";
-import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { sendChatMessage, getGreeting } from "../api/client";
-import { PageHeader } from "../components/layout/PageHeader";
-import { useAccessStatus } from "../hooks/useAccessStatus";
-import { tg } from "../lib/telegram";
 import { getAvatarPaths } from "../lib/avatars";
 
 type Message = {
@@ -25,11 +22,9 @@ type LocationState = {
 };
 
 export function Chat() {
-  const { dialogId } = useParams();
   const location = useLocation();
   const navigate = useNavigate();
   const state = (location.state as LocationState) ?? {};
-  const { data: accessStatus } = useAccessStatus();
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputValue, setInputValue] = useState("");
