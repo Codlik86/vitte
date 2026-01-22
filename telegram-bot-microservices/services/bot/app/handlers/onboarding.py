@@ -38,14 +38,14 @@ def get_age_verification_keyboard() -> InlineKeyboardMarkup:
     """Age verification keyboard (18+)"""
     return InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="Да, мне 18+ ✓", callback_data="age:confirmed"),
+            InlineKeyboardButton(text="Да, мне 18+ ", callback_data="age:confirmed"),
         ]
     ])
 
 
 # ==================== TEXTS ====================
 
-WELCOME_TEXT = """👋 Hello!
+WELCOME_TEXT = """💜 Hello!
 
 Please select your language:"""
 
