@@ -7,6 +7,7 @@ import { useAccessStatus } from "../hooks/useAccessStatus";
 import { useImagesLeft } from "../hooks/useImagesLeft";
 import { getAvatarPaths } from "../lib/avatars";
 import { pub } from "../lib/pub";
+import { tg } from "../lib/telegram";
 
 export function CharacterDetails() {
   const { id } = useParams();
@@ -68,7 +69,7 @@ export function CharacterDetails() {
     try {
       setBusy(true);
       setSelectError(null);
-      const result = await selectPersonaAndGreet({
+      await selectPersonaAndGreet({
         personaId: persona.id,
         storyId: selectedStoryId ?? undefined,
         atmosphere: selectedStory?.atmosphere,
@@ -76,19 +77,10 @@ export function CharacterDetails() {
         extraDescription: selectedStoryId ? `Выбран сюжет: ${selectedStoryId}` : undefined,
       });
 
-      // Navigate to chat with greeting
-      navigate("/chat", {
-        state: {
-          personaId: persona.id,
-          personaName: persona.name,
-          personaKey: persona.name.toLowerCase(),
-          storyId: selectedStoryId,
-          atmosphere: selectedStory?.atmosphere,
-          greeting: result.greeting,
-          dialogId: result.dialog_id,
-          isReturn: false,
-        },
-      });
+      // Закрываем webapp - приветствие придёт в чат Telegram
+      if (tg?.close) {
+        tg.close();
+      }
     } catch (e: any) {
       setSelectError(e.message ?? "Не удалось выбрать персонажа");
     } finally {

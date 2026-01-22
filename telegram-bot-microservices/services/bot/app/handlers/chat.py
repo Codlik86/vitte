@@ -2,14 +2,17 @@
 Chat handler - Start Chat button logic
 
 Handles "Начать общение" button from main menu.
-Checks if user has active dialog and shows appropriate options.
+Shows active dialogs list or prompts to create new.
 """
+from datetime import datetime
 from aiogram import Router, F
 from aiogram.types import CallbackQuery, Message, InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 from aiogram.filters import Command
+from sqlalchemy import select
+from sqlalchemy.orm import selectinload
 
 from app.config import config
-from shared.database import get_db
+from shared.database import get_db, Dialog, Persona
 from shared.database.services import get_user_dialogs, get_user_by_id
 from shared.utils import get_logger
 
@@ -19,55 +22,133 @@ router = Router(name="chat")
 
 # ==================== TEXTS ====================
 
-# Has active dialog - offer to continue or restart
-CONTINUE_DIALOG_RU = """💜 У тебя есть незавершённый разговор с {persona_name}.
+# Has active dialogs
+HAS_DIALOGS_RU = """💜 Твои активные диалоги
 
-Хочешь продолжить с того места или начать историю заново?"""
+Выбери с кем продолжить общение или начни новый диалог."""
 
-CONTINUE_DIALOG_EN = """💜 You have an unfinished conversation with {persona_name}.
+HAS_DIALOGS_EN = """💜 Your active dialogs
 
-Would you like to continue or start a new story?"""
+Choose who to continue chatting with or start a new dialog."""
 
-# No active dialog - prompt to select persona
-NO_DIALOG_RU = """💌 Выбери персонажа и историю, чтобы начать общение.
+# No active dialogs
+NO_DIALOGS_RU = """💌 У тебя пока нет активных диалогов.
 
-Открой приложение — там ждут интересные знакомства."""
+Открой приложение — выбери персонажа и начни общение."""
 
-NO_DIALOG_EN = """💌 Choose a character and story to start chatting.
+NO_DIALOGS_EN = """💌 You don't have any active dialogs yet.
 
-Open the app — interesting encounters await you there."""
+Open the app — choose a character and start chatting."""
 
 
 # ==================== KEYBOARDS ====================
 
-def get_continue_dialog_keyboard_ru() -> InlineKeyboardMarkup:
-    """Keyboard for continuing or restarting dialog (Russian)"""
-    return InlineKeyboardMarkup(inline_keyboard=[
-        [
-            InlineKeyboardButton(text="Продолжить 💬", callback_data="chat:continue"),
-            InlineKeyboardButton(text="Начать заново 🔄", callback_data="chat:restart"),
-        ],
-        [
-            InlineKeyboardButton(text="⬅️ Назад", callback_data="chat:back_to_menu"),
-        ]
+def format_dialog_date(dt: datetime | None) -> str:
+    """Format dialog date for display"""
+    if not dt:
+        return ""
+    now = datetime.utcnow()
+    if dt.date() == now.date():
+        return dt.strftime("%H:%M")
+    return dt.strftime("%d.%m")
+
+
+def get_dialogs_keyboard_ru(dialogs: list[Dialog], can_create_new: bool = True) -> InlineKeyboardMarkup:
+    """Build keyboard with active dialogs (Russian)"""
+    buttons = []
+
+    # New dialog button (if less than 3 active)
+    if can_create_new:
+        if config.webapp_url:
+            buttons.append([
+                InlineKeyboardButton(
+                    text="➕ Новый диалог",
+                    web_app=WebAppInfo(url=config.webapp_url)
+                )
+            ])
+        else:
+            buttons.append([
+                InlineKeyboardButton(
+                    text="➕ Новый диалог",
+                    callback_data="menu:open_webapp"
+                )
+            ])
+
+    # Dialog buttons
+    for dialog in dialogs:
+        persona_name = "Персонаж"
+        if dialog.persona:
+            persona_name = dialog.persona.name
+
+        date_str = format_dialog_date(dialog.updated_at or dialog.created_at)
+        label = f"💬 {persona_name}"
+        if date_str:
+            label += f" • {date_str}"
+
+        buttons.append([
+            InlineKeyboardButton(
+                text=label,
+                callback_data=f"chat:continue:{dialog.id}"
+            )
+        ])
+
+    # Back button
+    buttons.append([
+        InlineKeyboardButton(text="⬅️ Назад", callback_data="chat:back_to_menu")
     ])
 
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
 
-def get_continue_dialog_keyboard_en() -> InlineKeyboardMarkup:
-    """Keyboard for continuing or restarting dialog (English)"""
-    return InlineKeyboardMarkup(inline_keyboard=[
-        [
-            InlineKeyboardButton(text="Continue 💬", callback_data="chat:continue"),
-            InlineKeyboardButton(text="Start Over 🔄", callback_data="chat:restart"),
-        ],
-        [
-            InlineKeyboardButton(text="⬅️ Back", callback_data="chat:back_to_menu"),
-        ]
+
+def get_dialogs_keyboard_en(dialogs: list[Dialog], can_create_new: bool = True) -> InlineKeyboardMarkup:
+    """Build keyboard with active dialogs (English)"""
+    buttons = []
+
+    # New dialog button (if less than 3 active)
+    if can_create_new:
+        if config.webapp_url:
+            buttons.append([
+                InlineKeyboardButton(
+                    text="➕ New dialog",
+                    web_app=WebAppInfo(url=config.webapp_url)
+                )
+            ])
+        else:
+            buttons.append([
+                InlineKeyboardButton(
+                    text="➕ New dialog",
+                    callback_data="menu:open_webapp"
+                )
+            ])
+
+    # Dialog buttons
+    for dialog in dialogs:
+        persona_name = "Character"
+        if dialog.persona:
+            persona_name = dialog.persona.name
+
+        date_str = format_dialog_date(dialog.updated_at or dialog.created_at)
+        label = f"💬 {persona_name}"
+        if date_str:
+            label += f" • {date_str}"
+
+        buttons.append([
+            InlineKeyboardButton(
+                text=label,
+                callback_data=f"chat:continue:{dialog.id}"
+            )
+        ])
+
+    # Back button
+    buttons.append([
+        InlineKeyboardButton(text="⬅️ Back", callback_data="chat:back_to_menu")
     ])
 
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
 
-def get_no_dialog_keyboard_ru() -> InlineKeyboardMarkup:
-    """Keyboard when no active dialog (Russian)"""
+
+def get_no_dialogs_keyboard_ru() -> InlineKeyboardMarkup:
+    """Keyboard when no active dialogs (Russian)"""
     if config.webapp_url:
         webapp_btn = InlineKeyboardButton(
             text="Открыть Vitte 💜",
@@ -85,8 +166,8 @@ def get_no_dialog_keyboard_ru() -> InlineKeyboardMarkup:
     ])
 
 
-def get_no_dialog_keyboard_en() -> InlineKeyboardMarkup:
-    """Keyboard when no active dialog (English)"""
+def get_no_dialogs_keyboard_en() -> InlineKeyboardMarkup:
+    """Keyboard when no active dialogs (English)"""
     if config.webapp_url:
         webapp_btn = InlineKeyboardButton(
             text="Open Vitte 💜",
@@ -111,7 +192,6 @@ async def get_user_language(user_id: int) -> str:
     async for db in get_db():
         user = await get_user_by_id(db, user_id)
         if user:
-            # Handle both dict (from cache) and SQLAlchemy object
             if isinstance(user, dict):
                 return user.get("language_code", "ru")
             else:
@@ -119,23 +199,18 @@ async def get_user_language(user_id: int) -> str:
     return "ru"
 
 
-async def get_active_dialog_info(user_id: int) -> dict | None:
-    """
-    Get active dialog info for user.
-
-    Returns:
-        dict with 'id', 'persona_name' if active dialog exists
-        None if no active dialog
-    """
+async def get_active_dialogs_with_personas(user_id: int) -> list[Dialog]:
+    """Get active dialogs with persona info loaded"""
     async for db in get_db():
-        dialogs = await get_user_dialogs(db, user_id, active_only=True, limit=1)
-        if dialogs:
-            dialog = dialogs[0]
-            return {
-                "id": dialog.id,
-                "persona_name": dialog.title or "Персонаж",  # title as persona name for now
-            }
-    return None
+        result = await db.execute(
+            select(Dialog)
+            .options(selectinload(Dialog.persona))
+            .where(Dialog.user_id == user_id, Dialog.is_active == True)
+            .order_by(Dialog.updated_at.desc())
+            .limit(3)
+        )
+        return list(result.scalars().all())
+    return []
 
 
 # ==================== HANDLERS ====================
@@ -143,25 +218,25 @@ async def get_active_dialog_info(user_id: int) -> dict | None:
 async def _show_chat_screen(user_id: int, respond_func):
     """Common logic for showing chat screen"""
     lang = await get_user_language(user_id)
-    dialog_info = await get_active_dialog_info(user_id)
+    dialogs = await get_active_dialogs_with_personas(user_id)
 
-    if dialog_info:
-        persona_name = dialog_info["persona_name"]
+    if dialogs:
+        can_create_new = len(dialogs) < 3
         if lang == "ru":
-            text = CONTINUE_DIALOG_RU.format(persona_name=persona_name)
-            keyboard = get_continue_dialog_keyboard_ru()
+            text = HAS_DIALOGS_RU
+            keyboard = get_dialogs_keyboard_ru(dialogs, can_create_new)
         else:
-            text = CONTINUE_DIALOG_EN.format(persona_name=persona_name)
-            keyboard = get_continue_dialog_keyboard_en()
-        logger.info(f"User {user_id} has active dialog with {persona_name}")
+            text = HAS_DIALOGS_EN
+            keyboard = get_dialogs_keyboard_en(dialogs, can_create_new)
+        logger.info(f"User {user_id} has {len(dialogs)} active dialog(s)")
     else:
         if lang == "ru":
-            text = NO_DIALOG_RU
-            keyboard = get_no_dialog_keyboard_ru()
+            text = NO_DIALOGS_RU
+            keyboard = get_no_dialogs_keyboard_ru()
         else:
-            text = NO_DIALOG_EN
-            keyboard = get_no_dialog_keyboard_en()
-        logger.info(f"User {user_id} has no active dialog")
+            text = NO_DIALOGS_EN
+            keyboard = get_no_dialogs_keyboard_en()
+        logger.info(f"User {user_id} has no active dialogs")
 
     await respond_func(text, reply_markup=keyboard)
 
@@ -180,38 +255,40 @@ async def on_start_chat(callback: CallbackQuery):
     await _show_chat_screen(callback.from_user.id, callback.message.answer)
 
 
-@router.callback_query(F.data == "chat:continue")
-async def on_continue_chat(callback: CallbackQuery):
-    """Handle 'Continue' button - resume active dialog"""
+@router.callback_query(F.data.startswith("chat:continue:"))
+async def on_continue_dialog(callback: CallbackQuery):
+    """Handle 'Continue' button - resume specific dialog"""
     await callback.answer()
     user_id = callback.from_user.id
 
-    # TODO: Actually continue the dialog with LLM
-    # For now, just show placeholder
-    await callback.message.answer(
-        "💬 Продолжаем общение...\n\n"
-        "<i>(LLM интеграция в разработке)</i>",
-        parse_mode="HTML"
-    )
+    # Extract dialog_id from callback data
+    dialog_id = int(callback.data.split(":")[-1])
 
-    logger.info(f"User {user_id} chose to continue dialog")
+    # Get dialog with persona
+    async for db in get_db():
+        result = await db.execute(
+            select(Dialog)
+            .options(selectinload(Dialog.persona))
+            .where(Dialog.id == dialog_id, Dialog.user_id == user_id)
+        )
+        dialog = result.scalar_one_or_none()
 
+        if not dialog:
+            await callback.message.answer("❌ Диалог не найден")
+            return
 
-@router.callback_query(F.data == "chat:restart")
-async def on_restart_chat(callback: CallbackQuery):
-    """Handle 'Start Over' button - clear memory and restart"""
-    await callback.answer()
-    user_id = callback.from_user.id
+        # Set this dialog as active context for user
+        # The user can now send messages in this dialog
+        persona_name = dialog.persona.name if dialog.persona else "Персонаж"
 
-    # TODO: Clear dialog memory and start fresh
-    # For now, just show placeholder
-    await callback.message.answer(
-        "🔄 Начинаем заново...\n\n"
-        "<i>(Очистка памяти в разработке)</i>",
-        parse_mode="HTML"
-    )
+        await callback.message.answer(
+            f"💬 Продолжаем общение с {persona_name}...\n\n"
+            f"Напиши сообщение, чтобы продолжить.",
+            parse_mode="HTML"
+        )
 
-    logger.info(f"User {user_id} chose to restart dialog")
+        logger.info(f"User {user_id} continuing dialog {dialog_id} with {persona_name}")
+        break
 
 
 @router.callback_query(F.data == "chat:back_to_menu")
