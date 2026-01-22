@@ -9,8 +9,8 @@ import sqlalchemy as sa
 from sqlalchemy.dialects.postgresql import JSON
 
 # revision identifiers, used by Alembic.
-revision = '20260122_add_message_extra_data'
-down_revision = '20260121_add_dialog_persona_fields'
+revision = '008'
+down_revision = '007'
 branch_labels = None
 depends_on = None
 
