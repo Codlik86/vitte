@@ -44,6 +44,7 @@ class GreetingRequest(BaseModel):
     story_id: Optional[str] = None
     atmosphere: Optional[str] = None
     is_return: bool = False
+    send_to_telegram: bool = False  # If True, send greeting directly to Telegram
 
 
 class GreetingResponse(BaseModel):
@@ -124,6 +125,9 @@ async def get_greeting(
     Returns:
         GreetingResponse with persona's greeting
     """
+    from shared.database import Persona
+    from app.services.telegram_service import send_greeting
+
     result = await generate_persona_greeting(
         db=db,
         telegram_id=request.telegram_id,
@@ -132,6 +136,16 @@ async def get_greeting(
         atmosphere=request.atmosphere,
         is_return=request.is_return,
     )
+
+    # Send to Telegram if requested
+    if result.success and result.response and request.send_to_telegram:
+        persona = await db.get(Persona, request.persona_id)
+        persona_name = persona.name if persona else "Персонаж"
+        await send_greeting(
+            chat_id=request.telegram_id,
+            persona_name=persona_name,
+            greeting_text=result.response,
+        )
 
     return GreetingResponse(
         success=result.success,

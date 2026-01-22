@@ -26,6 +26,9 @@ class BotConfig(BaseSettings):
     # Web App
     webapp_url: str = os.getenv("WEBAPP_URL", "")
 
+    # Internal API URL (for calling API service from bot)
+    api_url: str = os.getenv("API_URL", "http://api:8000")
+
     # Rate Limiting
     rate_limit_messages: int = int(os.getenv("RATE_LIMIT_MESSAGES", "10"))  # per minute
     rate_limit_messages_window: int = int(os.getenv("RATE_LIMIT_MESSAGES_WINDOW", "60"))  # seconds

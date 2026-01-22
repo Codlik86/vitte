@@ -230,6 +230,7 @@ async def select_persona_and_greet(
 ):
     """Select a persona and generate greeting message"""
     from app.services.chat_flow import generate_persona_greeting
+    from app.services.telegram_service import send_greeting
 
     # telegram_id может прийти из query или из body
     tg_id = telegram_id or request.telegram_id
@@ -271,6 +272,13 @@ async def select_persona_and_greet(
         if result.success:
             greeting = result.response
             dialog_id = result.dialog_id
+
+            # Send greeting to Telegram
+            await send_greeting(
+                chat_id=tg_id,
+                persona_name=persona.name,
+                greeting_text=greeting,
+            )
 
     return SelectAndGreetResponse(
         success=True,

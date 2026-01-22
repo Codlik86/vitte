@@ -277,15 +277,33 @@ async def on_continue_dialog(callback: CallbackQuery):
             await callback.message.answer("❌ Диалог не найден")
             return
 
-        # Set this dialog as active context for user
-        # The user can now send messages in this dialog
         persona_name = dialog.persona.name if dialog.persona else "Персонаж"
+        persona_id = dialog.persona_id
 
+        # Show "generating" message
         await callback.message.answer(
-            f"💬 Продолжаем общение с {persona_name}...\n\n"
-            f"Напиши сообщение, чтобы продолжить.",
+            f"💬 Продолжаем общение с <b>{persona_name}</b>...",
             parse_mode="HTML"
         )
+
+        # Generate return greeting via API (will be sent to Telegram by API)
+        from app.services.api_client import generate_greeting
+        result = await generate_greeting(
+            telegram_id=user_id,
+            persona_id=persona_id,
+            story_id=dialog.story_id,
+            atmosphere=dialog.atmosphere,
+            is_return=True,
+            send_to_telegram=True,  # API will send greeting to Telegram
+        )
+
+        if not result.success:
+            logger.warning(f"Failed to generate greeting for user {user_id}: {result.error}")
+            # Fallback - just tell user to write
+            await callback.message.answer(
+                "Напиши сообщение, чтобы продолжить 💬",
+                parse_mode="HTML"
+            )
 
         logger.info(f"User {user_id} continuing dialog {dialog_id} with {persona_name}")
         break
