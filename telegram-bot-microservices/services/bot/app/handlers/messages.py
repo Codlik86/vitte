@@ -4,7 +4,8 @@ Message handler - process user text messages
 Handles incoming text messages from users and sends them to the chat API.
 Shows typing indicator and "Печатает..." message while waiting for response.
 """
-from aiogram import Router, F
+import asyncio
+from aiogram import Router, F, Bot
 from aiogram.types import Message
 from aiogram.enums import ChatAction
 from sqlalchemy import select
@@ -16,6 +17,20 @@ from shared.utils import get_logger
 
 logger = get_logger(__name__)
 router = Router(name="messages")
+
+
+async def keep_typing(bot: Bot, chat_id: int, interval: float = 4.0):
+    """
+    Continuously send typing action until cancelled.
+    Telegram typing indicator lasts ~5 seconds, so we refresh every 4 seconds.
+    """
+    try:
+        while True:
+            await bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
+            await asyncio.sleep(interval)
+    except asyncio.CancelledError:
+        # Task was cancelled - this is expected when API response arrives
+        pass
 
 
 async def get_active_dialog(user_id: int) -> Dialog | None:
@@ -68,26 +83,31 @@ async def handle_text_message(message: Message):
 
     persona_name = dialog.persona.name if dialog.persona else "Персонаж"
 
-    # Show typing indicator (visible in chat list)
-    await message.bot.send_chat_action(
-        chat_id=user_id,
-        action=ChatAction.TYPING
-    )
-
     # Send placeholder message
     placeholder = await message.answer(
         f"<i>{persona_name} печатает...</i>",
         parse_mode="HTML"
     )
 
-    # Call chat API
-    result = await send_chat_message(
-        telegram_id=user_id,
-        message=text,
-        persona_id=dialog.persona_id,
-        story_id=dialog.story_id,
-        atmosphere=dialog.atmosphere,
-    )
+    # Start continuous typing indicator (runs until cancelled)
+    typing_task = asyncio.create_task(keep_typing(message.bot, user_id))
+
+    try:
+        # Call chat API
+        result = await send_chat_message(
+            telegram_id=user_id,
+            message=text,
+            persona_id=dialog.persona_id,
+            story_id=dialog.story_id,
+            atmosphere=dialog.atmosphere,
+        )
+    finally:
+        # Stop typing indicator when API responds (success or error)
+        typing_task.cancel()
+        try:
+            await typing_task
+        except asyncio.CancelledError:
+            pass
 
     if result.success and result.response:
         # Edit placeholder with actual response
