@@ -65,11 +65,11 @@ class PersonaDetailResponse(BaseModel):
 
 class SelectAndGreetRequest(BaseModel):
     persona_id: int
-    telegram_id: int
-    storyId: Optional[str] = None
-    extraDescription: Optional[str] = None
-    settingsChanged: bool = False
-    sendGreeting: bool = True
+    telegram_id: Optional[int] = None  # Может прийти через query-параметр
+    story_id: Optional[str] = None
+    extra_description: Optional[str] = None
+    settings_changed: bool = False
+    send_greeting: bool = True
     atmosphere: Optional[str] = None
 
 
@@ -225,13 +225,19 @@ async def select_persona(
 @router.post("/personas/select_and_greet", response_model=SelectAndGreetResponse)
 async def select_persona_and_greet(
     request: SelectAndGreetRequest,
+    telegram_id: Optional[int] = Query(None, description="Telegram user ID"),
     db: AsyncSession = Depends(get_db)
 ):
     """Select a persona and generate greeting message"""
     from app.services.chat_flow import generate_persona_greeting
 
+    # telegram_id может прийти из query или из body
+    tg_id = telegram_id or request.telegram_id
+    if not tg_id:
+        raise HTTPException(status_code=400, detail="telegram_id is required")
+
     # Get user
-    user = await db.get(User, request.telegram_id)
+    user = await db.get(User, tg_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
@@ -241,7 +247,7 @@ async def select_persona_and_greet(
         raise HTTPException(status_code=404, detail="Persona not found")
 
     # Check access for custom personas
-    if persona.is_custom and persona.owner_user_id != request.telegram_id:
+    if persona.is_custom and persona.owner_user_id != tg_id:
         raise HTTPException(status_code=403, detail="Access denied")
 
     # Update user's active persona
@@ -252,12 +258,12 @@ async def select_persona_and_greet(
     greeting = None
     dialog_id = None
 
-    if request.sendGreeting:
+    if request.send_greeting:
         result = await generate_persona_greeting(
             db=db,
-            telegram_id=request.telegram_id,
+            telegram_id=tg_id,
             persona_id=request.persona_id,
-            story_id=request.storyId,
+            story_id=request.story_id,
             atmosphere=request.atmosphere,
             is_return=False,
         )
