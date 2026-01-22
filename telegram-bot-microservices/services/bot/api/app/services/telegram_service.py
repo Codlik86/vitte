@@ -89,3 +89,50 @@ async def send_greeting(
     message = f"💬 <b>{persona_name}</b>\n\n{greeting_text}"
 
     return await send_message(chat_id, message)
+
+
+async def send_chat_action(
+    chat_id: int,
+    action: str = "typing",
+) -> bool:
+    """
+    Send chat action (typing indicator) to Telegram.
+
+    Args:
+        chat_id: Telegram user ID
+        action: Action type (typing, upload_photo, etc.)
+
+    Returns:
+        True if sent successfully
+    """
+    if not config.bot_token:
+        logger.error("BOT_TOKEN not configured, cannot send chat action")
+        return False
+
+    data = {
+        "chat_id": chat_id,
+        "action": action,
+    }
+
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{TELEGRAM_API_URL}/sendChatAction",
+                json=data,
+                timeout=10.0
+            )
+
+            result = response.json()
+
+            if result.get("ok"):
+                return True
+            else:
+                logger.error(f"Failed to send chat action: {result.get('description')}")
+                return False
+
+    except httpx.RequestError as e:
+        logger.error(f"HTTP error sending chat action: {e}")
+        return False
+    except Exception as e:
+        logger.error(f"Unexpected error sending chat action: {e}")
+        return False

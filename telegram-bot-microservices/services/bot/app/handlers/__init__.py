@@ -9,5 +9,6 @@ from app.handlers.subscription import router as subscription_router
 from app.handlers.shop import router as shop_router
 from app.handlers.upgrades import router as upgrades_router
 from app.handlers.settings import router as settings_router
+from app.handlers.messages import router as messages_router
 
-__all__ = ["start_router", "help_router", "status_router", "onboarding_router", "menu_router", "chat_router", "subscription_router", "shop_router", "upgrades_router", "settings_router"]
+__all__ = ["start_router", "help_router", "status_router", "onboarding_router", "menu_router", "chat_router", "subscription_router", "shop_router", "upgrades_router", "settings_router", "messages_router"]
