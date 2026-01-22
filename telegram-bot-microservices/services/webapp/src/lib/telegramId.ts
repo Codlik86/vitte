@@ -5,6 +5,10 @@ export const TELEGRAM_WEBAPP_RETRY_MESSAGE =
 
 const DEBUG_ENV_KEYS = ["VITE_DEBUG_TELEGRAM_ID", "VITTE_DEBUG_TELEGRAM_ID", "VITE_DEBUG_ID"];
 
+// Кэш для telegram ID - чтобы не ждать 8 секунд на каждый API вызов
+let cachedTelegramId: number | undefined | null = null; // null = ещё не проверяли
+let cachePromise: Promise<number | undefined> | null = null;
+
 function normalizeId(id: unknown): number | undefined {
   if (typeof id === "number") {
     return Number.isFinite(id) ? id : undefined;
@@ -68,29 +72,49 @@ export function resolveTelegramId(): number | undefined {
   return undefined;
 }
 
-export async function waitTelegramId(timeoutMs = 8000): Promise<number | undefined> {
-  const deadline = Date.now() + timeoutMs;
-
-  while (Date.now() < deadline) {
-    const id = resolveTelegramId();
-    if (typeof id === "number" && Number.isFinite(id)) {
-      return id;
-    }
-    await new Promise((resolve) => setTimeout(resolve, 200));
+export async function waitTelegramId(timeoutMs = 2000): Promise<number | undefined> {
+  // Если уже есть закэшированный результат - возвращаем сразу
+  if (cachedTelegramId !== null) {
+    return cachedTelegramId;
   }
 
-  return undefined;
+  // Если уже идёт ожидание - подключаемся к существующему промису
+  if (cachePromise) {
+    return cachePromise;
+  }
+
+  // Запускаем ожидание и кэшируем промис
+  cachePromise = (async () => {
+    const deadline = Date.now() + timeoutMs;
+
+    while (Date.now() < deadline) {
+      const id = resolveTelegramId();
+      if (typeof id === "number" && Number.isFinite(id)) {
+        cachedTelegramId = id;
+        cachePromise = null;
+        return id;
+      }
+      await new Promise((resolve) => setTimeout(resolve, 200));
+    }
+
+    // Не нашли ID - кэшируем undefined
+    cachedTelegramId = undefined;
+    cachePromise = null;
+    return undefined;
+  })();
+
+  return cachePromise;
 }
 
 export function isTelegramWebApp(): boolean {
   return typeof window !== "undefined" && Boolean(window.Telegram?.WebApp);
 }
 
-export async function getTelegramIdOptional(timeoutMs = 8000): Promise<number | undefined> {
+export async function getTelegramIdOptional(timeoutMs = 2000): Promise<number | undefined> {
   return waitTelegramId(timeoutMs);
 }
 
-export async function requireTelegramId(timeoutMs = 8000): Promise<number> {
+export async function requireTelegramId(timeoutMs = 2000): Promise<number> {
   const id = await waitTelegramId(timeoutMs);
   if (typeof id === "number" && Number.isFinite(id)) {
     return id;
