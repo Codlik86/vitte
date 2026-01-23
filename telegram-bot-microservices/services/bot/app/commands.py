@@ -17,21 +17,13 @@ logger = get_logger(__name__)
 COMMANDS_RU = [
     BotCommand(command="menu", description="📋 Главное меню"),
     BotCommand(command="chat", description="💕 Начать общение"),
-    BotCommand(command="subscription", description="💖 Подписка"),
     BotCommand(command="app", description="💌 Открыть приложение"),
-    BotCommand(command="shop", description="💝 Магазин"),
-    BotCommand(command="upgrades", description="💗 Улучшения"),
-    BotCommand(command="settings", description="⚙️ Основные настройки"),
 ]
 
 COMMANDS_EN = [
     BotCommand(command="menu", description="📋 Main Menu"),
     BotCommand(command="chat", description="💕 Start Chat"),
-    BotCommand(command="subscription", description="💖 Subscription"),
     BotCommand(command="app", description="💌 Open App"),
-    BotCommand(command="shop", description="💝 Shop"),
-    BotCommand(command="upgrades", description="💗 Upgrades"),
-    BotCommand(command="settings", description="⚙️ Settings"),
 ]
 
 
