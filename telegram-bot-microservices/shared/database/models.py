@@ -134,7 +134,7 @@ class Dialog(Base):
 
     # Dialog details
     title = Column(String(255), nullable=True)
-    slot_number = Column(Integer, nullable=True)  # 1, 2, or 3 for active dialogs
+    slot_number = Column(Integer, nullable=True)  # 1-5 for active dialogs
     is_active = Column(Boolean, default=True)
 
     # Story/scenario context

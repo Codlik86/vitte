@@ -3,7 +3,7 @@ Chat Flow - главный оркестратор чата
 
 Управляет потоком:
 1. Safety check входящего сообщения
-2. Получение/создание диалога (3-slot система)
+2. Получение/создание диалога (5-slot система)
 3. Загрузка истории из PostgreSQL (последние 12 сообщений)
 4. Поиск релевантных воспоминаний из Qdrant
 5. Построение промпта через PromptBuilder
@@ -33,7 +33,7 @@ from .embedding_service import embedding_service
 
 logger = logging.getLogger(__name__)
 
-MAX_DIALOG_SLOTS = 3
+MAX_DIALOG_SLOTS = 5
 RECENT_MESSAGES_COUNT = 12
 
 

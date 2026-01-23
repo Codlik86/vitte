@@ -162,7 +162,7 @@ async def get_user_dialogs(
     db: AsyncSession = Depends(get_db)
 ):
     """
-    Get user's active dialogs (up to 3 slots).
+    Get user's active dialogs (up to 5 slots).
 
     Returns list of active dialogs with:
     - dialog_id

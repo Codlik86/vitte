@@ -10,11 +10,13 @@ from aiogram.types import CallbackQuery, Message, InlineKeyboardMarkup, InlineKe
 from aiogram.filters import Command
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
+import httpx
 
 from app.config import config
-from shared.database import get_db, Dialog, Persona
-from shared.database.services import get_user_dialogs, get_user_by_id
+from shared.database import get_db, Dialog
+from shared.database.services import get_user_by_id
 from shared.utils import get_logger
+from shared.llm.personas import PERSONAS
 
 logger = get_logger(__name__)
 router = Router(name="chat")
@@ -53,11 +55,26 @@ def format_dialog_date(dt: datetime | None) -> str:
     return dt.strftime("%d.%m")
 
 
+def get_story_title(persona_key: str, story_key: str) -> str | None:
+    """Get story title from persona stories"""
+    try:
+        persona_data = PERSONAS.get(persona_key)
+        if not persona_data or not hasattr(persona_data, 'stories'):
+            return None
+
+        story = persona_data.stories.get(story_key)
+        if story and 'title' in story:
+            return story['title']
+        return None
+    except Exception:
+        return None
+
+
 def get_dialogs_keyboard_ru(dialogs: list[Dialog], can_create_new: bool = True) -> InlineKeyboardMarkup:
     """Build keyboard with active dialogs (Russian)"""
     buttons = []
 
-    # New dialog button (if less than 3 active)
+    # New dialog button (if less than 5 active)
     if can_create_new:
         if config.webapp_url:
             buttons.append([
@@ -81,14 +98,29 @@ def get_dialogs_keyboard_ru(dialogs: list[Dialog], can_create_new: bool = True) 
             persona_name = dialog.persona.name
 
         date_str = format_dialog_date(dialog.updated_at or dialog.created_at)
+
+        # Build label: Name • Date • Story
         label = f"💬 {persona_name}"
         if date_str:
             label += f" • {date_str}"
 
+        # Add story title if exists
+        if dialog.story_id and dialog.persona:
+            story_title = get_story_title(dialog.persona.key, dialog.story_id)
+            if story_title:
+                # Truncate to first 15 chars + "..."
+                truncated = story_title[:15] + "..." if len(story_title) > 15 else story_title
+                label += f" • {truncated}"
+
+        # Dialog button + Delete button in one row
         buttons.append([
             InlineKeyboardButton(
                 text=label,
                 callback_data=f"chat:continue:{dialog.id}"
+            ),
+            InlineKeyboardButton(
+                text="❌",
+                callback_data=f"chat:delete:{dialog.id}"
             )
         ])
 
@@ -104,7 +136,7 @@ def get_dialogs_keyboard_en(dialogs: list[Dialog], can_create_new: bool = True) 
     """Build keyboard with active dialogs (English)"""
     buttons = []
 
-    # New dialog button (if less than 3 active)
+    # New dialog button (if less than 5 active)
     if can_create_new:
         if config.webapp_url:
             buttons.append([
@@ -128,14 +160,29 @@ def get_dialogs_keyboard_en(dialogs: list[Dialog], can_create_new: bool = True) 
             persona_name = dialog.persona.name
 
         date_str = format_dialog_date(dialog.updated_at or dialog.created_at)
+
+        # Build label: Name • Date • Story
         label = f"💬 {persona_name}"
         if date_str:
             label += f" • {date_str}"
 
+        # Add story title if exists
+        if dialog.story_id and dialog.persona:
+            story_title = get_story_title(dialog.persona.key, dialog.story_id)
+            if story_title:
+                # Truncate to first 15 chars + "..."
+                truncated = story_title[:15] + "..." if len(story_title) > 15 else story_title
+                label += f" • {truncated}"
+
+        # Dialog button + Delete button in one row
         buttons.append([
             InlineKeyboardButton(
                 text=label,
                 callback_data=f"chat:continue:{dialog.id}"
+            ),
+            InlineKeyboardButton(
+                text="❌",
+                callback_data=f"chat:delete:{dialog.id}"
             )
         ])
 
@@ -207,7 +254,7 @@ async def get_active_dialogs_with_personas(user_id: int) -> list[Dialog]:
             .options(selectinload(Dialog.persona))
             .where(Dialog.user_id == user_id, Dialog.is_active == True)
             .order_by(Dialog.updated_at.desc())
-            .limit(3)
+            .limit(5)
         )
         return list(result.scalars().all())
     return []
@@ -221,7 +268,7 @@ async def _show_chat_screen(user_id: int, respond_func):
     dialogs = await get_active_dialogs_with_personas(user_id)
 
     if dialogs:
-        can_create_new = len(dialogs) < 3
+        can_create_new = len(dialogs) < 5
         if lang == "ru":
             text = HAS_DIALOGS_RU
             keyboard = get_dialogs_keyboard_ru(dialogs, can_create_new)
@@ -307,6 +354,141 @@ async def on_continue_dialog(callback: CallbackQuery):
 
         logger.info(f"User {user_id} continuing dialog {dialog_id} with {persona_name}")
         break
+
+
+@router.callback_query(F.data.startswith("chat:delete:"))
+async def on_delete_dialog(callback: CallbackQuery):
+    """Handle delete dialog button - show confirmation"""
+    await callback.answer()
+    user_id = callback.from_user.id
+
+    # Extract dialog_id from callback data
+    dialog_id = int(callback.data.split(":")[-1])
+
+    # Get dialog info for confirmation message
+    async for db in get_db():
+        result = await db.execute(
+            select(Dialog)
+            .options(selectinload(Dialog.persona))
+            .where(Dialog.id == dialog_id, Dialog.user_id == user_id)
+        )
+        dialog = result.scalar_one_or_none()
+
+        if not dialog:
+            await callback.answer("❌ Диалог не найден", show_alert=True)
+            return
+
+        persona_name = dialog.persona.name if dialog.persona else "Персонаж"
+        lang = await get_user_language(user_id)
+
+        # Confirmation message
+        if lang == "ru":
+            text = f"🗑 Удалить диалог с <b>{persona_name}</b>?\n\nВся история переписки будет удалена безвозвратно."
+            confirm_btn_text = "✅ Да, удалить"
+            cancel_btn_text = "❌ Отмена"
+        else:
+            text = f"🗑 Delete dialog with <b>{persona_name}</b>?\n\nAll chat history will be permanently deleted."
+            confirm_btn_text = "✅ Yes, delete"
+            cancel_btn_text = "❌ Cancel"
+
+        keyboard = InlineKeyboardMarkup(inline_keyboard=[
+            [
+                InlineKeyboardButton(
+                    text=confirm_btn_text,
+                    callback_data=f"chat:delete_confirm:{dialog_id}"
+                )
+            ],
+            [
+                InlineKeyboardButton(
+                    text=cancel_btn_text,
+                    callback_data="chat:delete_cancel"
+                )
+            ]
+        ])
+
+        await callback.message.answer(text, reply_markup=keyboard, parse_mode="HTML")
+        break
+
+
+@router.callback_query(F.data.startswith("chat:delete_confirm:"))
+async def on_delete_confirm(callback: CallbackQuery):
+    """Handle delete confirmation - actually delete the dialog"""
+    await callback.answer()
+    user_id = callback.from_user.id
+
+    # Extract dialog_id from callback data
+    dialog_id = int(callback.data.split(":")[-1])
+
+    async for db in get_db():
+        # Get dialog
+        result = await db.execute(
+            select(Dialog)
+            .where(Dialog.id == dialog_id, Dialog.user_id == user_id)
+        )
+        dialog = result.scalar_one_or_none()
+
+        if not dialog:
+            await callback.message.edit_text("❌ Диалог не найден")
+            return
+
+        # Delete from PostgreSQL (cascade will delete messages)
+        await db.delete(dialog)
+        await db.commit()
+
+        # Delete from Qdrant
+        try:
+            qdrant_url = config.qdrant_url if hasattr(config, 'qdrant_url') else "http://qdrant:6333"
+            collection = "vitte_memories"
+
+            async with httpx.AsyncClient() as client:
+                await client.post(
+                    f"{qdrant_url}/collections/{collection}/points/delete",
+                    json={
+                        "filter": {
+                            "must": [
+                                {"key": "user_id", "match": {"value": user_id}},
+                                {"key": "dialog_id", "match": {"value": dialog_id}},
+                            ]
+                        }
+                    },
+                    timeout=10.0,
+                )
+        except Exception as e:
+            logger.warning(f"Failed to delete Qdrant memories for dialog {dialog_id}: {e}")
+
+        lang = await get_user_language(user_id)
+
+        # Success message
+        if lang == "ru":
+            success_text = "✅ Диалог удалён"
+        else:
+            success_text = "✅ Dialog deleted"
+
+        await callback.message.edit_text(success_text)
+
+        # Show updated dialogs list
+        await _show_chat_screen(user_id, callback.message.answer)
+
+        logger.info(f"User {user_id} deleted dialog {dialog_id}")
+        break
+
+
+@router.callback_query(F.data == "chat:delete_cancel")
+async def on_delete_cancel(callback: CallbackQuery):
+    """Handle delete cancellation"""
+    await callback.answer()
+    user_id = callback.from_user.id
+    lang = await get_user_language(user_id)
+
+    if lang == "ru":
+        text = "Отменено"
+    else:
+        text = "Cancelled"
+
+    await callback.message.edit_text(text)
+
+    # Show dialogs list again
+    await _show_chat_screen(user_id, callback.message.answer)
 
 
 @router.callback_query(F.data == "chat:back_to_menu")
