@@ -22,83 +22,79 @@ router = Router(name="menu")
 
 # ==================== MENU TEXT VARIANTS ====================
 
-# Variant 1 - "She missed you" (waiting)
-MENU_VARIANT_1_RU = """Vitte 💜
+# Variant 1
+MENU_VARIANT_1_RU = """Добро пожаловать в Vitte 💜
 
-Она скучала.
+Выбери персонажа и начни
+приватную беседу."""
 
-Готова продолжить с того места,
-где вы остановились.
+MENU_VARIANT_1_EN = """Welcome to Vitte 💜
 
-Или начать что-то новое.
-Как захочешь."""
+Choose a character and start
+a private conversation."""
 
-MENU_VARIANT_1_EN = """Vitte 💜
+# Variant 2
+MENU_VARIANT_2_RU = """Твое личное пространство 💜
 
-She missed you.
+Кого выберешь сегодня?"""
 
-Ready to continue from where
-you left off.
+MENU_VARIANT_2_EN = """Your personal space 💜
 
-Or start something new.
-Whatever you want."""
+Who will you choose today?"""
 
-# Variant 2 - "She's online" (available)
-MENU_VARIANT_2_RU = """💜 Vitte
-
-Она онлайн.
-Ждёт твоего сообщения.
-
-Можешь просто поболтать.
-Можешь пофлиртовать.
-Можешь попросить большего.
-
-Решать тебе."""
-
-MENU_VARIANT_2_EN = """💜 Vitte
-
-She's online.
-Waiting for your message.
-
-You can just chat.
-You can flirt.
-You can ask for more.
-
-It's up to you."""
-
-# Variant 3 - "Your girl is waiting" (hot & short)
+# Variant 3
 MENU_VARIANT_3_RU = """Vitte 💜
 
-Твоя девочка ждёт.
-
-Напиши ей.
-Она уже думает о тебе."""
+Выбери персонажа или продолжи
+диалог с того места, где остановился."""
 
 MENU_VARIANT_3_EN = """Vitte 💜
 
-Your girl is waiting.
+Choose a character or continue
+the dialog from where you left off."""
 
-Text her.
-She's already thinking about you."""
+# Variant 4
+MENU_VARIANT_4_RU = """Vitte 💜
+
+Время для приватной беседы.
+Новый персонаж или продолжить?"""
+
+MENU_VARIANT_4_EN = """Vitte 💜
+
+Time for a private conversation.
+New character or continue?"""
+
+# Variant 5
+MENU_VARIANT_5_RU = """Vitte 💜
+
+Выбери персонажа и начни чат."""
+
+MENU_VARIANT_5_EN = """Vitte 💜
+
+Choose a character and start chatting."""
 
 # Lists for random selection
-MENU_VARIANTS_RU = [MENU_VARIANT_1_RU, MENU_VARIANT_2_RU, MENU_VARIANT_3_RU]
-MENU_VARIANTS_EN = [MENU_VARIANT_1_EN, MENU_VARIANT_2_EN, MENU_VARIANT_3_EN]
+MENU_VARIANTS_RU = [MENU_VARIANT_1_RU, MENU_VARIANT_2_RU, MENU_VARIANT_3_RU, MENU_VARIANT_4_RU, MENU_VARIANT_5_RU]
+MENU_VARIANTS_EN = [MENU_VARIANT_1_EN, MENU_VARIANT_2_EN, MENU_VARIANT_3_EN, MENU_VARIANT_4_EN, MENU_VARIANT_5_EN]
 
 
 # ==================== WELCOME TEXT (FIRST TIME) ====================
 
 WELCOME_TEXT_RU = """Добро пожаловать в Vitte 💜
 
-Здесь тебя уже ждут. Это пространство для тёплых переписок, флирта и близости — с AI-персонажами, которые умеют слушать и отвечать по-настоящему.
+Приватное пространство для флирта
+с AI-персонажами.
 
-Героини с уникальными историями. Пиши когда хочется, открывай фото, включай режим страсти. Всё между вами."""
+Уникальные героини, фото, режим страсти.
+Всё между вами."""
 
 WELCOME_TEXT_EN = """Welcome to Vitte 💜
 
-They're already waiting for you here. This is a space for warm conversations, flirting and intimacy — with AI characters who truly know how to listen and respond.
+Private space for flirting
+with AI characters.
 
-Heroines with unique stories. Write whenever you want, unlock photos, turn on passion mode. Everything stays between you."""
+Unique heroines, photos, passion mode.
+Everything stays between you."""
 
 
 # ==================== FEATURE NAMES ====================
@@ -176,13 +172,12 @@ async def get_user_status(user_id: int) -> dict:
     return status
 
 
-def build_status_block(status: dict, lang: str = "ru", include_cta: bool = True) -> str:
+def build_status_block(status: dict, lang: str = "ru") -> str:
     """Build the status monitoring block for menu
 
     Args:
         status: User status dict
         lang: Language code
-        include_cta: Include call-to-action text at the end
     """
     feature_names = FEATURE_NAMES_RU if lang == "ru" else FEATURE_NAMES_EN
 
@@ -192,26 +187,26 @@ def build_status_block(status: dict, lang: str = "ru", include_cta: bool = True)
             feature_names.get(f, f) for f in status["features"]
         )
     else:
-        features_str = "нет" if lang == "ru" else "none"
+        features_str = "Нет улучшений" if lang == "ru" else "No upgrades"
+
+    # Plan status
+    plan = status["subscription"]
+
+    # Messages limit (for free plan - 20 per day, пока только текст)
+    messages_today = status["messages_today"]
+    messages_limit = 20  # Hardcoded for now
+    messages_str = f"💬 {messages_today}/{messages_limit}"
+
+    # Images
+    images_remaining = status["images_remaining"]
+    images_str = f"🖼 {images_remaining} доступно" if lang == "ru" else f"🖼 {images_remaining} available"
 
     if lang == "ru":
-        block = f"""🔮 Подписка: {status["subscription"]}
-💬 Сообщений сегодня: {status["messages_today"]}
-🖼 Изображений: {status["images_remaining"]}
-✨ Улучшения: {features_str}"""
-        if include_cta:
-            block += "\n\nНаписать ей 💌"
-        else:
-            block += "\n\nЖми «Открыть Vitte 💌» — выбери ту, с кем хочешь познакомиться."
+        block = f"""👤 {plan}        ✨ {features_str}
+{messages_str}        {images_str}"""
     else:
-        block = f""" Subscription: {status["subscription"]}
-💬 Messages today: {status["messages_today"]}
-🖼 Images: {status["images_remaining"]}
-✨ Enhancements: {features_str}"""
-        if include_cta:
-            block += "\n\nText her 💌"
-        else:
-            block += "\n\nTap «Open Vitte 💌» — choose who you want to meet."
+        block = f"""👤 {plan}        ✨ {features_str}
+{messages_str}        {images_str}"""
 
     return block
 
@@ -220,61 +215,27 @@ def build_status_block(status: dict, lang: str = "ru", include_cta: bool = True)
 
 def get_main_menu_keyboard_ru() -> InlineKeyboardMarkup:
     """Main menu keyboard (Russian)"""
-    # WebApp button or fallback
-    if config.webapp_url:
-        webapp_btn = InlineKeyboardButton(
-            text="💌 Открыть Vitte",
-            web_app=WebAppInfo(url=config.webapp_url)
-        )
-    else:
-        webapp_btn = InlineKeyboardButton(
-            text="💌 Открыть Vitte",
-            callback_data="menu:open_webapp"
-        )
-
     return InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="💕 Начать общение", callback_data="menu:start_chat"),
-            InlineKeyboardButton(text="💖 Подписка", callback_data="menu:subscription"),
+            InlineKeyboardButton(text="💬 Начать", callback_data="menu:start_chat"),
+            InlineKeyboardButton(text="💎 Подписка", callback_data="menu:subscription"),
         ],
         [
-            webapp_btn,
-        ],
-        [
-            InlineKeyboardButton(text="💝 Магазин", callback_data="menu:shop"),
-        ],
-        [
-            InlineKeyboardButton(text="⚙️ Основные настройки", callback_data="menu:settings"),
+            InlineKeyboardButton(text="🛍 Магазин", callback_data="menu:shop"),
+            InlineKeyboardButton(text="⚙️ Настройки", callback_data="menu:settings"),
         ]
     ])
 
 
 def get_main_menu_keyboard_en() -> InlineKeyboardMarkup:
     """Main menu keyboard (English)"""
-    # WebApp button or fallback
-    if config.webapp_url:
-        webapp_btn = InlineKeyboardButton(
-            text="💌 Open App",
-            web_app=WebAppInfo(url=config.webapp_url)
-        )
-    else:
-        webapp_btn = InlineKeyboardButton(
-            text="💌 Open App",
-            callback_data="menu:open_webapp"
-        )
-
     return InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="💕 Start Chat", callback_data="menu:start_chat"),
-            InlineKeyboardButton(text="💖 Subscription", callback_data="menu:subscription"),
+            InlineKeyboardButton(text="💬 Start", callback_data="menu:start_chat"),
+            InlineKeyboardButton(text="💎 Subscription", callback_data="menu:subscription"),
         ],
         [
-            webapp_btn,
-        ],
-        [
-            InlineKeyboardButton(text="💝 Shop", callback_data="menu:shop"),
-        ],
-        [
+            InlineKeyboardButton(text="🛍 Shop", callback_data="menu:shop"),
             InlineKeyboardButton(text="⚙️ Settings", callback_data="menu:settings"),
         ]
     ])
@@ -310,7 +271,7 @@ async def show_main_menu(target, lang: str = "ru", user_id: int = None, is_welco
     if is_welcome:
         # Welcome message for first-time users
         welcome_text = WELCOME_TEXT_RU if lang == "ru" else WELCOME_TEXT_EN
-        status_block = build_status_block(status, lang, include_cta=False)
+        status_block = build_status_block(status, lang)
         text = welcome_text + "\n\n" + status_block
 
         # Mark user as having seen welcome
@@ -319,7 +280,7 @@ async def show_main_menu(target, lang: str = "ru", user_id: int = None, is_welco
         # Random text variant for returning users
         variants = MENU_VARIANTS_RU if lang == "ru" else MENU_VARIANTS_EN
         menu_text = random.choice(variants)
-        status_block = build_status_block(status, lang, include_cta=True)
+        status_block = build_status_block(status, lang)
         text = menu_text + "\n\n" + status_block
 
     keyboard = get_main_menu_keyboard_ru() if lang == "ru" else get_main_menu_keyboard_en()
