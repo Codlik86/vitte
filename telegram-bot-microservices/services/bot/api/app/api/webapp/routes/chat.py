@@ -11,6 +11,7 @@ from typing import Optional
 from shared.database import get_db
 
 from app.services.chat_flow import process_chat_message, generate_persona_greeting
+from app.api.webapp.dependencies import WebAppUser
 
 router = APIRouter()
 
@@ -157,7 +158,7 @@ async def get_greeting(
 
 @router.get("/chat/dialogs")
 async def get_user_dialogs(
-    telegram_id: int = Query(..., description="Telegram user ID"),
+    user: WebAppUser,
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -172,6 +173,8 @@ async def get_user_dialogs(
     """
     from sqlalchemy import select, and_
     from shared.database.models import Dialog, Persona, Message
+
+    telegram_id = user.id
 
     # Get active dialogs with persona info
     result = await db.execute(
@@ -222,7 +225,7 @@ async def get_user_dialogs(
 @router.delete("/chat/dialogs/{dialog_id}")
 async def clear_dialog(
     dialog_id: int,
-    telegram_id: int = Query(..., description="Telegram user ID"),
+    user: WebAppUser,
     db: AsyncSession = Depends(get_db)
 ):
     """
@@ -235,10 +238,12 @@ async def clear_dialog(
 
     Args:
         dialog_id: ID of dialog to clear
-        telegram_id: User's Telegram ID (for validation)
+        user: WebAppUser (auto-created if new)
     """
     from shared.database.models import Dialog
     from app.services.embedding_service import embedding_service
+
+    telegram_id = user.id
 
     # Get dialog
     dialog = await db.get(Dialog, dialog_id)

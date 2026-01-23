@@ -10,6 +10,7 @@ from datetime import datetime
 from pydantic import BaseModel
 
 from shared.database import get_db, User, Subscription, ImageBalance, AccessStatus
+from app.api.webapp.dependencies import WebAppUser
 
 router = APIRouter()
 
@@ -39,39 +40,22 @@ class AccessStatusResponse(BaseModel):
 
 @router.get("/access/status", response_model=AccessStatusResponse)
 async def get_access_status(
-    telegram_id: int = Query(..., description="Telegram user ID"),
+    user: WebAppUser,
     db: AsyncSession = Depends(get_db)
 ):
     """Get user access status"""
-    # Get user with relationships
+    telegram_id = user.id
+
+    # Reload user with relationships
     result = await db.execute(
         select(User)
         .options(selectinload(User.subscription), selectinload(User.image_balance))
         .where(User.id == telegram_id)
     )
-    user = result.scalar_one_or_none()
-
-    if not user:
-        # Return default status for new user
-        return AccessStatusResponse(
-            telegram_id=telegram_id,
-            access_status=AccessStatus.TRIAL_USAGE.value,
-            free_messages_used=0,
-            free_messages_limit=10,
-            has_access=True,
-            can_send_message=True,
-            has_subscription=False,
-            plan_code=None,
-            premium_until=None,
-            images=ImagesStatus(
-                remaining_free_today=0,
-                remaining_paid=0,
-                total_remaining=0
-            )
-        )
+    user_with_rels = result.scalar_one()
 
     # Get subscription
-    subscription = user.subscription
+    subscription = user_with_rels.subscription
     has_subscription = bool(subscription and subscription.is_active and subscription.expires_at and subscription.expires_at > datetime.utcnow())
 
     # Determine access status
@@ -79,7 +63,7 @@ async def get_access_status(
         access_status = AccessStatus.SUBSCRIPTION_ACTIVE.value
         has_access = True
         can_send_message = True
-    elif user.free_messages_used < user.free_messages_limit:
+    elif user_with_rels.free_messages_used < user_with_rels.free_messages_limit:
         access_status = AccessStatus.TRIAL_USAGE.value
         has_access = True
         can_send_message = True
@@ -89,7 +73,7 @@ async def get_access_status(
         can_send_message = False
 
     # Get image balance
-    image_balance = user.image_balance
+    image_balance = user_with_rels.image_balance
     if image_balance:
         images = ImagesStatus(
             remaining_free_today=max(0, image_balance.daily_subscription_quota - image_balance.daily_subscription_used),
@@ -106,8 +90,8 @@ async def get_access_status(
     return AccessStatusResponse(
         telegram_id=telegram_id,
         access_status=access_status,
-        free_messages_used=user.free_messages_used,
-        free_messages_limit=user.free_messages_limit,
+        free_messages_used=user_with_rels.free_messages_used,
+        free_messages_limit=user_with_rels.free_messages_limit,
         has_access=has_access,
         can_send_message=can_send_message,
         has_subscription=has_subscription,

@@ -8,6 +8,7 @@ from typing import Optional
 from pydantic import BaseModel
 
 from shared.database import get_db, User, Persona, AccessStatus
+from app.api.webapp.dependencies import WebAppUser
 
 router = APIRouter()
 
@@ -98,12 +99,11 @@ class CreateCustomPersonaResponse(BaseModel):
 
 @router.get("/personas", response_model=PersonasListResponse)
 async def get_personas(
-    telegram_id: int = Query(..., description="Telegram user ID"),
+    user: WebAppUser,
     db: AsyncSession = Depends(get_db)
 ):
     """Get list of all available personas"""
-    # Get user
-    user = await db.get(User, telegram_id)
+    telegram_id = user.id
 
     # Get all active personas
     result = await db.execute(
@@ -116,7 +116,7 @@ async def get_personas(
 
     items = []
     for p in personas:
-        is_selected = bool(user and user.active_persona_id == p.id)
+        is_selected = bool(user.active_persona_id == p.id)
         is_owner = bool(p.owner_user_id and p.owner_user_id == telegram_id)
 
         items.append(PersonaListItem(
@@ -141,12 +141,11 @@ async def get_personas(
 @router.get("/personas/{persona_id}", response_model=PersonaDetailResponse)
 async def get_persona(
     persona_id: int,
-    telegram_id: int = Query(..., description="Telegram user ID"),
+    user: WebAppUser,
     db: AsyncSession = Depends(get_db)
 ):
     """Get persona details by ID"""
-    # Get user
-    user = await db.get(User, telegram_id)
+    telegram_id = user.id
 
     # Get persona
     persona = await db.get(Persona, persona_id)
@@ -157,7 +156,7 @@ async def get_persona(
     if persona.is_custom and persona.owner_user_id != telegram_id:
         raise HTTPException(status_code=403, detail="Access denied")
 
-    is_selected = bool(user and user.active_persona_id == persona.id)
+    is_selected = bool(user.active_persona_id == persona.id)
     is_owner = bool(persona.owner_user_id and persona.owner_user_id == telegram_id)
 
     # Parse story cards from JSON
@@ -197,14 +196,11 @@ async def get_persona(
 @router.post("/personas/{persona_id}/select")
 async def select_persona(
     persona_id: int,
-    telegram_id: int = Query(..., description="Telegram user ID"),
+    user: WebAppUser,
     db: AsyncSession = Depends(get_db)
 ):
     """Select a persona for the user"""
-    # Get user
-    user = await db.get(User, telegram_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    telegram_id = user.id
 
     # Get persona
     persona = await db.get(Persona, persona_id)
@@ -225,22 +221,14 @@ async def select_persona(
 @router.post("/personas/select_and_greet", response_model=SelectAndGreetResponse)
 async def select_persona_and_greet(
     request: SelectAndGreetRequest,
-    telegram_id: Optional[int] = Query(None, description="Telegram user ID"),
+    user: WebAppUser,
     db: AsyncSession = Depends(get_db)
 ):
     """Select a persona and generate greeting message"""
     from app.services.chat_flow import generate_persona_greeting
     from app.services.telegram_service import send_greeting
 
-    # telegram_id может прийти из query или из body
-    tg_id = telegram_id or request.telegram_id
-    if not tg_id:
-        raise HTTPException(status_code=400, detail="telegram_id is required")
-
-    # Get user
-    user = await db.get(User, tg_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    tg_id = user.id
 
     # Get persona
     persona = await db.get(Persona, request.persona_id)
@@ -291,13 +279,11 @@ async def select_persona_and_greet(
 @router.post("/personas/custom", response_model=CreateCustomPersonaResponse)
 async def create_custom_persona(
     request: CreateCustomPersonaRequest,
+    user: WebAppUser,
     db: AsyncSession = Depends(get_db)
 ):
     """Create or update a custom persona"""
-    # Get user
-    user = await db.get(User, request.telegram_id)
-    if not user:
-        raise HTTPException(status_code=404, detail="User not found")
+    telegram_id = user.id
 
     # Check if user has subscription (custom personas require premium)
     # For now, allow all users to create custom personas
@@ -306,7 +292,7 @@ async def create_custom_persona(
     if request.replace_existing:
         result = await db.execute(
             select(Persona).where(
-                Persona.owner_user_id == request.telegram_id,
+                Persona.owner_user_id == telegram_id,
                 Persona.is_custom == True
             )
         )
@@ -325,14 +311,14 @@ async def create_custom_persona(
 
     # Create new custom persona
     new_persona = Persona(
-        key=f"custom_{request.telegram_id}_{int(db.get_bind().url.database or '0')}",
+        key=f"custom_{telegram_id}_{int(db.get_bind().url.database or '0')}",
         name=request.name,
         short_title="Свой персонаж",
         short_description=request.short_description,
         description_short=request.vibe or "",
         is_default=False,
         is_custom=True,
-        owner_user_id=request.telegram_id
+        owner_user_id=telegram_id
     )
     db.add(new_persona)
     await db.commit()

@@ -15,6 +15,7 @@ from app.services.invoice_service import (
     create_image_pack_invoice,
     create_feature_invoice,
 )
+from app.api.webapp.dependencies import WebAppUser
 
 router = APIRouter()
 
@@ -132,11 +133,11 @@ async def get_store_config():
 
 @router.get("/store/status", response_model=StoreStatusResponse)
 async def get_store_status(
-    telegram_id: int = Query(..., description="Telegram user ID"),
+    user: WebAppUser,
     db: AsyncSession = Depends(get_db)
 ):
     """Get user's store status (subscription, images, features)"""
-    # Get user with relationships
+    # Reload user with relationships (WebAppUser doesn't load them)
     result = await db.execute(
         select(User)
         .options(
@@ -144,11 +145,12 @@ async def get_store_status(
             selectinload(User.image_balance),
             selectinload(User.feature_unlocks)
         )
-        .where(User.id == telegram_id)
+        .where(User.id == user.id)
     )
-    user = result.scalar_one_or_none()
+    user_with_rels = result.scalar_one_or_none()
 
-    if not user:
+    if not user_with_rels:
+        # Shouldn't happen since WebAppUser creates user, but handle gracefully
         return StoreStatusResponse(
             has_active_subscription=False,
             subscription_ends_at=None,
@@ -159,11 +161,11 @@ async def get_store_status(
         )
 
     # Check subscription
-    subscription = user.subscription
+    subscription = user_with_rels.subscription
     has_subscription = bool(subscription and subscription.is_active and subscription.expires_at and subscription.expires_at > datetime.utcnow())
 
     # Get image balance
-    image_balance = user.image_balance
+    image_balance = user_with_rels.image_balance
     remaining_today = 0
     remaining_paid = 0
     if image_balance:
@@ -172,8 +174,8 @@ async def get_store_status(
 
     # Get unlocked features
     unlocked_features = []
-    if user.feature_unlocks:
-        unlocked_features = [f.feature_code for f in user.feature_unlocks if f.enabled]
+    if user_with_rels.feature_unlocks:
+        unlocked_features = [f.feature_code for f in user_with_rels.feature_unlocks if f.enabled]
 
     return StoreStatusResponse(
         has_active_subscription=has_subscription,
@@ -188,8 +190,7 @@ async def get_store_status(
 @router.post("/store/buy/subscription/{plan_code}", response_model=BuyResponse)
 async def buy_subscription(
     plan_code: str,
-    telegram_id: int = Query(..., description="Telegram user ID"),
-    db: AsyncSession = Depends(get_db)
+    user: WebAppUser,
 ):
     """Initiate subscription purchase"""
     # Validate plan
@@ -203,7 +204,7 @@ async def buy_subscription(
         plan_name=plan["title"],
         duration_days=plan["duration_days"],
         price_stars=plan["price_stars"],
-        user_id=telegram_id,
+        user_id=user.id,
     )
 
     if not invoice_url:
@@ -223,8 +224,7 @@ async def buy_subscription(
 @router.post("/store/buy/image_pack/{pack_code}", response_model=BuyResponse)
 async def buy_image_pack(
     pack_code: str,
-    telegram_id: int = Query(..., description="Telegram user ID"),
-    db: AsyncSession = Depends(get_db)
+    user: WebAppUser,
 ):
     """Initiate image pack purchase"""
     # Validate pack
@@ -237,7 +237,7 @@ async def buy_image_pack(
         pack_code=pack_code,
         images_count=pack["images"],
         price_stars=pack["price_stars"],
-        user_id=telegram_id,
+        user_id=user.id,
     )
 
     if not invoice_url:
@@ -257,8 +257,7 @@ async def buy_image_pack(
 @router.post("/store/buy/feature/{feature_code}", response_model=BuyResponse)
 async def buy_feature(
     feature_code: str,
-    telegram_id: int = Query(..., description="Telegram user ID"),
-    db: AsyncSession = Depends(get_db)
+    user: WebAppUser,
 ):
     """Initiate feature purchase"""
     # Validate feature
@@ -272,7 +271,7 @@ async def buy_feature(
         feature_title=feature["title"],
         feature_description=feature["description"],
         price_stars=feature["price_stars"],
-        user_id=telegram_id,
+        user_id=user.id,
     )
 
     if not invoice_url:
