@@ -29,6 +29,9 @@ class BotConfig(BaseSettings):
     # Internal API URL (for calling API service from bot)
     api_url: str = os.getenv("API_URL", "http://api:8000")
 
+    # Menu image URL (served via nginx from MinIO)
+    menu_image_url: str = os.getenv("MENU_IMAGE_URL", "https://vitteapp.duckdns.org/storage/universal_pic_square.jpeg")
+
     # Rate Limiting
     rate_limit_messages: int = int(os.getenv("RATE_LIMIT_MESSAGES", "10"))  # per minute
     rate_limit_messages_window: int = int(os.getenv("RATE_LIMIT_MESSAGES_WINDOW", "60"))  # seconds

@@ -6,7 +6,7 @@ Contains main menu text and webapp button.
 """
 import random
 from aiogram import Router, F
-from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
+from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo, InputMediaPhoto
 from aiogram.filters import Command
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
@@ -285,12 +285,21 @@ async def show_main_menu(target, lang: str = "ru", user_id: int = None, is_welco
 
     keyboard = get_main_menu_keyboard_ru() if lang == "ru" else get_main_menu_keyboard_en()
 
+    # Send menu with photo
     if hasattr(target, 'message'):
-        # CallbackQuery - send new message
-        await target.message.answer(text, reply_markup=keyboard)
+        # CallbackQuery - send new message with photo
+        await target.message.answer_photo(
+            photo=config.menu_image_url,
+            caption=text,
+            reply_markup=keyboard
+        )
     else:
-        # Message object
-        await target.answer(text, reply_markup=keyboard)
+        # Message object - send photo
+        await target.answer_photo(
+            photo=config.menu_image_url,
+            caption=text,
+            reply_markup=keyboard
+        )
 
 
 async def mark_welcome_seen(user_id: int) -> None:
