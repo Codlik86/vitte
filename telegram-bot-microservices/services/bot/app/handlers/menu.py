@@ -196,18 +196,18 @@ def build_status_block(status: dict, lang: str = "ru", include_cta: bool = True)
 
     if lang == "ru":
         block = f"""🔮 Подписка: {status["subscription"]}
-🌸 Сообщений сегодня: {status["messages_today"]}
-🟪 Изображений: {status["images_remaining"]}
-😈 Улучшения: {features_str}"""
+💬 Сообщений сегодня: {status["messages_today"]}
+🖼 Изображений: {status["images_remaining"]}
+✨ Улучшения: {features_str}"""
         if include_cta:
             block += "\n\nНаписать ей 💌"
         else:
             block += "\n\nЖми «Открыть Vitte 💌» — выбери ту, с кем хочешь познакомиться."
     else:
-        block = f"""🔮 Subscription: {status["subscription"]}
-🌸 Messages today: {status["messages_today"]}
-🟪 Images: {status["images_remaining"]}
-😈 Enhancements: {features_str}"""
+        block = f""" Subscription: {status["subscription"]}
+💬 Messages today: {status["messages_today"]}
+🖼 Images: {status["images_remaining"]}
+✨ Enhancements: {features_str}"""
         if include_cta:
             block += "\n\nText her 💌"
         else:
