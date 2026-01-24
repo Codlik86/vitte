@@ -5,6 +5,7 @@ Handles incoming text messages from users and sends them to the chat API.
 Shows typing indicator and "Печатает..." message while waiting for response.
 """
 import asyncio
+from datetime import datetime, timedelta
 from aiogram import Router, F, Bot
 from aiogram.types import Message
 from aiogram.enums import ChatAction
@@ -12,11 +13,50 @@ from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 
 from app.services.api_client import send_chat_message
-from shared.database import get_db, Dialog
+from shared.database import get_db, Dialog, User, Subscription
+from shared.database.services import get_user_by_id
 from shared.utils import get_logger
 
 logger = get_logger(__name__)
 router = Router(name="messages")
+
+
+# ==================== TEXTS ====================
+
+NO_DIALOG_RU = "У тебя нет активного диалога. Нажми кнопку ниже, чтобы начать общение."
+NO_DIALOG_EN = "You don't have an active dialog. Click the button below to start chatting."
+
+LIMIT_REACHED_RU = "Вы достигли дневного лимита сообщений ({limit}). Оформите подписку для безлимитного общения 💎"
+LIMIT_REACHED_EN = "You've reached your daily message limit ({limit}). Get a subscription for unlimited messaging 💎"
+
+TYPING_RU = "{name} печатает..."
+TYPING_EN = "{name} is typing..."
+
+SAFETY_BLOCK_RU = "Не могу ответить на это сообщение. Попробуй написать что-то другое."
+SAFETY_BLOCK_EN = "I can't respond to that message. Try writing something else."
+
+ERROR_RU = "Произошла ошибка. Попробуй еще раз."
+ERROR_EN = "An error occurred. Please try again."
+
+USER_NOT_FOUND_RU = "Пользователь не найден"
+USER_NOT_FOUND_EN = "User not found"
+
+LIMIT_CHECK_ERROR_RU = "Ошибка проверки лимита"
+LIMIT_CHECK_ERROR_EN = "Error checking limit"
+
+
+# ==================== HELPER FUNCTIONS ====================
+
+async def get_user_language(user_id: int) -> str:
+    """Get user language from DB, default to 'ru'"""
+    async for db in get_db():
+        user = await get_user_by_id(db, user_id)
+        if user:
+            if isinstance(user, dict):
+                return user.get("language_code", "ru")
+            else:
+                return user.language_code or "ru"
+    return "ru"
 
 
 async def keep_typing(bot: Bot, chat_id: int, interval: float = 4.0):
@@ -47,6 +87,57 @@ async def get_active_dialog(user_id: int) -> Dialog | None:
     return None
 
 
+async def check_message_limit(user_id: int, lang: str) -> tuple[bool, str | None]:
+    """
+    Check if user can send a message (free users have 20 messages/day limit).
+    Returns (can_send, error_message)
+    """
+    async for db in get_db():
+        # Get user and subscription
+        user = await db.get(User, user_id)
+        if not user:
+            error = USER_NOT_FOUND_RU if lang == "ru" else USER_NOT_FOUND_EN
+            return False, error
+
+        # Check subscription status
+        result = await db.execute(
+            select(Subscription).where(Subscription.user_id == user_id)
+        )
+        subscription = result.scalar_one_or_none()
+
+        # If subscription is active, no limit
+        if subscription and subscription.is_active:
+            now = datetime.utcnow()
+            if subscription.expires_at and subscription.expires_at > now:
+                return True, None
+
+        # Free user - check daily limit (20 messages per day)
+        # Reset counter if it's a new day
+        now = datetime.utcnow()
+        if user.updated_at:
+            last_message_date = user.updated_at.date()
+            today = now.date()
+            if last_message_date < today:
+                # New day - reset counter
+                user.free_messages_used = 0
+
+        # Check if limit exceeded
+        if user.free_messages_used >= user.free_messages_limit:
+            error_template = LIMIT_REACHED_RU if lang == "ru" else LIMIT_REACHED_EN
+            error = error_template.format(limit=user.free_messages_limit)
+            return False, error
+
+        # Increment counter
+        user.free_messages_used += 1
+        user.updated_at = now
+        await db.commit()
+
+        return True, None
+
+    error = LIMIT_CHECK_ERROR_RU if lang == "ru" else LIMIT_CHECK_ERROR_EN
+    return False, error
+
+
 @router.message(F.text)
 async def handle_text_message(message: Message):
     """
@@ -69,23 +160,32 @@ async def handle_text_message(message: Message):
     if text.startswith("/"):
         return
 
+    # Get user language
+    lang = await get_user_language(user_id)
+
     # Get active dialog
     dialog = await get_active_dialog(user_id)
 
     if not dialog:
         # No active dialog - prompt user to start one
-        await message.answer(
-            "У тебя нет активного диалога. Нажми кнопку ниже, чтобы начать общение.",
-            parse_mode="HTML"
-        )
+        no_dialog_text = NO_DIALOG_RU if lang == "ru" else NO_DIALOG_EN
+        await message.answer(no_dialog_text, parse_mode="HTML")
         logger.info(f"User {user_id} sent message without active dialog")
         return
 
-    persona_name = dialog.persona.name if dialog.persona else "Персонаж"
+    # Check message limit for free users
+    can_send, error_msg = await check_message_limit(user_id, lang)
+    if not can_send:
+        await message.answer(error_msg, parse_mode="HTML")
+        logger.info(f"User {user_id} reached daily message limit")
+        return
+
+    persona_name = dialog.persona.name if dialog.persona else ("Персонаж" if lang == "ru" else "Character")
 
     # Send placeholder message
+    typing_text = TYPING_RU if lang == "ru" else TYPING_EN
     placeholder = await message.answer(
-        f"<i>{persona_name} печатает...</i>",
+        f"<i>{typing_text.format(name=persona_name)}</i>",
         parse_mode="HTML"
     )
 
@@ -128,16 +228,12 @@ async def handle_text_message(message: Message):
         logger.info(f"User {user_id} got response from {persona_name} (dialog {result.dialog_id})")
 
     elif result.is_safety_block:
-        await placeholder.edit_text(
-            "Не могу ответить на это сообщение. Попробуй написать что-то другое.",
-            parse_mode="HTML"
-        )
+        safety_text = SAFETY_BLOCK_RU if lang == "ru" else SAFETY_BLOCK_EN
+        await placeholder.edit_text(safety_text, parse_mode="HTML")
         logger.warning(f"Safety block for user {user_id}")
 
     else:
         # Error - show error message
-        await placeholder.edit_text(
-            f"Произошла ошибка. Попробуй еще раз.",
-            parse_mode="HTML"
-        )
+        error_text = ERROR_RU if lang == "ru" else ERROR_EN
+        await placeholder.edit_text(error_text, parse_mode="HTML")
         logger.error(f"Chat error for user {user_id}: {result.error}")

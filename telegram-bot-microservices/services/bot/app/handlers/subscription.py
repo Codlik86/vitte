@@ -69,6 +69,30 @@ SUBSCRIPTION_EN = """💎 <b>Vitte Premium</b>
 Choose your plan:"""
 
 
+# Active subscription status
+SUBSCRIPTION_ACTIVE_RU = """✅ <b>Подписка активна</b>
+
+📅 Активна до: <b>{expires_date}</b>
+⏳ Осталось дней: <b>{days_left}</b>
+
+<b>Доступный функционал:</b>
+• Безлимитные сообщения
+• 20 изображений каждый день
+• Самые продвинутые модели ИИ
+• Мгновенные ответы"""
+
+SUBSCRIPTION_ACTIVE_EN = """✅ <b>Subscription Active</b>
+
+📅 Active until: <b>{expires_date}</b>
+⏳ Days left: <b>{days_left}</b>
+
+<b>Available features:</b>
+• Unlimited messages
+• 20 images every day
+• Most advanced AI models
+• Instant responses"""
+
+
 PAYMENT_METHOD_RU = """💳 <b>Выбери способ оплаты</b>
 
 Ты выбрал: <b>{plan_name}</b>
@@ -140,6 +164,24 @@ def get_payment_method_keyboard_ru(plan_id: str) -> InlineKeyboardMarkup:
     ])
 
 
+def get_active_subscription_keyboard_ru() -> InlineKeyboardMarkup:
+    """Keyboard for users with active subscription (Russian)"""
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="⬅️ Назад", callback_data="sub:back_to_menu"),
+        ]
+    ])
+
+
+def get_active_subscription_keyboard_en() -> InlineKeyboardMarkup:
+    """Keyboard for users with active subscription (English)"""
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [
+            InlineKeyboardButton(text="⬅️ Back", callback_data="sub:back_to_menu"),
+        ]
+    ])
+
+
 def get_payment_method_keyboard_en(plan_id: str) -> InlineKeyboardMarkup:
     """Payment method selection keyboard (English)"""
     return InlineKeyboardMarkup(inline_keyboard=[
@@ -173,15 +215,48 @@ async def _show_subscription_screen(user_id: int, respond_func):
     """Common logic for showing subscription screen"""
     lang = await get_user_language(user_id)
 
-    if lang == "ru":
-        text = SUBSCRIPTION_RU
-        keyboard = get_subscription_keyboard_ru()
-    else:
-        text = SUBSCRIPTION_EN
-        keyboard = get_subscription_keyboard_en()
+    # Check if user has active subscription
+    async for db in get_db():
+        result = await db.execute(
+            select(Subscription).where(Subscription.user_id == user_id)
+        )
+        subscription = result.scalar_one_or_none()
 
-    await respond_func(text, reply_markup=keyboard, parse_mode="HTML")
-    logger.info(f"User {user_id} opened subscription menu")
+        # If subscription is active, show status
+        if subscription and subscription.is_active and subscription.expires_at:
+            now = datetime.utcnow()
+            if subscription.expires_at > now:
+                days_left = (subscription.expires_at - now).days
+                expires_date = subscription.expires_at.strftime("%d.%m.%Y") if lang == "ru" else subscription.expires_at.strftime("%Y-%m-%d")
+
+                if lang == "ru":
+                    text = SUBSCRIPTION_ACTIVE_RU.format(
+                        expires_date=expires_date,
+                        days_left=days_left
+                    )
+                    keyboard = get_active_subscription_keyboard_ru()
+                else:
+                    text = SUBSCRIPTION_ACTIVE_EN.format(
+                        expires_date=expires_date,
+                        days_left=days_left
+                    )
+                    keyboard = get_active_subscription_keyboard_en()
+
+                await respond_func(text, reply_markup=keyboard, parse_mode="HTML")
+                logger.info(f"User {user_id} viewed active subscription, {days_left} days left")
+                return
+
+        # No active subscription - show plans
+        if lang == "ru":
+            text = SUBSCRIPTION_RU
+            keyboard = get_subscription_keyboard_ru()
+        else:
+            text = SUBSCRIPTION_EN
+            keyboard = get_subscription_keyboard_en()
+
+        await respond_func(text, reply_markup=keyboard, parse_mode="HTML")
+        logger.info(f"User {user_id} opened subscription menu (no active subscription)")
+        break
 
 
 @router.message(Command("subscription"))

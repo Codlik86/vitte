@@ -68,7 +68,7 @@ class User(Base):
         nullable=False
     )
     free_messages_used = Column(Integer, default=0, nullable=False)
-    free_messages_limit = Column(Integer, default=10, nullable=False)
+    free_messages_limit = Column(Integer, default=20, nullable=False)
 
     # Active persona
     active_persona_id = Column(Integer, ForeignKey("personas.id", ondelete="SET NULL"), nullable=True)
