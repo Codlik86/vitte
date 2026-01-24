@@ -13,9 +13,10 @@ from sqlalchemy.orm import selectinload
 import httpx
 
 from app.config import config
-from shared.database import get_db, Dialog
+from shared.database import get_db, Dialog, Subscription
 from shared.database.services import get_user_by_id
 from shared.utils import get_logger
+from shared.utils.redis import redis_client
 from shared.llm.personas import PERSONAS
 
 logger = get_logger(__name__)
@@ -41,6 +42,19 @@ NO_DIALOGS_RU = """💌 У тебя пока нет активных диало�
 NO_DIALOGS_EN = """💌 You don't have any active dialogs yet.
 
 Open the app — choose a character and start chatting."""
+
+# Daily limit reached
+LIMIT_REACHED_RU = """⏸ <b>Дневной лимит исчерпан</b>
+
+Ты использовал все {limit} бесплатных сообщений на сегодня.
+
+Чтобы продолжить общение — оформи подписку 💎"""
+
+LIMIT_REACHED_EN = """⏸ <b>Daily limit reached</b>
+
+You've used all {limit} free messages for today.
+
+To continue chatting — get a subscription 💎"""
 
 
 # ==================== KEYBOARDS ====================
@@ -260,6 +274,61 @@ async def get_active_dialogs_with_personas(user_id: int) -> list[Dialog]:
     return []
 
 
+async def check_message_limit(user_id: int, lang: str) -> tuple[bool, str | None]:
+    """
+    Check if user can send a message (free users have 20 messages/day limit).
+    Uses Redis for fast counter with automatic daily reset.
+    Returns (can_send, error_message)
+    """
+    # Check subscription status from DB
+    async for db in get_db():
+        result = await db.execute(
+            select(Subscription).where(Subscription.user_id == user_id)
+        )
+        subscription = result.scalar_one_or_none()
+
+        # If subscription is active, no limit
+        if subscription and subscription.is_active:
+            now = datetime.utcnow()
+            if subscription.expires_at and subscription.expires_at > now:
+                return True, None
+        break
+
+    # Free user - check daily limit via Redis
+    redis_key = f"user:{user_id}:messages:daily"
+
+    try:
+        # Get current count from Redis
+        current_count = await redis_client.get(redis_key)
+
+        if current_count is None:
+            # First message today - set counter to 1 with TTL until midnight
+            now = datetime.utcnow()
+            # Calculate seconds until midnight UTC
+            midnight = datetime(now.year, now.month, now.day, 23, 59, 59)
+            seconds_until_midnight = int((midnight - now).total_seconds()) + 1
+
+            await redis_client.set(redis_key, "1", expire=seconds_until_midnight)
+            return True, None
+
+        count = int(current_count)
+
+        # Check if limit exceeded (20 messages/day)
+        if count >= 20:
+            error_template = LIMIT_REACHED_RU if lang == "ru" else LIMIT_REACHED_EN
+            error = error_template.format(limit=20)
+            return False, error
+
+        # Increment counter atomically
+        await redis_client.increment(redis_key)
+        return True, None
+
+    except Exception as e:
+        logger.error(f"Redis error checking message limit for user {user_id}: {e}")
+        # Fallback - allow message on Redis error
+        return True, None
+
+
 # ==================== HANDLERS ====================
 
 async def _show_chat_screen(user_id: int, respond_func):
@@ -307,6 +376,28 @@ async def on_continue_dialog(callback: CallbackQuery):
     """Handle 'Continue' button - resume specific dialog"""
     await callback.answer()
     user_id = callback.from_user.id
+
+    # Get user language
+    lang = await get_user_language(user_id)
+
+    # Check message limit BEFORE continuing dialog
+    can_send, error_msg = await check_message_limit(user_id, lang)
+    if not can_send:
+        # Show limit reached message with subscription and menu buttons
+        if lang == "ru":
+            sub_button_text = "💎 Подписка"
+            menu_button_text = "🏠 Главное меню"
+        else:
+            sub_button_text = "💎 Subscription"
+            menu_button_text = "🏠 Main Menu"
+
+        keyboard = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text=sub_button_text, callback_data="menu:subscription")],
+            [InlineKeyboardButton(text=menu_button_text, callback_data="menu:back_to_menu")]
+        ])
+        await callback.message.answer(error_msg, reply_markup=keyboard, parse_mode="HTML")
+        logger.info(f"User {user_id} reached daily message limit when continuing dialog")
+        return
 
     # Extract dialog_id from callback data
     dialog_id = int(callback.data.split(":")[-1])
