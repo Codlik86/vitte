@@ -384,3 +384,12 @@ async def on_open_webapp(callback: CallbackQuery):
     """Handle webapp button click (fallback when webapp_url not configured)"""
     await callback.answer("🚧 Web App в разработке / Web App under development", show_alert=True)
     logger.info(f"User {callback.from_user.id} clicked Open Vitte button")
+
+
+@router.callback_query(F.data == "menu:back_to_menu")
+async def on_back_to_menu(callback: CallbackQuery):
+    """Handle back to main menu button click"""
+    await callback.answer()
+    lang = await get_user_language(callback.from_user.id)
+    await show_main_menu(callback, lang=lang, user_id=callback.from_user.id)
+    logger.info(f"User {callback.from_user.id} returned to main menu")

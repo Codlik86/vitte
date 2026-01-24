@@ -27,8 +27,17 @@ router = Router(name="messages")
 NO_DIALOG_RU = "У тебя нет активного диалога. Нажми кнопку ниже, чтобы начать общение."
 NO_DIALOG_EN = "You don't have an active dialog. Click the button below to start chatting."
 
-LIMIT_REACHED_RU = "Вы достигли дневного лимита сообщений ({limit}). Оформите подписку для безлимитного общения 💎"
-LIMIT_REACHED_EN = "You've reached your daily message limit ({limit}). Get a subscription for unlimited messaging 💎"
+LIMIT_REACHED_RU = """⏸ <b>Дневной лимит исчерпан</b>
+
+Ты использовал все {limit} бесплатных сообщений на сегодня.
+
+Чтобы продолжить общение — оформи подписку 💎"""
+
+LIMIT_REACHED_EN = """⏸ <b>Daily limit reached</b>
+
+You've used all {limit} free messages for today.
+
+To continue chatting — get a subscription 💎"""
 
 TYPING_RU = "{name} печатает..."
 TYPING_EN = "{name} is typing..."
@@ -181,10 +190,17 @@ async def handle_text_message(message: Message):
     # Check message limit for free users
     can_send, error_msg = await check_message_limit(user_id, lang)
     if not can_send:
-        # Show limit reached message with subscription button
-        sub_button_text = "💎 Оформить подписку" if lang == "ru" else "💎 Get Subscription"
+        # Show limit reached message with subscription and menu buttons
+        if lang == "ru":
+            sub_button_text = "💎 Подписка"
+            menu_button_text = "🏠 Главное меню"
+        else:
+            sub_button_text = "💎 Subscription"
+            menu_button_text = "🏠 Main Menu"
+
         keyboard = InlineKeyboardMarkup(inline_keyboard=[
-            [InlineKeyboardButton(text=sub_button_text, callback_data="menu:subscription")]
+            [InlineKeyboardButton(text=sub_button_text, callback_data="menu:subscription")],
+            [InlineKeyboardButton(text=menu_button_text, callback_data="menu:back_to_menu")]
         ])
         await message.answer(error_msg, reply_markup=keyboard, parse_mode="HTML")
         logger.info(f"User {user_id} reached daily message limit")
