@@ -45,16 +45,11 @@ def get_settings_keyboard(lang: str, current_lang: str) -> InlineKeyboardMarkup:
     else:
         lang_btn_text = "🇬🇧 Язык: English" if lang == "ru" else "🇬🇧 Language: English"
 
-    # Clear history button (disabled for now)
-    clear_text = "🗑 Очистить историю" if lang == "ru" else "🗑 Clear history"
     back_text = "⬅️ Назад" if lang == "ru" else "⬅️ Back"
 
     return InlineKeyboardMarkup(inline_keyboard=[
         [
             InlineKeyboardButton(text=lang_btn_text, callback_data="settings:language"),
-        ],
-        [
-            InlineKeyboardButton(text=clear_text, callback_data="settings:clear_history"),
         ],
         [
             InlineKeyboardButton(text=back_text, callback_data="settings:back_to_menu"),
@@ -237,17 +232,6 @@ async def on_select_german(callback: CallbackQuery):
     logger.info(f"User {callback.from_user.id} tried to select German (in development)")
 
 
-@router.callback_query(F.data == "settings:clear_history")
-async def on_clear_history(callback: CallbackQuery):
-    """Handle 'Clear history' button - in development"""
-    lang = await get_user_language(callback.from_user.id)
-
-    if lang == "ru":
-        await callback.answer("🚧 Очистка истории в разработке", show_alert=True)
-    else:
-        await callback.answer("🚧 Clear history coming soon", show_alert=True)
-
-    logger.info(f"User {callback.from_user.id} tried to clear history (in development)")
 
 
 @router.callback_query(F.data == "settings:back_to_settings")
