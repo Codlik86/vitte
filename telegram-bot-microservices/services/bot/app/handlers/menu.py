@@ -186,6 +186,8 @@ def build_status_block(status: dict, lang: str = "ru") -> str:
         status: User status dict
         lang: Language code
     """
+    plan = status["subscription"]
+    is_premium = plan == "Premium"
     feature_names = FEATURE_NAMES_RU if lang == "ru" else FEATURE_NAMES_EN
 
     # Format features
@@ -196,23 +198,29 @@ def build_status_block(status: dict, lang: str = "ru") -> str:
     else:
         features_str = "Нет улучшений" if lang == "ru" else "No upgrades"
 
-    # Plan status
-    plan = status["subscription"]
-
-    # Messages limit (for free plan - 20 per day, пока только текст)
-    messages_today = status["messages_today"]
-    messages_limit = 20  # Hardcoded for now
-    messages_str = f"💬 {messages_today}/{messages_limit}"
-
     # Images
     images_remaining = status["images_remaining"]
     images_str = f"🖼 {images_remaining} доступно" if lang == "ru" else f"🖼 {images_remaining} available"
 
-    if lang == "ru":
-        block = f"""👤 {plan}        ✨ {features_str}
-{messages_str}        {images_str}"""
+    if is_premium:
+        # Premium user - show unlimited messages + features + images
+        if lang == "ru":
+            block = f"""💎 Premium        ✨ {features_str}
+💬 Безлимит        {images_str}"""
+        else:
+            block = f"""💎 Premium        ✨ {features_str}
+💬 Unlimited        {images_str}"""
     else:
-        block = f"""👤 {plan}        ✨ {features_str}
+        # Free user - show full status with limits
+        messages_today = status["messages_today"]
+        messages_limit = 20
+        messages_str = f"💬 {messages_today}/{messages_limit}"
+
+        if lang == "ru":
+            block = f"""👤 Free        ✨ {features_str}
+{messages_str}        {images_str}"""
+        else:
+            block = f"""👤 Free        ✨ {features_str}
 {messages_str}        {images_str}"""
 
     return block
