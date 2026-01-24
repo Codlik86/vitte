@@ -14,6 +14,7 @@ from datetime import datetime
 
 from app.config import config
 from shared.utils import get_logger
+from shared.utils.redis import redis_client
 from shared.database import get_db, get_user_by_id, User
 
 logger = get_logger(__name__)
@@ -150,8 +151,14 @@ async def get_user_status(user_id: int) -> dict:
             )
             status["subscription"] = "Premium" if has_active_sub else "Free"
 
-            # Messages today (free messages used)
-            status["messages_today"] = user.free_messages_used or 0
+            # Messages today - get from Redis
+            try:
+                redis_key = f"user:{user_id}:messages:daily"
+                current_count = await redis_client.get(redis_key)
+                status["messages_today"] = int(current_count) if current_count else 0
+            except Exception as e:
+                logger.error(f"Error getting message count from Redis: {e}")
+                status["messages_today"] = 0
 
             # Images remaining
             image_balance = user.image_balance

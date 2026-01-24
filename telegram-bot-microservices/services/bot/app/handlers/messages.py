@@ -7,7 +7,7 @@ Shows typing indicator and "Печатает..." message while waiting for respo
 import asyncio
 from datetime import datetime, timedelta
 from aiogram import Router, F, Bot
-from aiogram.types import Message
+from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.enums import ChatAction
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
@@ -181,7 +181,12 @@ async def handle_text_message(message: Message):
     # Check message limit for free users
     can_send, error_msg = await check_message_limit(user_id, lang)
     if not can_send:
-        await message.answer(error_msg, parse_mode="HTML")
+        # Show limit reached message with subscription button
+        sub_button_text = "💎 Оформить подписку" if lang == "ru" else "💎 Get Subscription"
+        keyboard = InlineKeyboardMarkup(inline_keyboard=[
+            [InlineKeyboardButton(text=sub_button_text, callback_data="menu:subscription")]
+        ])
+        await message.answer(error_msg, reply_markup=keyboard, parse_mode="HTML")
         logger.info(f"User {user_id} reached daily message limit")
         return
 
