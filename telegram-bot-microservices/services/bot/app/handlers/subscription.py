@@ -99,6 +99,9 @@ def get_subscription_keyboard_ru() -> InlineKeyboardMarkup:
             InlineKeyboardButton(text="Год · 365 дней — 2990 ⭐", callback_data="sub:plus_365d"),
         ],
         [
+            InlineKeyboardButton(text="⭐ Купить Stars", url="https://t.me/tribute/app?startapp=plsg"),
+        ],
+        [
             InlineKeyboardButton(text="⬅️ Назад", callback_data="sub:back_to_menu"),
         ]
     ])
@@ -115,6 +118,9 @@ def get_subscription_keyboard_en() -> InlineKeyboardMarkup:
         ],
         [
             InlineKeyboardButton(text="Year · 365 days — 2990 ⭐", callback_data="sub:plus_365d"),
+        ],
+        [
+            InlineKeyboardButton(text="⭐ Buy Stars", url="https://t.me/tribute/app?startapp=plsg"),
         ],
         [
             InlineKeyboardButton(text="⬅️ Back", callback_data="sub:back_to_menu"),
