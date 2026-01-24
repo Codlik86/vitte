@@ -4,7 +4,7 @@ Chat handler - Start Chat button logic
 Handles "Начать общение" button from main menu.
 Shows active dialogs list or prompts to create new.
 """
-from datetime import datetime
+from datetime import datetime, timezone
 from aiogram import Router, F
 from aiogram.types import CallbackQuery, Message, InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo
 from aiogram.filters import Command
@@ -63,7 +63,7 @@ def format_dialog_date(dt: datetime | None) -> str:
     """Format dialog date for display"""
     if not dt:
         return ""
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc)
     if dt.date() == now.date():
         return dt.strftime("%H:%M")
     return dt.strftime("%d.%m")
@@ -289,7 +289,7 @@ async def check_message_limit(user_id: int, lang: str) -> tuple[bool, str | None
 
         # If subscription is active, no limit
         if subscription and subscription.is_active:
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             if subscription.expires_at and subscription.expires_at > now:
                 return True, None
         break
@@ -303,7 +303,7 @@ async def check_message_limit(user_id: int, lang: str) -> tuple[bool, str | None
 
         if current_count is None:
             # First message today - set counter to 1 with TTL until midnight
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             # Calculate seconds until midnight UTC
             midnight = datetime(now.year, now.month, now.day, 23, 59, 59)
             seconds_until_midnight = int((midnight - now).total_seconds()) + 1

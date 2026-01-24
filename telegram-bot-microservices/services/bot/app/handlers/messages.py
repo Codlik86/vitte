@@ -5,7 +5,7 @@ Handles incoming text messages from users and sends them to the chat API.
 Shows typing indicator and "Печатает..." message while waiting for response.
 """
 import asyncio
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from aiogram import Router, F, Bot
 from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.enums import ChatAction
@@ -112,7 +112,7 @@ async def check_message_limit(user_id: int, lang: str) -> tuple[bool, str | None
 
         # If subscription is active, no limit
         if subscription and subscription.is_active:
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             if subscription.expires_at and subscription.expires_at > now:
                 return True, None
         break
@@ -126,7 +126,7 @@ async def check_message_limit(user_id: int, lang: str) -> tuple[bool, str | None
 
         if current_count is None:
             # First message today - set counter to 1 with TTL until midnight
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             # Calculate seconds until midnight UTC
             midnight = datetime(now.year, now.month, now.day, 23, 59, 59)
             seconds_until_midnight = int((midnight - now).total_seconds()) + 1

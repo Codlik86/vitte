@@ -10,7 +10,7 @@ from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKe
 from aiogram.filters import Command
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
-from datetime import datetime
+from datetime import datetime, timezone
 
 from app.config import config
 from shared.utils import get_logger
@@ -147,7 +147,7 @@ async def get_user_status(user_id: int) -> dict:
                 subscription and
                 subscription.is_active and
                 subscription.expires_at and
-                subscription.expires_at > datetime.utcnow()
+                subscription.expires_at > datetime.now(timezone.utc)
             )
             status["subscription"] = "Premium" if has_active_sub else "Free"
 

@@ -10,7 +10,7 @@ from aiogram.types import (
     LabeledPrice, PreCheckoutQuery
 )
 from aiogram.filters import Command
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from shared.database import get_db, User, Subscription, Purchase
 from shared.database.services import get_user_by_id
@@ -224,7 +224,7 @@ async def _show_subscription_screen(user_id: int, respond_func):
 
         # If subscription is active, show status
         if subscription and subscription.is_active and subscription.expires_at:
-            now = datetime.utcnow()
+            now = datetime.now(timezone.utc)
             if subscription.expires_at > now:
                 days_left = (subscription.expires_at - now).days
                 expires_date = subscription.expires_at.strftime("%d.%m.%Y") if lang == "ru" else subscription.expires_at.strftime("%Y-%m-%d")
@@ -422,7 +422,7 @@ async def on_successful_payment(message: Message):
         )
         subscription = result.scalar_one_or_none()
 
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         expires_at = now + timedelta(days=plan["days"])
 
         if subscription:
