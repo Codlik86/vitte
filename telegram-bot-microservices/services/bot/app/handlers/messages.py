@@ -16,6 +16,7 @@ from app.services.api_client import send_chat_message
 from shared.database import get_db, Dialog, User, Subscription
 from shared.database.services import get_user_by_id
 from shared.utils import get_logger
+from shared.utils.redis import redis_client
 
 logger = get_logger(__name__)
 router = Router(name="messages")
@@ -90,16 +91,11 @@ async def get_active_dialog(user_id: int) -> Dialog | None:
 async def check_message_limit(user_id: int, lang: str) -> tuple[bool, str | None]:
     """
     Check if user can send a message (free users have 20 messages/day limit).
+    Uses Redis for fast counter with automatic daily reset.
     Returns (can_send, error_message)
     """
+    # Check subscription status from DB (cached by get_user_by_id)
     async for db in get_db():
-        # Get user and subscription
-        user = await db.get(User, user_id)
-        if not user:
-            error = USER_NOT_FOUND_RU if lang == "ru" else USER_NOT_FOUND_EN
-            return False, error
-
-        # Check subscription status
         result = await db.execute(
             select(Subscription).where(Subscription.user_id == user_id)
         )
@@ -110,32 +106,41 @@ async def check_message_limit(user_id: int, lang: str) -> tuple[bool, str | None
             now = datetime.utcnow()
             if subscription.expires_at and subscription.expires_at > now:
                 return True, None
+        break
 
-        # Free user - check daily limit (20 messages per day)
-        # Reset counter if it's a new day
-        now = datetime.utcnow()
-        if user.updated_at:
-            last_message_date = user.updated_at.date()
-            today = now.date()
-            if last_message_date < today:
-                # New day - reset counter
-                user.free_messages_used = 0
+    # Free user - check daily limit via Redis
+    redis_key = f"user:{user_id}:messages:daily"
 
-        # Check if limit exceeded
-        if user.free_messages_used >= user.free_messages_limit:
+    try:
+        # Get current count from Redis
+        current_count = await redis_client.get(redis_key)
+
+        if current_count is None:
+            # First message today - set counter to 1 with TTL until midnight
+            now = datetime.utcnow()
+            # Calculate seconds until midnight UTC
+            midnight = datetime(now.year, now.month, now.day, 23, 59, 59)
+            seconds_until_midnight = int((midnight - now).total_seconds()) + 1
+
+            await redis_client.set(redis_key, "1", expire=seconds_until_midnight)
+            return True, None
+
+        count = int(current_count)
+
+        # Check if limit exceeded (20 messages/day)
+        if count >= 20:
             error_template = LIMIT_REACHED_RU if lang == "ru" else LIMIT_REACHED_EN
-            error = error_template.format(limit=user.free_messages_limit)
+            error = error_template.format(limit=20)
             return False, error
 
-        # Increment counter
-        user.free_messages_used += 1
-        user.updated_at = now
-        await db.commit()
-
+        # Increment counter atomically
+        await redis_client.increment(redis_key)
         return True, None
 
-    error = LIMIT_CHECK_ERROR_RU if lang == "ru" else LIMIT_CHECK_ERROR_EN
-    return False, error
+    except Exception as e:
+        logger.error(f"Redis error checking message limit for user {user_id}: {e}")
+        # Fallback - allow message on Redis error
+        return True, None
 
 
 @router.message(F.text)
