@@ -13,8 +13,12 @@ from shared.database import (
     get_user_by_id,
     create_user,
     create_subscription,
+    ImageBalance,
 )
 from shared.utils import get_logger
+
+# Константы лимитов для Free подписки
+FREE_IMAGES_BONUS = 10  # Разовый бонус фото при регистрации
 from app.handlers.onboarding import get_language_keyboard, WELCOME_TEXT
 
 logger = get_logger(__name__)
@@ -55,11 +59,22 @@ async def cmd_start(message: Message, i18n: I18nContext):
                     user_id=user.id,
                     plan="free",
                     is_active=True,
-                    messages_limit=100,
-                    images_limit=10
+                    messages_limit=20,  # 20 сообщений в день для Free
+                    images_limit=FREE_IMAGES_BONUS
                 )
 
-                logger.info(f"New user registered: {user.id} (@{user.username})")
+                # Create ImageBalance with free bonus images (разовый бонус)
+                image_balance = ImageBalance(
+                    user_id=user.id,
+                    total_purchased_images=FREE_IMAGES_BONUS,
+                    remaining_purchased_images=FREE_IMAGES_BONUS,
+                    daily_subscription_quota=0,  # Free не имеет ежедневной квоты
+                    daily_subscription_used=0
+                )
+                db.add(image_balance)
+                await db.commit()
+
+                logger.info(f"New user registered: {user.id} (@{user.username}) with {FREE_IMAGES_BONUS} free images")
 
             break
 

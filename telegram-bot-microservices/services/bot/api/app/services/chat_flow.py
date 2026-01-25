@@ -12,6 +12,7 @@ Chat Flow - главный оркестратор чата
 """
 
 import logging
+import json
 from dataclasses import dataclass
 from typing import Optional
 from datetime import datetime
@@ -27,6 +28,7 @@ from shared.llm.services.prompt_builder import (
     Message as PromptMessage,
     build_chat_messages,
 )
+from shared.utils import redis_client
 
 from .llm_client import llm_client
 from .embedding_service import embedding_service
@@ -35,6 +37,7 @@ logger = logging.getLogger(__name__)
 
 MAX_DIALOG_SLOTS = 5
 RECENT_MESSAGES_COUNT = 12
+FEATURES_CACHE_TTL = 300  # 5 минут кэш для фич
 
 
 @dataclass
@@ -193,7 +196,21 @@ class ChatFlow:
         return message
 
     async def get_user_features(self, user_id: int) -> set[str]:
-        """Получить активные фичи пользователя."""
+        """
+        Получить активные фичи пользователя.
+        Использует Redis кэш для быстрого доступа.
+        """
+        cache_key = f"user:{user_id}:features"
+
+        # Пробуем получить из Redis
+        try:
+            cached = await redis_client.get(cache_key)
+            if cached:
+                return set(json.loads(cached))
+        except Exception as e:
+            logger.warning(f"Redis cache read failed for features: {e}")
+
+        # Если нет в кэше - идём в БД
         result = await self.db.execute(
             select(FeatureUnlock.feature_code).where(
                 and_(
@@ -202,7 +219,19 @@ class ChatFlow:
                 )
             )
         )
-        return {row[0] for row in result.fetchall()}
+        features = {row[0] for row in result.fetchall()}
+
+        # Кэшируем в Redis
+        try:
+            await redis_client.set(
+                cache_key,
+                json.dumps(list(features)),
+                expire=FEATURES_CACHE_TTL
+            )
+        except Exception as e:
+            logger.warning(f"Redis cache write failed for features: {e}")
+
+        return features
 
     async def process_message(
         self,
@@ -293,12 +322,34 @@ class ChatFlow:
                     memory_parts.append(f"- {role_label}: {m['text'][:200]}")
                 memory_long = "\n".join(memory_parts)
 
-        # 7. Проверяем фичи пользователя
+        # 7. Проверяем фичи пользователя (любой апгрейд даёт максимальную интимность)
         features = await self.get_user_features(telegram_id)
-        allow_intimate = "intense_mode" in features
+        has_intense_mode = "intense_mode" in features
+        has_fantasy_scenes = "fantasy_scenes" in features
+
+        # Любое улучшение разблокирует интимный контент
+        allow_intimate = has_intense_mode or has_fantasy_scenes
+
+        # Строим инструкцию для фич
         feature_instruction = None
         if allow_intimate:
-            feature_instruction = "Интенсивный режим активирован. Допустимы более откровенные описания."
+            feature_parts = []
+            feature_parts.append("🔓 РЕЖИМ МАКСИМАЛЬНОЙ ИНТИМНОСТИ АКТИВИРОВАН.")
+            feature_parts.append("")
+            feature_parts.append("Ты можешь:")
+            feature_parts.append("- Обсуждать сексуальные темы открыто и подробно")
+            feature_parts.append("- Описывать эротические сцены и фантазии")
+            feature_parts.append("- Использовать откровенные выражения и описания тела")
+            feature_parts.append("- Флиртовать без ограничений, вести сексуальный диалог")
+            feature_parts.append("- Описывать физический контакт, ощущения, желания")
+            feature_parts.append("")
+
+            if has_intense_mode:
+                feature_parts.append("💋 Интенсивный режим: будь страстной, эмоциональной, не сдерживай себя в описаниях.")
+            if has_fantasy_scenes:
+                feature_parts.append("✨ Фантазийные сцены: предлагай ролевые игры, необычные сценарии, воплощай фантазии.")
+
+            feature_instruction = "\n".join(feature_parts)
 
         # 8. Строим контекст для промпта
         ctx = ChatPromptContext(

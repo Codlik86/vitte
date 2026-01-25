@@ -12,10 +12,13 @@ from aiogram.types import (
 from aiogram.filters import Command
 from datetime import datetime, timedelta, timezone
 
-from shared.database import get_db, User, Subscription, Purchase
+from shared.database import get_db, User, Subscription, Purchase, ImageBalance
 from shared.database.services import get_user_by_id
-from shared.utils import get_logger
+from shared.utils import get_logger, redis_client
 from sqlalchemy import select
+
+# Константы лимитов для Premium подписки
+PREMIUM_DAILY_IMAGES = 20  # Ежедневная квота фото для Premium
 
 logger = get_logger(__name__)
 router = Router(name="subscription")
@@ -467,7 +470,38 @@ async def on_successful_payment(message: Message):
         )
         db.add(purchase)
 
+        # Update ImageBalance for Premium daily quota
+        result = await db.execute(
+            select(ImageBalance).where(ImageBalance.user_id == user_id)
+        )
+        image_balance = result.scalar_one_or_none()
+
+        if image_balance:
+            # Обновляем ежедневную квоту для Premium
+            image_balance.daily_subscription_quota = PREMIUM_DAILY_IMAGES
+            image_balance.daily_subscription_used = 0
+            image_balance.daily_quota_date = now
+        else:
+            # Создаём ImageBalance если не существует
+            image_balance = ImageBalance(
+                user_id=user_id,
+                total_purchased_images=0,
+                remaining_purchased_images=0,
+                daily_subscription_quota=PREMIUM_DAILY_IMAGES,
+                daily_subscription_used=0,
+                daily_quota_date=now
+            )
+            db.add(image_balance)
+
         await db.commit()
+
+        # Инвалидируем кэш подписки
+        try:
+            await redis_client.delete(f"subscription:{user_id}")
+            logger.info(f"Invalidated subscription cache for user {user_id}")
+        except Exception as e:
+            logger.warning(f"Failed to invalidate subscription cache: {e}")
+
         break
 
     # Send success message

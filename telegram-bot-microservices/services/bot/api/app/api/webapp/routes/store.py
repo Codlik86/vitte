@@ -9,7 +9,7 @@ from typing import Optional
 from datetime import datetime
 from pydantic import BaseModel
 
-from shared.database import get_db, User, Subscription, ImageBalance, FeatureUnlock
+from shared.database import get_db, User, Subscription, FeatureUnlock, get_images_remaining
 from app.services.invoice_service import (
     create_subscription_invoice,
     create_image_pack_invoice,
@@ -138,11 +138,11 @@ async def get_store_status(
 ):
     """Get user's store status (subscription, images, features)"""
     # Reload user with relationships (WebAppUser doesn't load them)
+    # Note: image_balance загружается отдельно через get_images_remaining() для автоматического сброса
     result = await db.execute(
         select(User)
         .options(
             selectinload(User.subscription),
-            selectinload(User.image_balance),
             selectinload(User.feature_unlocks)
         )
         .where(User.id == user.id)
@@ -164,13 +164,11 @@ async def get_store_status(
     subscription = user_with_rels.subscription
     has_subscription = bool(subscription and subscription.is_active and subscription.expires_at and subscription.expires_at > datetime.utcnow())
 
-    # Get image balance
-    image_balance = user_with_rels.image_balance
-    remaining_today = 0
-    remaining_paid = 0
-    if image_balance:
-        remaining_today = max(0, image_balance.daily_subscription_quota - image_balance.daily_subscription_used)
-        remaining_paid = image_balance.remaining_purchased_images
+    # Get image balance with automatic daily reset
+    # Если новый день - сбрасываем daily_subscription_used до 0 (НЕ накапливается!)
+    image_quota = await get_images_remaining(db, user.id)
+    remaining_today = image_quota.remaining_daily
+    remaining_paid = image_quota.remaining_purchased
 
     # Get unlocked features
     unlocked_features = []

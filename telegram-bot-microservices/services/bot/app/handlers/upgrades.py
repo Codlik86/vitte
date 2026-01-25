@@ -14,7 +14,7 @@ from datetime import datetime
 
 from shared.database import get_db, User, FeatureUnlock, Purchase, Subscription
 from shared.database.services import get_user_by_id, get_subscription_by_user_id
-from shared.utils import get_logger
+from shared.utils import get_logger, redis_client
 from sqlalchemy import select
 
 logger = get_logger(__name__)
@@ -500,6 +500,14 @@ async def on_successful_payment(message: Message):
         db.add(purchase)
 
         await db.commit()
+
+        # Инвалидируем кэш фич пользователя в Redis
+        try:
+            await redis_client.delete(f"user:{user_id}:features")
+            logger.info(f"Invalidated features cache for user {user_id}")
+        except Exception as e:
+            logger.warning(f"Failed to invalidate features cache: {e}")
+
         break
 
     # Send success message

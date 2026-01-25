@@ -9,7 +9,7 @@ from typing import Optional
 from datetime import datetime
 from pydantic import BaseModel
 
-from shared.database import get_db, User, Subscription, ImageBalance, AccessStatus
+from shared.database import get_db, User, Subscription, ImageBalance, AccessStatus, get_images_remaining
 from app.api.webapp.dependencies import WebAppUser
 
 router = APIRouter()
@@ -72,20 +72,14 @@ async def get_access_status(
         has_access = False
         can_send_message = False
 
-    # Get image balance
-    image_balance = user_with_rels.image_balance
-    if image_balance:
-        images = ImagesStatus(
-            remaining_free_today=max(0, image_balance.daily_subscription_quota - image_balance.daily_subscription_used),
-            remaining_paid=image_balance.remaining_purchased_images,
-            total_remaining=max(0, image_balance.daily_subscription_quota - image_balance.daily_subscription_used) + image_balance.remaining_purchased_images
-        )
-    else:
-        images = ImagesStatus(
-            remaining_free_today=0,
-            remaining_paid=0,
-            total_remaining=0
-        )
+    # Get image balance with automatic daily reset
+    # Если новый день - сбрасываем daily_subscription_used до 0 (НЕ накапливается!)
+    image_quota = await get_images_remaining(db, telegram_id)
+    images = ImagesStatus(
+        remaining_free_today=image_quota.remaining_daily,
+        remaining_paid=image_quota.remaining_purchased,
+        total_remaining=image_quota.total_remaining
+    )
 
     return AccessStatusResponse(
         telegram_id=telegram_id,

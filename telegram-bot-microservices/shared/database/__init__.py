@@ -50,6 +50,13 @@ from shared.database.services import (
     invalidate_user_cache,
     invalidate_subscription_cache
 )
+from shared.database.image_service import (
+    ImageQuotaResult,
+    check_and_reset_daily_quota,
+    get_images_remaining,
+    use_image_quota,
+    add_purchased_images,
+)
 
 __all__ = [
     # Base
@@ -99,5 +106,11 @@ __all__ = [
     "delete_old_messages",
     # Cache utilities
     "invalidate_user_cache",
-    "invalidate_subscription_cache"
+    "invalidate_subscription_cache",
+    # Image quota services
+    "ImageQuotaResult",
+    "check_and_reset_daily_quota",
+    "get_images_remaining",
+    "use_image_quota",
+    "add_purchased_images",
 ]
