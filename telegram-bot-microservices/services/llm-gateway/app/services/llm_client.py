@@ -49,7 +49,7 @@ class LLMClient:
         model: Optional[str] = None,
         temperature: float = 0.7,
         max_tokens: Optional[int] = None,
-        repetition_penalty: Optional[float] = None,
+        presence_penalty: Optional[float] = None,
         frequency_penalty: Optional[float] = None
     ) -> str:
         """
@@ -60,7 +60,7 @@ class LLMClient:
             model: Model to use (default: deepseek-v3.2)
             temperature: Sampling temperature
             max_tokens: Max tokens in response
-            repetition_penalty: Penalty for token repetition (1.0 = no penalty, >1.0 = less repetition)
+            presence_penalty: Penalty for token presence (-2.0 to 2.0, positive = new topics)
             frequency_penalty: Penalty for frequent tokens (-2.0 to 2.0, positive = less repetition)
 
         Returns:
@@ -70,7 +70,7 @@ class LLMClient:
             APIError: If all retries failed
         """
         try:
-            # Build parameters dict
+            # Build parameters dict (OpenAI-compatible)
             params = {
                 "model": model or self.default_model,
                 "messages": [m.model_dump() for m in messages],
@@ -79,14 +79,28 @@ class LLMClient:
 
             if max_tokens is not None:
                 params["max_tokens"] = max_tokens
-            if repetition_penalty is not None:
-                params["repetition_penalty"] = repetition_penalty
+            if presence_penalty is not None:
+                params["presence_penalty"] = presence_penalty
             if frequency_penalty is not None:
                 params["frequency_penalty"] = frequency_penalty
+
+            # DEBUG: Log exact params sent to DeepSeek
+            logger.warning(f"DeepSeek API params: model={params.get('model')}, temp={params.get('temperature')}, "
+                          f"max_tokens={params.get('max_tokens')}, presence_penalty={params.get('presence_penalty')}, "
+                          f"frequency_penalty={params.get('frequency_penalty')}, messages_count={len(params['messages'])}")
 
             response = await self.client.chat.completions.create(**params)
 
             content = response.choices[0].message.content
+
+            # DEBUG: Log response to check for repetitions
+            logger.warning(f"DeepSeek response length: {len(content) if content else 0} chars")
+            if content and len(content) > 500:
+                # Check if response contains repetitions
+                first_200 = content[:200]
+                if content.count(first_200) > 1:
+                    logger.error(f"⚠️ REPETITION DETECTED in DeepSeek response! First 200 chars appear {content.count(first_200)} times")
+
             logger.info(
                 f"LLM completion success: model={model or self.default_model}, "
                 f"tokens={response.usage.total_tokens if response.usage else 'N/A'}"

@@ -83,7 +83,7 @@ async def create_chat_completion(request: ChatCompletionRequest):
             model=model,
             temperature=request.temperature,
             max_tokens=request.max_tokens,
-            repetition_penalty=request.repetition_penalty,
+            presence_penalty=request.presence_penalty,
             frequency_penalty=request.frequency_penalty
         )
 

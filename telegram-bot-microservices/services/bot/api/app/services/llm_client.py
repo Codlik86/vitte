@@ -27,7 +27,7 @@ class LLMClient:
         temperature: float = 0.8,
         max_tokens: int = 1024,
         stream: bool = False,
-        repetition_penalty: Optional[float] = None,
+        presence_penalty: Optional[float] = None,
         frequency_penalty: Optional[float] = None,
     ) -> Optional[str]:
         """
@@ -39,7 +39,7 @@ class LLMClient:
             temperature: Sampling temperature (0.0 - 2.0)
             max_tokens: Maximum tokens in response
             stream: Whether to stream response (not implemented yet)
-            repetition_penalty: Penalty for token repetition (1.0 = no penalty, >1.0 = less repetition)
+            presence_penalty: Penalty for token presence (-2.0 to 2.0, positive = new topics)
             frequency_penalty: Penalty for frequent tokens (-2.0 to 2.0, positive = less repetition)
 
         Returns:
@@ -53,9 +53,9 @@ class LLMClient:
             "stream": stream,
         }
 
-        # Добавляем опциональные параметры против повторений
-        if repetition_penalty is not None:
-            payload["repetition_penalty"] = repetition_penalty
+        # Добавляем опциональные параметры против повторений (OpenAI-compatible)
+        if presence_penalty is not None:
+            payload["presence_penalty"] = presence_penalty
         if frequency_penalty is not None:
             payload["frequency_penalty"] = frequency_penalty
 

@@ -12,13 +12,13 @@ class Message(BaseModel):
 
 
 class ChatCompletionRequest(BaseModel):
-    """Chat completion request"""
+    """Chat completion request (OpenAI-compatible)"""
     messages: List[Message]
     model: Optional[str] = None
     temperature: float = Field(default=0.7, ge=0.0, le=2.0)
     max_tokens: Optional[int] = Field(default=None, ge=1)
     stream: bool = False
-    repetition_penalty: Optional[float] = Field(default=None, ge=0.0, le=2.0)
+    presence_penalty: Optional[float] = Field(default=None, ge=-2.0, le=2.0)
     frequency_penalty: Optional[float] = Field(default=None, ge=-2.0, le=2.0)
 
 

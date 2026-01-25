@@ -403,13 +403,13 @@ class ChatFlow:
             debug_logger.warning(f"Message {idx}: [{role}] {content_preview}")
         debug_logger.warning(f"{'='*80}\n")
 
-        # 10. Отправляем в LLM Gateway с repetition penalty
+        # 10. Отправляем в LLM Gateway с presence_penalty (DeepSeek не поддерживает repetition_penalty)
         response = await llm_client.chat_completion(
             messages=messages,
             temperature=0.85,
             max_tokens=512,  # Уменьшено с 1024 - против длинных повторяющихся ответов
-            repetition_penalty=1.15,  # Против повторений
-            frequency_penalty=0.3,    # Против частых слов
+            presence_penalty=0.6,     # Мотивирует новые темы/фразы (OpenAI-compatible)
+            frequency_penalty=0.5,    # Штрафует частое повторение токенов
         )
 
         # DEBUG: Логируем ответ LLM
