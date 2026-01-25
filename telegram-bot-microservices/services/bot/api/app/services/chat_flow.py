@@ -394,6 +394,15 @@ class ChatFlow:
         system_prompt = messages[0]["content"] if messages and messages[0]["role"] == "system" else "No system prompt"
         debug_logger.warning(f"\n\n{'='*80}\nSYSTEM PROMPT for {persona.key} (user {telegram_id})\n{'='*80}\n{system_prompt}\n{'='*80}\nUser message: {user_message}\nAllow intimate: {allow_intimate}, Has features: {has_intense_mode or has_fantasy_scenes}\n{'='*80}\n")
 
+        # DEBUG: Логируем все messages которые отправляются в LLM
+        debug_logger.warning(f"\n\n{'='*80}\nFULL MESSAGES ARRAY TO LLM ({len(messages)} messages)\n{'='*80}")
+        for idx, msg in enumerate(messages):
+            role = msg.get("role", "unknown")
+            content = msg.get("content", "")
+            content_preview = content[:200] + "..." if len(content) > 200 else content
+            debug_logger.warning(f"Message {idx}: [{role}] {content_preview}")
+        debug_logger.warning(f"{'='*80}\n")
+
         # 10. Отправляем в LLM Gateway с repetition penalty
         response = await llm_client.chat_completion(
             messages=messages,
