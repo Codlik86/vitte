@@ -367,12 +367,25 @@ class ChatFlow:
         # 9. Строим сообщения для LLM
         messages = build_chat_messages(ctx, user_message)
 
+        # DEBUG: Логируем system prompt для отладки
+        system_prompt = messages[0]["content"] if messages and messages[0]["role"] == "system" else "No system prompt"
+        logger.info(f"=== SYSTEM PROMPT for {persona.key} (user {telegram_id}) ===")
+        logger.info(f"\n{system_prompt}\n")
+        logger.info(f"=== END SYSTEM PROMPT ===")
+        logger.info(f"User message: {user_message}")
+        logger.info(f"Allow intimate: {allow_intimate}, Has features: {has_intense_mode or has_fantasy_scenes}")
+
         # 10. Отправляем в LLM Gateway
         response = await llm_client.chat_completion(
             messages=messages,
             temperature=0.85,
             max_tokens=1024,
         )
+
+        # DEBUG: Логируем ответ LLM
+        logger.info(f"=== LLM RESPONSE for {persona.key} ===")
+        logger.info(f"{response}")
+        logger.info(f"=== END LLM RESPONSE ===")
 
         if not response:
             return ChatResult(
