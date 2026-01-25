@@ -34,6 +34,7 @@ from .llm_client import llm_client
 from .embedding_service import embedding_service
 
 logger = logging.getLogger(__name__)
+debug_logger = logging.getLogger('uvicorn.error')  # Для debug-логов которые точно выведутся
 
 MAX_DIALOG_SLOTS = 5
 RECENT_MESSAGES_COUNT = 12
@@ -305,6 +306,9 @@ class ChatFlow:
             PromptMessage(role=m.role, content=m.content)
             for m in recent_messages
         ]
+        # DEBUG: Логируем историю сообщений
+        debug_logger.warning(f"Recent messages count: {len(recent_messages)}")
+        debug_logger.warning(f"Recent messages: {[(m.role, m.content[:100]) for m in recent_messages]}")
 
         # 6. Поиск релевантных воспоминаний из Qdrant
         memory_long = None
@@ -315,12 +319,16 @@ class ChatFlow:
                 query=user_message,
                 limit=3,
             )
+            # DEBUG: Логируем что вернул Qdrant
+            debug_logger.warning(f"Qdrant memories for user {telegram_id}: {len(memories) if memories else 0} items")
             if memories:
+                debug_logger.warning(f"Qdrant memories content: {memories}")
                 memory_parts = []
                 for m in memories:
                     role_label = "Ты" if m["role"] == "assistant" else "Пользователь"
                     memory_parts.append(f"- {role_label}: {m['text'][:200]}")
                 memory_long = "\n".join(memory_parts)
+                debug_logger.warning(f"Memory_long built: {memory_long}")
 
         # 7. Проверяем фичи пользователя (любой апгрейд даёт максимальную интимность)
         features = await self.get_user_features(telegram_id)
@@ -369,28 +377,19 @@ class ChatFlow:
 
         # DEBUG: Логируем system prompt для отладки
         system_prompt = messages[0]["content"] if messages and messages[0]["role"] == "system" else "No system prompt"
-        print(f"\n\n{'='*80}")
-        print(f"SYSTEM PROMPT for {persona.key} (user {telegram_id})")
-        print(f"{'='*80}")
-        print(system_prompt)
-        print(f"{'='*80}")
-        print(f"User message: {user_message}")
-        print(f"Allow intimate: {allow_intimate}, Has features: {has_intense_mode or has_fantasy_scenes}")
-        print(f"{'='*80}\n")
+        debug_logger.warning(f"\n\n{'='*80}\nSYSTEM PROMPT for {persona.key} (user {telegram_id})\n{'='*80}\n{system_prompt}\n{'='*80}\nUser message: {user_message}\nAllow intimate: {allow_intimate}, Has features: {has_intense_mode or has_fantasy_scenes}\n{'='*80}\n")
 
-        # 10. Отправляем в LLM Gateway
+        # 10. Отправляем в LLM Gateway с repetition penalty
         response = await llm_client.chat_completion(
             messages=messages,
             temperature=0.85,
             max_tokens=1024,
+            repetition_penalty=1.15,  # Против повторений
+            frequency_penalty=0.3,    # Против частых слов
         )
 
         # DEBUG: Логируем ответ LLM
-        print(f"\n\n{'='*80}")
-        print(f"LLM RESPONSE for {persona.key}")
-        print(f"{'='*80}")
-        print(response)
-        print(f"{'='*80}\n")
+        debug_logger.warning(f"\n\n{'='*80}\nLLM RESPONSE for {persona.key}\n{'='*80}\n{response}\n{'='*80}\n")
 
         if not response:
             return ChatResult(

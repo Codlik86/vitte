@@ -27,6 +27,8 @@ class LLMClient:
         temperature: float = 0.8,
         max_tokens: int = 1024,
         stream: bool = False,
+        repetition_penalty: Optional[float] = None,
+        frequency_penalty: Optional[float] = None,
     ) -> Optional[str]:
         """
         Send chat completion request to LLM Gateway.
@@ -37,6 +39,8 @@ class LLMClient:
             temperature: Sampling temperature (0.0 - 2.0)
             max_tokens: Maximum tokens in response
             stream: Whether to stream response (not implemented yet)
+            repetition_penalty: Penalty for token repetition (1.0 = no penalty, >1.0 = less repetition)
+            frequency_penalty: Penalty for frequent tokens (-2.0 to 2.0, positive = less repetition)
 
         Returns:
             Assistant's response text or None if failed
@@ -48,6 +52,12 @@ class LLMClient:
             "max_tokens": max_tokens,
             "stream": stream,
         }
+
+        # Добавляем опциональные параметры против повторений
+        if repetition_penalty is not None:
+            payload["repetition_penalty"] = repetition_penalty
+        if frequency_penalty is not None:
+            payload["frequency_penalty"] = frequency_penalty
 
         try:
             async with httpx.AsyncClient() as client:
