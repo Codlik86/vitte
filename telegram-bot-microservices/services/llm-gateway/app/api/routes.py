@@ -82,7 +82,9 @@ async def create_chat_completion(request: ChatCompletionRequest):
             messages=request.messages,
             model=model,
             temperature=request.temperature,
-            max_tokens=request.max_tokens
+            max_tokens=request.max_tokens,
+            repetition_penalty=request.repetition_penalty,
+            frequency_penalty=request.frequency_penalty
         )
 
         # Cache response

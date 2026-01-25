@@ -48,7 +48,9 @@ class LLMClient:
         messages: List[Message],
         model: Optional[str] = None,
         temperature: float = 0.7,
-        max_tokens: Optional[int] = None
+        max_tokens: Optional[int] = None,
+        repetition_penalty: Optional[float] = None,
+        frequency_penalty: Optional[float] = None
     ) -> str:
         """
         Complete chat with retry logic
@@ -58,6 +60,8 @@ class LLMClient:
             model: Model to use (default: deepseek-v3.2)
             temperature: Sampling temperature
             max_tokens: Max tokens in response
+            repetition_penalty: Penalty for token repetition (1.0 = no penalty, >1.0 = less repetition)
+            frequency_penalty: Penalty for frequent tokens (-2.0 to 2.0, positive = less repetition)
 
         Returns:
             str: Assistant's response
@@ -66,12 +70,21 @@ class LLMClient:
             APIError: If all retries failed
         """
         try:
-            response = await self.client.chat.completions.create(
-                model=model or self.default_model,
-                messages=[m.model_dump() for m in messages],
-                temperature=temperature,
-                max_tokens=max_tokens
-            )
+            # Build parameters dict
+            params = {
+                "model": model or self.default_model,
+                "messages": [m.model_dump() for m in messages],
+                "temperature": temperature,
+            }
+
+            if max_tokens is not None:
+                params["max_tokens"] = max_tokens
+            if repetition_penalty is not None:
+                params["repetition_penalty"] = repetition_penalty
+            if frequency_penalty is not None:
+                params["frequency_penalty"] = frequency_penalty
+
+            response = await self.client.chat.completions.create(**params)
 
             content = response.choices[0].message.content
             logger.info(
