@@ -369,11 +369,11 @@ class ChatFlow:
 
         # DEBUG: Логируем system prompt для отладки
         system_prompt = messages[0]["content"] if messages and messages[0]["role"] == "system" else "No system prompt"
-        logger.info(f"=== SYSTEM PROMPT for {persona.key} (user {telegram_id}) ===")
-        logger.info(f"\n{system_prompt}\n")
-        logger.info(f"=== END SYSTEM PROMPT ===")
-        logger.info(f"User message: {user_message}")
-        logger.info(f"Allow intimate: {allow_intimate}, Has features: {has_intense_mode or has_fantasy_scenes}")
+        logger.warning(f"=== SYSTEM PROMPT for {persona.key} (user {telegram_id}) ===")
+        logger.warning(f"\n{system_prompt}\n")
+        logger.warning(f"=== END SYSTEM PROMPT ===")
+        logger.warning(f"User message: {user_message}")
+        logger.warning(f"Allow intimate: {allow_intimate}, Has features: {has_intense_mode or has_fantasy_scenes}")
 
         # 10. Отправляем в LLM Gateway
         response = await llm_client.chat_completion(
@@ -383,9 +383,9 @@ class ChatFlow:
         )
 
         # DEBUG: Логируем ответ LLM
-        logger.info(f"=== LLM RESPONSE for {persona.key} ===")
-        logger.info(f"{response}")
-        logger.info(f"=== END LLM RESPONSE ===")
+        logger.warning(f"=== LLM RESPONSE for {persona.key} ===")
+        logger.warning(f"{response}")
+        logger.warning(f"=== END LLM RESPONSE ===")
 
         if not response:
             return ChatResult(
