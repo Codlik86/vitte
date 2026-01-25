@@ -6,7 +6,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from pydantic import BaseModel
 
 from shared.database import get_db, User, Subscription, FeatureUnlock, get_images_remaining
@@ -162,7 +162,7 @@ async def get_store_status(
 
     # Check subscription
     subscription = user_with_rels.subscription
-    has_subscription = bool(subscription and subscription.is_active and subscription.expires_at and subscription.expires_at > datetime.utcnow())
+    has_subscription = bool(subscription and subscription.is_active and subscription.expires_at and subscription.expires_at > datetime.now(timezone.utc))
 
     # Get image balance with automatic daily reset
     # Если новый день - сбрасываем daily_subscription_used до 0 (НЕ накапливается!)
