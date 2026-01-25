@@ -302,13 +302,28 @@ class ChatFlow:
 
         # 5. Загружаем историю из PostgreSQL
         recent_messages = await self.get_recent_messages(dialog.id)
+
+        # DEDUPLICATION: Удаляем последовательные дубликаты (когда assistant отвечает одно и то же подряд)
+        deduped_messages = []
+        prev_content = None
+        for m in recent_messages:
+            # Если это assistant и контент совпадает с предыдущим assistant - пропускаем
+            if m.role == "assistant" and m.content == prev_content:
+                debug_logger.warning(f"Skipping duplicate assistant message: {m.content[:100]}")
+                continue
+            deduped_messages.append(m)
+            if m.role == "assistant":
+                prev_content = m.content
+            else:
+                prev_content = None  # Сбрасываем если это user message
+
         prompt_messages = [
             PromptMessage(role=m.role, content=m.content)
-            for m in recent_messages
+            for m in deduped_messages
         ]
         # DEBUG: Логируем историю сообщений
-        debug_logger.warning(f"Recent messages count: {len(recent_messages)}")
-        debug_logger.warning(f"Recent messages: {[(m.role, m.content[:100]) for m in recent_messages]}")
+        debug_logger.warning(f"Recent messages count: {len(recent_messages)} -> after dedup: {len(deduped_messages)}")
+        debug_logger.warning(f"Recent messages: {[(m.role, m.content[:100]) for m in deduped_messages]}")
 
         # 6. Поиск релевантных воспоминаний из Qdrant
         memory_long = None
@@ -383,7 +398,7 @@ class ChatFlow:
         response = await llm_client.chat_completion(
             messages=messages,
             temperature=0.85,
-            max_tokens=1024,
+            max_tokens=512,  # Уменьшено с 1024 - против длинных повторяющихся ответов
             repetition_penalty=1.15,  # Против повторений
             frequency_penalty=0.3,    # Против частых слов
         )

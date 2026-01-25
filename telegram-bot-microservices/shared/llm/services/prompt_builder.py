@@ -183,6 +183,16 @@ class PromptBuilder:
 
         return result
 
+    def _build_no_repetition_block(self) -> str:
+        """Блок против повторений."""
+        return """
+**ВАЖНО - Против повторений:**
+НИКОГДА не повторяй одни и те же фразы, действия или описания в одном ответе.
+Каждая твоя реплика должна развивать ситуацию, а не копировать предыдущие.
+Если ты уже описала действие (хлыст, прикосновение, взгляд) - используй ДРУГИЕ описания.
+Будь креативной и разнообразной в своих ответах.
+        """.strip()
+
     def build_system_prompt(self) -> str:
         """
         Собрать полный system prompt из всех блоков.
@@ -198,6 +208,7 @@ class PromptBuilder:
             self._build_mode_block(),
             self._build_memory_block(),
             self._build_features_block(),
+            self._build_no_repetition_block(),  # Инструкция против повторений - в конце!
         ]
 
         # Фильтруем пустые блоки
