@@ -26,7 +26,7 @@ class Settings(BaseSettings):
     # Redis cache
     redis_url: str = "redis://redis:6379/1"
     cache_ttl: int = 3600  # 1 hour for identical prompts
-    cache_enabled: bool = True
+    cache_enabled: bool = False  # DISABLED: cache doesn't account for repetition_penalty/frequency_penalty
 
     # Rate limiting
     rate_limit_requests_per_minute: int = 100
