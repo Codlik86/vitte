@@ -6,7 +6,7 @@ Uses httpx to send messages to Telegram users directly from API service.
 
 import httpx
 import logging
-from typing import Optional
+from typing import Optional, Dict, Any
 
 from app.config import config
 
@@ -18,12 +18,34 @@ TELEGRAM_API_URL = f"https://api.telegram.org/bot{config.bot_token}"
 DEFAULT_GREETING_IMAGE = "https://vitteapp.duckdns.org/storage/universal_pic.jpeg"
 
 
+def create_refresh_keyboard(dialog_id: int, message_id: int) -> Dict[str, Any]:
+    """
+    Create inline keyboard with refresh button for LLM responses.
+
+    Args:
+        dialog_id: Dialog ID for context
+        message_id: Message ID to store in callback data
+
+    Returns:
+        Inline keyboard markup dict
+    """
+    return {
+        "inline_keyboard": [[
+            {
+                "text": "🔄",
+                "callback_data": f"refresh:{dialog_id}:{message_id}"
+            }
+        ]]
+    }
+
+
 async def send_message(
     chat_id: int,
     text: str,
     parse_mode: str = "HTML",
     disable_notification: bool = False,
-) -> bool:
+    reply_markup: Optional[Dict[str, Any]] = None,
+) -> Optional[int]:
     """
     Send a text message to Telegram user.
 
@@ -32,13 +54,14 @@ async def send_message(
         text: Message text
         parse_mode: HTML or Markdown
         disable_notification: Send silently
+        reply_markup: Optional inline keyboard markup
 
     Returns:
-        True if sent successfully, False otherwise
+        Message ID if sent successfully, None otherwise
     """
     if not config.bot_token:
         logger.error("BOT_TOKEN not configured, cannot send message")
-        return False
+        return None
 
     data = {
         "chat_id": chat_id,
@@ -46,6 +69,9 @@ async def send_message(
         "parse_mode": parse_mode,
         "disable_notification": disable_notification,
     }
+
+    if reply_markup:
+        data["reply_markup"] = reply_markup
 
     try:
         async with httpx.AsyncClient() as client:
@@ -58,18 +84,19 @@ async def send_message(
             result = response.json()
 
             if result.get("ok"):
-                logger.info(f"Sent message to {chat_id}")
-                return True
+                message_id = result.get("result", {}).get("message_id")
+                logger.info(f"Sent message to {chat_id}, message_id={message_id}")
+                return message_id
             else:
                 logger.error(f"Failed to send message: {result.get('description')}")
-                return False
+                return None
 
     except httpx.RequestError as e:
         logger.error(f"HTTP error sending message: {e}")
-        return False
+        return None
     except Exception as e:
         logger.error(f"Unexpected error sending message: {e}")
-        return False
+        return None
 
 
 async def send_photo(

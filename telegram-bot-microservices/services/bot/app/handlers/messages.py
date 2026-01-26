@@ -7,7 +7,7 @@ Shows typing indicator and "Печатает..." message while waiting for respo
 import asyncio
 from datetime import datetime, timedelta, timezone
 from aiogram import Router, F, Bot
-from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.enums import ChatAction
 from sqlalchemy import select
 from sqlalchemy.orm import selectinload
@@ -236,11 +236,28 @@ async def handle_text_message(message: Message):
             pass
 
     if result.success and result.response:
-        # Edit placeholder with actual response
+        # Create inline keyboard with refresh button
+        refresh_keyboard = InlineKeyboardMarkup(inline_keyboard=[[
+            InlineKeyboardButton(text="🔄", callback_data=f"refresh:{result.dialog_id}:{placeholder.message_id}")
+        ]])
+
+        # Save context for refresh in Redis (TTL: 1 hour)
+        try:
+            refresh_context_key = f"refresh:{result.dialog_id}:{placeholder.message_id}"
+            await redis_client.set(
+                refresh_context_key,
+                text,  # user's original message
+                expire=3600  # 1 hour
+            )
+        except Exception as e:
+            logger.warning(f"Failed to save refresh context: {e}")
+
+        # Edit placeholder with actual response + refresh button
         try:
             await placeholder.edit_text(
                 f"<b>{persona_name}</b>\n\n{result.response}",
-                parse_mode="HTML"
+                parse_mode="HTML",
+                reply_markup=refresh_keyboard
             )
         except Exception as e:
             # If edit fails, send as new message
@@ -248,7 +265,8 @@ async def handle_text_message(message: Message):
             await placeholder.delete()
             await message.answer(
                 f"<b>{persona_name}</b>\n\n{result.response}",
-                parse_mode="HTML"
+                parse_mode="HTML",
+                reply_markup=refresh_keyboard
             )
 
         logger.info(f"User {user_id} got response from {persona_name} (dialog {result.dialog_id})")
@@ -263,3 +281,114 @@ async def handle_text_message(message: Message):
         error_text = ERROR_RU if lang == "ru" else ERROR_EN
         await placeholder.edit_text(error_text, parse_mode="HTML")
         logger.error(f"Chat error for user {user_id}: {result.error}")
+
+
+@router.callback_query(F.data.startswith("refresh:"))
+async def handle_refresh(callback: CallbackQuery):
+    """
+    Handle refresh button - regenerate LLM response with same context.
+
+    Callback data format: refresh:{dialog_id}:{message_id}
+    """
+    await callback.answer()
+    user_id = callback.from_user.id
+
+    # Parse callback data
+    try:
+        _, dialog_id_str, message_id_str = callback.data.split(":")
+        dialog_id = int(dialog_id_str)
+        message_id = int(message_id_str)
+    except (ValueError, IndexError):
+        logger.error(f"Invalid refresh callback data: {callback.data}")
+        return
+
+    # Get user language
+    lang = await get_user_language(user_id)
+
+    # Get user message from Redis
+    refresh_context_key = f"refresh:{dialog_id}:{message_id}"
+    try:
+        user_message = await redis_client.get(refresh_context_key)
+        if not user_message:
+            error_text = "Не могу обновить - контекст устарел" if lang == "ru" else "Cannot refresh - context expired"
+            await callback.answer(error_text, show_alert=True)
+            logger.warning(f"Refresh context expired for dialog {dialog_id}, message {message_id}")
+            return
+    except Exception as e:
+        logger.error(f"Redis error getting refresh context: {e}")
+        error_text = "Ошибка обновления" if lang == "ru" else "Refresh error"
+        await callback.answer(error_text, show_alert=True)
+        return
+
+    # Get dialog with persona
+    async for db in get_db():
+        result_query = await db.execute(
+            select(Dialog)
+            .options(selectinload(Dialog.persona))
+            .where(Dialog.id == dialog_id, Dialog.user_id == user_id)
+        )
+        dialog = result_query.scalar_one_or_none()
+
+        if not dialog:
+            await callback.answer("Диалог не найден" if lang == "ru" else "Dialog not found", show_alert=True)
+            return
+
+        persona_name = dialog.persona.name if dialog.persona else ("Персонаж" if lang == "ru" else "Character")
+        break
+
+    # Update message to show "regenerating..." state
+    typing_text = TYPING_RU if lang == "ru" else TYPING_EN
+    try:
+        await callback.message.edit_text(
+            f"<i>{typing_text.format(name=persona_name)}</i>",
+            parse_mode="HTML"
+        )
+    except Exception as e:
+        logger.warning(f"Failed to edit message during refresh: {e}")
+
+    # Start continuous typing indicator
+    typing_task = asyncio.create_task(keep_typing(callback.bot, user_id))
+
+    try:
+        # Call chat API with same user message (will generate NEW response)
+        result = await send_chat_message(
+            telegram_id=user_id,
+            message=user_message,
+            persona_id=dialog.persona_id,
+            story_id=dialog.story_id,
+            atmosphere=dialog.atmosphere,
+        )
+    finally:
+        # Stop typing indicator
+        typing_task.cancel()
+        try:
+            await typing_task
+        except asyncio.CancelledError:
+            pass
+
+    if result.success and result.response:
+        # Create inline keyboard with refresh button (same format)
+        refresh_keyboard = InlineKeyboardMarkup(inline_keyboard=[[
+            InlineKeyboardButton(text="🔄", callback_data=f"refresh:{result.dialog_id}:{callback.message.message_id}")
+        ]])
+
+        # Update message with new response
+        try:
+            await callback.message.edit_text(
+                f"<b>{persona_name}</b>\n\n{result.response}",
+                parse_mode="HTML",
+                reply_markup=refresh_keyboard
+            )
+        except Exception as e:
+            logger.warning(f"Failed to edit message with refreshed response: {e}")
+
+        logger.info(f"User {user_id} refreshed response for dialog {dialog_id}")
+
+    else:
+        # Error
+        error_text = ERROR_RU if lang == "ru" else ERROR_EN
+        try:
+            await callback.message.edit_text(error_text, parse_mode="HTML")
+        except Exception:
+            pass
+        logger.error(f"Refresh error for user {user_id}: {result.error}")
