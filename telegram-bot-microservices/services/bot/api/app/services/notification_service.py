@@ -92,7 +92,7 @@ async def check_and_send_notifications(db: AsyncSession) -> int:
         dialogs = result.all()
 
         for dialog, persona, user in dialogs:
-            # Проверяем, не отправляли ли уже это уведомление
+            # Проверка 1: Не отправляли ли уже это уведомление
             existing_log = await db.execute(
                 select(NotificationLog)
                 .where(
@@ -105,6 +105,30 @@ async def check_and_send_notifications(db: AsyncSession) -> int:
 
             if existing_log.scalar_one_or_none():
                 # Уже отправляли это уведомление для этого диалога
+                continue
+
+            # Проверка 2: Есть ли у пользователя более свежий активный диалог
+            # (предотвращает спам от старых персонажей, если юзер общается с новым)
+            latest_dialog_result = await db.execute(
+                select(Dialog)
+                .where(
+                    and_(
+                        Dialog.user_id == user.id,
+                        Dialog.is_active == True,
+                    )
+                )
+                .order_by(Dialog.updated_at.desc())
+                .limit(1)
+            )
+
+            latest_dialog = latest_dialog_result.scalar_one_or_none()
+
+            if latest_dialog and latest_dialog.id != dialog.id:
+                # У пользователя есть более свежий диалог - не спамим от старого персонажа
+                logger.debug(
+                    f"Skipping notification for dialog {dialog.id} (user {user.id}): "
+                    f"user has newer dialog {latest_dialog.id}"
+                )
                 continue
 
             # Получаем текст уведомления
