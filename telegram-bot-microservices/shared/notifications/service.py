@@ -142,7 +142,7 @@ async def check_and_send_notifications(
             # Отправляем уведомление
             try:
                 message_id = await send_telegram_message(
-                    user.telegram_id,
+                    user.id,  # user.id это telegram_id
                     notification_text,
                     keyboard,
                 )
