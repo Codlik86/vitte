@@ -219,10 +219,14 @@ async def _send_dialog_notifications_async() -> Dict[str, Any]:
         Dict with notification statistics
     """
     try:
-        from app.services.notification_service import check_and_send_notifications
+        from shared.notifications import check_and_send_notifications
+        from shared.notifications.telegram import send_telegram_notification
 
         async with AsyncSessionLocal() as db:
-            sent_count = await check_and_send_notifications(db)
+            sent_count = await check_and_send_notifications(
+                db=db,
+                send_telegram_message=send_telegram_notification
+            )
 
             result = {
                 "status": "success",
