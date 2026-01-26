@@ -76,7 +76,8 @@ async def create_user(
     username: Optional[str] = None,
     first_name: Optional[str] = None,
     last_name: Optional[str] = None,
-    language_code: str = "ru"
+    language_code: str = "ru",
+    utm_source: Optional[str] = None
 ) -> User:
     """
     Create new user and auto-cache it
@@ -88,6 +89,7 @@ async def create_user(
         first_name: First name
         last_name: Last name
         language_code: Language code
+        utm_source: UTM source for tracking (optional)
 
     Returns:
         Created User object
@@ -97,7 +99,8 @@ async def create_user(
         username=username,
         first_name=first_name,
         last_name=last_name,
-        language_code=language_code
+        language_code=language_code,
+        utm_source=utm_source
     )
     db.add(user)
     await db.commit()

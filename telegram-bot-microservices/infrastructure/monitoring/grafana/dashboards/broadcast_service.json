@@ -1,0 +1,117 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "Admin API"
+      },
+      "gridPos": {
+        "h": 4,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 99,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "# 🔍 Поиск пользователя\n\nВведите **Telegram ID** в поле сверху, чтобы увидеть детальную информацию о пользователе.\n\nПосле ввода ID перейдите в **[Карточка юзера](/d/user-card?var-telegram_id=${telegram_id})** для полной информации.",
+        "mode": "markdown"
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [],
+      "title": "Поиск пользователя",
+      "type": "text",
+      "transparent": true
+    },
+    {
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "Admin API"
+      },
+      "gridPos": {
+        "h": 8,
+        "w": 24,
+        "x": 0,
+        "y": 4
+      },
+      "id": 1,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "# Сервис рассылки\n\n## Статус: В разработке\n\nЭтот дашборд будет содержать:\n\n- 📊 Статистика отправленных рассылок\n- 📝 Список активных рассылок\n- ✅ Статус доставки сообщений\n- 🎯 Таргетинг пользователей\n- 📈 Аналитика открытий и кликов\n\nФункционал рассылок будет реализован в следующем этапе разработки.",
+        "mode": "markdown"
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "Admin API"
+          },
+          "filters": [],
+          "format": "table",
+          "global_query_id": "",
+          "refId": "A",
+          "root_selector": "",
+          "source": "url",
+          "type": "json",
+          "url": "/analytics/broadcast/stats",
+          "url_options": {
+            "data": "",
+            "method": "GET"
+          }
+        }
+      ],
+      "title": "Информация",
+      "type": "text"
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["vitte", "broadcast"],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": false,
+          "text": "",
+          "value": ""
+        },
+        "hide": 0,
+        "label": "Поиск по Telegram ID",
+        "name": "telegram_id",
+        "options": [],
+        "query": "",
+        "skipUrlSync": false,
+        "type": "textbox"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Сервис рассылки",
+  "uid": "broadcast-service",
+  "version": 1,
+  "weekStart": ""
+}

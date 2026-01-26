@@ -54,6 +54,7 @@ class User(Base):
     first_name = Column(String(255), nullable=True)
     last_name = Column(String(255), nullable=True)
     language_code = Column(String(10), default="ru")
+    utm_source = Column(String(255), nullable=True, index=True)  # UTM метка для аналитики
 
     # User status
     is_active = Column(Boolean, default=True)

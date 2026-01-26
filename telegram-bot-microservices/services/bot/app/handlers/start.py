@@ -32,9 +32,19 @@ async def cmd_start(message: Message, i18n: I18nContext):
 
     New users: Show language selection -> onboarding flow
     Existing users: Show welcome back message
+
+    UTM tracking: /start <utm_source>
+    Example: /start ad_campaign_1
     """
     user = message.from_user
     is_new_user = False
+
+    # Extract UTM source from command args
+    # Format: /start utm_source or /start (no args)
+    utm_source = None
+    if message.text and len(message.text.split()) > 1:
+        utm_source = message.text.split()[1]
+        logger.info(f"UTM source detected: {utm_source} for user {user.id}")
 
     try:
         async for db in get_db():
@@ -50,7 +60,8 @@ async def cmd_start(message: Message, i18n: I18nContext):
                     username=user.username,
                     first_name=user.first_name,
                     last_name=user.last_name,
-                    language_code=user.language_code or "ru"
+                    language_code=user.language_code or "ru",
+                    utm_source=utm_source  # Save UTM on registration
                 )
 
                 # Create free subscription (auto-cached)
@@ -74,7 +85,8 @@ async def cmd_start(message: Message, i18n: I18nContext):
                 db.add(image_balance)
                 await db.commit()
 
-                logger.info(f"New user registered: {user.id} (@{user.username}) with {FREE_IMAGES_BONUS} free images")
+                utm_log = f" | UTM: {utm_source}" if utm_source else ""
+                logger.info(f"New user registered: {user.id} (@{user.username}) with {FREE_IMAGES_BONUS} free images{utm_log}")
 
             break
 
