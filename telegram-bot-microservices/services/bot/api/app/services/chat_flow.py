@@ -13,6 +13,7 @@ Chat Flow - главный оркестратор чата
 
 import logging
 import json
+import re
 from dataclasses import dataclass
 from typing import Optional
 from datetime import datetime
@@ -50,6 +51,51 @@ class ChatResult:
     dialog_id: Optional[int] = None
     is_safety_block: bool = False
     message_count: int = 0
+
+
+def _remove_duplicate_sentences(text: str) -> str:
+    """
+    Удаляет повторяющиеся предложения из ответа LLM.
+
+    Используется post-processing подход (industry standard для Character AI).
+    Источник: https://milvus.io/ai-quick-reference
+    """
+    if not text or len(text) < 50:
+        return text
+
+    # Разбиваем на предложения (по точкам, вопросам, восклицаниям)
+    sentences = re.split(r'([.!?]\s+)', text)
+
+    # Собираем обратно с разделителями
+    parts = []
+    for i in range(0, len(sentences), 2):
+        if i < len(sentences):
+            sentence = sentences[i].strip()
+            separator = sentences[i + 1] if i + 1 < len(sentences) else ''
+
+            if sentence:
+                parts.append((sentence, separator))
+
+    # Удаляем дубликаты, сохраняя порядок
+    seen = set()
+    unique_parts = []
+
+    for sentence, separator in parts:
+        # Нормализуем для сравнения (убираем ремарки и лишние пробелы)
+        normalized = re.sub(r'\*[^*]+\*', '', sentence).strip().lower()
+
+        if normalized and normalized not in seen and len(normalized) > 10:
+            seen.add(normalized)
+            unique_parts.append(sentence + separator)
+
+    result = ''.join(unique_parts).strip()
+
+    # Логируем если были удалены дубли
+    if len(unique_parts) < len(parts):
+        removed_count = len(parts) - len(unique_parts)
+        logger.warning(f"Post-processing: removed {removed_count} duplicate sentence(s)")
+
+    return result
 
 
 class ChatFlow:
@@ -403,17 +449,21 @@ class ChatFlow:
             debug_logger.warning(f"Message {idx}: [{role}] {content_preview}")
         debug_logger.warning(f"{'='*80}\n")
 
-        # 10. Отправляем в LLM Gateway с presence_penalty (DeepSeek не поддерживает repetition_penalty)
+        # 10. Отправляем в LLM Gateway с оптимальными параметрами (research-based)
         response = await llm_client.chat_completion(
             messages=messages,
-            temperature=0.85,
-            max_tokens=512,  # Уменьшено с 1024 - против длинных повторяющихся ответов
-            presence_penalty=1.2,     # Агрессивно мотивируем новые темы/фразы (было 0.6)
-            frequency_penalty=1.0,    # Агрессивно штрафуем частое повторение токенов (было 0.5)
+            temperature=0.75,          # Снижено для уменьшения случайности
+            max_tokens=512,            # Уменьшено с 1024 - против длинных повторяющихся ответов
+            presence_penalty=0.3,      # Оптимальное значение (research: 0.2-0.5)
+            frequency_penalty=0.4,     # Оптимальное значение (research: 0.2-0.5)
         )
 
         # DEBUG: Логируем ответ LLM
         debug_logger.warning(f"\n\n{'='*80}\nLLM RESPONSE for {persona.key}\n{'='*80}\n{response}\n{'='*80}\n")
+
+        # 11. Post-processing: удаляем повторяющиеся предложения внутри ответа
+        if response:
+            response = _remove_duplicate_sentences(response)
 
         if not response:
             return ChatResult(
