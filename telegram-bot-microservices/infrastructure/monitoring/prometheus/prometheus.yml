@@ -29,14 +29,15 @@ scrape_configs:
           service: 'fastapi'
           component: 'api'
 
-  # Admin panel
-  - job_name: 'admin'
-    metrics_path: '/metrics'
-    static_configs:
-      - targets: ['admin:8080']
-        labels:
-          service: 'admin'
-          component: 'admin'
+  # Admin panel - removed because it returns JSON, not Prometheus format
+  # To add Prometheus metrics to admin, install prometheus-fastapi-instrumentator
+  # - job_name: 'admin'
+  #   metrics_path: '/metrics'
+  #   static_configs:
+  #     - targets: ['admin:8080']
+  #       labels:
+  #         service: 'admin'
+  #         component: 'admin'
 
   # Redis exporter (if added later)
   # - job_name: 'redis'
