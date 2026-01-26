@@ -408,8 +408,8 @@ class ChatFlow:
             messages=messages,
             temperature=0.85,
             max_tokens=512,  # Уменьшено с 1024 - против длинных повторяющихся ответов
-            presence_penalty=0.6,     # Мотивирует новые темы/фразы (OpenAI-compatible)
-            frequency_penalty=0.5,    # Штрафует частое повторение токенов
+            presence_penalty=1.2,     # Агрессивно мотивируем новые темы/фразы (было 0.6)
+            frequency_penalty=1.0,    # Агрессивно штрафуем частое повторение токенов (было 0.5)
         )
 
         # DEBUG: Логируем ответ LLM
