@@ -452,7 +452,7 @@ class ChatFlow:
         # 10. Отправляем в LLM Gateway с оптимальными параметрами (research-based)
         response = await llm_client.chat_completion(
             messages=messages,
-            temperature=0.75,          # Снижено для уменьшения случайности
+            temperature=0.85,          # Повышено для большей креативности ответов
             max_tokens=512,            # Уменьшено с 1024 - против длинных повторяющихся ответов
             presence_penalty=0.3,      # Оптимальное значение (research: 0.2-0.5)
             frequency_penalty=0.4,     # Оптимальное значение (research: 0.2-0.5)
