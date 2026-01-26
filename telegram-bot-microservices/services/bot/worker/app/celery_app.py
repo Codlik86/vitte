@@ -105,21 +105,12 @@ def init_redbeat_entries():
     try:
         from redbeat import RedBeatSchedulerEntry
 
-        logger.info("Initializing RedBeat schedule entries...")
+        logger.info(f"Initializing RedBeat schedule entries ({len(beat_schedule)} tasks)...")
 
+        created_count = 0
         for name, config in beat_schedule.items():
             try:
-                # Check if entry already exists
-                try:
-                    RedBeatSchedulerEntry.from_key(
-                        f'redbeat:{name}',
-                        app=celery_app
-                    )
-                    continue  # Entry exists, skip
-                except KeyError:
-                    pass  # Entry doesn't exist, create it
-
-                # Create new entry
+                # Create/update entry (will overwrite if exists)
                 entry = RedBeatSchedulerEntry(
                     name=name,
                     task=config['task'],
@@ -130,19 +121,22 @@ def init_redbeat_entries():
                     app=celery_app
                 )
                 entry.save()
-                logger.info(f"Created RedBeat entry: {name}")
+                created_count += 1
+
+                schedule_info = str(config['schedule'])
+                logger.info(f"✓ Registered RedBeat entry: {name} -> {config['task']} ({schedule_info})")
 
             except Exception as e:
-                logger.warning(f"Could not create RedBeat entry '{name}': {e}")
+                logger.error(f"✗ Failed to create RedBeat entry '{name}': {e}", exc_info=True)
                 continue
 
-        logger.info("RedBeat schedule initialization complete")
+        logger.info(f"RedBeat schedule initialized: {created_count}/{len(beat_schedule)} entries registered")
 
     except ImportError:
         # RedBeat not available, skip initialization
-        pass
+        logger.warning("RedBeat not installed, skipping schedule initialization")
     except Exception as e:
-        logger.warning(f"RedBeat initialization failed: {e}")
+        logger.error(f"RedBeat initialization failed: {e}", exc_info=True)
 
 
 # Initialize entries when module is imported by beat
