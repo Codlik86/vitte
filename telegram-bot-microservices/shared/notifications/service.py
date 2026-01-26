@@ -68,17 +68,16 @@ async def check_and_send_notifications(
     now = datetime.utcnow()
     sent_count = 0
 
-    # Временные интервалы для уведомлений
+    # Временные интервалы для уведомлений (минимальное время с момента последнего сообщения)
     intervals = [
-        ("20min", timedelta(minutes=20), timedelta(minutes=30)),   # 20-30 минут
-        ("2h", timedelta(hours=2), timedelta(hours=3)),             # 2-3 часа
-        ("24h", timedelta(hours=24), timedelta(hours=48)),          # 24-48 часов
+        ("20min", timedelta(minutes=20)),   # После 20 минут неактивности
+        ("2h", timedelta(hours=2)),          # После 2 часов неактивности
+        ("24h", timedelta(hours=24)),        # После 24 часов неактивности
     ]
 
-    for notification_type, min_delta, max_delta in intervals:
-        # Находим диалоги в нужном временном окне
-        min_time = now - max_delta
-        max_time = now - min_delta
+    for notification_type, min_delta in intervals:
+        # Находим диалоги где прошло >= минимального времени
+        threshold_time = now - min_delta
 
         result = await db.execute(
             select(Dialog, Persona, User)
@@ -87,8 +86,7 @@ async def check_and_send_notifications(
             .where(
                 and_(
                     Dialog.is_active == True,
-                    Dialog.updated_at >= min_time,
-                    Dialog.updated_at <= max_time,
+                    Dialog.updated_at <= threshold_time,  # Прошло >= min_delta времени
                 )
             )
         )
