@@ -10,8 +10,8 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision = '20260126_add_utm_source'
-down_revision = '20260126_add_notification_logs'
+revision = '010'
+down_revision = '009'
 branch_labels = None
 depends_on = None
 
