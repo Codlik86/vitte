@@ -95,11 +95,29 @@ class LLMClient:
 
             # DEBUG: Log response to check for repetitions
             logger.warning(f"DeepSeek response length: {len(content) if content else 0} chars")
-            if content and len(content) > 500:
-                # Check if response contains repetitions
-                first_200 = content[:200]
-                if content.count(first_200) > 1:
-                    logger.error(f"⚠️ REPETITION DETECTED in DeepSeek response! First 200 chars appear {content.count(first_200)} times")
+            if content and len(content) > 200:
+                # Check for repetitions of different sizes (50, 100, 150 chars)
+                repetition_found = False
+                for chunk_size in [50, 100, 150]:
+                    if len(content) > chunk_size * 2:
+                        # Check first chunk
+                        first_chunk = content[:chunk_size]
+                        count = content.count(first_chunk)
+                        if count > 1:
+                            logger.error(f"⚠️ REPETITION DETECTED! {chunk_size}-char block appears {count} times: '{first_chunk[:30]}...'")
+                            repetition_found = True
+
+                        # Also check for sentence-level repetitions (split by periods)
+                        sentences = [s.strip() for s in content.split('.') if s.strip()]
+                        if len(sentences) >= 2:
+                            for i, sent in enumerate(sentences):
+                                if len(sent) > 20 and sentences.count(sent) > 1:
+                                    logger.error(f"⚠️ DUPLICATE SENTENCE DETECTED (appears {sentences.count(sent)} times): '{sent[:50]}...'")
+                                    repetition_found = True
+                                    break
+
+                if repetition_found:
+                    logger.error(f"FULL RESPONSE WITH REPETITIONS:\n{content}")
 
             logger.info(
                 f"LLM completion success: model={model or self.default_model}, "
