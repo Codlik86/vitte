@@ -89,6 +89,8 @@ celery_app.conf.update(
     worker_max_tasks_per_child=1000,
     # Beat schedule
     beat_schedule=beat_schedule,
+    # RedBeat scheduler - хранит schedule в Redis вместо файла
+    redbeat_redis_url=config.celery_broker_url,
 )
 
 # Auto-discover tasks

@@ -325,7 +325,7 @@ services:
       context: .
       dockerfile: services/bot/worker/Dockerfile
     container_name: vitte_beat
-    command: celery -A app.celery_app beat --loglevel=info
+    command: celery -A app.celery_app beat --scheduler redbeat.RedBeatScheduler --loglevel=info
     env_file:
       - .env
     environment:
@@ -339,7 +339,7 @@ services:
       migrations:
         condition: service_completed_successfully
     healthcheck:
-      test: ["CMD-SHELL", "test -f celerybeat-schedule || exit 1"]
+      test: ["CMD-SHELL", "ps aux | grep 'celery.*beat' | grep -v grep || exit 1"]
       interval: 30s
       timeout: 10s
       start_period: 40s
