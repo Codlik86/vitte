@@ -23,7 +23,7 @@ class LLMClient:
     async def chat_completion(
         self,
         messages: list[dict],
-        model: str = "deepseek/deepseek-chat",
+        model: str = "deepseek/deepseek-v3.2",
         temperature: float = 0.8,
         max_tokens: int = 1024,
         stream: bool = False,
@@ -35,7 +35,7 @@ class LLMClient:
 
         Args:
             messages: List of message dicts with 'role' and 'content'
-            model: Model to use (default: deepseek-chat)
+            model: Model to use (default: deepseek-v3.2)
             temperature: Sampling temperature (0.0 - 2.0)
             max_tokens: Maximum tokens in response
             stream: Whether to stream response (not implemented yet)

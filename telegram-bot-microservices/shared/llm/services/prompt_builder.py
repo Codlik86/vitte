@@ -9,10 +9,12 @@ Prompt Builder - модульный конструктор промптов дл
 5. Блок режима диалога
 6. Блок недавнего диалога
 7. Блок памяти
+8. Блок запрещённых фраз (динамический)
 """
 
+import re
 from dataclasses import dataclass, field
-from typing import List, Optional, Dict, Any
+from typing import List, Optional, Dict, Any, Set
 
 from ..personas import get_persona
 from ..constants.modes import get_mode_description
@@ -183,9 +185,48 @@ class PromptBuilder:
 
         return result
 
+    def _extract_phrases_from_history(self) -> Set[str]:
+        """
+        Извлечь повторяющиеся фразы из последних сообщений ассистента.
+
+        Извлекает:
+        - Ремарки (текст между *...*)
+        - Первые предложения (до первой точки/восклицания/вопроса)
+        - Часто используемые конструкции
+
+        Returns:
+            Множество фраз для запрета
+        """
+        forbidden_phrases = set()
+
+        # Берём последние 5 сообщений ассистента
+        assistant_messages = [
+            msg.content for msg in self.ctx.recent_messages
+            if msg.role == "assistant"
+        ][-5:]
+
+        for content in assistant_messages:
+            # Извлекаем ремарки (*текст*)
+            remarks = re.findall(r'\*([^*]+)\*', content)
+            for remark in remarks:
+                remark = remark.strip()
+                # Только длинные ремарки (>20 символов) чтобы избежать шума
+                if len(remark) > 20:
+                    forbidden_phrases.add(f"*{remark}*")
+
+            # Извлекаем первое предложение
+            sentences = re.split(r'[.!?]\s+', content)
+            if sentences and len(sentences[0]) > 15:
+                # Убираем ремарки из предложения для чистого текста
+                first_sentence = re.sub(r'\*[^*]+\*', '', sentences[0]).strip()
+                if first_sentence and len(first_sentence) > 15:
+                    forbidden_phrases.add(first_sentence)
+
+        return forbidden_phrases
+
     def _build_no_repetition_block(self) -> str:
-        """Блок против повторений (усиленная версия, research-based)."""
-        return """
+        """Блок против повторений (усиленная версия с динамическими запретами)."""
+        base_instruction = """
 **КРИТИЧЕСКИ ВАЖНО - Запрет на повторения:**
 
 АБСОЛЮТНЫЙ ЗАПРЕТ на повторение:
@@ -199,6 +240,22 @@ class PromptBuilder:
 
 Если не знаешь что написать - ЛУЧШЕ написать короткий но уникальный ответ, чем повторить уже сказанное.
         """.strip()
+
+        # Добавляем динамический список запрещённых фраз
+        forbidden_phrases = self._extract_phrases_from_history()
+
+        if forbidden_phrases:
+            phrases_list = "\n".join([f"- {phrase}" for phrase in list(forbidden_phrases)[:10]])  # Ограничиваем 10 фразами
+            dynamic_block = f"""
+
+**ЗАПРЕЩЁННЫЕ ФРАЗЫ (ты уже использовала их, НЕ повторяй):**
+{phrases_list}
+
+Придумай НОВЫЕ способы выражения мыслей и действий!
+            """.strip()
+            return base_instruction + "\n\n" + dynamic_block
+
+        return base_instruction
 
     def build_system_prompt(self) -> str:
         """
