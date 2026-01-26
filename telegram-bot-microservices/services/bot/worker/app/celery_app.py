@@ -97,3 +97,53 @@ celery_app.conf.update(
 celery_app.autodiscover_tasks(["app.tasks"])
 
 logger.info("Celery app configured with beat schedule")
+
+
+# Initialize RedBeat schedule entries on import
+def init_redbeat_entries():
+    """Initialize RedBeat entries from beat_schedule config"""
+    try:
+        from redbeat import RedBeatSchedulerEntry
+
+        logger.info("Initializing RedBeat schedule entries...")
+
+        for name, config in beat_schedule.items():
+            try:
+                # Check if entry already exists
+                try:
+                    RedBeatSchedulerEntry.from_key(
+                        f'redbeat:{name}',
+                        app=celery_app
+                    )
+                    continue  # Entry exists, skip
+                except KeyError:
+                    pass  # Entry doesn't exist, create it
+
+                # Create new entry
+                entry = RedBeatSchedulerEntry(
+                    name=name,
+                    task=config['task'],
+                    schedule=config['schedule'],
+                    args=config.get('args', ()),
+                    kwargs=config.get('kwargs', {}),
+                    options=config.get('options', {}),
+                    app=celery_app
+                )
+                entry.save()
+                logger.info(f"Created RedBeat entry: {name}")
+
+            except Exception as e:
+                logger.warning(f"Could not create RedBeat entry '{name}': {e}")
+                continue
+
+        logger.info("RedBeat schedule initialization complete")
+
+    except ImportError:
+        # RedBeat not available, skip initialization
+        pass
+    except Exception as e:
+        logger.warning(f"RedBeat initialization failed: {e}")
+
+
+# Initialize entries when module is imported by beat
+init_redbeat_entries()
