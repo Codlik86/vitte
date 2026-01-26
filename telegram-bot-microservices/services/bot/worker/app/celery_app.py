@@ -64,6 +64,15 @@ beat_schedule = {
             "expires": 3600,
         }
     },
+
+    # Check inactive dialogs and send notifications every 10 minutes
+    "check-inactive-dialogs-every-10min": {
+        "task": "notifications.check_inactive_dialogs",
+        "schedule": 600.0,  # Every 10 minutes (600 seconds)
+        "options": {
+            "expires": 300,  # Task expires after 5 minutes
+        }
+    },
 }
 
 # Configure Celery

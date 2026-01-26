@@ -5,10 +5,15 @@ import asyncio
 from datetime import datetime, timedelta
 from typing import Dict, Any, List
 from sqlalchemy import select, and_
+import sys
+import os
 
 from app.celery_app import celery_app
 from shared.database import AsyncSessionLocal, User, Subscription
 from shared.utils import get_logger
+
+# Add parent directories to path for imports
+sys.path.insert(0, os.path.join(os.path.dirname(__file__), "../../../api"))
 
 logger = get_logger(__name__)
 
@@ -198,4 +203,60 @@ def send_admin_alert(
         return result
     except Exception as e:
         logger.error(f"Admin alert task failed: {e}", exc_info=True)
+        raise self.retry(exc=e, countdown=60 * (2 ** self.request.retries))
+
+
+async def _send_dialog_notifications_async() -> Dict[str, Any]:
+    """
+    Async implementation: check inactive dialogs and send notifications
+
+    Проверяет неактивные диалоги и отправляет уведомления по таймлайну:
+    - 20 минут: приветливое
+    - 2 часа: чуть грустное
+    - 24 часа: грустит без юзера
+
+    Returns:
+        Dict with notification statistics
+    """
+    try:
+        from app.services.notification_service import check_and_send_notifications
+
+        async with AsyncSessionLocal() as db:
+            sent_count = await check_and_send_notifications(db)
+
+            result = {
+                "status": "success",
+                "notifications_sent": sent_count,
+                "timestamp": datetime.utcnow().isoformat()
+            }
+
+            logger.info(
+                f"Dialog notifications processed: {sent_count} notifications sent",
+                extra=result
+            )
+
+            return result
+
+    except Exception as e:
+        logger.error(f"Dialog notification task failed: {e}", exc_info=True)
+        raise
+
+
+@celery_app.task(name="notifications.check_inactive_dialogs", bind=True, max_retries=3)
+def check_inactive_dialogs(self):
+    """
+    Проверить неактивные диалоги и отправить уведомления (Celery task wrapper)
+
+    Запускается по расписанию каждые 10 минут.
+    Отправляет уведомления пользователям которые давно не писали в диалог.
+
+    Returns:
+        Dict with notification statistics
+    """
+    try:
+        logger.info("Starting inactive dialogs check task")
+        result = asyncio.run(_send_dialog_notifications_async())
+        return result
+    except Exception as e:
+        logger.error(f"Inactive dialogs check failed: {e}", exc_info=True)
         raise self.retry(exc=e, countdown=60 * (2 ** self.request.retries))

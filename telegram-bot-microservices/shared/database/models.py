@@ -345,3 +345,25 @@ class Purchase(Base):
 
     def __repr__(self):
         return f"<Purchase(id={self.id}, user_id={self.user_id}, product_code={self.product_code})>"
+
+
+class NotificationLog(Base):
+    """Notification log for tracking sent notifications"""
+    __tablename__ = "notification_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    dialog_id = Column(Integer, ForeignKey("dialogs.id", ondelete="CASCADE"), nullable=False)
+    user_id = Column(BigInteger, ForeignKey("users.id"), nullable=False)
+
+    # Notification type: '20min', '2h', '24h'
+    notification_type = Column(String(16), nullable=False)
+
+    # Timestamps
+    sent_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    # Relationships
+    user = relationship("User", backref="notification_logs")
+    dialog = relationship("Dialog", backref="notification_logs")
+
+    def __repr__(self):
+        return f"<NotificationLog(id={self.id}, dialog_id={self.dialog_id}, type={self.notification_type})>"
