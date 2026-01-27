@@ -8,11 +8,11 @@ datasources:
     type: postgres
     access: proxy
     url: postgres:5432
-    database: vitte_bot
     user: vitte_user
     secureJsonData:
-      password: $__env{POSTGRES_PASSWORD}
+      password: ${POSTGRES_PASSWORD}
     jsonData:
+      database: vitte_bot
       sslmode: 'disable'
       postgresVersion: 1500
       timescaledb: false
