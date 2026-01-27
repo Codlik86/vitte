@@ -551,6 +551,89 @@ async def get_technical_stats():
         raise HTTPException(status_code=500, detail=str(e))
 
 
+# ==================== UTM STATS ====================
+
+@router.get("/utm/summary")
+async def get_utm_summary():
+    """
+    Общая статистика по UTM меткам
+    - Всего пользователей с UTM
+    - Количество уникальных UTM меток
+    """
+    try:
+        async for db in get_db():
+            # Total users with UTM
+            total_with_utm = await db.scalar(
+                select(func.count(User.id))
+                .where(User.utm_source.isnot(None), User.utm_source != '')
+            )
+
+            # Unique UTM sources count
+            unique_utm_count = await db.scalar(
+                select(func.count(func.distinct(User.utm_source)))
+                .where(User.utm_source.isnot(None), User.utm_source != '')
+            )
+
+            return {
+                "total_users_with_utm": total_with_utm or 0,
+                "unique_utm_sources": unique_utm_count or 0
+            }
+    except Exception as e:
+        logger.error(f"Error getting UTM summary: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/utm/top")
+async def get_top_utm_sources(limit: int = Query(10, ge=1, le=100)):
+    """
+    Топ UTM меток с метриками
+    - utm_source
+    - users_count (количество пользователей)
+    - payments_count (количество платежей)
+    - total_revenue (общая выручка)
+    - subscriptions_count (количество подписок)
+    """
+    try:
+        async for db in get_db():
+            # Get UTM stats
+            query = (
+                select(
+                    User.utm_source,
+                    func.count(func.distinct(User.id)).label('users_count'),
+                    func.count(func.distinct(Purchase.id)).label('payments_count'),
+                    func.coalesce(func.sum(Purchase.amount), 0).label('total_revenue'),
+                    func.count(func.distinct(
+                        case((and_(Subscription.is_active == True, Subscription.plan != 'free'), Subscription.id), else_=None)
+                    )).label('subscriptions_count')
+                )
+                .outerjoin(Purchase, and_(Purchase.user_id == User.id, Purchase.status == 'success'))
+                .outerjoin(Subscription, Subscription.user_id == User.id)
+                .where(User.utm_source.isnot(None), User.utm_source != '')
+                .group_by(User.utm_source)
+                .order_by(desc('users_count'))
+                .limit(limit)
+            )
+
+            result = await db.execute(query)
+            utm_stats = result.all()
+
+            return {
+                "utm_sources": [
+                    {
+                        "utm_source": row.utm_source,
+                        "users_count": row.users_count,
+                        "payments_count": row.payments_count,
+                        "total_revenue": int(row.total_revenue),
+                        "subscriptions_count": row.subscriptions_count
+                    }
+                    for row in utm_stats
+                ]
+            }
+    except Exception as e:
+        logger.error(f"Error getting top UTM sources: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
 # ==================== BROADCAST SERVICE (placeholder) ====================
 
 @router.get("/broadcast/stats")
