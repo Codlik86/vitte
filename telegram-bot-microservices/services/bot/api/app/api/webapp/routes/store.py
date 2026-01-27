@@ -64,12 +64,6 @@ EMOTIONAL_FEATURES = [
         "title": "Интенсивный режим",
         "description": "Более эмоциональные и глубокие ответы персонажей",
         "price_stars": 200
-    },
-    {
-        "code": "fantasy_scenes",
-        "title": "Фантазийные сцены",
-        "description": "Разблокирует расширенные сценарии и истории",
-        "price_stars": 200
     }
 ]
 

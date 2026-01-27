@@ -32,15 +32,6 @@ UPGRADES = {
         "price_stars": 200,
         "product_code": "upgrade_intense_mode",
         "feature_code": "intense_mode"
-    },
-    "fantasy_scenes": {
-        "name_ru": "Фантазийные сцены",
-        "name_en": "Fantasy Scenes",
-        "description_ru": "Разблокирует расширенные сценарии и истории",
-        "description_en": "Unlocks extended scenarios and stories",
-        "price_stars": 200,
-        "product_code": "upgrade_fantasy_scenes",
-        "feature_code": "fantasy_scenes"
     }
 }
 
@@ -52,20 +43,14 @@ UPGRADES_RU = """💗 <b>Улучшения</b>
 {status_text}
 
 <b>Интенсивный режим</b>
-Более эмоциональные и глубокие ответы персонажей.
-
-<b>Фантазийные сцены</b>
-Разблокирует расширенные сценарии и истории."""
+Более эмоциональные и глубокие ответы персонажей."""
 
 UPGRADES_EN = """💗 <b>Upgrades</b>
 
 {status_text}
 
 <b>Intense Mode</b>
-More emotional and deeper character responses.
-
-<b>Fantasy Scenes</b>
-Unlocks extended scenarios and stories."""
+More emotional and deeper character responses."""
 
 # Status texts
 NO_UPGRADES_RU = "Пока нет активных улучшений. Подключи фичи, чтобы сделать общение богаче."
@@ -105,11 +90,6 @@ def get_upgrades_keyboard_ru(intense_active: bool, fantasy_active: bool) -> Inli
     else:
         buttons.append([InlineKeyboardButton(text="Интенсивный режим · 200 ⭐", callback_data="upgrades:buy_intense_mode")])
 
-    if fantasy_active:
-        buttons.append([InlineKeyboardButton(text="✅ Фантазийные сцены", callback_data="upgrades:fantasy_info")])
-    else:
-        buttons.append([InlineKeyboardButton(text="Фантазийные сцены · 200 ⭐", callback_data="upgrades:buy_fantasy_scenes")])
-
     buttons.append([InlineKeyboardButton(text="⭐ Купить Stars по СБП", url="https://t.me/tribute/app?startapp=plsg")])
     buttons.append([InlineKeyboardButton(text="⬅️ Назад", callback_data="upgrades:back_to_menu")])
 
@@ -125,12 +105,7 @@ def get_upgrades_keyboard_en(intense_active: bool, fantasy_active: bool) -> Inli
     else:
         buttons.append([InlineKeyboardButton(text="Intense Mode · 200 ⭐", callback_data="upgrades:buy_intense_mode")])
 
-    if fantasy_active:
-        buttons.append([InlineKeyboardButton(text="✅ Fantasy Scenes", callback_data="upgrades:fantasy_info")])
-    else:
-        buttons.append([InlineKeyboardButton(text="Fantasy Scenes · 200 ⭐", callback_data="upgrades:buy_fantasy_scenes")])
-
-    buttons.append([InlineKeyboardButton(text="⭐ Buy Stars", url="https://t.me/tribute/app?startapp=plsg")])
+    buttons.append([InlineKeyboardButton(text="⭐ Buy Stars по СБП", url="https://t.me/tribute/app?startapp=plsg")])
     buttons.append([InlineKeyboardButton(text="⬅️ Back", callback_data="upgrades:back_to_menu")])
 
     return InlineKeyboardMarkup(inline_keyboard=buttons)

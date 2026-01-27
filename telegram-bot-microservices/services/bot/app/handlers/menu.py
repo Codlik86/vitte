@@ -101,13 +101,11 @@ Everything stays between you."""
 # ==================== FEATURE NAMES ====================
 
 FEATURE_NAMES_RU = {
-    "intense_mode": "Интенсив",
-    "fantasy_scenes": "Фантазии"
+    "intense_mode": "Интенсив"
 }
 
 FEATURE_NAMES_EN = {
-    "intense_mode": "Intense",
-    "fantasy_scenes": "Fantasy"
+    "intense_mode": "Intense"
 }
 
 
