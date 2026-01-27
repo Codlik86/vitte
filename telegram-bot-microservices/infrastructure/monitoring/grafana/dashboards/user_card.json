@@ -1181,6 +1181,6 @@
   "timezone": "browser",
   "title": "Карточка юзера",
   "uid": "user-card",
-  "version": 1,
+  "version": 2,
   "weekStart": ""
 }

@@ -7,8 +7,8 @@ providers:
     folder: 'Vitte Bot'
     type: file
     disableDeletion: false
-    updateIntervalSeconds: 10
-    allowUiUpdates: true
+    updateIntervalSeconds: 5
+    allowUiUpdates: false
     options:
       path: /etc/grafana/dashboards
       foldersFromFilesStructure: true
