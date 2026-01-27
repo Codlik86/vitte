@@ -553,7 +553,7 @@
           "root_selector": "",
           "source": "url",
           "type": "uql",
-          "uql": "parse-json | project \"Подписка\"=toboolean(\"has_subscription\")",
+          "uql": "parse-json | project \"Подписка\"=\"has_subscription\"",
           "url": "/analytics/user/${telegram_id}/card",
           "url_options": {
             "data": "",
@@ -1091,6 +1091,6 @@
   "timezone": "browser",
   "title": "Карточка юзера",
   "uid": "user-card",
-  "version": 3,
+  "version": 4,
   "weekStart": ""
 }
