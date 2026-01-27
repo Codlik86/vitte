@@ -490,7 +490,7 @@ services:
       - GF_SECURITY_ADMIN_USER=${GRAFANA_USER:-admin}
       - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_PASSWORD}
       - GF_USERS_ALLOW_SIGN_UP=false
-      - GF_SERVER_ROOT_URL=https://vitteapp.duckdns.org/grafana/
+      - GF_SERVER_ROOT_URL=http://195.209.210.96/grafana/
       - GF_SERVER_SERVE_FROM_SUB_PATH=true
       - GF_INSTALL_PLUGINS=yesoreyeram-infinity-datasource
       - POSTGRES_DB=${POSTGRES_DB}
