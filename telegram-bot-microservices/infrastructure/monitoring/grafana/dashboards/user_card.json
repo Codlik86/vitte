@@ -64,13 +64,6 @@
       "pluginVersion": "10.0.0",
       "targets": [
         {
-          "columns": [
-            {
-              "selector": "telegram_id",
-              "text": "Telegram ID",
-              "type": "string"
-            }
-          ],
           "datasource": {
             "type": "yesoreyeram-infinity-datasource",
             "uid": "admin-api"
@@ -81,7 +74,8 @@
           "refId": "A",
           "root_selector": "",
           "source": "url",
-          "type": "json",
+          "type": "uql",
+          "uql": "parse-json | project \"Telegram ID\"=\"telegram_id\"",
           "url": "/analytics/user/${telegram_id}/card",
           "url_options": {
             "data": "",
@@ -134,13 +128,6 @@
       "pluginVersion": "10.0.0",
       "targets": [
         {
-          "columns": [
-            {
-              "selector": "username",
-              "text": "Username",
-              "type": "string"
-            }
-          ],
           "datasource": {
             "type": "yesoreyeram-infinity-datasource",
             "uid": "admin-api"
@@ -151,7 +138,8 @@
           "refId": "A",
           "root_selector": "",
           "source": "url",
-          "type": "json",
+          "type": "uql",
+          "uql": "parse-json | project \"Username\"=\"username\"",
           "url": "/analytics/user/${telegram_id}/card",
           "url_options": {
             "data": "",
@@ -204,13 +192,6 @@
       "pluginVersion": "10.0.0",
       "targets": [
         {
-          "columns": [
-            {
-              "selector": "first_name",
-              "text": "Имя",
-              "type": "string"
-            }
-          ],
           "datasource": {
             "type": "yesoreyeram-infinity-datasource",
             "uid": "admin-api"
@@ -221,7 +202,8 @@
           "refId": "A",
           "root_selector": "",
           "source": "url",
-          "type": "json",
+          "type": "uql",
+          "uql": "parse-json | project \"Имя\"=\"first_name\"",
           "url": "/analytics/user/${telegram_id}/card",
           "url_options": {
             "data": "",
@@ -274,13 +256,6 @@
       "pluginVersion": "10.0.0",
       "targets": [
         {
-          "columns": [
-            {
-              "selector": "last_name",
-              "text": "Фамилия",
-              "type": "string"
-            }
-          ],
           "datasource": {
             "type": "yesoreyeram-infinity-datasource",
             "uid": "admin-api"
@@ -291,7 +266,8 @@
           "refId": "A",
           "root_selector": "",
           "source": "url",
-          "type": "json",
+          "type": "uql",
+          "uql": "parse-json | project \"Фамилия\"=\"last_name\"",
           "url": "/analytics/user/${telegram_id}/card",
           "url_options": {
             "data": "",
@@ -345,13 +321,6 @@
       "pluginVersion": "10.0.0",
       "targets": [
         {
-          "columns": [
-            {
-              "selector": "created_at",
-              "text": "Регистрация",
-              "type": "timestamp"
-            }
-          ],
           "datasource": {
             "type": "yesoreyeram-infinity-datasource",
             "uid": "admin-api"
@@ -362,7 +331,8 @@
           "refId": "A",
           "root_selector": "",
           "source": "url",
-          "type": "json",
+          "type": "uql",
+          "uql": "parse-json | project \"Регистрация\"=todatetime(\"created_at\")",
           "url": "/analytics/user/${telegram_id}/card",
           "url_options": {
             "data": "",
@@ -429,13 +399,6 @@
       "pluginVersion": "10.0.0",
       "targets": [
         {
-          "columns": [
-            {
-              "selector": "payments_total_stars",
-              "text": "Потрачено ⭐",
-              "type": "number"
-            }
-          ],
           "datasource": {
             "type": "yesoreyeram-infinity-datasource",
             "uid": "admin-api"
@@ -446,7 +409,8 @@
           "refId": "A",
           "root_selector": "",
           "source": "url",
-          "type": "json",
+          "type": "uql",
+          "uql": "parse-json | project \"Потрачено ⭐\"=tonumber(\"payments_total_stars\")",
           "url": "/analytics/user/${telegram_id}/card",
           "url_options": {
             "data": "",
@@ -500,13 +464,6 @@
       "pluginVersion": "10.0.0",
       "targets": [
         {
-          "columns": [
-            {
-              "selector": "payments_total_count",
-              "text": "Всего платежей",
-              "type": "number"
-            }
-          ],
           "datasource": {
             "type": "yesoreyeram-infinity-datasource",
             "uid": "admin-api"
@@ -517,7 +474,8 @@
           "refId": "A",
           "root_selector": "",
           "source": "url",
-          "type": "json",
+          "type": "uql",
+          "uql": "parse-json | project \"Всего платежей\"=tonumber(\"payments_total_count\")",
           "url": "/analytics/user/${telegram_id}/card",
           "url_options": {
             "data": "",
@@ -584,13 +542,6 @@
       "pluginVersion": "10.0.0",
       "targets": [
         {
-          "columns": [
-            {
-              "selector": "has_subscription",
-              "text": "Подписка",
-              "type": "boolean"
-            }
-          ],
           "datasource": {
             "type": "yesoreyeram-infinity-datasource",
             "uid": "admin-api"
@@ -601,7 +552,8 @@
           "refId": "A",
           "root_selector": "",
           "source": "url",
-          "type": "json",
+          "type": "uql",
+          "uql": "parse-json | project \"Подписка\"=toboolean(\"has_subscription\")",
           "url": "/analytics/user/${telegram_id}/card",
           "url_options": {
             "data": "",
@@ -654,13 +606,6 @@
       "pluginVersion": "10.0.0",
       "targets": [
         {
-          "columns": [
-            {
-              "selector": "subscription_plan",
-              "text": "План",
-              "type": "string"
-            }
-          ],
           "datasource": {
             "type": "yesoreyeram-infinity-datasource",
             "uid": "admin-api"
@@ -671,7 +616,8 @@
           "refId": "A",
           "root_selector": "",
           "source": "url",
-          "type": "json",
+          "type": "uql",
+          "uql": "parse-json | project \"План\"=\"subscription_plan\"",
           "url": "/analytics/user/${telegram_id}/card",
           "url_options": {
             "data": "",
@@ -738,13 +684,6 @@
       "pluginVersion": "10.0.0",
       "targets": [
         {
-          "columns": [
-            {
-              "selector": "messages_count",
-              "text": "Сообщений",
-              "type": "number"
-            }
-          ],
           "datasource": {
             "type": "yesoreyeram-infinity-datasource",
             "uid": "admin-api"
@@ -755,7 +694,8 @@
           "refId": "A",
           "root_selector": "",
           "source": "url",
-          "type": "json",
+          "type": "uql",
+          "uql": "parse-json | project \"Сообщений\"=tonumber(\"messages_count\")",
           "url": "/analytics/user/${telegram_id}/card",
           "url_options": {
             "data": "",
@@ -809,13 +749,6 @@
       "pluginVersion": "10.0.0",
       "targets": [
         {
-          "columns": [
-            {
-              "selector": "active_dialogs",
-              "text": "Активных диалогов",
-              "type": "number"
-            }
-          ],
           "datasource": {
             "type": "yesoreyeram-infinity-datasource",
             "uid": "admin-api"
@@ -826,7 +759,8 @@
           "refId": "A",
           "root_selector": "",
           "source": "url",
-          "type": "json",
+          "type": "uql",
+          "uql": "parse-json | project \"Активных диалогов\"=tonumber(\"active_dialogs\")",
           "url": "/analytics/user/${telegram_id}/card",
           "url_options": {
             "data": "",
@@ -880,13 +814,6 @@
       "pluginVersion": "10.0.0",
       "targets": [
         {
-          "columns": [
-            {
-              "selector": "last_interaction",
-              "text": "Последняя активность",
-              "type": "timestamp"
-            }
-          ],
           "datasource": {
             "type": "yesoreyeram-infinity-datasource",
             "uid": "admin-api"
@@ -897,7 +824,8 @@
           "refId": "A",
           "root_selector": "",
           "source": "url",
-          "type": "json",
+          "type": "uql",
+          "uql": "parse-json | project \"Последняя активность\"=todatetime(\"last_interaction\")",
           "url": "/analytics/user/${telegram_id}/card",
           "url_options": {
             "data": "",
@@ -968,13 +896,6 @@
       "pluginVersion": "10.0.0",
       "targets": [
         {
-          "columns": [
-            {
-              "selector": "features_unlocked",
-              "text": "Улучшения",
-              "type": "string"
-            }
-          ],
           "datasource": {
             "type": "yesoreyeram-infinity-datasource",
             "uid": "admin-api"
@@ -983,9 +904,10 @@
           "format": "table",
           "global_query_id": "",
           "refId": "A",
-          "root_selector": "",
+          "root_selector": "$.features_unlocked",
           "source": "url",
           "type": "json",
+          "columns": [],
           "url": "/analytics/user/${telegram_id}/card",
           "url_options": {
             "data": "",
@@ -1051,13 +973,6 @@
       "pluginVersion": "10.0.0",
       "targets": [
         {
-          "columns": [
-            {
-              "selector": "images_total_purchased",
-              "text": "Куплено изображений",
-              "type": "number"
-            }
-          ],
           "datasource": {
             "type": "yesoreyeram-infinity-datasource",
             "uid": "admin-api"
@@ -1068,7 +983,8 @@
           "refId": "A",
           "root_selector": "",
           "source": "url",
-          "type": "json",
+          "type": "uql",
+          "uql": "parse-json | project \"Куплено изображений\"=tonumber(\"images_total_purchased\")",
           "url": "/analytics/user/${telegram_id}/card",
           "url_options": {
             "data": "",
@@ -1122,13 +1038,6 @@
       "pluginVersion": "10.0.0",
       "targets": [
         {
-          "columns": [
-            {
-              "selector": "images_remaining",
-              "text": "Остаток изображений",
-              "type": "number"
-            }
-          ],
           "datasource": {
             "type": "yesoreyeram-infinity-datasource",
             "uid": "admin-api"
@@ -1139,7 +1048,8 @@
           "refId": "A",
           "root_selector": "",
           "source": "url",
-          "type": "json",
+          "type": "uql",
+          "uql": "parse-json | project \"Остаток изображений\"=tonumber(\"images_remaining\")",
           "url": "/analytics/user/${telegram_id}/card",
           "url_options": {
             "data": "",
@@ -1181,6 +1091,6 @@
   "timezone": "browser",
   "title": "Карточка юзера",
   "uid": "user-card",
-  "version": 2,
+  "version": 3,
   "weekStart": ""
 }
