@@ -453,7 +453,7 @@ class ChatFlow:
         response = await llm_client.chat_completion(
             messages=messages,
             temperature=0.85,          # Повышено для большей креативности ответов
-            max_tokens=512,            # Уменьшено с 1024 - против длинных повторяющихся ответов
+            max_tokens=800,            # Увеличено для более развёрнутых ответов
             presence_penalty=0.3,      # Оптимальное значение (research: 0.2-0.5)
             frequency_penalty=0.4,     # Оптимальное значение (research: 0.2-0.5)
         )
@@ -583,7 +583,7 @@ class ChatFlow:
         response = await llm_client.chat_completion(
             messages=messages,
             temperature=0.9,
-            max_tokens=512,
+            max_tokens=800,
         )
 
         if not response:
