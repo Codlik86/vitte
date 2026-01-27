@@ -8,8 +8,8 @@ datasources:
     type: postgres
     access: proxy
     url: postgres:5432
-    database: $__env{POSTGRES_DB}
-    user: $__env{POSTGRES_USER}
+    database: vitte_bot
+    user: vitte_user
     secureJsonData:
       password: $__env{POSTGRES_PASSWORD}
     jsonData:
@@ -17,7 +17,7 @@ datasources:
       postgresVersion: 1500
       timescaledb: false
     isDefault: true
-    editable: false
+    editable: true
 
   # Admin API - JSON API для Infinity plugin
   - name: Admin API

@@ -23,7 +23,7 @@ router = APIRouter(prefix="/analytics", tags=["analytics"])
 async def get_all_users(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
-    telegram_id: Optional[int] = None,
+    telegram_id: Optional[str] = Query(None),
     utm_source: Optional[str] = None,
     search: Optional[str] = None
 ):
@@ -92,8 +92,12 @@ async def get_all_users(
             )
 
             # Filters
-            if telegram_id:
-                query = query.where(User.id == telegram_id)
+            if telegram_id and telegram_id.strip():
+                try:
+                    tid = int(telegram_id)
+                    query = query.where(User.id == tid)
+                except ValueError:
+                    pass  # Ignore invalid telegram_id
 
             if utm_source:
                 query = query.where(User.utm_source == utm_source)
@@ -219,7 +223,7 @@ async def get_revenue_summary():
 async def get_recent_payments(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
-    telegram_id: Optional[int] = None
+    telegram_id: Optional[str] = Query(None)
 ):
     """
     Последние платежи (все транзакции)
@@ -254,8 +258,12 @@ async def get_recent_payments(
                 .order_by(desc(Purchase.created_at))
             )
 
-            if telegram_id:
-                query = query.where(User.id == telegram_id)
+            if telegram_id and telegram_id.strip():
+                try:
+                    tid = int(telegram_id)
+                    query = query.where(User.id == tid)
+                except ValueError:
+                    pass
 
             query = query.offset(skip).limit(limit)
 
@@ -347,7 +355,7 @@ async def get_top_spenders(limit: int = Query(50, ge=1, le=100)):
 # ==================== USER CARD ====================
 
 @router.get("/user/{telegram_id}/card")
-async def get_user_card(telegram_id: int):
+async def get_user_card(telegram_id: str):
     """
     Карточка пользователя - вся информация о юзере
 
@@ -358,16 +366,25 @@ async def get_user_card(telegram_id: int):
     - Активные диалоги
     - Улучшения
     """
+    # Validate telegram_id
+    if not telegram_id or not telegram_id.strip():
+        raise HTTPException(status_code=400, detail="telegram_id is required")
+
+    try:
+        tid = int(telegram_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid telegram_id format")
+
     try:
         async for db in get_db():
             # Get user
-            user = await db.scalar(select(User).where(User.id == telegram_id))
+            user = await db.scalar(select(User).where(User.id == tid))
             if not user:
                 raise HTTPException(status_code=404, detail="User not found")
 
             # Get subscription
             subscription = await db.scalar(
-                select(Subscription).where(Subscription.user_id == telegram_id)
+                select(Subscription).where(Subscription.user_id == tid)
             )
 
             # Get payments stats
@@ -379,7 +396,7 @@ async def get_user_card(telegram_id: int):
                     func.max(Purchase.created_at).label('last')
                 )
                 .where(
-                    Purchase.user_id == telegram_id,
+                    Purchase.user_id == tid,
                     Purchase.status == 'success'
                 )
             )
@@ -389,14 +406,14 @@ async def get_user_card(telegram_id: int):
             messages_count = await db.scalar(
                 select(func.count(Message.id))
                 .join(Dialog, Dialog.id == Message.dialog_id)
-                .where(Dialog.user_id == telegram_id)
+                .where(Dialog.user_id == tid)
             )
 
             # Get active dialogs
             active_dialogs = await db.scalar(
                 select(func.count(Dialog.id))
                 .where(
-                    Dialog.user_id == telegram_id,
+                    Dialog.user_id == tid,
                     Dialog.is_active == True
                 )
             )
@@ -405,7 +422,7 @@ async def get_user_card(telegram_id: int):
             unlocks = await db.execute(
                 select(FeatureUnlock)
                 .where(
-                    FeatureUnlock.user_id == telegram_id,
+                    FeatureUnlock.user_id == tid,
                     FeatureUnlock.enabled == True
                 )
             )
@@ -413,7 +430,7 @@ async def get_user_card(telegram_id: int):
 
             # Get image balance
             image_balance = await db.scalar(
-                select(ImageBalance).where(ImageBalance.user_id == telegram_id)
+                select(ImageBalance).where(ImageBalance.user_id == tid)
             )
 
             return {
