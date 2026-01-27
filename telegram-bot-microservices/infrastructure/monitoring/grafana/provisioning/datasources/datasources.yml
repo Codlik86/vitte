@@ -4,6 +4,7 @@ apiVersion: 1
 datasources:
   # PostgreSQL - Main Database
   - name: PostgreSQL
+    uid: postgresql
     type: postgres
     access: proxy
     url: postgres:5432
@@ -20,6 +21,7 @@ datasources:
 
   # Admin API - JSON API для Infinity plugin
   - name: Admin API
+    uid: admin-api
     type: yesoreyeram-infinity-datasource
     access: proxy
     url: http://admin:8080
@@ -33,6 +35,7 @@ datasources:
 
   # Prometheus - Metrics
   - name: Prometheus
+    uid: prometheus
     type: prometheus
     access: proxy
     url: http://prometheus:9090

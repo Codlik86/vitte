@@ -25,7 +25,7 @@
     {
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
-        "uid": "Admin API"
+        "uid": "admin-api"
       },
       "fieldConfig": {
         "defaults": {
@@ -73,7 +73,7 @@
           ],
           "datasource": {
             "type": "yesoreyeram-infinity-datasource",
-            "uid": "Admin API"
+            "uid": "admin-api"
           },
           "filters": [],
           "format": "table",
@@ -95,7 +95,7 @@
     {
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
-        "uid": "Admin API"
+        "uid": "admin-api"
       },
       "fieldConfig": {
         "defaults": {
@@ -143,7 +143,7 @@
           ],
           "datasource": {
             "type": "yesoreyeram-infinity-datasource",
-            "uid": "Admin API"
+            "uid": "admin-api"
           },
           "filters": [],
           "format": "table",
@@ -165,7 +165,7 @@
     {
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
-        "uid": "Admin API"
+        "uid": "admin-api"
       },
       "fieldConfig": {
         "defaults": {
@@ -213,7 +213,7 @@
           ],
           "datasource": {
             "type": "yesoreyeram-infinity-datasource",
-            "uid": "Admin API"
+            "uid": "admin-api"
           },
           "filters": [],
           "format": "table",
@@ -235,7 +235,7 @@
     {
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
-        "uid": "Admin API"
+        "uid": "admin-api"
       },
       "fieldConfig": {
         "defaults": {
@@ -283,7 +283,7 @@
           ],
           "datasource": {
             "type": "yesoreyeram-infinity-datasource",
-            "uid": "Admin API"
+            "uid": "admin-api"
           },
           "filters": [],
           "format": "table",
@@ -305,7 +305,7 @@
     {
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
-        "uid": "Admin API"
+        "uid": "admin-api"
       },
       "fieldConfig": {
         "defaults": {
@@ -354,7 +354,7 @@
           ],
           "datasource": {
             "type": "yesoreyeram-infinity-datasource",
-            "uid": "Admin API"
+            "uid": "admin-api"
           },
           "filters": [],
           "format": "table",
@@ -389,7 +389,7 @@
     {
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
-        "uid": "Admin API"
+        "uid": "admin-api"
       },
       "fieldConfig": {
         "defaults": {
@@ -438,7 +438,7 @@
           ],
           "datasource": {
             "type": "yesoreyeram-infinity-datasource",
-            "uid": "Admin API"
+            "uid": "admin-api"
           },
           "filters": [],
           "format": "table",
@@ -460,7 +460,7 @@
     {
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
-        "uid": "Admin API"
+        "uid": "admin-api"
       },
       "fieldConfig": {
         "defaults": {
@@ -509,7 +509,7 @@
           ],
           "datasource": {
             "type": "yesoreyeram-infinity-datasource",
-            "uid": "Admin API"
+            "uid": "admin-api"
           },
           "filters": [],
           "format": "table",
@@ -531,7 +531,7 @@
     {
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
-        "uid": "Admin API"
+        "uid": "admin-api"
       },
       "fieldConfig": {
         "defaults": {
@@ -593,7 +593,7 @@
           ],
           "datasource": {
             "type": "yesoreyeram-infinity-datasource",
-            "uid": "Admin API"
+            "uid": "admin-api"
           },
           "filters": [],
           "format": "table",
@@ -615,7 +615,7 @@
     {
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
-        "uid": "Admin API"
+        "uid": "admin-api"
       },
       "fieldConfig": {
         "defaults": {
@@ -663,7 +663,7 @@
           ],
           "datasource": {
             "type": "yesoreyeram-infinity-datasource",
-            "uid": "Admin API"
+            "uid": "admin-api"
           },
           "filters": [],
           "format": "table",
@@ -698,7 +698,7 @@
     {
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
-        "uid": "Admin API"
+        "uid": "admin-api"
       },
       "fieldConfig": {
         "defaults": {
@@ -747,7 +747,7 @@
           ],
           "datasource": {
             "type": "yesoreyeram-infinity-datasource",
-            "uid": "Admin API"
+            "uid": "admin-api"
           },
           "filters": [],
           "format": "table",
@@ -769,7 +769,7 @@
     {
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
-        "uid": "Admin API"
+        "uid": "admin-api"
       },
       "fieldConfig": {
         "defaults": {
@@ -818,7 +818,7 @@
           ],
           "datasource": {
             "type": "yesoreyeram-infinity-datasource",
-            "uid": "Admin API"
+            "uid": "admin-api"
           },
           "filters": [],
           "format": "table",
@@ -840,7 +840,7 @@
     {
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
-        "uid": "Admin API"
+        "uid": "admin-api"
       },
       "fieldConfig": {
         "defaults": {
@@ -889,7 +889,7 @@
           ],
           "datasource": {
             "type": "yesoreyeram-infinity-datasource",
-            "uid": "Admin API"
+            "uid": "admin-api"
           },
           "filters": [],
           "format": "table",
@@ -924,7 +924,7 @@
     {
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
-        "uid": "Admin API"
+        "uid": "admin-api"
       },
       "fieldConfig": {
         "defaults": {
@@ -977,7 +977,7 @@
           ],
           "datasource": {
             "type": "yesoreyeram-infinity-datasource",
-            "uid": "Admin API"
+            "uid": "admin-api"
           },
           "filters": [],
           "format": "table",
@@ -1011,7 +1011,7 @@
     {
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
-        "uid": "Admin API"
+        "uid": "admin-api"
       },
       "fieldConfig": {
         "defaults": {
@@ -1060,7 +1060,7 @@
           ],
           "datasource": {
             "type": "yesoreyeram-infinity-datasource",
-            "uid": "Admin API"
+            "uid": "admin-api"
           },
           "filters": [],
           "format": "table",
@@ -1082,7 +1082,7 @@
     {
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
-        "uid": "Admin API"
+        "uid": "admin-api"
       },
       "fieldConfig": {
         "defaults": {
@@ -1131,7 +1131,7 @@
           ],
           "datasource": {
             "type": "yesoreyeram-infinity-datasource",
-            "uid": "Admin API"
+            "uid": "admin-api"
           },
           "filters": [],
           "format": "table",

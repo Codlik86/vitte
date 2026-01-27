@@ -12,7 +12,7 @@
     {
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
-        "uid": "Admin API"
+        "uid": "admin-api"
       },
       "gridPos": {
         "h": 6,
@@ -39,7 +39,7 @@
     {
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
-        "uid": "Admin API"
+        "uid": "admin-api"
       },
       "fieldConfig": {
         "defaults": {
@@ -88,7 +88,7 @@
           ],
           "datasource": {
             "type": "yesoreyeram-infinity-datasource",
-            "uid": "Admin API"
+            "uid": "admin-api"
           },
           "filters": [],
           "format": "table",
@@ -110,7 +110,7 @@
     {
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
-        "uid": "Admin API"
+        "uid": "admin-api"
       },
       "fieldConfig": {
         "defaults": {
@@ -159,7 +159,7 @@
           ],
           "datasource": {
             "type": "yesoreyeram-infinity-datasource",
-            "uid": "Admin API"
+            "uid": "admin-api"
           },
           "filters": [],
           "format": "table",
@@ -181,7 +181,7 @@
     {
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
-        "uid": "Admin API"
+        "uid": "admin-api"
       },
       "fieldConfig": {
         "defaults": {
@@ -230,7 +230,7 @@
           ],
           "datasource": {
             "type": "yesoreyeram-infinity-datasource",
-            "uid": "Admin API"
+            "uid": "admin-api"
           },
           "filters": [],
           "format": "table",
@@ -252,7 +252,7 @@
     {
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
-        "uid": "Admin API"
+        "uid": "admin-api"
       },
       "fieldConfig": {
         "defaults": {
@@ -301,7 +301,7 @@
           ],
           "datasource": {
             "type": "yesoreyeram-infinity-datasource",
-            "uid": "Admin API"
+            "uid": "admin-api"
           },
           "filters": [],
           "format": "table",
@@ -323,7 +323,7 @@
     {
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
-        "uid": "Admin API"
+        "uid": "admin-api"
       },
       "fieldConfig": {
         "defaults": {
@@ -372,7 +372,7 @@
           ],
           "datasource": {
             "type": "yesoreyeram-infinity-datasource",
-            "uid": "Admin API"
+            "uid": "admin-api"
           },
           "filters": [],
           "format": "table",
@@ -394,7 +394,7 @@
     {
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
-        "uid": "Admin API"
+        "uid": "admin-api"
       },
       "fieldConfig": {
         "defaults": {
@@ -443,7 +443,7 @@
           ],
           "datasource": {
             "type": "yesoreyeram-infinity-datasource",
-            "uid": "Admin API"
+            "uid": "admin-api"
           },
           "filters": [],
           "format": "table",
@@ -465,7 +465,7 @@
     {
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
-        "uid": "Admin API"
+        "uid": "admin-api"
       },
       "fieldConfig": {
         "defaults": {
@@ -514,7 +514,7 @@
           ],
           "datasource": {
             "type": "yesoreyeram-infinity-datasource",
-            "uid": "Admin API"
+            "uid": "admin-api"
           },
           "filters": [],
           "format": "table",
@@ -536,7 +536,7 @@
     {
       "datasource": {
         "type": "postgres",
-        "uid": "PostgreSQL"
+        "uid": "postgresql"
       },
       "fieldConfig": {
         "defaults": {
@@ -611,7 +611,7 @@
         {
           "datasource": {
             "type": "postgres",
-            "uid": "PostgreSQL"
+            "uid": "postgresql"
           },
           "editorMode": "code",
           "format": "time_series",
@@ -663,7 +663,7 @@
     {
       "datasource": {
         "type": "postgres",
-        "uid": "PostgreSQL"
+        "uid": "postgresql"
       },
       "fieldConfig": {
         "defaults": {
@@ -738,7 +738,7 @@
         {
           "datasource": {
             "type": "postgres",
-            "uid": "PostgreSQL"
+            "uid": "postgresql"
           },
           "editorMode": "code",
           "format": "time_series",

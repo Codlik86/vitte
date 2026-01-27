@@ -12,7 +12,7 @@
     {
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
-        "uid": "Admin API"
+        "uid": "admin-api"
       },
       "gridPos": {
         "h": 4,
@@ -39,7 +39,7 @@
     {
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
-        "uid": "Admin API"
+        "uid": "admin-api"
       },
       "gridPos": {
         "h": 8,
@@ -62,7 +62,7 @@
         {
           "datasource": {
             "type": "yesoreyeram-infinity-datasource",
-            "uid": "Admin API"
+            "uid": "admin-api"
           },
           "filters": [],
           "format": "table",
