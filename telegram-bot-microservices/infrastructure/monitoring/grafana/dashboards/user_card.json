@@ -66,7 +66,7 @@
         {
           "columns": [
             {
-              "selector": "user.telegram_id",
+              "selector": "telegram_id",
               "text": "Telegram ID",
               "type": "string"
             }
@@ -136,7 +136,7 @@
         {
           "columns": [
             {
-              "selector": "user.username",
+              "selector": "username",
               "text": "Username",
               "type": "string"
             }
@@ -206,7 +206,7 @@
         {
           "columns": [
             {
-              "selector": "user.first_name",
+              "selector": "first_name",
               "text": "Имя",
               "type": "string"
             }
@@ -276,7 +276,7 @@
         {
           "columns": [
             {
-              "selector": "user.last_name",
+              "selector": "last_name",
               "text": "Фамилия",
               "type": "string"
             }
@@ -347,7 +347,7 @@
         {
           "columns": [
             {
-              "selector": "user.created_at",
+              "selector": "created_at",
               "text": "Регистрация",
               "type": "timestamp"
             }
@@ -431,7 +431,7 @@
         {
           "columns": [
             {
-              "selector": "payments.total_stars",
+              "selector": "payments_total_stars",
               "text": "Потрачено ⭐",
               "type": "number"
             }
@@ -502,7 +502,7 @@
         {
           "columns": [
             {
-              "selector": "payments.total_count",
+              "selector": "payments_total_count",
               "text": "Всего платежей",
               "type": "number"
             }
@@ -586,7 +586,7 @@
         {
           "columns": [
             {
-              "selector": "subscription.has_subscription",
+              "selector": "has_subscription",
               "text": "Подписка",
               "type": "boolean"
             }
@@ -656,7 +656,7 @@
         {
           "columns": [
             {
-              "selector": "subscription.plan",
+              "selector": "subscription_plan",
               "text": "План",
               "type": "string"
             }
@@ -740,7 +740,7 @@
         {
           "columns": [
             {
-              "selector": "activity.messages_count",
+              "selector": "messages_count",
               "text": "Сообщений",
               "type": "number"
             }
@@ -811,7 +811,7 @@
         {
           "columns": [
             {
-              "selector": "activity.active_dialogs",
+              "selector": "active_dialogs",
               "text": "Активных диалогов",
               "type": "number"
             }
@@ -882,7 +882,7 @@
         {
           "columns": [
             {
-              "selector": "user.last_interaction",
+              "selector": "last_interaction",
               "text": "Последняя активность",
               "type": "timestamp"
             }
@@ -970,7 +970,7 @@
         {
           "columns": [
             {
-              "selector": "features.unlocked",
+              "selector": "features_unlocked",
               "text": "Улучшения",
               "type": "string"
             }
@@ -1053,7 +1053,7 @@
         {
           "columns": [
             {
-              "selector": "images.total_purchased",
+              "selector": "images_total_purchased",
               "text": "Куплено изображений",
               "type": "number"
             }
@@ -1124,7 +1124,7 @@
         {
           "columns": [
             {
-              "selector": "images.remaining",
+              "selector": "images_remaining",
               "text": "Остаток изображений",
               "type": "number"
             }

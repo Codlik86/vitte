@@ -433,51 +433,46 @@ async def get_user_card(telegram_id: str):
                 select(ImageBalance).where(ImageBalance.user_id == tid)
             )
 
+            # Return flat structure for easier Grafana Infinity plugin parsing
             return {
-                "user": {
-                    "telegram_id": user.id,
-                    "username": user.username,
-                    "first_name": user.first_name,
-                    "last_name": user.last_name,
-                    "language": user.language_code,
-                    "utm_source": user.utm_source,
-                    "is_active": user.is_active,
-                    "is_blocked": user.is_blocked,
-                    "is_admin": user.is_admin,
-                    "access_status": user.access_status,
-                    "free_messages_used": user.free_messages_used,
-                    "free_messages_limit": user.free_messages_limit,
-                    "created_at": user.created_at.isoformat() if user.created_at else None,
-                    "last_interaction": user.last_interaction.isoformat() if user.last_interaction else None
-                },
-                "subscription": {
-                    "has_subscription": subscription is not None and subscription.is_active,
-                    "plan": subscription.plan if subscription else "free",
-                    "is_active": subscription.is_active if subscription else False,
-                    "started_at": subscription.started_at.isoformat() if subscription and subscription.started_at else None,
-                    "expires_at": subscription.expires_at.isoformat() if subscription and subscription.expires_at else None,
-                    "intense_mode": subscription.intense_mode if subscription else False,
-                    "fantasy_scenes": subscription.fantasy_scenes if subscription else False
-                } if subscription else None,
-                "payments": {
-                    "total_count": payments.count or 0,
-                    "total_stars": int(payments.total) if payments.total else 0,
-                    "first_payment": payments.first.isoformat() if payments.first else None,
-                    "last_payment": payments.last.isoformat() if payments.last else None
-                },
-                "activity": {
-                    "messages_count": messages_count or 0,
-                    "active_dialogs": active_dialogs or 0
-                },
-                "features": {
-                    "unlocked": features
-                },
-                "images": {
-                    "total_purchased": image_balance.total_purchased_images if image_balance else 0,
-                    "remaining": image_balance.remaining_purchased_images if image_balance else 0,
-                    "daily_quota": image_balance.daily_subscription_quota if image_balance else 0,
-                    "daily_used": image_balance.daily_subscription_used if image_balance else 0
-                } if image_balance else None
+                # User info (flat)
+                "telegram_id": user.id,
+                "username": user.username,
+                "first_name": user.first_name,
+                "last_name": user.last_name,
+                "language": user.language_code,
+                "utm_source": user.utm_source,
+                "is_active": user.is_active,
+                "is_blocked": user.is_blocked,
+                "is_admin": user.is_admin,
+                "access_status": user.access_status,
+                "free_messages_used": user.free_messages_used,
+                "free_messages_limit": user.free_messages_limit,
+                "created_at": user.created_at.isoformat() if user.created_at else None,
+                "last_interaction": user.last_interaction.isoformat() if user.last_interaction else None,
+                # Subscription info (flat)
+                "has_subscription": subscription is not None and subscription.is_active,
+                "subscription_plan": subscription.plan if subscription else "free",
+                "subscription_is_active": subscription.is_active if subscription else False,
+                "subscription_started_at": subscription.started_at.isoformat() if subscription and subscription.started_at else None,
+                "subscription_expires_at": subscription.expires_at.isoformat() if subscription and subscription.expires_at else None,
+                "intense_mode": subscription.intense_mode if subscription else False,
+                "fantasy_scenes": subscription.fantasy_scenes if subscription else False,
+                # Payments info (flat)
+                "payments_total_count": payments.count or 0,
+                "payments_total_stars": int(payments.total) if payments.total else 0,
+                "first_payment": payments.first.isoformat() if payments.first else None,
+                "last_payment": payments.last.isoformat() if payments.last else None,
+                # Activity info (flat)
+                "messages_count": messages_count or 0,
+                "active_dialogs": active_dialogs or 0,
+                # Features (array)
+                "features_unlocked": features,
+                # Images info (flat)
+                "images_total_purchased": image_balance.total_purchased_images if image_balance else 0,
+                "images_remaining": image_balance.remaining_purchased_images if image_balance else 0,
+                "images_daily_quota": image_balance.daily_subscription_quota if image_balance else 0,
+                "images_daily_used": image_balance.daily_subscription_used if image_balance else 0
             }
 
     except HTTPException:
