@@ -160,10 +160,15 @@ async def get_user_status(user_id: int) -> dict:
                 logger.error(f"Error getting message count from Redis: {e}")
                 status["messages_today"] = 0
 
-            # Images remaining
+            # Images remaining (purchased + daily quota)
             image_balance = user.image_balance
             if image_balance:
-                status["images_remaining"] = image_balance.remaining_purchased_images or 0
+                # Calculate remaining from daily quota (for Premium users)
+                remaining_daily = max(0, image_balance.daily_subscription_quota - image_balance.daily_subscription_used)
+                remaining_purchased = image_balance.remaining_purchased_images or 0
+                status["images_remaining"] = remaining_daily + remaining_purchased
+            else:
+                status["images_remaining"] = 0
 
             # Active features
             if user.feature_unlocks:
@@ -203,25 +208,33 @@ def build_status_block(status: dict, lang: str = "ru") -> str:
     images_str = f"🖼 {images_remaining} доступно" if lang == "ru" else f"🖼 {images_remaining} available"
 
     if is_premium:
-        # Premium user - show unlimited messages + features + images
+        # Premium user - show unlimited messages + features + images (вертикально)
         if lang == "ru":
-            block = f"""💎 Premium        ✨ {features_str}
-💬 Безлимит        {images_str}"""
+            block = f"""💎 Premium
+✨ {features_str}
+💬 Безлимит
+{images_str}"""
         else:
-            block = f"""💎 Premium        ✨ {features_str}
-💬 Unlimited        {images_str}"""
+            block = f"""💎 Premium
+✨ {features_str}
+💬 Unlimited
+{images_str}"""
     else:
-        # Free user - show full status with limits
+        # Free user - show full status with limits (вертикально)
         messages_today = status["messages_today"]
         messages_limit = 20
         messages_str = f"💬 {messages_today}/{messages_limit}"
 
         if lang == "ru":
-            block = f"""👤 Free        ✨ {features_str}
-{messages_str}        {images_str}"""
+            block = f"""👤 Free
+✨ {features_str}
+{messages_str}
+{images_str}"""
         else:
-            block = f"""👤 Free        ✨ {features_str}
-{messages_str}        {images_str}"""
+            block = f"""👤 Free
+✨ {features_str}
+{messages_str}
+{images_str}"""
 
     return block
 

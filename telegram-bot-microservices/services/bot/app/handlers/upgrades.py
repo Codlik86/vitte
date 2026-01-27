@@ -110,7 +110,7 @@ def get_upgrades_keyboard_ru(intense_active: bool, fantasy_active: bool) -> Inli
     else:
         buttons.append([InlineKeyboardButton(text="Фантазийные сцены · 200 ⭐", callback_data="upgrades:buy_fantasy_scenes")])
 
-    buttons.append([InlineKeyboardButton(text="⭐ Купить Stars", url="https://t.me/tribute/app?startapp=plsg")])
+    buttons.append([InlineKeyboardButton(text="⭐ Купить Stars по СБП", url="https://t.me/tribute/app?startapp=plsg")])
     buttons.append([InlineKeyboardButton(text="⬅️ Назад", callback_data="upgrades:back_to_menu")])
 
     return InlineKeyboardMarkup(inline_keyboard=buttons)

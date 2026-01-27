@@ -147,7 +147,7 @@ def get_images_keyboard_ru() -> InlineKeyboardMarkup:
             InlineKeyboardButton(text="200 изображений — 500 ⭐", callback_data="shop:pack_200"),
         ],
         [
-            InlineKeyboardButton(text="⭐ Купить Stars", url="https://t.me/tribute/app?startapp=plsg"),
+            InlineKeyboardButton(text="⭐ Купить Stars по СБП", url="https://t.me/tribute/app?startapp=plsg"),
         ],
         [
             InlineKeyboardButton(text="⬅️ Назад", callback_data="shop:back_to_hub"),
