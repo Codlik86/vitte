@@ -21,12 +21,12 @@ export function HeaderAuth() {
 
   const handleLogout = async () => {
     await fetch('/admin-panel/api/auth/logout', { method: 'POST' })
-    router.push('/admin-panel/login')
+    router.push('/login')
     router.refresh()
   }
 
   // Don't show on login page (after all hooks)
-  if (pathname === '/admin-panel/login') return null
+  if (pathname === '/login') return null
 
   return (
     <div ref={ref} className="relative">

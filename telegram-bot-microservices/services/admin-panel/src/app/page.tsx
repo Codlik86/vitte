@@ -11,7 +11,7 @@ export default function SearchPage() {
     e.preventDefault()
     const id = telegramId.trim()
     if (id) {
-      router.push(`/admin-panel/user/${id}`)
+      router.push(`/user/${id}`)
     }
   }
 

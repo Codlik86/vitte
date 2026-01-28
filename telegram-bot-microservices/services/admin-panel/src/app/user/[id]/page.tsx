@@ -166,7 +166,7 @@ export default function UserCardPage() {
       const res = await fetch(`${API_BASE}/user/${telegramId}`, { method: 'DELETE' })
       if (!res.ok) throw new Error(await res.text())
       showToast('Аккаунт удалён')
-      setTimeout(() => router.push('/admin-panel'), 1500)
+      setTimeout(() => router.push('/'), 1500)
     } catch (e: any) {
       showToast(`Ошибка: ${e.message}`)
     } finally {
@@ -178,7 +178,7 @@ export default function UserCardPage() {
   if (error) return (
     <div className="text-center py-20">
       <p className="text-tg-danger text-lg mb-4">{error}</p>
-      <button onClick={() => router.push('/admin-panel')} className="text-tg-accent hover:underline">
+      <button onClick={() => router.push('/')} className="text-tg-accent hover:underline">
         Назад к поиску
       </button>
     </div>
@@ -196,7 +196,7 @@ export default function UserCardPage() {
       )}
 
       <div className="flex items-center gap-4 mb-6">
-        <button onClick={() => router.push('/admin-panel')} className="text-tg-muted hover:text-tg-text transition">
+        <button onClick={() => router.push('/')} className="text-tg-muted hover:text-tg-text transition">
           &larr; Назад
         </button>
         <h1 className="text-2xl font-bold">Пользователь {telegramId}</h1>
@@ -223,14 +223,13 @@ export default function UserCardPage() {
         <InfoRow label="Действует с" value={formatDate(user.subscription_started_at)} />
         <InfoRow label="Действует до" value={formatDate(user.subscription_expires_at)} />
         <InfoRow label="Intense Mode" value={user.intense_mode ? 'Да' : 'Нет'} />
-        <InfoRow label="Fantasy Scenes" value={user.fantasy_scenes ? 'Да' : 'Нет'} />
         <div className="flex flex-wrap gap-2 mt-4">
+          <ActionBtn label="Premium 7д" variant="success"
+            loading={actionLoading === 'sub7'}
+            onClick={() => doAction('/subscription', { action: 'grant_premium', days: 7 }, 'sub7')} />
           <ActionBtn label="Premium 30д" variant="success"
             loading={actionLoading === 'sub30'}
             onClick={() => doAction('/subscription', { action: 'grant_premium', days: 30 }, 'sub30')} />
-          <ActionBtn label="Premium 90д" variant="success"
-            loading={actionLoading === 'sub90'}
-            onClick={() => doAction('/subscription', { action: 'grant_premium', days: 90 }, 'sub90')} />
           <ActionBtn label="Premium 365д" variant="success"
             loading={actionLoading === 'sub365'}
             onClick={() => doAction('/subscription', { action: 'grant_premium', days: 365 }, 'sub365')} />
@@ -281,12 +280,6 @@ export default function UserCardPage() {
           <ActionBtn label="Убрать intense_mode" variant="danger"
             loading={actionLoading === 'feat_intense_revoke'}
             onClick={() => doAction('/features', { action: 'revoke', feature_code: 'intense_mode' }, 'feat_intense_revoke')} />
-          <ActionBtn label="Дать fantasy_scenes" variant="success"
-            loading={actionLoading === 'feat_fantasy_grant'}
-            onClick={() => doAction('/features', { action: 'grant', feature_code: 'fantasy_scenes' }, 'feat_fantasy_grant')} />
-          <ActionBtn label="Убрать fantasy_scenes" variant="danger"
-            loading={actionLoading === 'feat_fantasy_revoke'}
-            onClick={() => doAction('/features', { action: 'revoke', feature_code: 'fantasy_scenes' }, 'feat_fantasy_revoke')} />
         </div>
       </Card>
 

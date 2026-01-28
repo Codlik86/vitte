@@ -5,7 +5,7 @@ import { HeaderAuth } from './HeaderAuth'
 
 export function Shell({ children }: { children: React.ReactNode }) {
   const pathname = usePathname()
-  const isLogin = pathname === '/admin-panel/login'
+  const isLogin = pathname === '/login'
 
   if (isLogin) {
     return <>{children}</>

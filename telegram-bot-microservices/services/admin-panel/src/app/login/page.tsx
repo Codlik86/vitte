@@ -27,7 +27,7 @@ export default function LoginPage() {
         return
       }
 
-      router.push('/admin-panel')
+      router.push('/')
       router.refresh()
     } catch {
       setError('Ошибка подключения')
