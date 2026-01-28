@@ -223,7 +223,7 @@
                 "value": [
                   {
                     "title": "Открыть карточку",
-                    "url": "/admin-panel/user/${__value.raw}",
+                    "url": "http://195.209.210.96/admin-panel/user/${__value.raw}",
                     "targetBlank": true
                   }
                 ]
