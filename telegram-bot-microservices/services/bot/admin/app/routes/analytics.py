@@ -1,11 +1,12 @@
 """
 Analytics and admin API routes for Grafana dashboards
 """
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy import select, func, and_, or_, desc, case
+from fastapi import APIRouter, Depends, HTTPException, Query, Body
+from sqlalchemy import select, func, and_, or_, desc, case, delete as sa_delete
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime, timedelta
 from typing import Optional, List
+from pydantic import BaseModel
 
 from shared.database import (
     User, Subscription, Purchase, Dialog, Message,
@@ -631,6 +632,324 @@ async def get_top_utm_sources(limit: int = Query(10, ge=1, le=100)):
             }
     except Exception as e:
         logger.error(f"Error getting top UTM sources: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ==================== USER MANAGEMENT ACTIONS ====================
+
+class SubscriptionAction(BaseModel):
+    action: str  # grant_premium, revoke
+    days: Optional[int] = 30
+
+class ImagesAction(BaseModel):
+    action: str  # add, reset
+    amount: Optional[int] = 0
+
+class FeaturesAction(BaseModel):
+    action: str  # grant, revoke
+    feature_code: str
+
+
+@router.post("/user/{telegram_id}/subscription")
+async def manage_user_subscription(telegram_id: str, body: SubscriptionAction):
+    """Manage user subscription: grant premium or revoke"""
+    try:
+        tid = int(telegram_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid telegram_id")
+
+    try:
+        async for db in get_db():
+            user = await db.get(User, tid)
+            if not user:
+                raise HTTPException(status_code=404, detail="User not found")
+
+            sub = await db.scalar(
+                select(Subscription).where(Subscription.user_id == tid)
+            )
+
+            if body.action == "grant_premium":
+                now = datetime.utcnow()
+                if sub:
+                    sub.plan = "premium"
+                    sub.is_active = True
+                    sub.started_at = now
+                    sub.expires_at = now + timedelta(days=body.days or 30)
+                else:
+                    sub = Subscription(
+                        user_id=tid,
+                        plan="premium",
+                        is_active=True,
+                        started_at=now,
+                        expires_at=now + timedelta(days=body.days or 30),
+                    )
+                    db.add(sub)
+
+                user.access_status = "subscription_active"
+                await db.commit()
+                return {"status": "ok", "message": f"Premium granted for {body.days} days"}
+
+            elif body.action == "revoke":
+                if sub:
+                    sub.is_active = False
+                    sub.plan = "free"
+                    sub.expires_at = None
+                user.access_status = "trial_usage"
+                await db.commit()
+                return {"status": "ok", "message": "Subscription revoked"}
+
+            else:
+                raise HTTPException(status_code=400, detail=f"Unknown action: {body.action}")
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error managing subscription: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/user/{telegram_id}/images")
+async def manage_user_images(telegram_id: str, body: ImagesAction):
+    """Manage user images: add or reset"""
+    try:
+        tid = int(telegram_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid telegram_id")
+
+    try:
+        async for db in get_db():
+            user = await db.get(User, tid)
+            if not user:
+                raise HTTPException(status_code=404, detail="User not found")
+
+            balance = await db.scalar(
+                select(ImageBalance).where(ImageBalance.user_id == tid)
+            )
+
+            if body.action == "add":
+                amount = body.amount or 0
+                if balance:
+                    balance.total_purchased_images += amount
+                    balance.remaining_purchased_images += amount
+                else:
+                    balance = ImageBalance(
+                        user_id=tid,
+                        total_purchased_images=amount,
+                        remaining_purchased_images=amount,
+                    )
+                    db.add(balance)
+                await db.commit()
+                return {"status": "ok", "message": f"Added {amount} images"}
+
+            elif body.action == "reset":
+                if balance:
+                    balance.total_purchased_images = 0
+                    balance.remaining_purchased_images = 0
+                    await db.commit()
+                return {"status": "ok", "message": "Images reset to 0"}
+
+            else:
+                raise HTTPException(status_code=400, detail=f"Unknown action: {body.action}")
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error managing images: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/user/{telegram_id}/features")
+async def manage_user_features(telegram_id: str, body: FeaturesAction):
+    """Manage user features: grant or revoke"""
+    try:
+        tid = int(telegram_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid telegram_id")
+
+    try:
+        async for db in get_db():
+            user = await db.get(User, tid)
+            if not user:
+                raise HTTPException(status_code=404, detail="User not found")
+
+            if body.action == "grant":
+                existing = await db.scalar(
+                    select(FeatureUnlock).where(
+                        FeatureUnlock.user_id == tid,
+                        FeatureUnlock.feature_code == body.feature_code
+                    )
+                )
+                if existing:
+                    existing.enabled = True
+                else:
+                    db.add(FeatureUnlock(
+                        user_id=tid,
+                        feature_code=body.feature_code,
+                        enabled=True,
+                    ))
+
+                # Also update subscription flags if applicable
+                sub = await db.scalar(select(Subscription).where(Subscription.user_id == tid))
+                if sub:
+                    if body.feature_code == "intense_mode":
+                        sub.intense_mode = True
+                    elif body.feature_code == "fantasy_scenes":
+                        sub.fantasy_scenes = True
+
+                await db.commit()
+                return {"status": "ok", "message": f"Feature {body.feature_code} granted"}
+
+            elif body.action == "revoke":
+                existing = await db.scalar(
+                    select(FeatureUnlock).where(
+                        FeatureUnlock.user_id == tid,
+                        FeatureUnlock.feature_code == body.feature_code
+                    )
+                )
+                if existing:
+                    existing.enabled = False
+
+                sub = await db.scalar(select(Subscription).where(Subscription.user_id == tid))
+                if sub:
+                    if body.feature_code == "intense_mode":
+                        sub.intense_mode = False
+                    elif body.feature_code == "fantasy_scenes":
+                        sub.fantasy_scenes = False
+
+                await db.commit()
+                return {"status": "ok", "message": f"Feature {body.feature_code} revoked"}
+
+            else:
+                raise HTTPException(status_code=400, detail=f"Unknown action: {body.action}")
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error managing features: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/user/{telegram_id}/activity")
+async def get_user_activity(telegram_id: str):
+    """Get user activity history: purchases, dialogs, subscriptions"""
+    try:
+        tid = int(telegram_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid telegram_id")
+
+    try:
+        async for db in get_db():
+            user = await db.get(User, tid)
+            if not user:
+                raise HTTPException(status_code=404, detail="User not found")
+
+            activities = []
+
+            # Purchases
+            purchases_result = await db.execute(
+                select(Purchase)
+                .where(Purchase.user_id == tid)
+                .order_by(desc(Purchase.created_at))
+                .limit(50)
+            )
+            for p in purchases_result.scalars():
+                activities.append({
+                    "type": "purchase",
+                    "description": p.product_code,
+                    "details": f"{p.amount} {p.currency or 'stars'} — {p.status}",
+                    "created_at": p.created_at.isoformat() if p.created_at else "",
+                })
+
+            # Dialogs
+            dialogs_result = await db.execute(
+                select(Dialog)
+                .where(Dialog.user_id == tid)
+                .order_by(desc(Dialog.created_at))
+                .limit(50)
+            )
+            for d in dialogs_result.scalars():
+                activities.append({
+                    "type": "dialog",
+                    "description": d.title or f"Dialog #{d.id}",
+                    "details": f"Persona #{d.persona_id}, {d.message_count} msgs",
+                    "created_at": d.created_at.isoformat() if d.created_at else "",
+                })
+
+            # Feature unlocks
+            features_result = await db.execute(
+                select(FeatureUnlock)
+                .where(FeatureUnlock.user_id == tid)
+                .order_by(desc(FeatureUnlock.unlocked_at))
+            )
+            for f in features_result.scalars():
+                activities.append({
+                    "type": "feature",
+                    "description": f.feature_code,
+                    "details": "Enabled" if f.enabled else "Disabled",
+                    "created_at": f.unlocked_at.isoformat() if f.unlocked_at else "",
+                })
+
+            # Sort by date
+            activities.sort(key=lambda x: x["created_at"], reverse=True)
+
+            return activities
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting user activity: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.delete("/user/{telegram_id}")
+async def delete_user_account(telegram_id: str):
+    """Completely delete user account from database"""
+    try:
+        tid = int(telegram_id)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid telegram_id")
+
+    try:
+        async for db in get_db():
+            user = await db.get(User, tid)
+            if not user:
+                raise HTTPException(status_code=404, detail="User not found")
+
+            # Delete in order (respect foreign keys)
+            # Messages (via dialogs cascade), but be explicit
+            dialogs = await db.execute(select(Dialog.id).where(Dialog.user_id == tid))
+            dialog_ids = [d[0] for d in dialogs.all()]
+            if dialog_ids:
+                await db.execute(sa_delete(Message).where(Message.dialog_id.in_(dialog_ids)))
+
+            await db.execute(sa_delete(Dialog).where(Dialog.user_id == tid))
+            await db.execute(sa_delete(Purchase).where(Purchase.user_id == tid))
+            await db.execute(sa_delete(FeatureUnlock).where(FeatureUnlock.user_id == tid))
+            await db.execute(sa_delete(ImageBalance).where(ImageBalance.user_id == tid))
+            await db.execute(sa_delete(Subscription).where(Subscription.user_id == tid))
+
+            # Delete user
+            await db.delete(user)
+            await db.commit()
+
+            # Try to clear Redis cache
+            try:
+                import redis
+                import os
+                redis_url = os.getenv("REDIS_URL", "redis://redis:6379/0")
+                r = redis.from_url(redis_url)
+                # Delete all keys matching this user
+                for key in r.scan_iter(f"*{tid}*"):
+                    r.delete(key)
+            except Exception as redis_err:
+                logger.warning(f"Could not clear Redis cache: {redis_err}")
+
+            return {"status": "ok", "message": f"User {tid} deleted"}
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error deleting user: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

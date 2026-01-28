@@ -223,7 +223,8 @@
                 "value": [
                   {
                     "title": "Открыть карточку",
-                    "url": "/d/user-card?var-telegram_id=${__value.raw}"
+                    "url": "/admin-panel/user/${__value.raw}",
+                    "targetBlank": true
                   }
                 ]
               }
@@ -589,6 +590,6 @@
   "timezone": "browser",
   "title": "Управление пользователями",
   "uid": "users-management",
-  "version": 2,
+  "version": 3,
   "weekStart": ""
 }

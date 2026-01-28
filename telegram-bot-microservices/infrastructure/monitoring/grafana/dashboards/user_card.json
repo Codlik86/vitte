@@ -23,7 +23,7 @@
           "showLineNumbers": false,
           "showMiniMap": false
         },
-        "content": "# 🚧 В разработке\n\nДашборд находится в процессе разработки.",
+        "content": "# Карточка пользователя\n\nКарточка пользователя перенесена в Admin Panel.\n\n[Открыть Admin Panel →](/admin-panel/)\n\nВведите Telegram ID на странице Admin Panel для просмотра карточки.\n\nИли перейдите напрямую: `/admin-panel/user/TELEGRAM_ID`",
         "mode": "markdown"
       },
       "pluginVersion": "10.0.0",
@@ -61,6 +61,6 @@
   "timezone": "browser",
   "title": "Карточка юзера",
   "uid": "user-card",
-  "version": 7,
+  "version": 8,
   "weekStart": ""
 }
