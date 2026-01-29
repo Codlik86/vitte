@@ -10,6 +10,8 @@ from typing import Optional, List
 from datetime import datetime
 from sqlalchemy import select, func, and_
 
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from shared.database import (
     get_db,
     User,
