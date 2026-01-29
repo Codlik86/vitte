@@ -376,6 +376,11 @@ services:
       - ADMIN_HOST=${ADMIN_HOST:-0.0.0.0}
       - ADMIN_PORT=${ADMIN_PORT:-8080}
       - DATABASE_URL=${DATABASE_URL}
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ROOT_USER=${MINIO_ROOT_USER:-minioadmin}
+      - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
+      - MINIO_BUCKET=broadcasts
+      - MINIO_PUBLIC_URL=https://vitteapp.duckdns.org
     # Internal only - access via Nginx
     expose:
       - "8080"
@@ -386,6 +391,8 @@ services:
         condition: service_healthy
       redis:
         condition: service_healthy
+      minio:
+        condition: service_started
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
       interval: 30s
