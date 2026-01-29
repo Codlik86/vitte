@@ -541,6 +541,9 @@ async def upload_media(file: UploadFile = File(...)):
         ext = os.path.splitext(file.filename or "file")[1] or ".bin"
         object_name = f"broadcast/{uuid.uuid4().hex}{ext}"
 
+        # Логируем конфигурацию MinIO (без пароля)
+        logger.info(f"MinIO config: endpoint={MINIO_ENDPOINT}, user={MINIO_ACCESS_KEY}, bucket={MINIO_BUCKET}")
+
         # Подключаемся к MinIO
         client = Minio(
             MINIO_ENDPOINT,
@@ -550,6 +553,7 @@ async def upload_media(file: UploadFile = File(...)):
         )
 
         # Создаем bucket если не существует
+        logger.info(f"Checking if bucket exists: {MINIO_BUCKET}")
         if not client.bucket_exists(MINIO_BUCKET):
             client.make_bucket(MINIO_BUCKET)
             # Делаем bucket публичным для чтения
@@ -573,13 +577,15 @@ async def upload_media(file: UploadFile = File(...)):
 
         # Загружаем в MinIO
         from io import BytesIO
-        client.put_object(
+        logger.info(f"Uploading to MinIO: bucket={MINIO_BUCKET}, object={object_name}, size={file_size}")
+        result = client.put_object(
             MINIO_BUCKET,
             object_name,
             BytesIO(contents),
             file_size,
             content_type=content_type
         )
+        logger.info(f"MinIO put_object result: {result}")
 
         # Формируем публичный URL
         public_url = f"{MINIO_PUBLIC_URL}/{object_name}"
