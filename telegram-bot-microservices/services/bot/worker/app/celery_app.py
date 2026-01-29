@@ -96,6 +96,9 @@ celery_app.conf.update(
     task_soft_time_limit=config.celery_task_soft_time_limit,
     worker_prefetch_multiplier=1,
     worker_max_tasks_per_child=1000,
+    # ETA/Countdown tasks support
+    task_acks_late=True,
+    task_reject_on_worker_lost=True,
     # Beat schedule
     beat_schedule=beat_schedule,
     # RedBeat scheduler - хранит schedule в Redis вместо файла
