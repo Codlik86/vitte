@@ -20,6 +20,12 @@ export function Shell({ children }: { children: React.ReactNode }) {
           </a>
           <div className="flex items-center gap-4">
             <a
+              href="/admin-panel/broadcast"
+              className="text-sm text-tg-muted hover:text-tg-text transition"
+            >
+              Рассылки
+            </a>
+            <a
               href="/grafana/"
               className="text-sm text-tg-muted hover:text-tg-text transition"
             >

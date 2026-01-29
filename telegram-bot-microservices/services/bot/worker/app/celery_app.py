@@ -73,6 +73,15 @@ beat_schedule = {
             "expires": 300,  # Task expires after 5 minutes
         }
     },
+
+    # Check and send broadcasts to new users every 5 minutes
+    "check-new-user-broadcasts-every-5min": {
+        "task": "broadcast.check_new_user_broadcasts",
+        "schedule": 300.0,  # Every 5 minutes (300 seconds)
+        "options": {
+            "expires": 240,  # Task expires after 4 minutes
+        }
+    },
 }
 
 # Configure Celery

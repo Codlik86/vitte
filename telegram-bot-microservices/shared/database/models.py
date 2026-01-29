@@ -368,3 +368,96 @@ class NotificationLog(Base):
 
     def __repr__(self):
         return f"<NotificationLog(id={self.id}, dialog_id={self.dialog_id}, type={self.notification_type})>"
+
+
+class BroadcastType(str, PyEnum):
+    """Тип рассылки"""
+    NEW_USER = "new_user"  # Рассылка новым пользователям через N времени после регистрации
+    SCHEDULED = "scheduled"  # Запланированная рассылка на определенную дату/время
+
+
+class BroadcastStatus(str, PyEnum):
+    """Статус рассылки"""
+    DRAFT = "draft"  # Черновик
+    SCHEDULED = "scheduled"  # Запланирована
+    RUNNING = "running"  # Выполняется
+    COMPLETED = "completed"  # Завершена
+    CANCELLED = "cancelled"  # Отменена
+    FAILED = "failed"  # Ошибка
+
+
+class Broadcast(Base):
+    """Модель рассылки уведомлений"""
+    __tablename__ = "broadcasts"
+
+    id = Column(Integer, primary_key=True, index=True)
+
+    # Тип и статус
+    broadcast_type = Column(
+        SAEnum(BroadcastType, name="broadcast_type_enum", create_constraint=False, native_enum=False),
+        nullable=False
+    )
+    status = Column(
+        SAEnum(BroadcastStatus, name="broadcast_status_enum", create_constraint=False, native_enum=False),
+        default=BroadcastStatus.DRAFT,
+        nullable=False
+    )
+
+    # Название для отображения в админке
+    name = Column(String(255), nullable=False)
+
+    # Контент рассылки
+    text = Column(Text, nullable=False)
+    media_url = Column(String(512), nullable=True)  # URL фото/видео
+    media_type = Column(String(16), nullable=True)  # 'photo' или 'video'
+
+    # Кнопки (JSON массив: [{"text": "Начать", "callback_data": "menu:start_chat"}])
+    buttons = Column(JSON, nullable=True)
+
+    # Начисление изображений
+    gift_images = Column(Integer, default=0, nullable=False)
+
+    # Для NEW_USER: задержка после регистрации в минутах (30, 60, 120, 180)
+    delay_minutes = Column(Integer, nullable=True)
+
+    # Для SCHEDULED: конкретная дата и время отправки
+    scheduled_at = Column(DateTime(timezone=True), nullable=True)
+
+    # Статистика
+    total_recipients = Column(Integer, default=0, nullable=False)
+    sent_count = Column(Integer, default=0, nullable=False)
+    failed_count = Column(Integer, default=0, nullable=False)
+
+    # Timestamps
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+    started_at = Column(DateTime(timezone=True), nullable=True)
+    completed_at = Column(DateTime(timezone=True), nullable=True)
+
+    # Celery task ID для отслеживания
+    celery_task_id = Column(String(64), nullable=True)
+
+    def __repr__(self):
+        return f"<Broadcast(id={self.id}, name={self.name}, status={self.status})>"
+
+
+class BroadcastLog(Base):
+    """Лог отправки рассылки конкретному пользователю"""
+    __tablename__ = "broadcast_logs"
+
+    id = Column(Integer, primary_key=True, index=True)
+    broadcast_id = Column(Integer, ForeignKey("broadcasts.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(BigInteger, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
+
+    # Статус отправки
+    success = Column(Boolean, default=False, nullable=False)
+    error_message = Column(Text, nullable=True)
+
+    # Timestamps
+    sent_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    # Relationships
+    broadcast = relationship("Broadcast", backref="logs")
+    user = relationship("User", backref="broadcast_logs")
+
+    def __repr__(self):
+        return f"<BroadcastLog(broadcast_id={self.broadcast_id}, user_id={self.user_id}, success={self.success})>"
