@@ -588,7 +588,7 @@ async def upload_media(file: UploadFile = File(...)):
         logger.info(f"MinIO put_object result: {result}")
 
         # Формируем публичный URL
-        public_url = f"{MINIO_PUBLIC_URL}/{object_name}"
+        public_url = f"{MINIO_PUBLIC_URL}/broadcasts/{object_name}"
 
         logger.info(f"Uploaded media file: {object_name}, size: {file_size}, type: {media_type}")
 
