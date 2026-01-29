@@ -420,6 +420,26 @@ async def _check_new_user_broadcasts_async() -> Dict[str, Any]:
 
 # ==================== CELERY TASKS ====================
 
+def _run_async(coro):
+    """
+    Безопасно запустить async coroutine в Celery worker
+    Создает новый event loop если текущий закрыт или отсутствует
+    """
+    try:
+        loop = asyncio.get_event_loop()
+        if loop.is_closed():
+            raise RuntimeError("Event loop is closed")
+    except RuntimeError:
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
+    try:
+        return loop.run_until_complete(coro)
+    finally:
+        # Не закрываем loop, т.к. он может переиспользоваться
+        pass
+
+
 @celery_app.task(name="broadcast.execute_scheduled_broadcast", bind=True, max_retries=3)
 def execute_scheduled_broadcast(self, broadcast_id: int):
     """
@@ -427,7 +447,7 @@ def execute_scheduled_broadcast(self, broadcast_id: int):
     """
     try:
         logger.info(f"Executing scheduled broadcast task for broadcast {broadcast_id}")
-        result = asyncio.run(_execute_scheduled_broadcast_async(broadcast_id))
+        result = _run_async(_execute_scheduled_broadcast_async(broadcast_id))
         return result
     except Exception as e:
         logger.error(f"Scheduled broadcast task failed: {e}", exc_info=True)
@@ -441,7 +461,7 @@ def send_new_user_broadcast(self, user_id: int, broadcast_id: int):
     """
     try:
         logger.info(f"Sending new user broadcast {broadcast_id} to user {user_id}")
-        result = asyncio.run(_send_new_user_broadcast_async(user_id, broadcast_id))
+        result = _run_async(_send_new_user_broadcast_async(user_id, broadcast_id))
         return result
     except Exception as e:
         logger.error(f"New user broadcast task failed: {e}", exc_info=True)
@@ -456,7 +476,7 @@ def check_new_user_broadcasts(self):
     """
     try:
         logger.info("Running check new user broadcasts task")
-        result = asyncio.run(_check_new_user_broadcasts_async())
+        result = _run_async(_check_new_user_broadcasts_async())
         return result
     except Exception as e:
         logger.error(f"Check new user broadcasts task failed: {e}", exc_info=True)
