@@ -175,6 +175,7 @@ export default function BroadcastPage() {
   const [formGiftImages, setFormGiftImages] = useState(0)
   const [formDelayMinutes, setFormDelayMinutes] = useState(30)
   const [formScheduledAt, setFormScheduledAt] = useState('')
+  const [uploading, setUploading] = useState(false)
 
   const showToast = (msg: string) => {
     setToast(msg)
@@ -415,29 +416,79 @@ export default function BroadcastPage() {
           </div>
 
           {/* Медиа */}
-          <div className="mb-4 grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-tg-muted mb-2">URL фото/видео (опционально)</label>
-              <input
-                type="text"
-                value={formMediaUrl}
-                onChange={(e) => setFormMediaUrl(e.target.value)}
-                placeholder="https://..."
-                className="w-full px-4 py-2 bg-tg-secondary border border-tg-border rounded-lg text-tg-text focus:outline-none focus:border-tg-accent"
-              />
+          <div className="mb-4">
+            <label className="block text-tg-muted mb-2">Фото / Видео (опционально)</label>
+            <div className="flex items-center gap-4">
+              <label className={`flex items-center justify-center px-4 py-3 bg-tg-secondary border border-tg-border border-dashed rounded-lg cursor-pointer hover:border-tg-accent transition ${uploading ? 'opacity-50 cursor-wait' : ''}`}>
+                <input
+                  type="file"
+                  accept="image/*,video/*"
+                  className="hidden"
+                  disabled={uploading}
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0]
+                    if (!file) return
+
+                    // Определяем тип медиа
+                    const isVideo = file.type.startsWith('video/')
+                    const mediaType = isVideo ? 'video' : 'photo'
+
+                    try {
+                      setUploading(true)
+                      const formData = new FormData()
+                      formData.append('file', file)
+
+                      const res = await fetch(`${API_BASE}/broadcast/upload`, {
+                        method: 'POST',
+                        body: formData,
+                      })
+
+                      if (!res.ok) {
+                        const err = await res.json()
+                        throw new Error(err.error || 'Upload failed')
+                      }
+
+                      const data = await res.json()
+                      setFormMediaUrl(data.url)
+                      setFormMediaType(mediaType)
+                      showToast('Файл загружен')
+                    } catch (err: any) {
+                      showToast(`Ошибка загрузки: ${err.message}`)
+                    } finally {
+                      setUploading(false)
+                      e.target.value = ''
+                    }
+                  }}
+                />
+                <span className="text-tg-muted">
+                  {uploading ? '⏳ Загрузка...' : '📎 Выбрать файл'}
+                </span>
+              </label>
+
+              {formMediaUrl && (
+                <div className="flex items-center gap-2 bg-tg-secondary px-3 py-2 rounded-lg">
+                  <span className="text-sm">
+                    {formMediaType === 'video' ? '🎬' : '🖼️'} {formMediaType === 'video' ? 'Видео' : 'Фото'}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setFormMediaUrl('')
+                      setFormMediaType('')
+                    }}
+                    className="text-tg-danger hover:text-red-400 transition"
+                  >
+                    ✕
+                  </button>
+                </div>
+              )}
             </div>
-            <div>
-              <label className="block text-tg-muted mb-2">Тип медиа</label>
-              <select
-                value={formMediaType}
-                onChange={(e) => setFormMediaType(e.target.value as 'photo' | 'video' | '')}
-                className="w-full px-4 py-2 bg-tg-secondary border border-tg-border rounded-lg text-tg-text focus:outline-none focus:border-tg-accent"
-              >
-                <option value="">Без медиа</option>
-                <option value="photo">Фото</option>
-                <option value="video">Видео</option>
-              </select>
-            </div>
+
+            {formMediaUrl && (
+              <div className="mt-2 text-xs text-tg-muted truncate">
+                {formMediaUrl}
+              </div>
+            )}
           </div>
 
           {/* Кнопки */}

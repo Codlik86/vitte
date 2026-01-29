@@ -1,7 +1,9 @@
 """
 Broadcast management routes for admin panel
 """
-from fastapi import APIRouter, HTTPException
+import os
+import uuid
+from fastapi import APIRouter, HTTPException, UploadFile, File
 from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime
@@ -20,6 +22,13 @@ from shared.utils import get_logger
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/broadcast", tags=["broadcast"])
+
+# MinIO/S3 настройки
+MINIO_ENDPOINT = os.getenv("MINIO_ENDPOINT", "minio:9000")
+MINIO_ACCESS_KEY = os.getenv("MINIO_ROOT_USER", "minioadmin")
+MINIO_SECRET_KEY = os.getenv("MINIO_ROOT_PASSWORD", "minioadmin")
+MINIO_BUCKET = os.getenv("MINIO_BUCKET", "broadcasts")
+MINIO_PUBLIC_URL = os.getenv("MINIO_PUBLIC_URL", "http://195.209.210.96:9000")
 
 
 # ==================== SCHEMAS ====================
@@ -507,4 +516,87 @@ async def get_active_new_user_broadcasts():
 
     except Exception as e:
         logger.error(f"Error getting active new user broadcasts: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.post("/upload")
+async def upload_media(file: UploadFile = File(...)):
+    """
+    Загрузить медиа-файл (фото/видео) для рассылки
+    Файл загружается в MinIO и возвращается публичный URL
+    """
+    try:
+        from minio import Minio
+        from minio.error import S3Error
+
+        # Проверка типа файла
+        content_type = file.content_type or ""
+        if not content_type.startswith(("image/", "video/")):
+            raise HTTPException(status_code=400, detail="Only image and video files allowed")
+
+        # Определяем тип медиа
+        media_type = "photo" if content_type.startswith("image/") else "video"
+
+        # Генерируем уникальное имя файла
+        ext = os.path.splitext(file.filename or "file")[1] or ".bin"
+        object_name = f"broadcast/{uuid.uuid4().hex}{ext}"
+
+        # Подключаемся к MinIO
+        client = Minio(
+            MINIO_ENDPOINT,
+            access_key=MINIO_ACCESS_KEY,
+            secret_key=MINIO_SECRET_KEY,
+            secure=False
+        )
+
+        # Создаем bucket если не существует
+        if not client.bucket_exists(MINIO_BUCKET):
+            client.make_bucket(MINIO_BUCKET)
+            # Делаем bucket публичным для чтения
+            policy = {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Effect": "Allow",
+                        "Principal": {"AWS": "*"},
+                        "Action": ["s3:GetObject"],
+                        "Resource": [f"arn:aws:s3:::{MINIO_BUCKET}/*"]
+                    }
+                ]
+            }
+            import json
+            client.set_bucket_policy(MINIO_BUCKET, json.dumps(policy))
+
+        # Читаем файл
+        contents = await file.read()
+        file_size = len(contents)
+
+        # Загружаем в MinIO
+        from io import BytesIO
+        client.put_object(
+            MINIO_BUCKET,
+            object_name,
+            BytesIO(contents),
+            file_size,
+            content_type=content_type
+        )
+
+        # Формируем публичный URL
+        public_url = f"{MINIO_PUBLIC_URL}/{MINIO_BUCKET}/{object_name}"
+
+        logger.info(f"Uploaded media file: {object_name}, size: {file_size}, type: {media_type}")
+
+        return {
+            "success": True,
+            "url": public_url,
+            "media_type": media_type,
+            "filename": file.filename,
+            "size": file_size
+        }
+
+    except S3Error as e:
+        logger.error(f"MinIO error uploading file: {e}")
+        raise HTTPException(status_code=500, detail=f"Storage error: {str(e)}")
+    except Exception as e:
+        logger.error(f"Error uploading file: {e}")
         raise HTTPException(status_code=500, detail=str(e))
