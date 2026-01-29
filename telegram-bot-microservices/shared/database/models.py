@@ -2,7 +2,7 @@
 Database models for Vitte bot
 """
 from enum import Enum as PyEnum
-from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text, BigInteger, ForeignKey, JSON, Numeric, Enum as SAEnum
+from sqlalchemy import Column, Integer, String, Boolean, DateTime, Text, BigInteger, ForeignKey, JSON, Numeric, Enum as SAEnum, LargeBinary
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from shared.database.base import Base
@@ -461,3 +461,20 @@ class BroadcastLog(Base):
 
     def __repr__(self):
         return f"<BroadcastLog(broadcast_id={self.broadcast_id}, user_id={self.user_id}, success={self.success})>"
+
+
+class BroadcastMedia(Base):
+    """Медиа файлы для рассылок"""
+    __tablename__ = "broadcast_media"
+
+    id = Column(String(64), primary_key=True, index=True)  # UUID
+    file_data = Column(LargeBinary, nullable=False)  # Бинарные данные файла
+    content_type = Column(String(128), nullable=False)  # image/jpeg, video/mp4, etc
+    file_size = Column(Integer, nullable=False)  # Размер в байтах
+    media_type = Column(String(16), nullable=False)  # 'photo' или 'video'
+
+    # Timestamps
+    created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    def __repr__(self):
+        return f"<BroadcastMedia(id={self.id}, media_type={self.media_type}, size={self.file_size})>"

@@ -3,7 +3,8 @@ Broadcast management routes for admin panel
 """
 import os
 import uuid
-from fastapi import APIRouter, HTTPException, UploadFile, File
+from fastapi import APIRouter, HTTPException, UploadFile, File, Depends
+from fastapi.responses import Response
 from pydantic import BaseModel
 from typing import Optional, List
 from datetime import datetime
@@ -520,77 +521,58 @@ async def get_active_new_user_broadcasts():
 
 
 @router.post("/upload")
-async def upload_media(file: UploadFile = File(...)):
+async def upload_media(
+    file: UploadFile = File(...),
+    db: AsyncSession = Depends(get_db)
+):
     """
     Загрузить медиа-файл (фото/видео) для рассылки
-    Файл загружается в MinIO и возвращается публичный URL
+    Сохраняет файл в БД и возвращает URL для получения
     """
     try:
-        from minio import Minio
-        from minio.error import S3Error
+        from shared.database.models import BroadcastMedia
 
         # Проверка типа файла
         content_type = file.content_type or ""
         if not content_type.startswith(("image/", "video/")):
             raise HTTPException(status_code=400, detail="Only image and video files allowed")
 
-        # Определяем тип медиа
-        media_type = "photo" if content_type.startswith("image/") else "video"
-
-        # Генерируем уникальное имя файла
-        ext = os.path.splitext(file.filename or "file")[1] or ".bin"
-        object_name = f"broadcast/{uuid.uuid4().hex}{ext}"
-
-        # Логируем конфигурацию MinIO (без пароля)
-        logger.info(f"MinIO config: endpoint={MINIO_ENDPOINT}, user={MINIO_ACCESS_KEY}, bucket={MINIO_BUCKET}")
-
-        # Подключаемся к MinIO
-        client = Minio(
-            MINIO_ENDPOINT,
-            access_key=MINIO_ACCESS_KEY,
-            secret_key=MINIO_SECRET_KEY,
-            secure=False
-        )
-
-        # Создаем bucket если не существует
-        logger.info(f"Checking if bucket exists: {MINIO_BUCKET}")
-        if not client.bucket_exists(MINIO_BUCKET):
-            client.make_bucket(MINIO_BUCKET)
-            # Делаем bucket публичным для чтения
-            policy = {
-                "Version": "2012-10-17",
-                "Statement": [
-                    {
-                        "Effect": "Allow",
-                        "Principal": {"AWS": "*"},
-                        "Action": ["s3:GetObject"],
-                        "Resource": [f"arn:aws:s3:::{MINIO_BUCKET}/*"]
-                    }
-                ]
-            }
-            import json
-            client.set_bucket_policy(MINIO_BUCKET, json.dumps(policy))
-
         # Читаем файл
         contents = await file.read()
         file_size = len(contents)
 
-        # Загружаем в MinIO
-        from io import BytesIO
-        logger.info(f"Uploading to MinIO: bucket={MINIO_BUCKET}, object={object_name}, size={file_size}")
-        result = client.put_object(
-            MINIO_BUCKET,
-            object_name,
-            BytesIO(contents),
-            file_size,
-            content_type=content_type
+        # Проверяем размер (макс 20MB для фото, 50MB для видео)
+        is_video = content_type.startswith("video/")
+        max_size = 50 * 1024 * 1024 if is_video else 20 * 1024 * 1024
+
+        if file_size > max_size:
+            raise HTTPException(
+                status_code=400,
+                detail=f"File too large. Max size: {max_size // (1024*1024)}MB"
+            )
+
+        # Определяем тип медиа
+        media_type = "photo" if content_type.startswith("image/") else "video"
+
+        # Генерируем уникальный ID
+        file_id = uuid.uuid4().hex
+
+        # Сохраняем в БД
+        media = BroadcastMedia(
+            id=file_id,
+            file_data=contents,
+            content_type=content_type,
+            file_size=file_size,
+            media_type=media_type
         )
-        logger.info(f"MinIO put_object result: {result}")
 
-        # Формируем публичный URL
-        public_url = f"{MINIO_PUBLIC_URL}/broadcasts/{object_name}"
+        db.add(media)
+        await db.commit()
 
-        logger.info(f"Uploaded media file: {object_name}, size: {file_size}, type: {media_type}")
+        # Формируем URL для получения файла
+        public_url = f"{MINIO_PUBLIC_URL}/api/broadcast/media/{file_id}"
+
+        logger.info(f"Uploaded media to DB: id={file_id}, size={file_size}, type={media_type}")
 
         return {
             "success": True,
@@ -600,9 +582,44 @@ async def upload_media(file: UploadFile = File(...)):
             "size": file_size
         }
 
-    except S3Error as e:
-        logger.error(f"MinIO error uploading file: {e}")
-        raise HTTPException(status_code=500, detail=f"Storage error: {str(e)}")
+    except HTTPException:
+        raise
     except Exception as e:
         logger.error(f"Error uploading file: {e}")
+        await db.rollback()
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+@router.get("/media/{file_id}")
+async def get_media(file_id: str, db = Depends(get_db)):
+    """
+    Получить медиа файл по ID
+    """
+    from shared.database.models import BroadcastMedia
+    from sqlalchemy import select
+
+    try:
+        # Получаем файл из БД
+        result = await db.execute(
+            select(BroadcastMedia).where(BroadcastMedia.id == file_id)
+        )
+        media = result.scalar_one_or_none()
+
+        if not media:
+            raise HTTPException(status_code=404, detail="Media not found")
+
+        # Возвращаем файл с правильным content-type
+        return Response(
+            content=media.file_data,
+            media_type=media.content_type,
+            headers={
+                "Cache-Control": "public, max-age=604800",  # 7 days
+                "Content-Length": str(media.file_size)
+            }
+        )
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error getting media: {e}")
         raise HTTPException(status_code=500, detail=str(e))
