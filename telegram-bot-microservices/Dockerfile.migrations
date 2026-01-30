@@ -1,0 +1,22 @@
+# Dockerfile for running database migrations
+FROM python:3.11-slim
+
+# Set working directory
+WORKDIR /app
+
+# Install dependencies
+COPY shared/requirements.txt ./shared-requirements.txt
+RUN pip install --no-cache-dir -r shared-requirements.txt
+
+# Copy shared code and migration files
+COPY shared/ ./shared/
+COPY alembic/ ./alembic/
+COPY alembic.ini ./
+COPY scripts/run_migrations.py ./scripts/
+
+# Set environment
+ENV PYTHONUNBUFFERED=1
+ENV PYTHONDONTWRITEBYTECODE=1
+
+# Run migrations
+CMD ["python", "scripts/run_migrations.py"]

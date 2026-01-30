@@ -1,0 +1,45 @@
+# Grafana Datasources Configuration
+apiVersion: 1
+
+datasources:
+  # PostgreSQL - Main Database
+  - name: PostgreSQL
+    uid: postgresql
+    type: postgres
+    access: proxy
+    url: postgres:5432
+    user: vitte_user
+    secureJsonData:
+      password: ${POSTGRES_PASSWORD}
+    jsonData:
+      database: vitte_bot
+      sslmode: 'disable'
+      postgresVersion: 1500
+      timescaledb: false
+    isDefault: true
+    editable: true
+
+  # Admin API - JSON API для Infinity plugin
+  - name: Admin API
+    uid: admin-api
+    type: yesoreyeram-infinity-datasource
+    access: proxy
+    url: http://admin:8080
+    jsonData:
+      auth_method: 'none'
+      allowedHosts:
+        - 'http://admin:8080'
+        - 'admin:8080'
+        - 'admin'
+    editable: true
+
+  # Prometheus - Metrics
+  - name: Prometheus
+    uid: prometheus
+    type: prometheus
+    access: proxy
+    url: http://prometheus:9090
+    jsonData:
+      timeInterval: '15s'
+      httpMethod: 'POST'
+    editable: false

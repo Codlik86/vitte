@@ -1,0 +1,66 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "gridPos": {
+        "h": 10,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "# Карточка пользователя\n\nКарточка пользователя перенесена в Admin Panel.\n\n[Открыть Admin Panel →](http://195.209.210.96/admin-panel/)\n\nВведите Telegram ID на странице Admin Panel для просмотра карточки.\n\nИли перейдите напрямую: `http://195.209.210.96/admin-panel/user/TELEGRAM_ID`",
+        "mode": "markdown"
+      },
+      "pluginVersion": "10.0.0",
+      "title": "Карточка пользователя",
+      "type": "text"
+    }
+  ],
+  "refresh": "",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["vitte", "user"],
+  "templating": {
+    "list": [
+      {
+        "current": {
+          "selected": false,
+          "text": "",
+          "value": ""
+        },
+        "hide": 0,
+        "label": "Telegram ID",
+        "name": "telegram_id",
+        "options": [],
+        "query": "",
+        "skipUrlSync": false,
+        "type": "textbox"
+      }
+    ]
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Карточка юзера",
+  "uid": "user-card",
+  "version": 8,
+  "weekStart": ""
+}

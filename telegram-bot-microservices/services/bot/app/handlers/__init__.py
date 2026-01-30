@@ -1,0 +1,14 @@
+"""Handlers module"""
+from app.handlers.start import router as start_router
+from app.handlers.help import router as help_router
+from app.handlers.status import router as status_router
+from app.handlers.onboarding import router as onboarding_router
+from app.handlers.menu import router as menu_router
+from app.handlers.chat import router as chat_router
+from app.handlers.subscription import router as subscription_router
+from app.handlers.shop import router as shop_router
+from app.handlers.upgrades import router as upgrades_router
+from app.handlers.settings import router as settings_router
+from app.handlers.messages import router as messages_router
+
+__all__ = ["start_router", "help_router", "status_router", "onboarding_router", "menu_router", "chat_router", "subscription_router", "shop_router", "upgrades_router", "settings_router", "messages_router"]

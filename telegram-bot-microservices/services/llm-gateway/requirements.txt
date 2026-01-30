@@ -1,0 +1,17 @@
+# FastAPI and server
+fastapi==0.115.6
+uvicorn[standard]==0.34.0
+pydantic==2.10.6
+pydantic-settings==2.7.1
+
+# OpenAI SDK (compatible with OpenRouter)
+openai==1.59.5
+
+# Redis client
+redis[hiredis]==5.2.1
+
+# Retry logic
+tenacity==9.0.0
+
+# Utilities
+python-multipart==0.0.20

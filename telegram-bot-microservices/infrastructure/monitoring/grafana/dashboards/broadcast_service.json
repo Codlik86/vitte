@@ -1,0 +1,57 @@
+{
+  "annotations": {
+    "list": []
+  },
+  "editable": true,
+  "fiscalYearStartMonth": 0,
+  "graphTooltip": 0,
+  "id": null,
+  "links": [],
+  "liveNow": false,
+  "panels": [
+    {
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "admin-api"
+      },
+      "gridPos": {
+        "h": 6,
+        "w": 24,
+        "x": 0,
+        "y": 0
+      },
+      "id": 1,
+      "options": {
+        "code": {
+          "language": "plaintext",
+          "showLineNumbers": false,
+          "showMiniMap": false
+        },
+        "content": "# Сервис рассылки\n\nУправление рассылками доступно в админ-панели.\n\n## [Открыть сервис рассылки →](http://195.209.210.96/admin-panel/broadcast)\n\n### Возможности:\n- **Рассылка новым пользователям** — отправка через 30 мин / 1 час / 2 часа / 3 часа после регистрации\n- **Обычная рассылка** — отправка на определенную дату и время всем активным пользователям\n- **Медиа контент** — прикрепление фото или видео к сообщению\n- **Кнопки** — добавление кнопок: Начать, Подписка, Магазин, Главное меню\n- **Бонусы** — начисление изображений пользователям\n- **Мониторинг** — отслеживание прогресса рассылки в реальном времени",
+        "mode": "markdown"
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [],
+      "title": "",
+      "type": "text",
+      "transparent": true
+    }
+  ],
+  "refresh": "30s",
+  "schemaVersion": 38,
+  "style": "dark",
+  "tags": ["vitte", "broadcast"],
+  "templating": {
+    "list": []
+  },
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "timepicker": {},
+  "timezone": "browser",
+  "title": "Сервис рассылки",
+  "uid": "broadcast-service",
+  "version": 2,
+  "weekStart": ""
+}
