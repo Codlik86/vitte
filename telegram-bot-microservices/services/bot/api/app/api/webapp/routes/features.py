@@ -200,10 +200,10 @@ async def clear_dialogs(
                 f"https://api.telegram.org/bot{config.bot_token}/sendMessage",
                 json={
                     "chat_id": telegram_id,
-                    "text": "✅ Все диалоги и память очищены.\n\nНажми /start чтобы начать новый диалог.",
+                    "text": "✅ Все диалоги и память очищены.\n\nГотов начать новый диалог?",
                     "reply_markup": {
                         "inline_keyboard": [[
-                            {"text": "🔄 Начать", "callback_data": "menu:start"}
+                            {"text": "🔄 Начать диалог", "callback_data": "menu:start_chat"}
                         ]]
                     }
                 },
