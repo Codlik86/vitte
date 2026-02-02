@@ -61,13 +61,13 @@ IMAGE_PACKS = {
 # Shop hub screen
 SHOP_HUB_RU = """🛒 <b>Магазин</b>
 
-Здесь можно докупить изображения или разблокировать улучшения общения.
+Здесь можно докупить изображения.
 
 Выбери раздел:"""
 
 SHOP_HUB_EN = """🛒 <b>Shop</b>
 
-Here you can buy more images or unlock communication enhancements.
+Here you can buy more images.
 
 Choose a section:"""
 
@@ -108,9 +108,9 @@ def get_shop_hub_keyboard_ru() -> InlineKeyboardMarkup:
         [
             InlineKeyboardButton(text="🖼 Купить изображения", callback_data="shop:images"),
         ],
-        [
-            InlineKeyboardButton(text="✨ Купить улучшения", callback_data="shop:upgrades"),
-        ],
+        # [
+        #     InlineKeyboardButton(text="✨ Купить улучшения", callback_data="shop:upgrades"),
+        # ],
         [
             InlineKeyboardButton(text="⬅️ Назад", callback_data="shop:back_to_menu"),
         ]
@@ -123,9 +123,9 @@ def get_shop_hub_keyboard_en() -> InlineKeyboardMarkup:
         [
             InlineKeyboardButton(text="🖼 Buy Images", callback_data="shop:images"),
         ],
-        [
-            InlineKeyboardButton(text="✨ Buy Upgrades", callback_data="shop:upgrades"),
-        ],
+        # [
+        #     InlineKeyboardButton(text="✨ Buy Upgrades", callback_data="shop:upgrades"),
+        # ],
         [
             InlineKeyboardButton(text="⬅️ Back", callback_data="shop:back_to_menu"),
         ]

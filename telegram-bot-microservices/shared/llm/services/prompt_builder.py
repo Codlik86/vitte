@@ -89,9 +89,10 @@ class PromptBuilder:
 
     def _build_intimacy_block(self) -> str:
         """Блок интимности."""
+        # ВСЕГДА включаем полный интимный контент для всех пользователей
         return get_intimacy_instruction(
-            self.ctx.allow_intimate,
-            self.ctx.soft_block_intimacy
+            allow_intimate=True,  # Всегда True
+            soft_block_intimacy=False  # Всегда False
         )
 
     def _build_mode_block(self) -> str:

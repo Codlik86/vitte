@@ -3,26 +3,26 @@ import { useNavigate } from "react-router-dom";
 import { PageHeader } from "../components/layout/PageHeader";
 import { DebugTelegramBanner } from "../components/DebugTelegramBanner";
 import {
-  fetchFeaturesStatus,
-  toggleFeature,
+  // fetchFeaturesStatus,  // ОТКЛЮЧЕНО
+  // toggleFeature,  // ОТКЛЮЧЕНО
   clearDialogs,
   clearLongMemory,
 } from "../api/client";
-import type { FeatureStatusItem } from "../api/types";
+// import type { FeatureStatusItem } from "../api/types";  // ОТКЛЮЧЕНО
 import { useAccessStatus } from "../hooks/useAccessStatus";
 import { useImagesLeft } from "../hooks/useImagesLeft";
 import { tg } from "../lib/telegram";
 
-type TabKey = "upgrades" | "base";
-const FEATURE_CODES = ["intense_mode", "fantasy_scenes"];
+// type TabKey = "upgrades" | "base";  // ОТКЛЮЧЕНО - больше нет улучшений
+// const FEATURE_CODES = ["intense_mode", "fantasy_scenes"];
 
 export function Settings() {
   const navigate = useNavigate();
   const { data: accessStatus, reload: reloadAccess } = useAccessStatus();
   const { imagesLeft } = useImagesLeft();
-  const [activeTab, setActiveTab] = useState<TabKey>("upgrades");
-  const [features, setFeatures] = useState<FeatureStatusItem[]>([]);
-  const [loading, setLoading] = useState(true);
+  // const [activeTab, setActiveTab] = useState<TabKey>("upgrades");  // ОТКЛЮЧЕНО
+  // const [features, setFeatures] = useState<FeatureStatusItem[]>([]);  // ОТКЛЮЧЕНО
+  // const [loading, setLoading] = useState(true);  // ОТКЛЮЧЕНО
   const [error, setError] = useState<string | null>(null);
 
   const imagesAvailable = imagesLeft;
@@ -33,58 +33,59 @@ export function Settings() {
     isPremium: Boolean(accessStatus?.has_subscription),
   };
 
-  const load = useCallback(async () => {
-    try {
-      setError(null);
-      setLoading(true);
-      const data = await fetchFeaturesStatus();
-      setFeatures(data.features);
-    } catch (e: any) {
-      setError(e.message ?? "Не удалось загрузить настройки");
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+  // ОТКЛЮЧЕНО - больше не нужны улучшения
+  // const load = useCallback(async () => {
+  //   try {
+  //     setError(null);
+  //     setLoading(true);
+  //     const data = await fetchFeaturesStatus();
+  //     setFeatures(data.features);
+  //   } catch (e: any) {
+  //     setError(e.message ?? "Не удалось загрузить настройки");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // }, []);
 
-  useEffect(() => {
-    if (accessStatus?.features?.features?.length) {
-      setFeatures(accessStatus.features.features);
-      setLoading(false);
-    } else {
-      load();
-    }
-  }, [accessStatus?.features?.features, load]);
+  // useEffect(() => {
+  //   if (accessStatus?.features?.features?.length) {
+  //     setFeatures(accessStatus.features.features);
+  //     setLoading(false);
+  //   } else {
+  //     load();
+  //   }
+  // }, [accessStatus?.features?.features, load]);
 
-  const ownedFeatures = useMemo(
-    () => features.filter((f) => FEATURE_CODES.includes(f.code) && (f.active || f.enabled)),
-    [features],
-  );
-  const lockedFeatures = useMemo(
-    () => features.filter((f) => FEATURE_CODES.includes(f.code) && !(f.active || f.enabled)),
-    [features],
-  );
-  const featurePrices = useMemo(() => {
-    const map = new Map<string, number>();
-    accessStatus?.store?.features?.forEach((item) => {
-      map.set(item.code, item.price_stars);
-    });
-    return map;
-  }, [accessStatus?.store?.features]);
+  // const ownedFeatures = useMemo(
+  //   () => features.filter((f) => FEATURE_CODES.includes(f.code) && (f.active || f.enabled)),
+  //   [features],
+  // );
+  // const lockedFeatures = useMemo(
+  //   () => features.filter((f) => FEATURE_CODES.includes(f.code) && !(f.active || f.enabled)),
+  //   [features],
+  // );
+  // const featurePrices = useMemo(() => {
+  //   const map = new Map<string, number>();
+  //   accessStatus?.store?.features?.forEach((item) => {
+  //     map.set(item.code, item.price_stars);
+  //   });
+  //   return map;
+  // }, [accessStatus?.store?.features]);
 
-  const handleToggle = async (feature: FeatureStatusItem, next: boolean) => {
-    try {
-      const res = await toggleFeature(feature.code, next);
-      setFeatures((prev) => {
-        const updated = prev.map((item) =>
-          item.code === feature.code ? { ...item, ...res.features[0] } : item
-        );
-        return updated;
-      });
-      await reloadAccess();
-    } catch (e: any) {
-      setError(e.message ?? "Не удалось обновить настройку");
-    }
-  };
+  // const handleToggle = async (feature: FeatureStatusItem, next: boolean) => {
+  //   try {
+  //     const res = await toggleFeature(feature.code, next);
+  //     setFeatures((prev) => {
+  //       const updated = prev.map((item) =>
+  //         item.code === feature.code ? { ...item, ...res.features[0] } : item
+  //       );
+  //       return updated;
+  //     });
+  //     await reloadAccess();
+  //   } catch (e: any) {
+  //     setError(e.message ?? "Не удалось обновить настройку");
+  //   }
+  // };
 
   const handleClearAllDialogs = async () => {
     if (!window.confirm("Очистить все диалоги и память? Это удалит все сообщения и воспоминания персонажей. Действие необратимо.")) return;
@@ -113,71 +114,72 @@ export function Settings() {
     }
   };
 
-  const renderFeatures = () => {
-    if (loading) {
-      return (
-        <div className="space-y-3">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div
-              key={`feat-skeleton-${i}`}
-              className="h-20 w-full rounded-3xl border border-white/5 bg-white/5 animate-pulse"
-            />
-          ))}
-        </div>
-      );
-    }
-
-    if (ownedFeatures.length === 0) {
-      return (
-        <div className="space-y-4">
-          <p className="text-sm text-white/70">
-            Пока нет активных улучшений. Подключи фичи, чтобы сделать общение богаче.
-          </p>
-          <LockedFeatureList
-            lockedFeatures={lockedFeatures}
-            onUnlock={() => navigate("/store")}
-            priceMap={featurePrices}
-          />
-        </div>
-      );
-    }
-
-    return (
-      <div className="space-y-3">
-        {ownedFeatures.map((feature) => (
-          <div
-            key={feature.code}
-            className="flex flex-col gap-2 rounded-3xl border border-white/5 bg-card-elevated/70 px-4 py-4"
-          >
-            <div className="flex items-start justify-between gap-3">
-              <div>
-                <p className="text-base font-semibold text-white">{feature.title}</p>
-                <p className="text-sm text-white/70">{feature.description}</p>
-              </div>
-              {feature.toggleable && (
-                <ToggleSwitch
-                  enabled={feature.enabled}
-                  onChange={(value) => handleToggle(feature, value)}
-                  label={feature.enabled ? "Вкл" : "Выкл"}
-                />
-              )}
-            </div>
-          </div>
-        ))}
-
-        {lockedFeatures.length > 0 && (
-          <div className="space-y-3">
-            <p className="text-sm font-semibold text-white">Недоступные улучшения</p>
-            <LockedFeatureList
-              lockedFeatures={lockedFeatures}
-              onUnlock={() => navigate("/store")}
-              priceMap={featurePrices}
-            />
-          </div>
-        )}
-      </div>
-    );
-  };
+  // ОТКЛЮЧЕНО - больше не нужны улучшения
+  // const renderFeatures = () => {
+  //   if (loading) {
+  //     return (
+  //       <div className="space-y-3">
+  //         {Array.from({ length: 3 }).map((_, i) => (
+  //           <div
+  //             key={`feat-skeleton-${i}`}
+  //             className="h-20 w-full rounded-3xl border border-white/5 bg-white/5 animate-pulse"
+  //           />
+  //         ))}
+  //       </div>
+  //     );
+  //   }
+  //
+  //   if (ownedFeatures.length === 0) {
+  //     return (
+  //       <div className="space-y-4">
+  //         <p className="text-sm text-white/70">
+  //           Пока нет активных улучшений. Подключи фичи, чтобы сделать общение богаче.
+  //         </p>
+  //         <LockedFeatureList
+  //           lockedFeatures={lockedFeatures}
+  //           onUnlock={() => navigate("/store")}
+  //           priceMap={featurePrices}
+  //         />
+  //       </div>
+  //     );
+  //   }
+  //
+  //   return (
+  //     <div className="space-y-3">
+  //       {ownedFeatures.map((feature) => (
+  //         <div
+  //           key={feature.code}
+  //           className="flex flex-col gap-2 rounded-3xl border border-white/5 bg-card-elevated/70 px-4 py-4"
+  //         >
+  //           <div className="flex items-start justify-between gap-3">
+  //             <div>
+  //               <p className="text-base font-semibold text-white">{feature.title}</p>
+  //               <p className="text-sm text-white/70">{feature.description}</p>
+  //             </div>
+  //             {feature.toggleable && (
+  //               <ToggleSwitch
+  //                 enabled={feature.enabled}
+  //                 onChange={(value) => handleToggle(feature, value)}
+  //                 label={feature.enabled ? "Вкл" : "Выкл"}
+  //               />
+  //             )}
+  //           </div>
+  //         </div>
+  //       ))}
+  //
+  //       {lockedFeatures.length > 0 && (
+  //         <div className="space-y-3">
+  //           <p className="text-sm font-semibold text-white">Недоступные улучшения</p>
+  //           <LockedFeatureList
+  //             lockedFeatures={lockedFeatures}
+  //             onUnlock={() => navigate("/store")}
+  //             priceMap={featurePrices}
+  //           />
+  //         </div>
+  //       )}
+  //     </div>
+  //   );
+  // };
 
   const renderBaseSettings = () => {
     return (
@@ -218,106 +220,111 @@ export function Settings() {
           </div>
         )}
 
-        <div className="flex rounded-3xl border border-white/5 bg-card-dark/60 p-1">
+        {/* УБРАЛИ ТАБЫ - больше нет раздела с улучшениями */}
+        {/* <div className="flex rounded-3xl border border-white/5 bg-card-dark/60 p-1">
           <TabButton active={activeTab === "upgrades"} onClick={() => setActiveTab("upgrades")}>
             Мои улучшения
           </TabButton>
           <TabButton active={activeTab === "base"} onClick={() => setActiveTab("base")}>
             Основные
           </TabButton>
-        </div>
+        </div> */}
 
-        {activeTab === "upgrades" ? renderFeatures() : renderBaseSettings()}
+        {/* Показываем только Основные настройки */}
+        {renderBaseSettings()}
       </div>
     </div>
   );
 }
 
-function LockedFeatureList({
-  lockedFeatures,
-  onUnlock,
-  priceMap,
-}: {
-  lockedFeatures: FeatureStatusItem[];
-  onUnlock: () => void;
-  priceMap: Map<string, number>;
-}) {
-  return (
-    <div className="grid gap-3">
-      {lockedFeatures.map((card) => (
-        <div
-          key={card.code}
-          className="rounded-3xl border border-white/5 bg-card-dark/40 px-4 py-4"
-        >
-          <p className="text-base font-semibold text-white">{card.title}</p>
-          <p className="mt-1 text-sm text-white/70">{card.description}</p>
-          <button
-            className="mt-3 inline-flex w-full items-center justify-center rounded-full bg-gradient-to-r from-amber-400 to-orange-500 px-4 py-3 text-sm font-semibold text-white"
-            onClick={onUnlock}
-          >
-            Разблокировать
-            {priceMap.has(card.code) ? ` · ${priceMap.get(card.code)} ⭐` : ""}
-          </button>
-        </div>
-      ))}
-    </div>
-  );
-}
+// ОТКЛЮЧЕНО - больше не нужны улучшения
+// function LockedFeatureList({
+//   lockedFeatures,
+//   onUnlock,
+//   priceMap,
+// }: {
+//   lockedFeatures: FeatureStatusItem[];
+//   onUnlock: () => void;
+//   priceMap: Map<string, number>;
+// }) {
+//   return (
+//     <div className="grid gap-3">
+//       {lockedFeatures.map((card) => (
+//         <div
+//           key={card.code}
+//           className="rounded-3xl border border-white/5 bg-card-dark/40 px-4 py-4"
+//         >
+//           <p className="text-base font-semibold text-white">{card.title}</p>
+//           <p className="mt-1 text-sm text-white/70">{card.description}</p>
+//           <button
+//             className="mt-3 inline-flex w-full items-center justify-center rounded-full bg-gradient-to-r from-amber-400 to-orange-500 px-4 py-3 text-sm font-semibold text-white"
+//             onClick={onUnlock}
+//           >
+//             Разблокировать
+//             {priceMap.has(card.code) ? ` · ${priceMap.get(card.code)} ⭐` : ""}
+//           </button>
+//         </div>
+//       ))}
+//     </div>
+//   );
+// }
 
-function TabButton({
-  active,
-  children,
-  onClick,
-}: {
-  active: boolean;
-  children: ReactNode;
-  onClick: () => void;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`flex-1 rounded-2xl px-4 py-3 text-sm font-semibold transition ${
-        active ? "bg-white text-bg-dark shadow" : "text-white/70 hover:text-white"
-      }`}
-    >
-      {children}
-    </button>
-  );
-}
+// ОТКЛЮЧЕНО - больше не нужны табы
+// function TabButton({
+//   active,
+//   children,
+//   onClick,
+// }: {
+//   active: boolean;
+//   children: ReactNode;
+//   onClick: () => void;
+// }) {
+//   return (
+//     <button
+//       type="button"
+//       onClick={onClick}
+//       className={`flex-1 rounded-2xl px-4 py-3 text-sm font-semibold transition ${
+//         active ? "bg-white text-bg-dark shadow" : "text-white/70 hover:text-white"
+//       }`}
+//     >
+//       {children}
+//     </button>
+//   );
+// }
 
-function ToggleSwitch({
-  enabled,
-  onChange,
-  label,
-}: {
-  enabled: boolean;
-  onChange: (value: boolean) => void;
-  label?: string;
-}) {
-  return (
-    <button
-      type="button"
-      onClick={() => onChange(!enabled)}
-      className={`inline-flex items-center gap-2 text-xs font-semibold transition ${
-        enabled ? "text-emerald-100" : "text-white/70"
-      }`}
-    >
-      <span
-        className={`relative flex h-7 w-12 items-center rounded-full px-1 transition ${
-          enabled ? "bg-emerald-400/60" : "bg-white/15"
-        }`}
-      >
-        <span
-          className={`h-5 w-5 rounded-full bg-white shadow transition-transform ${
-            enabled ? "translate-x-5" : "translate-x-0"
-          }`}
-        />
-      </span>
-      <span className="pr-1">{label ?? (enabled ? "On" : "Off")}</span>
-    </button>
-  );
-}
+// ОТКЛЮЧЕНО - больше не нужны переключатели для улучшений
+// function ToggleSwitch({
+//   enabled,
+//   onChange,
+//   label,
+// }: {
+//   enabled: boolean;
+//   onChange: (value: boolean) => void;
+//   label?: string;
+// }) {
+//   return (
+//     <button
+//       type="button"
+//       onClick={() => onChange(!enabled)}
+//       className={`inline-flex items-center gap-2 text-xs font-semibold transition ${
+//         enabled ? "text-emerald-100" : "text-white/70"
+//       }`}
+//     >
+//       <span
+//         className={`relative flex h-7 w-12 items-center rounded-full px-1 transition ${
+//           enabled ? "bg-emerald-400/60" : "bg-white/15"
+//         }`}
+//       >
+//         <span
+//           className={`h-5 w-5 rounded-full bg-white shadow transition-transform ${
+//             enabled ? "translate-x-5" : "translate-x-0"
+//           }`}
+//         />
+//       </span>
+//       <span className="pr-1">{label ?? (enabled ? "On" : "Off")}</span>
+//     </button>
+//   );
+// }
 
 function ActionButton({
   label,

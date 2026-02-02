@@ -193,28 +193,26 @@ def build_status_block(status: dict, lang: str = "ru") -> str:
     is_premium = plan == "Premium"
     feature_names = FEATURE_NAMES_RU if lang == "ru" else FEATURE_NAMES_EN
 
-    # Format features
-    if status["features"]:
-        features_str = ", ".join(
-            feature_names.get(f, f) for f in status["features"]
-        )
-    else:
-        features_str = "Нет улучшений" if lang == "ru" else "No upgrades"
+    # Format features - ОТКЛЮЧЕНО, больше не показываем улучшения
+    # if status["features"]:
+    #     features_str = ", ".join(
+    #         feature_names.get(f, f) for f in status["features"]
+    #     )
+    # else:
+    #     features_str = "Нет улучшений" if lang == "ru" else "No upgrades"
 
     # Images
     images_remaining = status["images_remaining"]
     images_str = f"🖼 {images_remaining} доступно" if lang == "ru" else f"🖼 {images_remaining} available"
 
     if is_premium:
-        # Premium user - show unlimited messages + features + images (вертикально)
+        # Premium user - show unlimited messages + images (БЕЗ улучшений)
         if lang == "ru":
             block = f"""💎 Premium
-✨ {features_str}
 💬 Безлимит
 {images_str}"""
         else:
             block = f"""💎 Premium
-✨ {features_str}
 💬 Unlimited
 {images_str}"""
     else:
@@ -225,12 +223,10 @@ def build_status_block(status: dict, lang: str = "ru") -> str:
 
         if lang == "ru":
             block = f"""👤 Free
-✨ {features_str}
 {messages_str}
 {images_str}"""
         else:
             block = f"""👤 Free
-✨ {features_str}
 {messages_str}
 {images_str}"""
 
