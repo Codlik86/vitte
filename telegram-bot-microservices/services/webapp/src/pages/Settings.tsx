@@ -25,7 +25,6 @@ export function Settings() {
   const [features, setFeatures] = useState<FeatureStatusItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [actionMessage, setActionMessage] = useState<string | null>(null);
 
   const imagesAvailable = imagesLeft;
 
@@ -234,11 +233,6 @@ export function Settings() {
         {error && (
           <div className="rounded-3xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-100">
             {error}
-          </div>
-        )}
-        {actionMessage && (
-          <div className="rounded-3xl border border-emerald-400/30 bg-emerald-400/10 px-4 py-3 text-sm text-emerald-100">
-            {actionMessage}
           </div>
         )}
 
