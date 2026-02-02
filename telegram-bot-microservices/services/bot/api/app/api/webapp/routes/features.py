@@ -10,7 +10,8 @@ from datetime import datetime
 from pydantic import BaseModel
 import httpx
 
-from shared.database import get_db, User, FeatureUnlock, Dialog, Message
+from shared.database import get_db, User, FeatureUnlock, Dialog, Message, Subscription, NotificationLog
+from shared.utils import redis_client
 from app.config import config
 
 router = APIRouter()
@@ -156,17 +157,41 @@ async def clear_dialogs(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    # Delete all messages from user's dialogs
+    # Get all dialog IDs first
     result = await db.execute(
         select(Dialog.id).where(Dialog.user_id == telegram_id)
     )
     dialog_ids = [row[0] for row in result.all()]
 
+    # Delete all messages from these dialogs
     if dialog_ids:
         await db.execute(
             delete(Message).where(Message.dialog_id.in_(dialog_ids))
         )
-        await db.commit()
+
+    # Delete all dialogs
+    await db.execute(
+        delete(Dialog).where(Dialog.user_id == telegram_id)
+    )
+    await db.commit()
+
+    # Clear Redis cache for this user
+    try:
+        # Clear user features cache
+        await redis_client.delete(f"user_features:{telegram_id}")
+        # Clear user images quota cache
+        await redis_client.delete(f"user_images_quota:{telegram_id}")
+        # Clear any other user-specific cache keys
+        pattern = f"*{telegram_id}*"
+        cursor = 0
+        while True:
+            cursor, keys = await redis_client.scan(cursor, match=pattern, count=100)
+            if keys:
+                await redis_client.delete(*keys)
+            if cursor == 0:
+                break
+    except Exception as e:
+        print(f"Failed to clear Redis cache for user {telegram_id}: {e}")
 
     return ActionResponse(
         success=True,
@@ -214,12 +239,56 @@ async def delete_account(
                 timeout=10.0,
             )
     except Exception as e:
-        # Log but don't fail - memory deletion is not critical
         print(f"Failed to delete Qdrant memories for user {telegram_id}: {e}")
 
-    # Delete all user data (cascades will handle related records)
+    # Get all dialog IDs first
+    result = await db.execute(
+        select(Dialog.id).where(Dialog.user_id == telegram_id)
+    )
+    dialog_ids = [row[0] for row in result.all()]
+
+    # Delete all messages from user's dialogs
+    if dialog_ids:
+        await db.execute(
+            delete(Message).where(Message.dialog_id.in_(dialog_ids))
+        )
+
+    # Delete all dialogs
+    await db.execute(
+        delete(Dialog).where(Dialog.user_id == telegram_id)
+    )
+
+    # Delete subscription (CASCADE will handle related data)
+    await db.execute(
+        delete(Subscription).where(Subscription.user_id == telegram_id)
+    )
+
+    # Delete notification logs
+    await db.execute(
+        delete(NotificationLog).where(NotificationLog.user_id == telegram_id)
+    )
+
+    # Delete all user data (CASCADE will handle: feature_unlocks, image_balances, purchases, broadcast_logs, user_personas)
     await db.delete(user)
     await db.commit()
+
+    # Clear ALL Redis cache for this user
+    try:
+        # Clear specific known keys
+        await redis_client.delete(f"user_features:{telegram_id}")
+        await redis_client.delete(f"user_images_quota:{telegram_id}")
+
+        # Clear all keys containing user ID
+        pattern = f"*{telegram_id}*"
+        cursor = 0
+        while True:
+            cursor, keys = await redis_client.scan(cursor, match=pattern, count=100)
+            if keys:
+                await redis_client.delete(*keys)
+            if cursor == 0:
+                break
+    except Exception as e:
+        print(f"Failed to clear Redis cache for user {telegram_id}: {e}")
 
     return ActionResponse(
         success=True,

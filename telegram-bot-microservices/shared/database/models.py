@@ -80,12 +80,12 @@ class User(Base):
     last_interaction = Column(DateTime(timezone=True), server_default=func.now())
 
     # Relationships
-    subscription = relationship("Subscription", back_populates="user", uselist=False)
-    dialogs = relationship("Dialog", back_populates="user")
+    subscription = relationship("Subscription", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    dialogs = relationship("Dialog", back_populates="user", cascade="all, delete-orphan")
     active_persona = relationship("Persona", foreign_keys=[active_persona_id])
-    image_balance = relationship("ImageBalance", back_populates="user", uselist=False)
-    feature_unlocks = relationship("FeatureUnlock", back_populates="user")
-    purchases = relationship("Purchase", back_populates="user")
+    image_balance = relationship("ImageBalance", back_populates="user", uselist=False, cascade="all, delete-orphan")
+    feature_unlocks = relationship("FeatureUnlock", back_populates="user", cascade="all, delete-orphan")
+    purchases = relationship("Purchase", back_populates="user", cascade="all, delete-orphan")
 
     def __repr__(self):
         return f"<User(id={self.id}, username={self.username})>"

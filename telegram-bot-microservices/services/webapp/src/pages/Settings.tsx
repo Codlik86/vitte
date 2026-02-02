@@ -95,7 +95,13 @@ export function Settings() {
       await clearDialogs();
       // Очищаем долгую память (Qdrant)
       await clearLongMemory();
-      setActionMessage("Все диалоги и память очищены.");
+
+      // Закрываем webapp - пользователь вернётся в бот с чистой историей
+      if (tg?.close) {
+        tg.close();
+      } else {
+        navigate("/");
+      }
     } catch (e: any) {
       setError(e.message ?? "Не удалось очистить диалоги");
     }
@@ -105,7 +111,13 @@ export function Settings() {
     if (!window.confirm("Удалить аккаунт и все данные? Это действие необратимо.")) return;
     try {
       await deleteAccount();
-      setActionMessage("Аккаунт удалён. Можно закрыть MiniApp.");
+
+      // Закрываем webapp - аккаунт удалён
+      if (tg?.close) {
+        tg.close();
+      } else {
+        navigate("/");
+      }
     } catch (e: any) {
       setError(e.message ?? "Не удалось удалить аккаунт");
     }
