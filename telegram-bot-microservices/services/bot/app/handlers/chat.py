@@ -331,12 +331,13 @@ async def check_message_limit(user_id: int, lang: str) -> tuple[bool, str | None
 
 # ==================== HANDLERS ====================
 
-async def _show_chat_screen(user_id: int, respond_func):
+async def _show_chat_screen(user_id: int, target):
     """Common logic for showing chat screen"""
     lang = await get_user_language(user_id)
     dialogs = await get_active_dialogs_with_personas(user_id)
 
     if dialogs:
+        # User has dialogs - show with photo
         can_create_new = len(dialogs) < 5
         if lang == "ru":
             text = HAS_DIALOGS_RU
@@ -345,7 +346,15 @@ async def _show_chat_screen(user_id: int, respond_func):
             text = HAS_DIALOGS_EN
             keyboard = get_dialogs_keyboard_en(dialogs, can_create_new)
         logger.info(f"User {user_id} has {len(dialogs)} active dialog(s)")
+
+        # Send with photo
+        await target.answer_photo(
+            photo=config.start_image_url,
+            caption=text,
+            reply_markup=keyboard
+        )
     else:
+        # No dialogs - show without photo
         if lang == "ru":
             text = NO_DIALOGS_RU
             keyboard = get_no_dialogs_keyboard_ru()
@@ -354,13 +363,13 @@ async def _show_chat_screen(user_id: int, respond_func):
             keyboard = get_no_dialogs_keyboard_en()
         logger.info(f"User {user_id} has no active dialogs")
 
-    await respond_func(text, reply_markup=keyboard)
+        await target.answer(text, reply_markup=keyboard)
 
 
 @router.message(Command("chat"))
 async def cmd_chat(message: Message):
     """Handle /chat command - start chat section"""
-    await _show_chat_screen(message.from_user.id, message.answer)
+    await _show_chat_screen(message.from_user.id, message)
     logger.info(f"User {message.from_user.id} opened chat via /chat command")
 
 
@@ -368,7 +377,7 @@ async def cmd_chat(message: Message):
 async def on_start_chat(callback: CallbackQuery):
     """Handle 'Start Chat' button from main menu"""
     await callback.answer()
-    await _show_chat_screen(callback.from_user.id, callback.message.answer)
+    await _show_chat_screen(callback.from_user.id, callback.message)
 
 
 @router.callback_query(F.data.startswith("chat:continue:"))
