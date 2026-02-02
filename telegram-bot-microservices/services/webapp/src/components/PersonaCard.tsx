@@ -4,7 +4,6 @@ type PersonaCardProps = {
   title: string;
   description?: string | null;
   gradientVariant?: "default" | "custom";
-  selected?: boolean;
   avatarUrl?: string;
   showCustomAvatar?: boolean;
   onClick: () => void;
@@ -14,7 +13,6 @@ export function PersonaCard({
   title,
   description,
   gradientVariant = "default",
-  selected = false,
   avatarUrl,
   showCustomAvatar = false,
   onClick,
