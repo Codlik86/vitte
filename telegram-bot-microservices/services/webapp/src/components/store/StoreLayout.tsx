@@ -187,7 +187,8 @@ function StoreImagesAndFeaturesSection({
             })}
       </div>
 
-      <div className="space-y-3">
+      {/* ОТКЛЮЧЕНО - больше нет улучшений */}
+      {/* <div className="space-y-3">
         {loading
           ? Array.from({ length: 2 }).map((_, i) => (
               <div
@@ -232,7 +233,7 @@ function StoreImagesAndFeaturesSection({
                 </div>
               );
             })}
-      </div>
+      </div> */}
     </section>
   );
 }
