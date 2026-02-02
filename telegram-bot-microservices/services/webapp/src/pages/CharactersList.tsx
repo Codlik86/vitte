@@ -118,7 +118,6 @@ export function CharactersList() {
               key={p.id}
               title={p.name}
               description={p.short_description}
-              selected={p.is_selected}
               gradientVariant="default"
               avatarUrl={avatar.card}
               onClick={() => navigate(`/characters/${p.id}`, { state: { name: p.name } })}
