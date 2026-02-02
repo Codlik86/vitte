@@ -193,6 +193,25 @@ async def clear_dialogs(
     except Exception as e:
         print(f"Failed to clear Redis cache for user {telegram_id}: {e}")
 
+    # Send message to bot to show fresh start screen
+    try:
+        async with httpx.AsyncClient() as client:
+            await client.post(
+                f"https://api.telegram.org/bot{config.bot_token}/sendMessage",
+                json={
+                    "chat_id": telegram_id,
+                    "text": "✅ Все диалоги и память очищены.\n\nНажми /start чтобы начать новый диалог.",
+                    "reply_markup": {
+                        "inline_keyboard": [[
+                            {"text": "🔄 Начать", "callback_data": "menu:start"}
+                        ]]
+                    }
+                },
+                timeout=5.0
+            )
+    except Exception as e:
+        print(f"Failed to send message to user {telegram_id}: {e}")
+
     return ActionResponse(
         success=True,
         message="Dialogs cleared successfully"

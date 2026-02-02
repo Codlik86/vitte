@@ -7,7 +7,6 @@ import {
   toggleFeature,
   clearDialogs,
   clearLongMemory,
-  deleteAccount,
 } from "../api/client";
 import type { FeatureStatusItem } from "../api/types";
 import { useAccessStatus } from "../hooks/useAccessStatus";
@@ -106,22 +105,6 @@ export function Settings() {
     }
   };
 
-  const handleDeleteAccount = async () => {
-    if (!window.confirm("Удалить аккаунт и все данные? Это действие необратимо.")) return;
-    try {
-      await deleteAccount();
-
-      // Закрываем webapp - аккаунт удалён
-      if (tg?.close) {
-        tg.close();
-      } else {
-        navigate("/");
-      }
-    } catch (e: any) {
-      setError(e.message ?? "Не удалось удалить аккаунт");
-    }
-  };
-
   const handleLogout = () => {
     if (tg?.close) {
       tg.close();
@@ -201,7 +184,6 @@ export function Settings() {
       <div className="space-y-3">
         <ActionButton label="Очистить все диалоги" onClick={handleClearAllDialogs} tone="secondary" />
         <ActionButton label="Выйти из MiniApp" onClick={handleLogout} tone="ghost" />
-        <ActionButton label="Удалить аккаунт" onClick={handleDeleteAccount} tone="danger" />
       </div>
     );
   };
