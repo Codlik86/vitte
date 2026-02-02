@@ -135,7 +135,7 @@ function StoreImagesAndFeaturesSection({
   loading,
   busy,
   onBuyPack,
-  onBuyFeature,
+  // onBuyFeature,  // ОТКЛЮЧЕНО - больше нет улучшений
 }: {
   config: StoreConfig | null;
   status: StoreStatus | null;
@@ -145,8 +145,8 @@ function StoreImagesAndFeaturesSection({
   onBuyFeature: (code: string) => void;
 }) {
   const packs = config?.image_packs ?? [];
-  const features = config?.emotional_features ?? [];
-  const unlocked = new Set(status?.unlocked_features ?? []);
+  // const features = config?.emotional_features ?? [];  // ОТКЛЮЧЕНО
+  // const unlocked = new Set(status?.unlocked_features ?? []);  // ОТКЛЮЧЕНО
   const imagesAvailable = (status?.remaining_images_today ?? 0) + (status?.remaining_paid_images ?? 0);
 
   return (
