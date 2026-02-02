@@ -212,12 +212,12 @@ def get_no_dialogs_keyboard_ru() -> InlineKeyboardMarkup:
     """Keyboard when no active dialogs (Russian)"""
     if config.webapp_url:
         webapp_btn = InlineKeyboardButton(
-            text="Открыть Vitte 💜",
+            text="Открыть CraveMe 💜",
             web_app=WebAppInfo(url=config.webapp_url)
         )
     else:
         webapp_btn = InlineKeyboardButton(
-            text="Открыть Vitte 💜",
+            text="Открыть CraveMe 💜",
             callback_data="menu:open_webapp"
         )
 
@@ -231,12 +231,12 @@ def get_no_dialogs_keyboard_en() -> InlineKeyboardMarkup:
     """Keyboard when no active dialogs (English)"""
     if config.webapp_url:
         webapp_btn = InlineKeyboardButton(
-            text="Open Vitte 💜",
+            text="Open CraveMe 💜",
             web_app=WebAppInfo(url=config.webapp_url)
         )
     else:
         webapp_btn = InlineKeyboardButton(
-            text="Open Vitte 💜",
+            text="Open CraveMe 💜",
             callback_data="menu:open_webapp"
         )
 

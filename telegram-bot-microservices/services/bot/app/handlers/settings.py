@@ -20,11 +20,11 @@ router = Router(name="settings")
 
 SETTINGS_RU = """⚙️ <b>Основные настройки</b>
 
-Здесь ты можешь настроить Vitte под себя."""
+Здесь ты можешь настроить CraveMe под себя."""
 
 SETTINGS_EN = """⚙️ <b>Settings</b>
 
-Customize your Vitte experience."""
+Customize your CraveMe experience."""
 
 LANGUAGE_SELECT_RU = """🌐 <b>Выбор языка</b>
 

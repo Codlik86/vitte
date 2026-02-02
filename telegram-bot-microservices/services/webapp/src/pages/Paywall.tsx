@@ -66,7 +66,7 @@ export function Paywall() {
 
         <section className="space-y-3 rounded-3xl border border-white/10 bg-card-elevated/80 px-5 py-5 shadow-card">
           <div className="space-y-1">
-            <h2 className="text-xl font-semibold text-white">Vitte Premium</h2>
+            <h2 className="text-xl font-semibold text-white">CraveMe Premium</h2>
             <ul className="space-y-1 text-sm text-white/80">
               <li>• Безлимитные сообщения</li>
               <li>• 20 изображений каждый день</li>

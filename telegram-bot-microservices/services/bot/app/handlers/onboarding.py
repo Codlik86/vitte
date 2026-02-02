@@ -49,13 +49,13 @@ WELCOME_TEXT = """💜 Hello!
 
 Please select your language:"""
 
-AGE_VERIFICATION_RU = """Привет, я Vitte 💜
+AGE_VERIFICATION_RU = """Привет, я CraveMe 💜
 
 Здесь только для взрослых. Если тебе 18+ — давай знакомиться.
 
 <i>(контент на утверждении)</i>"""
 
-AGE_VERIFICATION_EN = """Hi, I'm Vitte 💜
+AGE_VERIFICATION_EN = """Hi, I'm CraveMe 💜
 
 This is for adults only. If you're 18+ — let's get to know each other.
 

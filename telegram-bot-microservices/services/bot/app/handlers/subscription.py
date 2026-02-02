@@ -2,7 +2,7 @@
 Subscription handler - Premium subscription options
 
 Handles subscription button from main menu.
-Shows Vitte Premium plans with Telegram Stars pricing.
+Shows CraveMe Premium plans with Telegram Stars pricing.
 """
 from aiogram import Router, F, Bot
 from aiogram.types import (
@@ -53,7 +53,7 @@ SUBSCRIPTION_PLANS = {
 
 # ==================== TEXTS ====================
 
-SUBSCRIPTION_RU = """💎 <b>Vitte Premium</b>
+SUBSCRIPTION_RU = """💎 <b>CraveMe Premium</b>
 
 • Безлимитные сообщения
 • 20 изображений каждый день
@@ -62,7 +62,7 @@ SUBSCRIPTION_RU = """💎 <b>Vitte Premium</b>
 
 Выбери подходящий план:"""
 
-SUBSCRIPTION_EN = """💎 <b>Vitte Premium</b>
+SUBSCRIPTION_EN = """💎 <b>CraveMe Premium</b>
 
 • Unlimited messages
 • 20 images every day

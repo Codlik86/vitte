@@ -24,12 +24,12 @@ router = Router(name="menu")
 # ==================== MENU TEXT VARIANTS ====================
 
 # Variant 1
-MENU_VARIANT_1_RU = """Добро пожаловать в Vitte 💜
+MENU_VARIANT_1_RU = """Добро пожаловать в CraveMe 💜
 
 Выбери персонажа и начни
 приватную беседу."""
 
-MENU_VARIANT_1_EN = """Welcome to Vitte 💜
+MENU_VARIANT_1_EN = """Welcome to CraveMe 💜
 
 Choose a character and start
 a private conversation."""
@@ -44,33 +44,33 @@ MENU_VARIANT_2_EN = """Your personal space 💜
 Who will you choose today?"""
 
 # Variant 3
-MENU_VARIANT_3_RU = """Vitte 💜
+MENU_VARIANT_3_RU = """CraveMe 💜
 
 Выбери персонажа или продолжи
 диалог с того места, где остановился."""
 
-MENU_VARIANT_3_EN = """Vitte 💜
+MENU_VARIANT_3_EN = """CraveMe 💜
 
 Choose a character or continue
 the dialog from where you left off."""
 
 # Variant 4
-MENU_VARIANT_4_RU = """Vitte 💜
+MENU_VARIANT_4_RU = """CraveMe 💜
 
 Время для приватной беседы.
 Новый персонаж или продолжить?"""
 
-MENU_VARIANT_4_EN = """Vitte 💜
+MENU_VARIANT_4_EN = """CraveMe 💜
 
 Time for a private conversation.
 New character or continue?"""
 
 # Variant 5
-MENU_VARIANT_5_RU = """Vitte 💜
+MENU_VARIANT_5_RU = """CraveMe 💜
 
 Выбери персонажа и начни чат."""
 
-MENU_VARIANT_5_EN = """Vitte 💜
+MENU_VARIANT_5_EN = """CraveMe 💜
 
 Choose a character and start chatting."""
 
@@ -81,7 +81,7 @@ MENU_VARIANTS_EN = [MENU_VARIANT_1_EN, MENU_VARIANT_2_EN, MENU_VARIANT_3_EN, MEN
 
 # ==================== WELCOME TEXT (FIRST TIME) ====================
 
-WELCOME_TEXT_RU = """Добро пожаловать в Vitte 💜
+WELCOME_TEXT_RU = """Добро пожаловать в CraveMe 💜
 
 Приватное пространство для флирта
 с AI-персонажами.
@@ -89,7 +89,7 @@ WELCOME_TEXT_RU = """Добро пожаловать в Vitte 💜
 Уникальные героини, фото, режим страсти.
 Всё между вами."""
 
-WELCOME_TEXT_EN = """Welcome to Vitte 💜
+WELCOME_TEXT_EN = """Welcome to CraveMe 💜
 
 Private space for flirting
 with AI characters.
@@ -374,14 +374,14 @@ async def cmd_app(message: Message):
     if config.webapp_url:
         # WebApp is configured - show button to open it
         if lang == "ru":
-            text = "💌 Нажми на кнопку, чтобы открыть приложение Vitte"
+            text = "💌 Нажми на кнопку, чтобы открыть приложение CraveMe"
             keyboard = InlineKeyboardMarkup(inline_keyboard=[
-                [InlineKeyboardButton(text="Открыть Vitte 💜", web_app=WebAppInfo(url=config.webapp_url))]
+                [InlineKeyboardButton(text="Открыть CraveMe 💜", web_app=WebAppInfo(url=config.webapp_url))]
             ])
         else:
-            text = "💌 Tap the button to open Vitte app"
+            text = "💌 Tap the button to open CraveMe app"
             keyboard = InlineKeyboardMarkup(inline_keyboard=[
-                [InlineKeyboardButton(text="Open Vitte 💜", web_app=WebAppInfo(url=config.webapp_url))]
+                [InlineKeyboardButton(text="Open CraveMe 💜", web_app=WebAppInfo(url=config.webapp_url))]
             ])
         await message.answer(text, reply_markup=keyboard)
     else:
@@ -398,7 +398,7 @@ async def cmd_app(message: Message):
 async def on_open_webapp(callback: CallbackQuery):
     """Handle webapp button click (fallback when webapp_url not configured)"""
     await callback.answer("🚧 Web App в разработке / Web App under development", show_alert=True)
-    logger.info(f"User {callback.from_user.id} clicked Open Vitte button")
+    logger.info(f"User {callback.from_user.id} clicked Open CraveMe button")
 
 
 @router.callback_query(F.data == "menu:back_to_menu")
