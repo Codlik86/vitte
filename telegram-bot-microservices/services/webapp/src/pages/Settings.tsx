@@ -88,23 +88,16 @@ export function Settings() {
     }
   };
 
-  const handleClearDialogs = async () => {
-    if (!window.confirm("Очистить всю переписку? Это удалит сообщения из краткой памяти.")) return;
+  const handleClearAllDialogs = async () => {
+    if (!window.confirm("Очистить все диалоги и память? Это удалит все сообщения и воспоминания персонажей. Действие необратимо.")) return;
     try {
+      // Очищаем краткую память (диалоги)
       await clearDialogs();
-      setActionMessage("Краткая память очищена.");
+      // Очищаем долгую память (Qdrant)
+      await clearLongMemory();
+      setActionMessage("Все диалоги и память очищены.");
     } catch (e: any) {
       setError(e.message ?? "Не удалось очистить диалоги");
-    }
-  };
-
-  const handleClearLongMemory = async () => {
-    if (!window.confirm("Очистить долгую память? Воспоминания будут стерты.")) return;
-    try {
-      await clearLongMemory();
-      setActionMessage("Долгая память очищена.");
-    } catch (e: any) {
-      setError(e.message ?? "Не удалось очистить долгую память");
     }
   };
 
@@ -195,10 +188,9 @@ export function Settings() {
   const renderBaseSettings = () => {
     return (
       <div className="space-y-3">
-        <ActionButton label="Очистить память диалогов" onClick={handleClearDialogs} tone="secondary" />
-        <ActionButton label="Очистить долгую память" onClick={handleClearLongMemory} tone="secondary" />
-        <ActionButton label="Удалить аккаунт" onClick={handleDeleteAccount} tone="danger" />
+        <ActionButton label="Очистить все диалоги" onClick={handleClearAllDialogs} tone="secondary" />
         <ActionButton label="Выйти из MiniApp" onClick={handleLogout} tone="ghost" />
+        <ActionButton label="Удалить аккаунт" onClick={handleDeleteAccount} tone="danger" />
       </div>
     );
   };

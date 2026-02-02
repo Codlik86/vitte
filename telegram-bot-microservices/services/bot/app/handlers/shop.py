@@ -305,7 +305,7 @@ async def on_shop_upgrades(callback: CallbackQuery):
 async def on_back_to_hub(callback: CallbackQuery):
     """Handle 'Back' button - return to shop hub"""
     await callback.answer()
-    await _show_shop_hub(callback.from_user.id, callback.message.answer)
+    await _show_shop_hub(callback.from_user.id, callback.message)
 
 
 @router.callback_query(F.data.startswith("shop:pack_"))

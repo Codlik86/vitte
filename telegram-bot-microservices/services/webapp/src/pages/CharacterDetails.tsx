@@ -154,11 +154,11 @@ export function CharacterDetails() {
 
             <InfoBlock title="О персонаже" text={persona.legend_full ?? persona.long_description} />
 
-            <FeelBlock
+            {/* <FeelBlock
               emotions={persona.emotions_full}
               positive={persona.triggers_positive}
               negative={persona.triggers_negative}
-            />
+            /> */}
 
             {storyCards && storyCards.length > 0 && (
               <StoriesBlock stories={storyCards} selectedId={selectedStoryId} onSelect={setSelectedStoryId} />

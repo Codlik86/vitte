@@ -8,8 +8,10 @@ from sqlalchemy.orm import selectinload
 from typing import Optional
 from datetime import datetime
 from pydantic import BaseModel
+import httpx
 
 from shared.database import get_db, User, FeatureUnlock, Dialog, Message
+from app.config import config
 
 router = APIRouter()
 
@@ -202,6 +204,18 @@ async def delete_account(
     user = await db.get(User, telegram_id)
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
+
+    # Delete long-term memory from Qdrant
+    try:
+        async with httpx.AsyncClient() as client:
+            await client.post(
+                f"{config.api_url}/api/memory/clear",
+                json={"telegram_id": telegram_id},
+                timeout=10.0,
+            )
+    except Exception as e:
+        # Log but don't fail - memory deletion is not critical
+        print(f"Failed to delete Qdrant memories for user {telegram_id}: {e}")
 
     # Delete all user data (cascades will handle related records)
     await db.delete(user)

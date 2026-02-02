@@ -57,11 +57,6 @@ export function PersonaCard({
             />
           </>
         )}
-        {selected && (
-          <span className="absolute right-2 top-2 rounded-full bg-emerald-500/90 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-white shadow-card">
-            выбрано
-          </span>
-        )}
       </div>
       <div className="mt-3 flex flex-1 flex-col gap-1">
         <h2 className="text-base font-semibold text-white leading-tight">{title}</h2>
