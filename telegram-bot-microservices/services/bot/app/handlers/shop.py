@@ -16,6 +16,7 @@ from shared.database import get_db, User, ImageBalance, Purchase
 from shared.database.services import get_user_by_id, get_subscription_by_user_id
 from shared.utils import get_logger
 from sqlalchemy import select
+from app.config import config
 
 logger = get_logger(__name__)
 router = Router(name="shop")
@@ -233,7 +234,7 @@ async def get_user_images_count(user_id: int) -> int:
 
 # ==================== HANDLERS ====================
 
-async def _show_shop_hub(user_id: int, respond_func):
+async def _show_shop_hub(user_id: int, target):
     """Show shop hub screen with categories"""
     lang = await get_user_language(user_id)
 
@@ -244,7 +245,13 @@ async def _show_shop_hub(user_id: int, respond_func):
         text = SHOP_HUB_EN
         keyboard = get_shop_hub_keyboard_en()
 
-    await respond_func(text, reply_markup=keyboard, parse_mode="HTML")
+    # Send shop hub with photo
+    await target.answer_photo(
+        photo=config.shop_image_url,
+        caption=text,
+        reply_markup=keyboard,
+        parse_mode="HTML"
+    )
     logger.info(f"User {user_id} opened shop hub")
 
 
@@ -267,14 +274,14 @@ async def _show_images_screen(user_id: int, respond_func):
 @router.message(Command("shop"))
 async def cmd_shop(message: Message):
     """Handle /shop command"""
-    await _show_shop_hub(message.from_user.id, message.answer)
+    await _show_shop_hub(message.from_user.id, message)
 
 
 @router.callback_query(F.data == "menu:shop")
 async def on_shop(callback: CallbackQuery):
     """Handle 'Shop' button from main menu"""
     await callback.answer()
-    await _show_shop_hub(callback.from_user.id, callback.message.answer)
+    await _show_shop_hub(callback.from_user.id, callback.message)
 
 
 @router.callback_query(F.data == "shop:images")

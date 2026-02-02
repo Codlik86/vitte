@@ -32,6 +32,12 @@ class BotConfig(BaseSettings):
     # Menu image URL (served via nginx from MinIO)
     menu_image_url: str = os.getenv("MENU_IMAGE_URL", "https://vitteapp.duckdns.org/storage/universal_pic_square.jpeg")
 
+    # Shop image URL (same as menu - square format)
+    shop_image_url: str = os.getenv("SHOP_IMAGE_URL", "https://vitteapp.duckdns.org/storage/universal_pic_square.jpeg")
+
+    # Start image URL (для existing users с диалогами)
+    start_image_url: str = os.getenv("START_IMAGE_URL", "https://vitteapp.duckdns.org/storage/universal_pic.jpeg")
+
     # Rate Limiting
     rate_limit_messages: int = int(os.getenv("RATE_LIMIT_MESSAGES", "10"))  # per minute
     rate_limit_messages_window: int = int(os.getenv("RATE_LIMIT_MESSAGES_WINDOW", "60"))  # seconds
