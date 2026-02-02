@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from "react";
+import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { PageHeader } from "../components/layout/PageHeader";
 import { DebugTelegramBanner } from "../components/DebugTelegramBanner";
@@ -18,7 +18,7 @@ import { tg } from "../lib/telegram";
 
 export function Settings() {
   const navigate = useNavigate();
-  const { data: accessStatus, reload: reloadAccess } = useAccessStatus();
+  const { data: accessStatus } = useAccessStatus();
   const { imagesLeft } = useImagesLeft();
   // const [activeTab, setActiveTab] = useState<TabKey>("upgrades");  // ОТКЛЮЧЕНО
   // const [features, setFeatures] = useState<FeatureStatusItem[]>([]);  // ОТКЛЮЧЕНО
