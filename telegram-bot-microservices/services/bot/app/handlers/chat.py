@@ -567,7 +567,7 @@ async def on_delete_confirm(callback: CallbackQuery):
         await callback.message.edit_text(success_text)
 
         # Show updated dialogs list
-        await _show_chat_screen(user_id, callback.message.answer)
+        await _show_chat_screen(user_id, callback.message)
 
         logger.info(f"User {user_id} deleted dialog {dialog_id}")
         break
