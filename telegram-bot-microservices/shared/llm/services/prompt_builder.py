@@ -92,7 +92,7 @@ class PromptBuilder:
         # ВСЕГДА включаем полный интимный контент для всех пользователей
         return get_intimacy_instruction(
             allow_intimate=True,  # Всегда True
-            soft_block_intimacy=False  # Всегда False
+            soft_block=False  # Всегда False
         )
 
     def _build_mode_block(self) -> str:
