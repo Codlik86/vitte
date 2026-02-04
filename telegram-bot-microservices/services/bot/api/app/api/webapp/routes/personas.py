@@ -23,6 +23,7 @@ class StoryCard(BaseModel):
     atmosphere: str
     prompt: Optional[str] = None
     image: Optional[str] = None
+    image_offset: Optional[str] = None
 
 
 class PersonaListItem(BaseModel):
@@ -170,7 +171,8 @@ async def get_persona(
                 description=sc.get("description", ""),
                 atmosphere=sc.get("atmosphere", "flirt_romance"),
                 prompt=sc.get("prompt"),
-                image=sc.get("image")
+                image=sc.get("image"),
+                image_offset=sc.get("image_offset")
             ))
 
     return PersonaDetailResponse(

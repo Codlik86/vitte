@@ -245,7 +245,8 @@ function StoriesBlock({
                     <img
                       src={pub(card.image)}
                       alt={card.title}
-                      className="absolute inset-0 h-full w-full object-cover object-[50%_15%]"
+                      className={`absolute inset-0 h-full w-full object-cover`}
+                      style={{ objectPosition: `50% ${card.image_offset ?? "15%"}` }}
                     />
                   </div>
                 )}

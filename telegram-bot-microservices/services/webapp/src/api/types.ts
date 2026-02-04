@@ -212,4 +212,5 @@ export type StoryCard = {
   atmosphere: "flirt_romance" | "support" | "cozy_evening" | "serious_talk";
   prompt: string;
   image?: string | null;
+  image_offset?: string | null;
 };
