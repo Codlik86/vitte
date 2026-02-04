@@ -1,14 +1,14 @@
 import { pub } from "./pub";
 
 const AVATARS: Record<string, { card: string; chat: string }> = {
-  "лина": { card: pub("personas/lina-card.jpg"), chat: pub("personas/lina-chat.jpg") },
-  "марианна": { card: pub("personas/marianna-card.jpg"), chat: pub("personas/marianna-chat.jpg") },
+  "лина": { card: pub("personas/lina-card.png"), chat: pub("personas/lina-chat.png") },
+  "марианна": { card: pub("personas/marianna-card.png"), chat: pub("personas/marianna-chat.png") },
   "аки": { card: pub("personas/aki-card.jpg"), chat: pub("personas/aki-chat.jpg") },
-  "мей": { card: pub("personas/mei-card.jpg"), chat: pub("personas/mei-chat.jpg") },
+  "мей": { card: pub("personas/mei-card.png"), chat: pub("personas/mei-chat.png") },
   "стейси": { card: pub("personas/stacey-card.jpg"), chat: pub("personas/stacey-chat.jpg") },
-  "тая": { card: pub("personas/taya-card.jpg"), chat: pub("personas/taya-chat.jpg") },
-  "джули": { card: pub("personas/julie-card.jpg"), chat: pub("personas/julie-chat.jpg") },
-  "эш": { card: pub("personas/ash-card.jpg"), chat: pub("personas/ash-chat.jpg") },
+  "тая": { card: pub("personas/taya-card.png"), chat: pub("personas/taya-chat.png") },
+  "джули": { card: pub("personas/julie-card.png"), chat: pub("personas/julie-chat.png") },
+  "эш": { card: pub("personas/ash-card.png"), chat: pub("personas/ash-chat.png") },
   "юна": { card: pub("personas/yuna-card.jpg"), chat: pub("personas/yuna-chat.jpg") },
 };
 
