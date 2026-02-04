@@ -30,13 +30,13 @@ class BotConfig(BaseSettings):
     api_url: str = os.getenv("API_URL", "http://api:8000")
 
     # Menu image URL (served via nginx from MinIO)
-    menu_image_url: str = os.getenv("MENU_IMAGE_URL", "https://vitteapp.duckdns.org/storage/universal_pic_square.jpeg")
+    menu_image_url: str = os.getenv("MENU_IMAGE_URL", "https://craveme.tech/storage/universal_pic_square.jpeg")
 
     # Shop image URL (same as menu - square format)
-    shop_image_url: str = os.getenv("SHOP_IMAGE_URL", "https://vitteapp.duckdns.org/storage/universal_pic_square.jpeg")
+    shop_image_url: str = os.getenv("SHOP_IMAGE_URL", "https://craveme.tech/storage/universal_pic_square.jpeg")
 
     # Start image URL (для existing users с диалогами)
-    start_image_url: str = os.getenv("START_IMAGE_URL", "https://vitteapp.duckdns.org/storage/universal_pic.jpeg")
+    start_image_url: str = os.getenv("START_IMAGE_URL", "https://craveme.tech/storage/universal_pic.jpeg")
 
     # Rate Limiting
     rate_limit_messages: int = int(os.getenv("RATE_LIMIT_MESSAGES", "10"))  # per minute

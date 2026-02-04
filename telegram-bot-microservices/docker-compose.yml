@@ -380,7 +380,7 @@ services:
       - MINIO_ROOT_USER=${MINIO_ROOT_USER:-minioadmin}
       - MINIO_ROOT_PASSWORD=${MINIO_ROOT_PASSWORD}
       - MINIO_BUCKET=broadcasts
-      - MINIO_PUBLIC_URL=https://vitteapp.duckdns.org
+      - MINIO_PUBLIC_URL=https://craveme.tech
     # Internal only - access via Nginx
     expose:
       - "8080"

@@ -15,7 +15,7 @@ logger = logging.getLogger(__name__)
 TELEGRAM_API_URL = f"https://api.telegram.org/bot{config.bot_token}"
 
 # Default greeting image URL (served via nginx from MinIO)
-DEFAULT_GREETING_IMAGE = "https://vitteapp.duckdns.org/storage/universal_pic.jpeg"
+DEFAULT_GREETING_IMAGE = "https://craveme.tech/storage/universal_pic.jpeg"
 
 
 def create_refresh_keyboard(dialog_id: int, message_id: int) -> Dict[str, Any]:
