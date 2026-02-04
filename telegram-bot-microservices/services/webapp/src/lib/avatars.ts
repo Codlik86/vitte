@@ -10,6 +10,11 @@ const AVATARS: Record<string, { card: string; chat: string }> = {
   "джули": { card: pub("personas/julie-card.png"), chat: pub("personas/julie-chat.png") },
   "эш": { card: pub("personas/ash-card.png"), chat: pub("personas/ash-chat.png") },
   "юна": { card: pub("personas/yuna-card.jpg"), chat: pub("personas/yuna-chat.jpg") },
+  "училка": { card: pub("personas/uchilka-card.jpeg"), chat: pub("personas/uchilka-chat.jpeg") },
+  "инста": { card: pub("personas/insta-card.jpeg"), chat: pub("personas/insta-chat.jpeg") },
+  "косплей": { card: pub("personas/cosplay-card.jpeg"), chat: pub("personas/cosplay-chat.jpeg") },
+  "аниме 1": { card: pub("personas/anime1-card.jpeg"), chat: pub("personas/anime1-chat.jpeg") },
+  "аниме 2": { card: pub("personas/anime2-card.jpeg"), chat: pub("personas/anime2-chat.jpeg") },
 };
 
 const DEFAULT_AVATAR = {
