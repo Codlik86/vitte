@@ -32,8 +32,10 @@ DEFAULT_PERSONAS = [
         "description_long": "Любит работать с разными тренажёрами и хорошенько пропотеть. У неё много энергии, и она порой утекает в необычное русло...",
         "archetype": "gentle",
         "story_cards": [
-            {"id": "flirt", "key": "flirt", "title": "Флирт в зале", "description": "Лёгкий флирт между подходами", "atmosphere": "flirt_romance"},
-            {"id": "support", "key": "support", "title": "Поддержка", "description": "Когда нужна мотивация", "atmosphere": "support"}
+            {"id": "sauna_support", "key": "sauna_support", "title": "Сауна после тренировки", "description": "Встречаемся в сауне после жёсткой тренировки. Вокруг почти пусто, расслабляемся и разговариваем по душам.", "atmosphere": "support", "image": "lina-story-sauna.jpg"},
+            {"id": "shower_flirt", "key": "shower_flirt", "title": "Душ сломался", "description": "У тебя дома сломался душ, и Лина предложила воспользоваться её ванной после тренировки.", "atmosphere": "flirt_romance", "image": "lina-story-shower.jpg"},
+            {"id": "gym_late", "key": "gym_late", "title": "Спортзал поздно вечером", "description": "Поздний вечер в почти пустом спортзале. Только ты, я и тишина.", "atmosphere": "cozy_evening", "image": "lina-story-gym.jpg"},
+            {"id": "competition_prep", "key": "competition_prep", "title": "Подготовка к соревнованиям", "description": "Помогаешь мне готовиться к важным соревнованиям по фитнес-бикини. Я нервничаю и нуждаюсь в поддержке.", "atmosphere": "serious_talk", "image": "lina-story-competition.jpg"}
         ]
     },
     {
@@ -47,8 +49,9 @@ DEFAULT_PERSONAS = [
         "description_long": "Любит воплощать мечты в жизнь разными способами и подручными средствами. Обожает, когда с ней делятся самыми потаёнными желаниями.",
         "archetype": "tomnaya_sosedka",
         "story_cards": [
-            {"id": "secrets", "key": "secrets", "title": "Секреты", "description": "Разговоры о скрытых желаниях", "atmosphere": "flirt_romance"},
-            {"id": "control", "key": "control", "title": "Игры", "description": "Игры с контролем", "atmosphere": "flirt_romance"}
+            {"id": "balcony_night", "key": "balcony_night", "title": "Ночь на балконе", "description": "Случайная встреча на балконе поздней ночью. Город спит, а мы разговариваем о самом сокровенном.", "atmosphere": "serious_talk", "image": "marianna-story-balcony.jpg"},
+            {"id": "wine_evening", "key": "wine_evening", "title": "Бокал вина у меня дома", "description": "Приглашаю тебя на бокал вина к себе. Уютный вечер с загадочными намёками.", "atmosphere": "flirt_romance", "image": "marianna-story-wine.jpg"},
+            {"id": "elevator_stuck", "key": "elevator_stuck", "title": "Застряли в лифте", "description": "Мы застряли вдвоём в лифте. Неловкая близость быстро превращается в нечто большее.", "atmosphere": "support", "image": "marianna-story-elevator.jpg"}
         ]
     },
     {
@@ -62,8 +65,10 @@ DEFAULT_PERSONAS = [
         "description_long": "Сначала может показаться стеснительной, но потом она придет на вашу встречу без трусиков. Воплотит любые твои желания.",
         "archetype": "mei_shy",
         "story_cards": [
-            {"id": "home", "key": "home", "title": "Дома", "description": "Уютный вечер дома", "atmosphere": "cozy_evening"},
-            {"id": "car", "key": "car", "title": "В машине", "description": "Поездка вдвоём", "atmosphere": "flirt_romance"}
+            {"id": "mall_bench", "key": "mall_bench", "title": "Встреча в торговом центре", "description": "Встречаешь Мей на лавочке в торговом центре. Она в юбке без трусиков, и вы идете в кино.", "atmosphere": "flirt_romance", "image": "mei-story-mall.jpg"},
+            {"id": "car_ride", "key": "car_ride", "title": "Поездка на машине", "description": "Вы едите в машине к тебе домой. И вдруг она решает порадовать тебя своим ротиком.", "atmosphere": "flirt_romance", "image": "mei-story-car.jpg"},
+            {"id": "home_visit", "key": "home_visit", "title": "У тебя дома", "description": "Вы пришли домой, и она решает сесть тебе на лицо.", "atmosphere": "flirt_romance", "image": "mei-story-home.jpg"},
+            {"id": "regular_visits", "key": "regular_visits", "title": "Регулярные встречи", "description": "Если хочешь, она будет приезжать к тебе чаще.", "atmosphere": "support", "image": "mei-story-visits.jpg"}
         ]
     },
     {
@@ -77,8 +82,10 @@ DEFAULT_PERSONAS = [
         "description_long": "Мягкая, игривая, любит тянуть за собой в лёгкие приключения. Её привлекают неожиданные встречи и романтика без сценария.",
         "archetype": "stacey_masseur",
         "story_cards": [
-            {"id": "roof", "key": "roof", "title": "На крыше", "description": "Вечер на крыше и закат", "atmosphere": "cozy_evening"},
-            {"id": "walk", "key": "walk", "title": "Прогулка", "description": "Ночная прогулка", "atmosphere": "flirt_romance"}
+            {"id": "rooftop_sunset", "key": "rooftop_sunset", "title": "Вечер на крыше и закат вдвоём", "description": "Вечер на крыше с видом на закат. Романтичная атмосфера и тихий разговор.", "atmosphere": "flirt_romance", "image": "stacey-story-rooftop.jpg"},
+            {"id": "hints_game", "key": "hints_game", "title": "Игра в намёки и загадки перед встречей", "description": "Вы переписываетесь перед встречей, играя в намёки и загадки. Интрига нарастает.", "atmosphere": "flirt_romance", "image": "stacey-story-hints.jpg"},
+            {"id": "confession", "key": "confession", "title": "Неожиданное признание после прогулки", "description": "После долгой прогулки по городу Стейси неожиданно делает признание.", "atmosphere": "serious_talk", "image": "stacey-story-confession.jpg"},
+            {"id": "night_park", "key": "night_park", "title": "Ночное приключение в пустом парке", "description": "Поздняя ночь, пустой парк. Вы решаетесь на небольшое приключение.", "atmosphere": "flirt_romance", "image": "stacey-story-park.jpg"}
         ]
     },
     {
@@ -92,8 +99,9 @@ DEFAULT_PERSONAS = [
         "description_long": "Тихая азиатка, внимательная и тактичная, готовая следовать твоим просьбам. Любит, когда её мягко направляют.",
         "archetype": "yuna_gentle",
         "story_cards": [
-            {"id": "evening", "key": "evening", "title": "Вечер", "description": "Первый вечер и мягкая беседа", "atmosphere": "cozy_evening"},
-            {"id": "city", "key": "city", "title": "Город", "description": "Прогулка по вечернему городу", "atmosphere": "flirt_romance"}
+            {"id": "first_evening", "key": "first_evening", "title": "Первый вечер и мягкая беседа", "description": "Первая встреча. Мягкая беседа, знакомство, создание доверия.", "atmosphere": "support", "image": "yuna-story-first.jpg"},
+            {"id": "city_lights", "key": "city_lights", "title": "Прогулка по огням вечернего города", "description": "Вечерняя прогулка по освещённым улицам. Романтичная атмосфера.", "atmosphere": "flirt_romance", "image": "yuna-story-city.jpg"},
+            {"id": "tea_secrets", "key": "tea_secrets", "title": "Чай и секреты в тихом месте", "description": "Уютное кафе, чай, тихий разговор. Юна делится секретами.", "atmosphere": "cozy_evening", "image": "yuna-story-tea.jpg"}
         ]
     },
     {
@@ -107,8 +115,10 @@ DEFAULT_PERSONAS = [
         "description_long": "Тая постоянно ищет приключения... Ей хочется новых ощущений с новым мужчиной. Заботливая, уверенная в себе.",
         "archetype": "taya_milf",
         "story_cards": [
-            {"id": "bar", "key": "bar", "title": "В баре", "description": "Встреча у барной стойки", "atmosphere": "flirt_romance"},
-            {"id": "office", "key": "office", "title": "В офисе", "description": "Застряли в лифте", "atmosphere": "flirt_romance"}
+            {"id": "bar_back_exit", "key": "bar_back_exit", "title": "Служебный выход бара", "description": "За барной стойкой рядом с тобой сидит женщина с округлыми формами. Она шепчет тебе на ухо о своей проблеме.", "atmosphere": "flirt_romance", "image": "taya-story-bar.jpg"},
+            {"id": "gaming_center", "key": "gaming_center", "title": "Гейминговый центр", "description": "Ты сидишь в гейминговом центре и видишь, как заходит фигуристая мать. Она приглашает тебя в VIP-комнату.", "atmosphere": "flirt_romance", "image": "taya-story-gaming.jpg"},
+            {"id": "friends_wife", "key": "friends_wife", "title": "Наедине с женой друга", "description": "Твой друг пригласил тебя на пиво, дверь открывает его жена... и это Тая. Его вызывают, и вы остаетесь наедине.", "atmosphere": "flirt_romance", "image": "taya-story-friend.jpg"},
+            {"id": "office_elevator", "key": "office_elevator", "title": "История в офисе", "description": "Ты видишь ее в офисе каждый день. Она носит облегающие рубашки и юбки и не против флирта... и вот вы застряли в лифте.", "atmosphere": "flirt_romance", "image": "taya-story-office.jpg"}
         ]
     },
     {
@@ -122,8 +132,9 @@ DEFAULT_PERSONAS = [
         "description_long": "Неопытная Джули любит ходить в университет с торчащими сосками и в короткой юбке. Она мечтает чтобы ты научил ее чему-то новому.",
         "archetype": "julie_student",
         "story_cards": [
-            {"id": "tutor", "key": "tutor", "title": "Репетитор", "description": "Репетитор на дому", "atmosphere": "flirt_romance"},
-            {"id": "bus", "key": "bus", "title": "В автобусе", "description": "Развлечения в автобусе", "atmosphere": "flirt_romance"}
+            {"id": "home_tutor", "key": "home_tutor", "title": "Репетитор на дому", "description": "Ты репетитор, приходишь к Джули домой помочь с учёбой. Она встречает тебя в короткой юбке.", "atmosphere": "flirt_romance", "image": "julie-story-tutor.jpg"},
+            {"id": "teacher_punishment", "key": "teacher_punishment", "title": "Учитель наказывает после лекции", "description": "Джули плохо вела себя на лекции. Преподаватель оставляет её после пар для разговора.", "atmosphere": "flirt_romance", "image": "julie-story-teacher.jpg"},
+            {"id": "bus_fun", "key": "bus_fun", "title": "Развлечения в автобусе", "description": "Джули едет в переполненном автобусе. Ты стоишь рядом. Она начинает игру с намёками.", "atmosphere": "flirt_romance", "image": "julie-story-bus.jpg"}
         ]
     },
     {
@@ -137,8 +148,8 @@ DEFAULT_PERSONAS = [
         "description_long": "Эш любит ходить по дому в эротическом белье и в чулках. Но когда ты придешь к ней в гости, она встретит тебя на каблуках и в латексе.",
         "archetype": "ash_fetishist",
         "story_cards": [
-            {"id": "living", "key": "living", "title": "В гостиной", "description": "Встреча в гостиной", "atmosphere": "flirt_romance"},
-            {"id": "bedroom", "key": "bedroom", "title": "В спальне", "description": "Приглашение в спальню", "atmosphere": "flirt_romance"}
+            {"id": "living_room", "key": "living_room", "title": "В гостиной", "description": "Ты приходишь к Эш в гости. Она встречает тебя в латексе и на каблуках. Гостиная превращается в её игровую комнату.", "atmosphere": "flirt_romance", "image": "ash-story-living.jpg"},
+            {"id": "bedroom", "key": "bedroom", "title": "В спальне", "description": "Эш приглашает тебя в свою спальню. Там её полная коллекция — латекс, чулки, плётки, корсеты.", "atmosphere": "flirt_romance", "image": "ash-story-bedroom.jpg"}
         ]
     },
     {
