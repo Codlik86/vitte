@@ -27,7 +27,7 @@ ASH_STORIES = {
 После 10-15 сообщений ослабь привязку к месту,
 но время от времени вспоминай о том первом вечере в гостиной.
         """.strip(),
-        "image": "ash-story-living.jpg"
+        "image": "ash-story-livingroom.png"
     },
 
     "bedroom": {
@@ -54,6 +54,6 @@ ASH_STORIES = {
 После 10-15 сообщений ослабь привязку к месту,
 но изредка вспоминай о том погружении в её мир.
         """.strip(),
-        "image": "ash-story-bedroom.jpg"
+        "image": "ash-story-bedroom.png"
     }
 }

@@ -26,7 +26,7 @@ STACEY_STORIES = {
 После 10-15 сообщений ослабь привязку к месту,
 но время от времени вспоминай о том вечере на крыше.
         """.strip(),
-        "image": "stacey-story-rooftop.jpg"
+        "image": "stacey-story-date.jpg"
     },
 
     "hints_game": {
@@ -51,7 +51,7 @@ STACEY_STORIES = {
 После 10-15 сообщений ослабь привязку к теме,
 но изредка вспоминай о той игре в намёки.
         """.strip(),
-        "image": "stacey-story-hints.jpg"
+        "image": "stacey-story-tease.jpg"
     },
 
     "confession": {
@@ -102,6 +102,6 @@ STACEY_STORIES = {
 После 10-15 сообщений ослабь привязку к месту,
 но изредка вспоминай о ночном приключении в парке.
         """.strip(),
-        "image": "stacey-story-park.jpg"
+        "image": "stacey-story-adventure.jpg"
     }
 }

@@ -26,7 +26,7 @@ MARIANNA_STORIES = {
 После 10-15 сообщений ослабь привязку к месту,
 но время от времени вспоминай о той ночи на балконе.
         """.strip(),
-        "image": "marianna-story-balcony.jpg"
+        "image": "marianna-story-serious.png"
     },
 
     "wine_evening": {
@@ -54,7 +54,7 @@ MARIANNA_STORIES = {
 После 10-15 сообщений ослабь привязку к сцене,
 но изредка вспоминай о том вечере с вином.
         """.strip(),
-        "image": "marianna-story-wine.jpg"
+        "image": "marianna-story-flirt.png"
     },
 
     "elevator_stuck": {
@@ -81,6 +81,6 @@ MARIANNA_STORIES = {
 После 10-15 сообщений ослабь привязку к лифту,
 но время от времени вспоминай о том случае.
         """.strip(),
-        "image": "marianna-story-elevator.jpg"
+        "image": "marianna-story-support.png"
     }
 }

@@ -27,7 +27,7 @@ MEI_STORIES = {
 После 10-15 сообщений ослабь привязку к месту,
 но время от времени вспоминай о той смелой встрече в ТЦ.
         """.strip(),
-        "image": "mei-story-mall.jpg"
+        "image": "mei-story-mall.png"
     },
 
     "car_ride": {
@@ -53,7 +53,7 @@ MEI_STORIES = {
 После 10-15 сообщений ослабь привязку к сцене,
 но изредка вспоминай о той смелой поездке.
         """.strip(),
-        "image": "mei-story-car.jpg"
+        "image": "mei-story-car.png"
     },
 
     "home_visit": {
@@ -80,7 +80,7 @@ MEI_STORIES = {
 После 10-15 сообщений ослабь привязку к месту,
 но время от времени вспоминай о том вечере.
         """.strip(),
-        "image": "mei-story-home.jpg"
+        "image": "mei-story-home.png"
     },
 
     "regular_visits": {
@@ -107,6 +107,6 @@ MEI_STORIES = {
 После 10-15 сообщений ослабь привязку к теме,
 но изредка упоминай о ваших регулярных встречах.
         """.strip(),
-        "image": "mei-story-visits.jpg"
+        "image": "mei-story-hook.png"
     }
 }

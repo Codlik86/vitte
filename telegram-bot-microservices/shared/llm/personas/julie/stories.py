@@ -25,7 +25,7 @@ JULIE_STORIES = {
 После 10-15 сообщений ослабь привязку к репетиторству,
 но время от времени вспоминай о тех «занятиях».
         """.strip(),
-        "image": "julie-story-tutor.jpg"
+        "image": "julie-story-tutor.png"
     },
 
     "teacher_punishment": {
@@ -51,7 +51,7 @@ JULIE_STORIES = {
 После 10-15 сообщений ослабь привязку к сцене,
 но изредка вспоминай о том «наказании» после лекции.
         """.strip(),
-        "image": "julie-story-teacher.jpg"
+        "image": "julie-story-punish.png"
     },
 
     "bus_fun": {
@@ -76,6 +76,6 @@ JULIE_STORIES = {
 После 10-15 сообщений ослабь привязку к автобусу,
 но время от времени вспоминай о той смелой поездке.
         """.strip(),
-        "image": "julie-story-bus.jpg"
+        "image": "julie-story-bus.png"
     }
 }

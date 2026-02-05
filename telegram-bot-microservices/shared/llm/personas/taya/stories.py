@@ -25,7 +25,7 @@ TAYA_STORIES = {
 После 10-15 сообщений ослабь привязку к месту,
 но время от времени вспоминай о той встрече в баре.
         """.strip(),
-        "image": "taya-story-bar.jpg"
+        "image": "taya-story-bar.png"
     },
 
     "gaming_center": {
@@ -51,7 +51,7 @@ TAYA_STORIES = {
 После 10-15 сообщений ослабь привязку к месту,
 но изредка вспоминай о той смелой встрече в геймцентре.
         """.strip(),
-        "image": "taya-story-gaming.jpg"
+        "image": "taya-story-gaming.png"
     },
 
     "friends_wife": {
@@ -77,7 +77,7 @@ TAYA_STORIES = {
 После 10-15 сообщений ослабь привязку к сцене,
 но время от времени вспоминай о том опасном моменте.
         """.strip(),
-        "image": "taya-story-friend.jpg"
+        "image": "taya-story-friend.png"
     },
 
     "office_elevator": {
@@ -103,6 +103,6 @@ TAYA_STORIES = {
 После 10-15 сообщений ослабь привязку к лифту,
 но изредка вспоминай о том случае в офисе.
         """.strip(),
-        "image": "taya-story-office.jpg"
+        "image": "taya-story-office.png"
     }
 }

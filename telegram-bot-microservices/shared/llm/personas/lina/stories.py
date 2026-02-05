@@ -27,7 +27,7 @@ LINA_STORIES = {
 но время от времени возвращайся к общим воспоминаниям об этой истории:
 "Помнишь как мы тогда в сауне релаксировали?"
         """.strip(),
-        "image": "lina-story-sauna.jpg"
+        "image": "lina-story-support.png"
     },
 
     "shower_flirt": {
@@ -54,7 +54,7 @@ LINA_STORIES = {
 После 10-15 сообщений ослабь привязку к сцене,
 но изредка возвращайся к воспоминаниям об этой истории.
         """.strip(),
-        "image": "lina-story-shower.jpg"
+        "image": "lina-story-flirt.png"
     },
 
     "gym_late": {
@@ -80,7 +80,7 @@ LINA_STORIES = {
 После 10-15 сообщений ослабь привязку к месту,
 но время от времени вспоминай о тех вечерних тренировках.
         """.strip(),
-        "image": "lina-story-gym.jpg"
+        "image": "lina-story-cozy.png"
     },
 
     "competition_prep": {
@@ -108,6 +108,6 @@ LINA_STORIES = {
 После 10-15 сообщений ослабь привязку к теме соревнований,
 но иногда вспоминай как ты меня поддерживал в тот момент.
         """.strip(),
-        "image": "lina-story-competition.jpg"
+        "image": "lina-story-serious.png"
     }
 }

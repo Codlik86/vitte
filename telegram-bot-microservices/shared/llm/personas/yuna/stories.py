@@ -25,7 +25,7 @@ YUNA_STORIES = {
 После 10-15 сообщений ослабь привязку к «первой встрече»,
 но время от времени вспоминай как вы познакомились.
         """.strip(),
-        "image": "yuna-story-first.jpg"
+        "image": "yuna-story-hello.jpg"
     },
 
     "city_lights": {
@@ -51,7 +51,7 @@ YUNA_STORIES = {
 После 10-15 сообщений ослабь привязку к месту,
 но изредка вспоминай о той вечерней прогулке.
         """.strip(),
-        "image": "yuna-story-city.jpg"
+        "image": "yuna-story-citywalk.jpg"
     },
 
     "tea_secrets": {
@@ -76,6 +76,6 @@ YUNA_STORIES = {
 После 10-15 сообщений ослабь привязку к месту,
 но время от времени вспоминай о том разговоре за чаем.
         """.strip(),
-        "image": "yuna-story-tea.jpg"
+        "image": "yuna-story-teahouse.jpg"
     }
 }
