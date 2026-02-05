@@ -1,0 +1,89 @@
+"""
+Mapping between personas and their ComfyUI workflows
+"""
+from pathlib import Path
+from typing import Dict, Optional
+
+from app.config import config
+
+
+# Persona key → Workflow filename mapping
+PERSONA_WORKFLOW_MAP: Dict[str, str] = {
+    "lina": "LINA_PROD_MVP.json",
+    "marianna": "MARRIANA_PROD_MVP.json",  # Note: typo in filename (MARRIANA vs MARIANNA)
+    "mei": "MAY_PROD_MVP.json",  # Note: different name (MAY vs MEI)
+    "stacey": "STACY_PROD_MVP.json",  # Note: missing 'e' (STACY vs STACEY)
+    "yuna": "UNA_PROD_MVP.json",  # Note: missing 'Y' (UNA vs YUNA)
+    "taya": "TAYA_PROD_MVP.json",
+    "julie": "JULIE_PROD_MVP.json",
+    "ash": "ASH_PROD_MVP.json",
+}
+
+
+# Persona key → Trigger word mapping (from LoRA training)
+PERSONA_TRIGGER_MAP: Dict[str, str] = {
+    "ash": "brit-woman",  # GF7184J7K4SJJSTY8VJ0VRBTQ0.safetensors
+    "julie": "elvaross",  # elaravoss.safetensors
+    "lina": "ameg2",  # ameg2_con_char.safetensors
+    "marianna": "",  # TBD - need to check workflow
+    "mei": "",  # TBD - need to check workflow
+    "stacey": "",  # TBD - need to check workflow
+    "taya": "",  # TBD - need to check workflow
+    "yuna": "",  # TBD - need to check workflow
+}
+
+
+def get_workflow_path(persona_key: str) -> Optional[Path]:
+    """
+    Get full path to workflow JSON file for a persona.
+
+    Args:
+        persona_key: Persona identifier (lina, julie, ash, etc.)
+
+    Returns:
+        Path to workflow JSON file or None if not found
+    """
+    workflow_filename = PERSONA_WORKFLOW_MAP.get(persona_key)
+    if not workflow_filename:
+        return None
+
+    workflow_path = config.WORKFLOWS_DIR / workflow_filename
+    if not workflow_path.exists():
+        return None
+
+    return workflow_path
+
+
+def get_trigger_word(persona_key: str) -> str:
+    """
+    Get trigger word for persona's LoRA.
+
+    Args:
+        persona_key: Persona identifier
+
+    Returns:
+        Trigger word or empty string if not configured
+    """
+    return PERSONA_TRIGGER_MAP.get(persona_key, "")
+
+
+def is_persona_supported(persona_key: str) -> bool:
+    """
+    Check if persona has a workflow configured.
+
+    Args:
+        persona_key: Persona identifier
+
+    Returns:
+        True if workflow exists
+    """
+    return persona_key in PERSONA_WORKFLOW_MAP
+
+
+__all__ = [
+    "PERSONA_WORKFLOW_MAP",
+    "PERSONA_TRIGGER_MAP",
+    "get_workflow_path",
+    "get_trigger_word",
+    "is_persona_supported",
+]

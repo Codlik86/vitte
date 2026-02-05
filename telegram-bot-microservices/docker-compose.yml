@@ -363,6 +363,49 @@ services:
           cpus: '0.25'
           memory: 256M
 
+  # Image Generator Service (ComfyUI Integration)
+  image-generator:
+    build:
+      context: .
+      dockerfile: services/image-generator/Dockerfile
+    container_name: vitte_image_generator
+    env_file:
+      - .env
+    environment:
+      - ENVIRONMENT=${ENVIRONMENT:-production}
+      - COMFYUI_HOST=${COMFYUI_HOST:-195.209.210.175}
+      - COMFYUI_PORT=${COMFYUI_PORT:-8188}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_DB=0
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+      - BOT_TOKEN=${BOT_TOKEN}
+      - LOG_LEVEL=${LOG_LEVEL:-INFO}
+      - MAX_CONCURRENT_GENERATIONS=${MAX_CONCURRENT_GENERATIONS:-2}
+      - IMAGE_GENERATION_FREQUENCY=${IMAGE_GENERATION_FREQUENCY:-4}
+      - GENERATION_TIMEOUT=${GENERATION_TIMEOUT:-120}
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - vitte_network
+    security_opt:
+      - no-new-privileges:true
+    logging:
+      driver: "json-file"
+      options:
+        max-size: "10m"
+        max-file: "3"
+    deploy:
+      resources:
+        limits:
+          cpus: '2'
+          memory: 1G
+        reservations:
+          cpus: '0.5'
+          memory: 512M
+
   # Admin Panel
   admin:
     build:
