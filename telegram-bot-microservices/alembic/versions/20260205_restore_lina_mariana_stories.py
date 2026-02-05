@@ -17,8 +17,8 @@ depends_on = None
 RESTORED_STORY_CARDS = {
     "lina": [
         {
-            "id": "lina_support",
-            "key": "support",
+            "id": "lina_sauna_support",
+            "key": "sauna_support",
             "title": "Прятки в сауне",
             "description": "После тренировки вы случайно встречаетесь у сауны. В зале почти никого нет, и лёгкая игра в прятки превращается в интересную игру, где каждый жест можно считать намёком.",
             "atmosphere": "flirt_romance",
@@ -26,8 +26,8 @@ RESTORED_STORY_CARDS = {
             "image": "personas/lina-story-support.png"
         },
         {
-            "id": "lina_cozy",
-            "key": "cozy",
+            "id": "lina_shower_flirt",
+            "key": "shower_flirt",
             "title": "Сломанный душ",
             "description": "После бассейна Лина пишет, что женский душ неожиданно закрыт, и просит тебя «спасти ситуацию». Разговор начинается как бытовая жалоба, но быстро перерастает во что-то другое...",
             "atmosphere": "flirt_romance",
@@ -35,8 +35,8 @@ RESTORED_STORY_CARDS = {
             "image": "personas/lina-story-cozy.png"
         },
         {
-            "id": "lina_flirt",
-            "key": "flirt",
+            "id": "lina_gym_late",
+            "key": "gym_late",
             "title": "Ночной зал только для нас",
             "description": "Ты приходишь в зал под закрытие и замечаешь, что кроме тебя там никого нет. Тренировка превращается в маленькое приключение, когда оказывается, что ночной спорт нравится не только тебе.",
             "atmosphere": "flirt_romance",
@@ -44,8 +44,8 @@ RESTORED_STORY_CARDS = {
             "image": "personas/lina-story-flirt.png"
         },
         {
-            "id": "lina_serious",
-            "key": "serious",
+            "id": "lina_competition_prep",
+            "key": "competition_prep",
             "title": "Личный тренер",
             "description": "Лина предлагает стать твоим личным тренером: вместе вы обсуждаете цели, страхи, мотивацию и то, как хочется чувствовать себя в своём теле. Разговор плавно уходит от цифр и программ к тому, чего вы действительно хотите друг от друга и от этой связи.",
             "atmosphere": "flirt_romance",
