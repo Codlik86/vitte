@@ -1,7 +1,7 @@
 """Restore original Lina and Mariana stories from old project
 
-Revision ID: 019
-Revises: 018
+Revision ID: 021
+Revises: 020
 Create Date: 2026-02-05
 
 """
@@ -9,8 +9,8 @@ import json
 from alembic import op
 import sqlalchemy as sa
 
-revision = '019'
-down_revision = '018'
+revision = '021'
+down_revision = '020'
 branch_labels = None
 depends_on = None
 
