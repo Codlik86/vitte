@@ -64,7 +64,7 @@ export function CharacterDetails() {
     const hasChanges = Boolean(selectedStoryId);
 
     // Get selected story for atmosphere
-    const selectedStory = persona.story_cards?.find((s) => s.id === selectedStoryId);
+    const selectedStory = persona.story_cards?.find((s) => s.key === selectedStoryId);
 
     try {
       setBusy(true);
