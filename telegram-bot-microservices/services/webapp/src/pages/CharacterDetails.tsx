@@ -227,12 +227,12 @@ function StoriesBlock({
       <p className="text-sm font-semibold text-white">Истории</p>
       <div className="space-y-3">
         {stories.map((card) => {
-          const active = selectedId === card.id;
+          const active = selectedId === card.key;
           return (
             <button
               key={card.id}
               type="button"
-              onClick={() => onSelect(active ? null : card.id)}
+              onClick={() => onSelect(active ? null : card.key)}
               className={`relative w-full text-left rounded-3xl transition ${
                 active
                   ? "border border-pink-400/60 bg-white/10"
