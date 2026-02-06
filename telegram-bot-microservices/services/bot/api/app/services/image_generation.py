@@ -29,6 +29,8 @@ class ImageGenerationService:
         """
         Determine if image should be generated based on message count.
 
+        Generates image every 3rd user message.
+
         Args:
             message_count: Current message count in dialog (counts both user and assistant messages)
             last_generation_at: Message count when last image was generated
@@ -44,16 +46,10 @@ class ImageGenerationService:
         # So divide by 2 to get number of user messages (dialog turns)
         user_messages = message_count // 2
 
-        # If no previous generation - generate between 3rd-5th user message
-        if last_generation_at is None:
-            # Generate on first occurrence in range 3-5
-            return user_messages >= self.min_frequency and user_messages <= self.max_frequency
-
-        # Calculate user messages since last generation
-        user_messages_since_last = (message_count - last_generation_at) // 2
-
-        # Generate on first occurrence in range 3-5 after last generation
-        return user_messages_since_last >= self.min_frequency and user_messages_since_last <= self.max_frequency
+        # Generate every 3rd user message
+        # user_messages: 1, 2, 3, 4, 5, 6, 7, 8, 9...
+        # generate on:       3,       6,       9...
+        return user_messages > 0 and user_messages % 3 == 0
 
     def trigger_generation(
         self,
