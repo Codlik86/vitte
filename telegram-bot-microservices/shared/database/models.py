@@ -144,6 +144,7 @@ class Dialog(Base):
 
     # Stats
     message_count = Column(Integer, default=0)
+    last_image_generation_at = Column(Integer, nullable=True)  # Message count when last image was generated
 
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())

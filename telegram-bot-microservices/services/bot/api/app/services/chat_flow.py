@@ -33,6 +33,8 @@ from shared.utils import redis_client
 
 from .llm_client import llm_client
 from .embedding_service import embedding_service
+from .image_generation import trigger_image_generation_if_needed
+from app.utils.celery_client import celery_app
 
 logger = logging.getLogger(__name__)
 debug_logger = logging.getLogger('uvicorn.error')  # Для debug-логов которые точно выведутся
@@ -476,7 +478,30 @@ class ChatFlow:
         await self.save_message(dialog, "user", user_message)
         await self.save_message(dialog, "assistant", response)
 
-        # 12. Сохраняем в Qdrant (async, не блокируем)
+        # 12. Trigger image generation if needed (every 3-5 messages, random)
+        try:
+            task_id = trigger_image_generation_if_needed(
+                celery_app=celery_app,
+                message_count=dialog.message_count or 0,
+                persona_key=persona.key,
+                user_id=telegram_id,
+                chat_id=telegram_id,  # Using telegram_id as chat_id for now
+                user_message=user_message,
+                last_generation_at=dialog.last_image_generation_at,
+            )
+
+            if task_id:
+                # Update last generation marker
+                dialog.last_image_generation_at = dialog.message_count
+                logger.info(
+                    f"Image generation triggered for dialog {dialog.id}, "
+                    f"persona={persona.key}, message_count={dialog.message_count}, "
+                    f"task_id={task_id}"
+                )
+        except Exception as e:
+            logger.error(f"Failed to trigger image generation: {e}", exc_info=True)
+
+        # 13. Сохраняем в Qdrant (async, не блокируем)
         try:
             await embedding_service.store_memory(
                 user_id=telegram_id,
@@ -495,7 +520,7 @@ class ChatFlow:
         except Exception as e:
             logger.warning(f"Failed to store memories: {e}")
 
-        # 13. Коммитим изменения
+        # 14. Коммитим изменения
         await self.db.commit()
 
         return ChatResult(
