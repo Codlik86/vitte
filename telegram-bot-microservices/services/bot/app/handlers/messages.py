@@ -254,29 +254,29 @@ async def handle_text_message(message: Message):
 
         # Check if image was generated
         if result.image_url:
-            # Delete placeholder
+            # Send photo first, then text response
             try:
                 await placeholder.delete()
             except Exception:
                 pass
 
-            # Send photo with caption (text response)
+            # Send photo (no caption - avoids 1024 char limit issues)
             try:
-                await message.answer_photo(
-                    photo=result.image_url,
-                    caption=f"<b>{persona_name}</b>\n\n{result.response}",
-                    parse_mode="HTML",
-                    reply_markup=refresh_keyboard
-                )
-                logger.info(f"User {user_id} got response + image from {persona_name} (dialog {result.dialog_id})")
+                await message.answer_photo(photo=result.image_url)
+                logger.info(f"User {user_id} got image from {persona_name}")
             except Exception as e:
-                logger.error(f"Failed to send photo, falling back to text: {e}")
-                # Fallback - send as text if photo fails
+                logger.error(f"Failed to send photo: {e}")
+
+            # Send text response separately
+            try:
                 await message.answer(
                     f"<b>{persona_name}</b>\n\n{result.response}",
                     parse_mode="HTML",
                     reply_markup=refresh_keyboard
                 )
+                logger.info(f"User {user_id} got response from {persona_name} (dialog {result.dialog_id})")
+            except Exception as e:
+                logger.error(f"Failed to send text after photo: {e}")
         else:
             # No image - edit placeholder with text response + refresh button
             try:

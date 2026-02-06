@@ -460,26 +460,45 @@ class ChatFlow:
         try:
             import asyncio
 
-            # First: check if there's a pending image from previous request
             pending_key = f"img_task:{dialog.id}"
             pending_task_id = await redis_client.get(pending_key)
 
             if pending_task_id:
-                # There's a pending image generation - try to get result
+                # Check if pending image is ready (non-blocking check first)
                 async_result = AsyncResult(pending_task_id, app=celery_app)
-                try:
-                    result = await asyncio.to_thread(
-                        async_result.get, timeout=5, propagate=False
-                    )
-                    if result and isinstance(result, dict) and result.get('success'):
-                        image_url = result.get('image_url')
-                        logger.info(f"Picked up ready image for dialog {dialog.id}: {image_url}")
-                except Exception:
-                    logger.warning(f"Pending image not ready yet for dialog {dialog.id}, discarding")
-                # Clear pending task regardless (used or expired)
-                await redis_client.delete(pending_key)
+                state = async_result.state
 
-            # Second: check if we should trigger NEW generation on this message
+                if state == 'SUCCESS':
+                    # Result is ready - grab it immediately
+                    try:
+                        result = async_result.result  # Already available, no wait needed
+                        if result and isinstance(result, dict) and result.get('success'):
+                            image_url = result.get('image_url')
+                            logger.info(f"Picked up ready image for dialog {dialog.id}: {image_url}")
+                    except Exception as e:
+                        logger.warning(f"Failed to read image result: {e}")
+                    await redis_client.delete(pending_key)
+                elif state in ('PENDING', 'STARTED'):
+                    # Still generating - wait a bit (user is waiting for LLM anyway)
+                    try:
+                        result = await asyncio.to_thread(
+                            async_result.get, timeout=15, propagate=False
+                        )
+                        if result and isinstance(result, dict) and result.get('success'):
+                            image_url = result.get('image_url')
+                            logger.info(f"Waited and got image for dialog {dialog.id}: {image_url}")
+                    except Exception:
+                        # Still not ready after 15s - keep task_id for next request
+                        logger.info(f"Image still generating for dialog {dialog.id}, keeping for next request")
+                    if image_url:
+                        await redis_client.delete(pending_key)
+                    # If no image_url - don't delete, keep for next request
+                else:
+                    # FAILURE or REVOKED - discard
+                    logger.warning(f"Image task {state} for dialog {dialog.id}, discarding")
+                    await redis_client.delete(pending_key)
+
+            # Check if we should trigger NEW generation on this message
             service = ImageGenerationService(celery_app)
             current_count = (dialog.message_count or 0) + 2
             should_generate = service.should_generate_image(
@@ -488,7 +507,6 @@ class ChatFlow:
             )
 
             if should_generate:
-                # Start generation in background, save task_id for NEXT request
                 task = celery_app.send_task(
                     'image_generator.generate_image',
                     args=[persona.key, user_message, None],
@@ -496,7 +514,7 @@ class ChatFlow:
                 )
                 await redis_client.set(pending_key, task.id, expire=300)
                 dialog.last_image_generation_at = current_count
-                logger.info(f"Triggered image generation for dialog {dialog.id}, task_id={task.id}, will attach to next response")
+                logger.info(f"Triggered image generation for dialog {dialog.id}, task_id={task.id}")
         except Exception as e:
             logger.error(f"Image generation error: {e}", exc_info=True)
 
