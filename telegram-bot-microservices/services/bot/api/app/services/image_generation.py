@@ -129,9 +129,10 @@ class ImageGenerationService:
             )
 
             # Wait for task to complete (blocking)
-            result = task.get(timeout=timeout)
+            # Use propagate=False to avoid NotRegistered error
+            result = task.get(timeout=timeout, propagate=False)
 
-            if result and result.get('success'):
+            if result and isinstance(result, dict) and result.get('success'):
                 image_url = result.get('image_url')
                 logger.info(
                     f"Image generated successfully: {image_url}, "
@@ -139,7 +140,7 @@ class ImageGenerationService:
                 )
                 return image_url
             else:
-                error = result.get('error', 'Unknown error') if result else 'No result'
+                error = result.get('error', 'Unknown error') if isinstance(result, dict) and result else 'No result'
                 logger.error(f"Image generation failed: {error}")
                 return None
 
