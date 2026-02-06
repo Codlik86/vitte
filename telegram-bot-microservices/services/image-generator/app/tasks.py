@@ -6,7 +6,8 @@ from typing import Optional
 
 from celery import Celery
 from app.config import config
-from app.comfyui_client import comfyui_client
+from app.comfyui_client import ComfyUIClient
+from app.comfyui_pool import comfyui_pool
 from app.workflow_mapping import get_workflow_path, is_persona_supported
 from app.telegram_sender import send_photo_to_telegram
 from shared.utils import get_logger
@@ -71,13 +72,20 @@ def generate_and_send_image(
             logger.error(error_msg)
             return {"success": False, "error": error_msg}
 
+        # Get ComfyUI URL from pool (worker affinity)
+        comfyui_url = comfyui_pool.get_comfyui_url()
+        logger.info(f"Using ComfyUI instance: {comfyui_url}")
+
+        # Create client for this worker's assigned ComfyUI instance
+        client = ComfyUIClient(base_url=comfyui_url)
+
         # Generate image (async)
         # Create new event loop for Celery worker (get_event_loop doesn't work in threads)
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         try:
             image_data = loop.run_until_complete(
-                comfyui_client.generate_image(workflow_path, prompt, seed)
+                client.generate_image(workflow_path, prompt, seed)
             )
 
             if not image_data:
@@ -120,5 +128,6 @@ def health_check() -> dict:
     return {
         "status": "healthy",
         "service": "image-generator",
-        "comfyui_url": config.COMFYUI_BASE_URL
+        "comfyui_urls": config.COMFYUI_URLS,
+        "pool_size": len(config.COMFYUI_URLS)
     }

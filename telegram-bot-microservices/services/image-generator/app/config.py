@@ -13,10 +13,16 @@ class Config:
     SERVICE_NAME = "image-generator"
     LOG_LEVEL = os.getenv("LOG_LEVEL", "INFO")
 
-    # ComfyUI
-    COMFYUI_HOST = os.getenv("COMFYUI_HOST", "195.209.210.175")
-    COMFYUI_PORT = int(os.getenv("COMFYUI_PORT", "8188"))
-    COMFYUI_BASE_URL = f"http://{COMFYUI_HOST}:{COMFYUI_PORT}"
+    # ComfyUI - Multiple hosts support for parallel processing
+    # Format: "host1:port1,host2:port2" or single "host:port"
+    COMFYUI_HOSTS = os.getenv("COMFYUI_HOSTS", "195.209.210.175:8188,195.209.210.175:8189")
+
+    # Parse hosts list
+    _hosts_list = [h.strip() for h in COMFYUI_HOSTS.split(",") if h.strip()]
+    COMFYUI_URLS = [f"http://{host}" for host in _hosts_list]
+
+    # Backwards compatibility - primary host
+    COMFYUI_BASE_URL = COMFYUI_URLS[0] if COMFYUI_URLS else "http://195.209.210.175:8188"
 
     # Workflows directory
     BASE_DIR = Path(__file__).parent.parent

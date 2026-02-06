@@ -18,8 +18,14 @@ logger = get_logger(__name__)
 class ComfyUIClient:
     """Client for ComfyUI REST API"""
 
-    def __init__(self):
-        self.base_url = config.COMFYUI_BASE_URL
+    def __init__(self, base_url: Optional[str] = None):
+        """
+        Initialize ComfyUI client.
+
+        Args:
+            base_url: ComfyUI server URL (if None, will be assigned from pool)
+        """
+        self.base_url = base_url or config.COMFYUI_BASE_URL
         self.timeout = aiohttp.ClientTimeout(total=config.GENERATION_TIMEOUT)
 
     async def load_workflow(self, workflow_path: Path) -> Dict[str, Any]:
@@ -248,6 +254,8 @@ class ComfyUIClient:
             Image bytes or None
         """
         try:
+            logger.info(f"Starting generation on {self.base_url}")
+
             # Load and modify workflow
             workflow = await self.load_workflow(workflow_path)
             workflow = self.modify_workflow(workflow, prompt, seed)
@@ -273,9 +281,5 @@ class ComfyUIClient:
             return image_data
 
         except Exception as e:
-            logger.error(f"Error in generate_image pipeline: {e}")
+            logger.error(f"Error in generate_image pipeline on {self.base_url}: {e}")
             return None
-
-
-# Global client instance
-comfyui_client = ComfyUIClient()
