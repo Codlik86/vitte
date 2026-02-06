@@ -21,7 +21,8 @@ from datetime import datetime
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select, func, and_
 
-from shared.database.models import User, Dialog, Message, Persona, FeatureUnlock
+from shared.database.models import User, Dialog, Message, Persona, FeatureUnlock, Subscription
+from shared.database.image_service import get_images_remaining, use_image_quota
 from shared.llm.services.safety import run_safety_check, get_supportive_reply
 from shared.llm.services.intimacy import get_intimacy_instruction
 from shared.llm.services.prompt_builder import (
@@ -332,6 +333,38 @@ class ChatFlow:
                 is_safety_block=True,
             )
 
+        # 2.5. Check message limit (free users: 20/day)
+        try:
+            sub_result = await self.db.execute(
+                select(Subscription).where(Subscription.user_id == telegram_id)
+            )
+            subscription = sub_result.scalar_one_or_none()
+            has_active_sub = False
+            if subscription and subscription.is_active:
+                now = datetime.utcnow()
+                if subscription.expires_at and subscription.expires_at > now:
+                    has_active_sub = True
+
+            if not has_active_sub:
+                # Free user - check daily limit via Redis
+                redis_key = f"user:{telegram_id}:messages:daily"
+                current_count = await redis_client.get(redis_key)
+                if current_count is not None and int(current_count) >= 20:
+                    return ChatResult(
+                        success=False,
+                        error="Дневной лимит сообщений исчерпан (20/день). Оформите подписку для безлимитного общения.",
+                    )
+                # Increment counter
+                if current_count is None:
+                    now = datetime.utcnow()
+                    midnight = datetime(now.year, now.month, now.day, 23, 59, 59)
+                    seconds_until_midnight = int((midnight - now).total_seconds()) + 1
+                    await redis_client.set(redis_key, "1", expire=seconds_until_midnight)
+                else:
+                    await redis_client.increment(redis_key)
+        except Exception as e:
+            debug_logger.warning(f"Message limit check error (allowing): {e}")
+
         # 3. Определяем персонажа
         if not persona_id:
             persona_id = user.active_persona_id
@@ -469,14 +502,21 @@ class ChatFlow:
             debug_logger.warning(f"IMG: dialog={dialog.id}, msg_count={dialog.message_count}, current_count={current_count}, should_generate={should_generate}")
 
             if should_generate:
-                # Start ComfyUI generation NOW - it runs parallel with LLM below
-                image_celery_task = celery_app.send_task(
-                    'image_generator.generate_image',
-                    args=[persona.key, user_message, None],
-                    queue='image_generation',
-                )
-                dialog.last_image_generation_at = current_count
-                debug_logger.warning(f"IMG: started parallel generation task_id={image_celery_task.id}")
+                # Check image quota before generating
+                image_quota = await get_images_remaining(self.db, telegram_id)
+                debug_logger.warning(f"IMG: quota check: can_generate={image_quota.can_generate}, remaining={image_quota.total_remaining}")
+
+                if image_quota.can_generate:
+                    # Start ComfyUI generation NOW - it runs parallel with LLM below
+                    image_celery_task = celery_app.send_task(
+                        'image_generator.generate_image',
+                        args=[persona.key, user_message, None],
+                        queue='image_generation',
+                    )
+                    dialog.last_image_generation_at = current_count
+                    debug_logger.warning(f"IMG: started parallel generation task_id={image_celery_task.id}")
+                else:
+                    debug_logger.warning(f"IMG: skipped - no image quota remaining")
         except Exception as e:
             debug_logger.warning(f"IMG ERROR (trigger): {e}", exc_info=True)
 
@@ -513,7 +553,9 @@ class ChatFlow:
                 )
                 if result_data and isinstance(result_data, dict) and result_data.get('success'):
                     image_url = result_data.get('image_url')
-                    debug_logger.warning(f"IMG: got image: {image_url}")
+                    # Deduct 1 image from quota
+                    quota_result = await use_image_quota(self.db, telegram_id)
+                    debug_logger.warning(f"IMG: got image: {image_url}, deducted from={quota_result.source}, remaining={quota_result.total_remaining}")
                 else:
                     debug_logger.warning(f"IMG: generation failed or bad result: {result_data}")
             except Exception as e:
