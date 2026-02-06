@@ -473,7 +473,7 @@ class ChatFlow:
                 image_celery_task = celery_app.send_task(
                     'image_generator.generate_image',
                     args=[persona.key, user_message, None],
-                    queue='celery',
+                    queue='image_generation',
                 )
                 dialog.last_image_generation_at = current_count
                 debug_logger.warning(f"IMG: started parallel generation task_id={image_celery_task.id}")

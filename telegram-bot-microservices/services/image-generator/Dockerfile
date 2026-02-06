@@ -21,4 +21,4 @@ COPY ./services/image-generator/workflows /app/workflows
 # Set Python path to include /app for shared imports
 ENV PYTHONPATH=/app
 
-CMD ["python", "-m", "celery", "-A", "app.tasks", "worker", "--loglevel=INFO", "--concurrency=2", "--hostname=image-generator@%h"]
+CMD ["python", "-m", "celery", "-A", "app.tasks", "worker", "--loglevel=INFO", "--concurrency=2", "--hostname=image-generator@%h", "-Q", "image_generation"]
