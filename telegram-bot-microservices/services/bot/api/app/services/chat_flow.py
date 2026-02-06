@@ -33,7 +33,7 @@ from shared.utils import redis_client
 
 from .llm_client import llm_client
 from .embedding_service import embedding_service
-from .image_generation import trigger_image_generation_if_needed
+from .image_generation import generate_image_if_needed
 from app.utils.celery_client import celery_app
 
 logger = logging.getLogger(__name__)
@@ -53,6 +53,7 @@ class ChatResult:
     dialog_id: Optional[int] = None
     is_safety_block: bool = False
     message_count: int = 0
+    image_url: Optional[str] = None  # URL сгенерированного изображения
 
 
 def _remove_duplicate_sentences(text: str) -> str:
@@ -478,28 +479,30 @@ class ChatFlow:
         await self.save_message(dialog, "user", user_message)
         await self.save_message(dialog, "assistant", response)
 
-        # 12. Trigger image generation if needed (every 3-5 messages, random)
+        # 12. Generate image if needed (every 3-5 messages, random) - SYNCHRONOUSLY
+        image_url = None
         try:
-            task_id = trigger_image_generation_if_needed(
+            image_url = generate_image_if_needed(
                 celery_app=celery_app,
                 message_count=dialog.message_count or 0,
                 persona_key=persona.key,
                 user_id=telegram_id,
-                chat_id=telegram_id,  # Using telegram_id as chat_id for now
+                chat_id=telegram_id,
                 user_message=user_message,
                 last_generation_at=dialog.last_image_generation_at,
+                timeout=15,  # Wait max 15 seconds (should be 9-10s normally)
             )
 
-            if task_id:
+            if image_url:
                 # Update last generation marker
                 dialog.last_image_generation_at = dialog.message_count
                 logger.info(
-                    f"Image generation triggered for dialog {dialog.id}, "
+                    f"Image generated for dialog {dialog.id}, "
                     f"persona={persona.key}, message_count={dialog.message_count}, "
-                    f"task_id={task_id}"
+                    f"image_url={image_url}"
                 )
         except Exception as e:
-            logger.error(f"Failed to trigger image generation: {e}", exc_info=True)
+            logger.error(f"Failed to generate image: {e}", exc_info=True)
 
         # 13. Сохраняем в Qdrant (async, не блокируем)
         try:
@@ -527,6 +530,7 @@ class ChatFlow:
             success=True,
             response=response,
             dialog_id=dialog.id,
+            image_url=image_url,  # Include generated image URL
             message_count=dialog.message_count or 0,
         )
 

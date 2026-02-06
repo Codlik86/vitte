@@ -122,6 +122,88 @@ def generate_and_send_image(
         return {"success": False, "error": str(e)}
 
 
+@celery_app.task(name="image_generator.generate_image")
+def generate_image(
+    persona_key: str,
+    prompt: str,
+    seed: Optional[int] = None
+) -> dict:
+    """
+    Generate NSFW image and return URL (don't send to Telegram).
+
+    Args:
+        persona_key: Persona identifier (lina, julie, ash, etc.)
+        prompt: Image generation prompt
+        seed: Random seed (optional)
+
+    Returns:
+        dict with success status and image_url
+    """
+    try:
+        logger.info(f"Generating image for persona={persona_key}")
+
+        # Validate persona
+        if not is_persona_supported(persona_key):
+            error_msg = f"Persona '{persona_key}' not supported"
+            logger.error(error_msg)
+            return {"success": False, "error": error_msg}
+
+        # Get workflow path
+        workflow_path = get_workflow_path(persona_key)
+        if not workflow_path:
+            error_msg = f"Workflow not found for persona '{persona_key}'"
+            logger.error(error_msg)
+            return {"success": False, "error": error_msg}
+
+        # Get ComfyUI URL from pool (worker affinity)
+        comfyui_url = comfyui_pool.get_comfyui_url()
+        logger.info(f"Using ComfyUI instance: {comfyui_url}")
+
+        # Create client for this worker's assigned ComfyUI instance
+        client = ComfyUIClient(base_url=comfyui_url)
+
+        # Generate image (async)
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            image_data = loop.run_until_complete(
+                client.generate_image(workflow_path, prompt, seed)
+            )
+
+            if not image_data:
+                error_msg = "Image generation failed"
+                logger.error(error_msg)
+                return {"success": False, "error": error_msg}
+
+            logger.info(f"Image generated successfully, size: {len(image_data)} bytes")
+
+            # Upload to MinIO and get public URL
+            from app.storage import upload_generated_image
+            image_url = loop.run_until_complete(
+                upload_generated_image(persona_key, image_data)
+            )
+        finally:
+            loop.close()
+
+        if not image_url:
+            error_msg = "Failed to upload image to storage"
+            logger.error(error_msg)
+            return {"success": False, "error": error_msg}
+
+        logger.info(f"Image uploaded successfully: {image_url}")
+        return {
+            "success": True,
+            "image_url": image_url,
+            "persona": persona_key,
+            "size_bytes": len(image_data)
+        }
+
+    except Exception as e:
+        error_msg = f"Error in generate_image: {e}"
+        logger.error(error_msg, exc_info=True)
+        return {"success": False, "error": str(e)}
+
+
 @celery_app.task(name="image_generator.health_check")
 def health_check() -> dict:
     """Health check task for monitoring."""

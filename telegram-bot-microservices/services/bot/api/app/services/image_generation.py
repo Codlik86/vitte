@@ -61,7 +61,7 @@ class ImageGenerationService:
         seed: Optional[int] = None
     ) -> Optional[str]:
         """
-        Trigger image generation task.
+        Trigger image generation task (async, don't wait).
 
         Args:
             persona_key: Persona identifier (lina, julie, ash, etc.)
@@ -92,8 +92,63 @@ class ImageGenerationService:
             logger.error(f"Failed to trigger image generation: {e}", exc_info=True)
             return None
 
+    def generate_and_wait(
+        self,
+        persona_key: str,
+        user_id: int,
+        chat_id: int,
+        prompt: str,
+        seed: Optional[int] = None,
+        timeout: int = 30
+    ) -> Optional[str]:
+        """
+        Generate image synchronously and wait for result.
 
-# Module-level function for easy import
+        Args:
+            persona_key: Persona identifier (lina, julie, ash, etc.)
+            user_id: Telegram user ID
+            chat_id: Telegram chat ID
+            prompt: Generation prompt (user message or default)
+            seed: Random seed (optional)
+            timeout: Max wait time in seconds (default: 30)
+
+        Returns:
+            Image URL if successful, None otherwise
+        """
+        try:
+            # Send task and wait for result
+            task = self.celery_app.send_task(
+                'image_generator.generate_image',  # Task that returns URL instead of sending
+                args=[persona_key, prompt, seed],
+                queue='celery',
+            )
+
+            logger.info(
+                f"Waiting for image generation: persona={persona_key}, "
+                f"user={user_id}, task_id={task.id}, timeout={timeout}s"
+            )
+
+            # Wait for task to complete (blocking)
+            result = task.get(timeout=timeout)
+
+            if result and result.get('success'):
+                image_url = result.get('image_url')
+                logger.info(
+                    f"Image generated successfully: {image_url}, "
+                    f"size={result.get('size_bytes', 0)} bytes"
+                )
+                return image_url
+            else:
+                error = result.get('error', 'Unknown error') if result else 'No result'
+                logger.error(f"Image generation failed: {error}")
+                return None
+
+        except Exception as e:
+            logger.error(f"Failed to generate image: {e}", exc_info=True)
+            return None
+
+
+# Module-level function for easy import (async version - don't wait)
 def trigger_image_generation_if_needed(
     celery_app,
     message_count: int,
@@ -104,7 +159,7 @@ def trigger_image_generation_if_needed(
     last_generation_at: Optional[int] = None,
 ) -> Optional[str]:
     """
-    Check if image generation should be triggered and trigger if needed.
+    Check if image generation should be triggered and trigger if needed (async).
 
     Args:
         celery_app: Celery app instance
@@ -133,7 +188,51 @@ def trigger_image_generation_if_needed(
     return None
 
 
+# Module-level function for synchronous generation (wait for result)
+def generate_image_if_needed(
+    celery_app,
+    message_count: int,
+    persona_key: str,
+    user_id: int,
+    chat_id: int,
+    user_message: str,
+    last_generation_at: Optional[int] = None,
+    timeout: int = 30,
+) -> Optional[str]:
+    """
+    Check if image generation should be triggered and generate synchronously.
+
+    Args:
+        celery_app: Celery app instance
+        message_count: Current message count
+        persona_key: Persona identifier
+        user_id: Telegram user ID
+        chat_id: Telegram chat ID
+        user_message: User's message (used as prompt)
+        last_generation_at: Message count when last image was generated
+        timeout: Max wait time in seconds (default: 30)
+
+    Returns:
+        Image URL if generation triggered and successful, None otherwise
+    """
+    service = ImageGenerationService(celery_app)
+
+    if service.should_generate_image(message_count, last_generation_at):
+        # Use user message as prompt (will be improved later with prompt builder)
+        return service.generate_and_wait(
+            persona_key=persona_key,
+            user_id=user_id,
+            chat_id=chat_id,
+            prompt=user_message,
+            seed=None,  # Random seed
+            timeout=timeout,
+        )
+
+    return None
+
+
 __all__ = [
     "ImageGenerationService",
     "trigger_image_generation_if_needed",
+    "generate_image_if_needed",
 ]
