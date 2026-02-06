@@ -6,6 +6,7 @@ Manages triggering of NSFW image generation via ComfyUI
 import logging
 import random
 from typing import Optional
+from celery.result import AsyncResult
 
 logger = logging.getLogger(__name__)
 
@@ -116,9 +117,9 @@ class ImageGenerationService:
             Image URL if successful, None otherwise
         """
         try:
-            # Send task and wait for result
+            # Send task to image-generator service
             task = self.celery_app.send_task(
-                'image_generator.generate_image',  # Task that returns URL instead of sending
+                'image_generator.generate_image',
                 args=[persona_key, prompt, seed],
                 queue='celery',
             )
@@ -128,9 +129,13 @@ class ImageGenerationService:
                 f"user={user_id}, task_id={task.id}, timeout={timeout}s"
             )
 
+            # Use AsyncResult directly with task_id to retrieve result
+            # This avoids NotRegistered error since we don't need task definition
+            async_result = AsyncResult(task.id, app=self.celery_app)
+
             # Wait for task to complete (blocking)
-            # Use propagate=False to avoid NotRegistered error
-            result = task.get(timeout=timeout, propagate=False)
+            # propagate=False prevents raising exceptions from task
+            result = async_result.get(timeout=timeout, propagate=False)
 
             if result and isinstance(result, dict) and result.get('success'):
                 image_url = result.get('image_url')
