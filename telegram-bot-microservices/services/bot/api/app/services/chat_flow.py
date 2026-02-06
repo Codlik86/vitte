@@ -454,74 +454,39 @@ class ChatFlow:
             debug_logger.warning(f"Message {idx}: [{role}] {content_preview}")
         debug_logger.warning(f"{'='*80}\n")
 
-        # 9.5. Image generation: check for ready image OR trigger new generation
-        # Logic: trigger on 3rd message -> save task_id in Redis -> on NEXT message pick up result
+        # 9.5. Image generation: start generation BEFORE LLM so they run in parallel
+        import asyncio
         image_url = None
+        image_celery_task = None  # Celery task object if we triggered generation
         try:
-            import asyncio
-
-            pending_key = f"img_task:{dialog.id}"
-            pending_task_id = await redis_client.get(pending_key)
-            debug_logger.warning(f"IMG: dialog={dialog.id}, pending_task={pending_task_id}, msg_count={dialog.message_count}")
-
-            if pending_task_id:
-                async_result = AsyncResult(pending_task_id, app=celery_app)
-                state = async_result.state
-                debug_logger.warning(f"IMG: pending task state={state}")
-
-                if state == 'SUCCESS':
-                    try:
-                        result = async_result.result
-                        if result and isinstance(result, dict) and result.get('success'):
-                            image_url = result.get('image_url')
-                            debug_logger.warning(f"IMG: picked up image: {image_url}")
-                    except Exception as e:
-                        debug_logger.warning(f"IMG: failed to read result: {e}")
-                    await redis_client.delete(pending_key)
-                elif state in ('PENDING', 'STARTED'):
-                    try:
-                        result = await asyncio.to_thread(
-                            async_result.get, timeout=15, propagate=False
-                        )
-                        if result and isinstance(result, dict) and result.get('success'):
-                            image_url = result.get('image_url')
-                            debug_logger.warning(f"IMG: waited and got image: {image_url}")
-                    except Exception:
-                        debug_logger.warning(f"IMG: still generating, keeping for next request")
-                    if image_url:
-                        await redis_client.delete(pending_key)
-                else:
-                    debug_logger.warning(f"IMG: task {state}, discarding")
-                    await redis_client.delete(pending_key)
-
-            # Check if we should trigger NEW generation
+            # Check if we should trigger generation on THIS message
             service = ImageGenerationService(celery_app)
             current_count = (dialog.message_count or 0) + 2
             should_generate = service.should_generate_image(
                 message_count=current_count,
                 last_generation_at=dialog.last_image_generation_at
             )
-            debug_logger.warning(f"IMG: current_count={current_count}, should_generate={should_generate}")
+            debug_logger.warning(f"IMG: dialog={dialog.id}, msg_count={dialog.message_count}, current_count={current_count}, should_generate={should_generate}")
 
             if should_generate:
-                task = celery_app.send_task(
+                # Start ComfyUI generation NOW - it runs parallel with LLM below
+                image_celery_task = celery_app.send_task(
                     'image_generator.generate_image',
                     args=[persona.key, user_message, None],
                     queue='celery',
                 )
-                await redis_client.set(pending_key, task.id, expire=300)
                 dialog.last_image_generation_at = current_count
-                debug_logger.warning(f"IMG: triggered generation task_id={task.id}")
+                debug_logger.warning(f"IMG: started parallel generation task_id={image_celery_task.id}")
         except Exception as e:
-            debug_logger.warning(f"IMG ERROR: {e}", exc_info=True)
+            debug_logger.warning(f"IMG ERROR (trigger): {e}", exc_info=True)
 
-        # 10. Отправляем в LLM Gateway с оптимальными параметрами (research-based)
+        # 10. Отправляем в LLM Gateway (runs parallel with ComfyUI if triggered)
         response = await llm_client.chat_completion(
             messages=messages,
-            temperature=0.85,          # Повышено для большей креативности ответов
-            max_tokens=800,            # Увеличено для более развёрнутых ответов
-            presence_penalty=0.3,      # Оптимальное значение (research: 0.2-0.5)
-            frequency_penalty=0.4,     # Оптимальное значение (research: 0.2-0.5)
+            temperature=0.85,
+            max_tokens=800,
+            presence_penalty=0.3,
+            frequency_penalty=0.4,
         )
 
         # DEBUG: Логируем ответ LLM
@@ -537,6 +502,22 @@ class ChatFlow:
                 error="LLM Gateway error",
                 dialog_id=dialog.id,
             )
+
+        # 11.5. Wait for ComfyUI image generation result (up to 25 sec)
+        if image_celery_task:
+            try:
+                debug_logger.warning(f"IMG: LLM done, waiting for ComfyUI task_id={image_celery_task.id} (max 35s)")
+                async_result = AsyncResult(image_celery_task.id, app=celery_app)
+                result_data = await asyncio.to_thread(
+                    async_result.get, timeout=35, propagate=False
+                )
+                if result_data and isinstance(result_data, dict) and result_data.get('success'):
+                    image_url = result_data.get('image_url')
+                    debug_logger.warning(f"IMG: got image: {image_url}")
+                else:
+                    debug_logger.warning(f"IMG: generation failed or bad result: {result_data}")
+            except Exception as e:
+                debug_logger.warning(f"IMG: timeout/error waiting for ComfyUI: {e}")
 
         # 11. Сохраняем сообщения в PostgreSQL
         await self.save_message(dialog, "user", user_message)
