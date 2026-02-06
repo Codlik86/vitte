@@ -453,7 +453,7 @@ class ChatFlow:
         debug_logger.warning(f"{'='*80}\n")
 
         # 9.5. Check if image generation needed and start it BEFORE LLM (parallel execution)
-        image_task = None
+        image_task_id = None
         should_generate = False
         try:
             from app.services.image_generation import ImageGenerationService
@@ -467,13 +467,15 @@ class ChatFlow:
             )
 
             if should_generate:
-                # Start image generation NOW (parallel with LLM) - send task that RETURNS URL
-                image_task = celery_app.send_task(
-                    'image_generator.generate_image',
-                    args=[persona.key, user_message, None],
-                    queue='celery',
+                # Start image generation NOW (parallel with LLM)
+                image_task_id = service.trigger_generation(
+                    persona_key=persona.key,
+                    user_id=telegram_id,
+                    chat_id=telegram_id,
+                    prompt=user_message,
+                    seed=None
                 )
-                logger.info(f"Started parallel image generation: task_id={image_task.id}")
+                logger.info(f"Started parallel image generation: task_id={image_task_id}")
         except Exception as e:
             logger.error(f"Failed to start image generation: {e}", exc_info=True)
 
@@ -506,12 +508,12 @@ class ChatFlow:
 
         # 12. Wait for image generation result if it was started (parallel execution completed)
         image_url = None
-        if should_generate and image_task:
+        if should_generate and image_task_id:
             try:
                 from celery.result import AsyncResult
                 import asyncio
 
-                async_result = AsyncResult(image_task.id, app=celery_app)
+                async_result = AsyncResult(image_task_id, app=celery_app)
 
                 # Wait for result in non-blocking way (max 20 seconds for ComfyUI)
                 result = await asyncio.to_thread(
