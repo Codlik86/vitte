@@ -34,6 +34,11 @@ from shared.utils import redis_client
 
 from celery.result import AsyncResult
 
+from shared.llm.services.image_prompt_builder import (
+    build_image_prompt_messages,
+    assemble_final_prompt,
+)
+
 from .llm_client import llm_client
 from .embedding_service import embedding_service
 from .image_generation import ImageGenerationService
@@ -507,10 +512,44 @@ class ChatFlow:
                 debug_logger.warning(f"IMG: quota check: can_generate={image_quota.can_generate}, remaining={image_quota.total_remaining}")
 
                 if image_quota.can_generate:
-                    # Start ComfyUI generation NOW - it runs parallel with LLM below
+                    # Step 1: Generate image prompt via LLM
+                    comfy_prompt = None
+                    try:
+                        # Build recent messages context for image prompt LLM
+                        img_recent = [
+                            {"role": m.role, "content": m.content}
+                            for m in deduped_messages[-4:]
+                        ]
+                        img_messages = build_image_prompt_messages(
+                            persona_key=persona.key,
+                            story_key=story_id or dialog.story_id,
+                            user_message=user_message,
+                            recent_messages=img_recent,
+                        )
+                        # Fast LLM call for image prompt (~1-2 sec, ~50 tokens)
+                        raw_prompt = await llm_client.chat_completion(
+                            messages=img_messages,
+                            temperature=0.7,
+                            max_tokens=120,
+                        )
+                        if raw_prompt:
+                            comfy_prompt = assemble_final_prompt(persona.key, raw_prompt)
+                            debug_logger.warning(f"IMG PROMPT: {comfy_prompt}")
+                        else:
+                            debug_logger.warning(f"IMG PROMPT: LLM returned None, using fallback")
+                    except Exception as prompt_err:
+                        debug_logger.warning(f"IMG PROMPT ERROR: {prompt_err}")
+
+                    # Fallback: trigger_word + generic description
+                    if not comfy_prompt:
+                        from shared.llm.services.image_prompt_builder import PERSONA_TRIGGER_WORDS
+                        tw = PERSONA_TRIGGER_WORDS.get(persona.key, "")
+                        comfy_prompt = f"{tw}, a beautiful woman, soft lighting, realistic photography" if tw else "a beautiful woman, soft lighting, realistic photography"
+
+                    # Step 2: Start ComfyUI generation with the LLM-generated prompt
                     image_celery_task = celery_app.send_task(
                         'image_generator.generate_image',
-                        args=[persona.key, user_message, None],
+                        args=[persona.key, comfy_prompt, None],
                         queue='image_generation',
                     )
                     dialog.last_image_generation_at = current_count

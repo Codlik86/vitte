@@ -22,14 +22,14 @@ PERSONA_WORKFLOW_MAP: Dict[str, str] = {
 
 # Persona key → Trigger word mapping (from LoRA training)
 PERSONA_TRIGGER_MAP: Dict[str, str] = {
-    "ash": "brit-woman",  # GF7184J7K4SJJSTY8VJ0VRBTQ0.safetensors
-    "julie": "elvaross",  # elaravoss.safetensors
-    "lina": "ameg2",  # ameg2_con_char.safetensors
-    "marianna": "",  # TBD - need to check workflow
-    "mei": "",  # TBD - need to check workflow
-    "stacey": "",  # TBD - need to check workflow
-    "taya": "",  # TBD - need to check workflow
-    "yuna": "",  # TBD - need to check workflow
+    "lina": "ameg2",
+    "marianna": "Amanda_Z, a beautiful woman with ginger hair, braided hair, green eyes and full lips",
+    "yuna": "e1st_asn",
+    "taya": "Elise_XWMB, she has blonde hair",
+    "stacey": "woman037",
+    "mei": "asig2",
+    "ash": "brit-woman",
+    "julie": "elvaross",
 }
 
 
