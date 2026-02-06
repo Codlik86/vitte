@@ -31,9 +31,11 @@ from shared.llm.services.prompt_builder import (
 )
 from shared.utils import redis_client
 
+from celery.result import AsyncResult
+
 from .llm_client import llm_client
 from .embedding_service import embedding_service
-from .image_generation import generate_image_if_needed
+from .image_generation import ImageGenerationService
 from app.utils.celery_client import celery_app
 
 logger = logging.getLogger(__name__)
@@ -452,30 +454,51 @@ class ChatFlow:
             debug_logger.warning(f"Message {idx}: [{role}] {content_preview}")
         debug_logger.warning(f"{'='*80}\n")
 
-        # 9.5. Check if image generation needed and start it BEFORE LLM (parallel execution)
-        image_task = None
-        should_generate = False
+        # 9.5. Image generation: check for ready image OR trigger new generation
+        # Logic: trigger on 3rd message -> save task_id in Redis -> on NEXT message pick up result
+        image_url = None
         try:
-            from app.services.image_generation import ImageGenerationService
-            from app.utils.celery_client import celery_app
+            import asyncio
 
+            # First: check if there's a pending image from previous request
+            pending_key = f"img_task:{dialog.id}"
+            pending_task_id = await redis_client.get(pending_key)
+
+            if pending_task_id:
+                # There's a pending image generation - try to get result
+                async_result = AsyncResult(pending_task_id, app=celery_app)
+                try:
+                    result = await asyncio.to_thread(
+                        async_result.get, timeout=5, propagate=False
+                    )
+                    if result and isinstance(result, dict) and result.get('success'):
+                        image_url = result.get('image_url')
+                        logger.info(f"Picked up ready image for dialog {dialog.id}: {image_url}")
+                except Exception:
+                    logger.warning(f"Pending image not ready yet for dialog {dialog.id}, discarding")
+                # Clear pending task regardless (used or expired)
+                await redis_client.delete(pending_key)
+
+            # Second: check if we should trigger NEW generation on this message
             service = ImageGenerationService(celery_app)
-            # Check BEFORE incrementing message count (will be incremented when saving)
+            current_count = (dialog.message_count or 0) + 2
             should_generate = service.should_generate_image(
-                message_count=(dialog.message_count or 0) + 2,  # +2 for upcoming user+assistant messages
+                message_count=current_count,
                 last_generation_at=dialog.last_image_generation_at
             )
 
             if should_generate:
-                # Start image generation NOW (parallel with LLM) - send task that RETURNS URL
-                image_task = celery_app.send_task(
+                # Start generation in background, save task_id for NEXT request
+                task = celery_app.send_task(
                     'image_generator.generate_image',
                     args=[persona.key, user_message, None],
                     queue='celery',
                 )
-                logger.info(f"Started parallel image generation: task_id={image_task.id}")
+                await redis_client.set(pending_key, task.id, expire=300)
+                dialog.last_image_generation_at = current_count
+                logger.info(f"Triggered image generation for dialog {dialog.id}, task_id={task.id}, will attach to next response")
         except Exception as e:
-            logger.error(f"Failed to start image generation: {e}", exc_info=True)
+            logger.error(f"Image generation error: {e}", exc_info=True)
 
         # 10. Отправляем в LLM Gateway с оптимальными параметрами (research-based)
         response = await llm_client.chat_completion(
@@ -504,37 +527,7 @@ class ChatFlow:
         await self.save_message(dialog, "user", user_message)
         await self.save_message(dialog, "assistant", response)
 
-        # 12. Wait for image generation result if it was started (parallel execution completed)
-        image_url = None
-        if should_generate and image_task:
-            try:
-                from celery.result import AsyncResult
-                import asyncio
-
-                async_result = AsyncResult(image_task.id, app=celery_app)
-
-                # Wait for result in non-blocking way (max 20 seconds for ComfyUI)
-                result = await asyncio.to_thread(
-                    async_result.get,
-                    timeout=20,
-                    propagate=False
-                )
-
-                if result and isinstance(result, dict) and result.get('success'):
-                    image_url = result.get('image_url')
-                    dialog.last_image_generation_at = dialog.message_count
-                    logger.info(
-                        f"Image generated for dialog {dialog.id}, "
-                        f"persona={persona.key}, message_count={dialog.message_count}, "
-                        f"image_url={image_url}, size={result.get('size_bytes', 0)} bytes"
-                    )
-                else:
-                    error = result.get('error', 'Unknown error') if isinstance(result, dict) else 'No result'
-                    logger.error(f"Image generation failed: {error}")
-            except Exception as e:
-                logger.error(f"Failed to get image generation result: {e}", exc_info=True)
-
-        # 13. Сохраняем в Qdrant (async, не блокируем)
+        # 12. Сохраняем в Qdrant (async, не блокируем)
         try:
             await embedding_service.store_memory(
                 user_id=telegram_id,
