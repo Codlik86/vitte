@@ -30,7 +30,7 @@ class ImageGenerationService:
         Determine if image should be generated based on message count.
 
         Args:
-            message_count: Current message count in dialog
+            message_count: Current message count in dialog (counts both user and assistant messages)
             last_generation_at: Message count when last image was generated
 
         Returns:
@@ -40,18 +40,22 @@ class ImageGenerationService:
         if not message_count or message_count == 0:
             return False
 
-        # If no previous generation - use random frequency
+        # message_count counts both user and assistant messages
+        # So divide by 2 to get number of user messages (dialog turns)
+        user_messages = message_count // 2
+
+        # If no previous generation - randomly pick between 3rd, 4th, or 5th user message
         if last_generation_at is None:
-            # Random frequency between 3-5 messages
-            frequency = random.randint(self.min_frequency, self.max_frequency)
-            return message_count >= frequency
+            # Pick random target (3, 4, or 5)
+            target = random.randint(self.min_frequency, self.max_frequency)
+            return user_messages == target
 
-        # Calculate messages since last generation
-        messages_since_last = message_count - last_generation_at
+        # Calculate user messages since last generation
+        user_messages_since_last = (message_count - last_generation_at) // 2
 
-        # Generate if enough messages passed (random 3-5)
-        frequency = random.randint(self.min_frequency, self.max_frequency)
-        return messages_since_last >= frequency
+        # Randomly pick next generation between 3-5 messages after last one
+        target = random.randint(self.min_frequency, self.max_frequency)
+        return user_messages_since_last == target
 
     def trigger_generation(
         self,
@@ -133,14 +137,9 @@ class ImageGenerationService:
             # This avoids NotRegistered error since we don't need task definition
             async_result = AsyncResult(task.id, app=self.celery_app)
 
-            logger.info(f"AsyncResult created, state={async_result.state}, ready={async_result.ready()}")
-
             # Wait for task to complete (blocking)
             # propagate=False prevents raising exceptions from task
-            logger.info(f"Calling async_result.get() with timeout={timeout}s...")
             result = async_result.get(timeout=timeout, propagate=False)
-
-            logger.info(f"Got result: type={type(result)}, value={result}")
 
             if result and isinstance(result, dict) and result.get('success'):
                 image_url = result.get('image_url')

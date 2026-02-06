@@ -24,8 +24,10 @@ celery_app.conf.update(
     task_serializer="json",
     accept_content=["json"],
     result_serializer="json",
+    result_accept_content=["json"],
     timezone="UTC",
     enable_utc=True,
+    result_expires=3600,  # Results expire after 1 hour
 )
 
 logger.info(f"Celery client initialized: broker={CELERY_BROKER_URL}")
