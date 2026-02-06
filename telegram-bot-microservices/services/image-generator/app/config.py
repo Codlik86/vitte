@@ -3,6 +3,7 @@ Configuration for Image Generator Service
 """
 import os
 from pathlib import Path
+from urllib.parse import quote_plus
 
 
 class Config:
@@ -34,8 +35,10 @@ class Config:
 
     # Build Redis URL with password if provided
     if REDIS_PASSWORD:
-        CELERY_BROKER_URL = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_BROKER_DB}"
-        CELERY_RESULT_BACKEND = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_RESULT_DB}"
+        # URL-encode password to handle special characters like ! and #
+        encoded_password = quote_plus(REDIS_PASSWORD)
+        CELERY_BROKER_URL = f"redis://:{encoded_password}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_BROKER_DB}"
+        CELERY_RESULT_BACKEND = f"redis://:{encoded_password}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_RESULT_DB}"
     else:
         CELERY_BROKER_URL = f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_BROKER_DB}"
         CELERY_RESULT_BACKEND = f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_RESULT_DB}"
