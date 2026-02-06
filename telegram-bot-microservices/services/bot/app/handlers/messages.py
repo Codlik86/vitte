@@ -260,10 +260,23 @@ async def handle_text_message(message: Message):
             except Exception:
                 pass
 
-            # Send photo (no caption - avoids 1024 char limit issues)
+            # Send photo as bytes (Telegram can't fetch URL from our server)
             try:
-                await message.answer_photo(photo=result.image_url)
-                logger.info(f"User {user_id} got image from {persona_name}")
+                import httpx
+                from aiogram.types import BufferedInputFile
+                # Convert public URL to internal MinIO URL
+                # https://craveme.tech/storage/X -> http://minio:9000/vitte-bot/X
+                internal_url = result.image_url.replace(
+                    "https://craveme.tech/storage/", "http://minio:9000/vitte-bot/"
+                )
+                async with httpx.AsyncClient() as http_client:
+                    img_resp = await http_client.get(internal_url, timeout=10.0)
+                    if img_resp.status_code == 200:
+                        photo_file = BufferedInputFile(img_resp.content, filename="photo.png")
+                        await message.answer_photo(photo=photo_file)
+                        logger.info(f"User {user_id} got image from {persona_name}")
+                    else:
+                        logger.error(f"Failed to download image: HTTP {img_resp.status_code} from {internal_url}")
             except Exception as e:
                 logger.error(f"Failed to send photo: {e}")
 
