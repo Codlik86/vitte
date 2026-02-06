@@ -24,16 +24,21 @@ class Config:
     # Redis/Celery
     REDIS_HOST = os.getenv("REDIS_HOST", "redis")
     REDIS_PORT = int(os.getenv("REDIS_PORT", "6379"))
-    REDIS_DB = int(os.getenv("REDIS_DB", "0"))
     REDIS_PASSWORD = os.getenv("REDIS_PASSWORD", "")
+
+    # Dedicated Redis DBs for image-generator (isolated from worker/beat)
+    # Worker/Beat use: DB 0 (general), DB 1 (broker), DB 2 (results)
+    # Image-generator uses: DB 3 (broker), DB 4 (results)
+    REDIS_BROKER_DB = int(os.getenv("REDIS_BROKER_DB", "3"))
+    REDIS_RESULT_DB = int(os.getenv("REDIS_RESULT_DB", "4"))
 
     # Build Redis URL with password if provided
     if REDIS_PASSWORD:
-        CELERY_BROKER_URL = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
-        CELERY_RESULT_BACKEND = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
+        CELERY_BROKER_URL = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_BROKER_DB}"
+        CELERY_RESULT_BACKEND = f"redis://:{REDIS_PASSWORD}@{REDIS_HOST}:{REDIS_PORT}/{REDIS_RESULT_DB}"
     else:
-        CELERY_BROKER_URL = f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
-        CELERY_RESULT_BACKEND = f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}"
+        CELERY_BROKER_URL = f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_BROKER_DB}"
+        CELERY_RESULT_BACKEND = f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_RESULT_DB}"
 
     # Bot API (for sending images back to Telegram)
     BOT_API_URL = os.getenv("BOT_API_URL", "http://bot:8000")
