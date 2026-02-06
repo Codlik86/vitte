@@ -452,6 +452,33 @@ class ChatFlow:
             debug_logger.warning(f"Message {idx}: [{role}] {content_preview}")
         debug_logger.warning(f"{'='*80}\n")
 
+        # 9.5. Check if image generation needed and start it BEFORE LLM (parallel execution)
+        image_task_id = None
+        should_generate = False
+        try:
+            from app.services.image_generation import ImageGenerationService
+            from app.utils.celery_client import celery_app
+
+            service = ImageGenerationService(celery_app)
+            # Check BEFORE incrementing message count (will be incremented when saving)
+            should_generate = service.should_generate_image(
+                message_count=(dialog.message_count or 0) + 2,  # +2 for upcoming user+assistant messages
+                last_generation_at=dialog.last_image_generation_at
+            )
+
+            if should_generate:
+                # Start image generation NOW (parallel with LLM)
+                image_task_id = service.trigger_generation(
+                    persona_key=persona.key,
+                    user_id=telegram_id,
+                    chat_id=telegram_id,
+                    prompt=user_message,
+                    seed=None
+                )
+                logger.info(f"Started parallel image generation: task_id={image_task_id}")
+        except Exception as e:
+            logger.error(f"Failed to start image generation: {e}", exc_info=True)
+
         # 10. Отправляем в LLM Gateway с оптимальными параметрами (research-based)
         response = await llm_client.chat_completion(
             messages=messages,
@@ -479,30 +506,35 @@ class ChatFlow:
         await self.save_message(dialog, "user", user_message)
         await self.save_message(dialog, "assistant", response)
 
-        # 12. Generate image if needed (every 3-5 messages, random) - SYNCHRONOUSLY
+        # 12. Wait for image generation result if it was started (parallel execution completed)
         image_url = None
-        try:
-            image_url = generate_image_if_needed(
-                celery_app=celery_app,
-                message_count=dialog.message_count or 0,
-                persona_key=persona.key,
-                user_id=telegram_id,
-                chat_id=telegram_id,
-                user_message=user_message,
-                last_generation_at=dialog.last_image_generation_at,
-                timeout=15,  # Wait max 15 seconds (should be 9-10s normally)
-            )
+        if should_generate and image_task_id:
+            try:
+                from celery.result import AsyncResult
+                import asyncio
 
-            if image_url:
-                # Update last generation marker
-                dialog.last_image_generation_at = dialog.message_count
-                logger.info(
-                    f"Image generated for dialog {dialog.id}, "
-                    f"persona={persona.key}, message_count={dialog.message_count}, "
-                    f"image_url={image_url}"
+                async_result = AsyncResult(image_task_id, app=celery_app)
+
+                # Wait for result in non-blocking way (max 20 seconds for ComfyUI)
+                result = await asyncio.to_thread(
+                    async_result.get,
+                    timeout=20,
+                    propagate=False
                 )
-        except Exception as e:
-            logger.error(f"Failed to generate image: {e}", exc_info=True)
+
+                if result and isinstance(result, dict) and result.get('success'):
+                    image_url = result.get('image_url')
+                    dialog.last_image_generation_at = dialog.message_count
+                    logger.info(
+                        f"Image generated for dialog {dialog.id}, "
+                        f"persona={persona.key}, message_count={dialog.message_count}, "
+                        f"image_url={image_url}, size={result.get('size_bytes', 0)} bytes"
+                    )
+                else:
+                    error = result.get('error', 'Unknown error') if isinstance(result, dict) else 'No result'
+                    logger.error(f"Image generation failed: {error}")
+            except Exception as e:
+                logger.error(f"Failed to get image generation result: {e}", exc_info=True)
 
         # 13. Сохраняем в Qdrant (async, не блокируем)
         try:

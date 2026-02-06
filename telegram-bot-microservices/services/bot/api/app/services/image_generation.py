@@ -44,18 +44,16 @@ class ImageGenerationService:
         # So divide by 2 to get number of user messages (dialog turns)
         user_messages = message_count // 2
 
-        # If no previous generation - randomly pick between 3rd, 4th, or 5th user message
+        # If no previous generation - generate between 3rd-5th user message
         if last_generation_at is None:
-            # Pick random target (3, 4, or 5)
-            target = random.randint(self.min_frequency, self.max_frequency)
-            return user_messages == target
+            # Generate on first occurrence in range 3-5
+            return user_messages >= self.min_frequency and user_messages <= self.max_frequency
 
         # Calculate user messages since last generation
         user_messages_since_last = (message_count - last_generation_at) // 2
 
-        # Randomly pick next generation between 3-5 messages after last one
-        target = random.randint(self.min_frequency, self.max_frequency)
-        return user_messages_since_last == target
+        # Generate on first occurrence in range 3-5 after last generation
+        return user_messages_since_last >= self.min_frequency and user_messages_since_last <= self.max_frequency
 
     def trigger_generation(
         self,
@@ -104,7 +102,7 @@ class ImageGenerationService:
         chat_id: int,
         prompt: str,
         seed: Optional[int] = None,
-        timeout: int = 30
+        timeout: int = 25
     ) -> Optional[str]:
         """
         Generate image synchronously and wait for result.
