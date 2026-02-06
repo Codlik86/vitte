@@ -30,6 +30,7 @@ class ChatResult:
     dialog_id: Optional[int] = None
     is_safety_block: bool = False
     message_count: int = 0
+    image_url: Optional[str] = None  # URL сгенерированного изображения
 
 
 async def generate_greeting(
@@ -145,6 +146,7 @@ async def send_chat_message(
                     dialog_id=result.get("dialog_id"),
                     is_safety_block=result.get("is_safety_block", False),
                     message_count=result.get("message_count", 0),
+                    image_url=result.get("image_url"),  # Parse image URL from API
                 )
             else:
                 logger.error(f"Chat API error {response.status_code}: {response.text}")

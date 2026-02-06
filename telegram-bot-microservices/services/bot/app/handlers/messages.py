@@ -252,24 +252,50 @@ async def handle_text_message(message: Message):
         except Exception as e:
             logger.warning(f"Failed to save refresh context: {e}")
 
-        # Edit placeholder with actual response + refresh button
-        try:
-            await placeholder.edit_text(
-                f"<b>{persona_name}</b>\n\n{result.response}",
-                parse_mode="HTML",
-                reply_markup=refresh_keyboard
-            )
-        except Exception as e:
-            # If edit fails, send as new message
-            logger.warning(f"Failed to edit placeholder: {e}")
-            await placeholder.delete()
-            await message.answer(
-                f"<b>{persona_name}</b>\n\n{result.response}",
-                parse_mode="HTML",
-                reply_markup=refresh_keyboard
-            )
+        # Check if image was generated
+        if result.image_url:
+            # Delete placeholder
+            try:
+                await placeholder.delete()
+            except Exception:
+                pass
 
-        logger.info(f"User {user_id} got response from {persona_name} (dialog {result.dialog_id})")
+            # Send photo with caption (text response)
+            try:
+                await message.answer_photo(
+                    photo=result.image_url,
+                    caption=f"<b>{persona_name}</b>\n\n{result.response}",
+                    parse_mode="HTML",
+                    reply_markup=refresh_keyboard
+                )
+                logger.info(f"User {user_id} got response + image from {persona_name} (dialog {result.dialog_id})")
+            except Exception as e:
+                logger.error(f"Failed to send photo, falling back to text: {e}")
+                # Fallback - send as text if photo fails
+                await message.answer(
+                    f"<b>{persona_name}</b>\n\n{result.response}",
+                    parse_mode="HTML",
+                    reply_markup=refresh_keyboard
+                )
+        else:
+            # No image - edit placeholder with text response + refresh button
+            try:
+                await placeholder.edit_text(
+                    f"<b>{persona_name}</b>\n\n{result.response}",
+                    parse_mode="HTML",
+                    reply_markup=refresh_keyboard
+                )
+            except Exception as e:
+                # If edit fails, send as new message
+                logger.warning(f"Failed to edit placeholder: {e}")
+                await placeholder.delete()
+                await message.answer(
+                    f"<b>{persona_name}</b>\n\n{result.response}",
+                    parse_mode="HTML",
+                    reply_markup=refresh_keyboard
+                )
+
+            logger.info(f"User {user_id} got response from {persona_name} (dialog {result.dialog_id})")
 
     elif result.is_safety_block:
         safety_text = SAFETY_BLOCK_RU if lang == "ru" else SAFETY_BLOCK_EN
