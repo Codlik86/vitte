@@ -376,17 +376,25 @@ services:
       - COMFYUI_HOSTS=${COMFYUI_HOSTS:-195.209.210.175:8188,195.209.210.175:8189}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
-      - REDIS_BROKER_DB=3
-      - REDIS_RESULT_DB=4
+      - REDIS_BROKER_DB=1
+      - REDIS_RESULT_DB=2
       - REDIS_PASSWORD=${REDIS_PASSWORD}
       - BOT_TOKEN=${BOT_TOKEN}
       - LOG_LEVEL=${LOG_LEVEL:-INFO}
       - MAX_CONCURRENT_GENERATIONS=${MAX_CONCURRENT_GENERATIONS:-2}
       - IMAGE_GENERATION_FREQUENCY=${IMAGE_GENERATION_FREQUENCY:-4}
       - GENERATION_TIMEOUT=${GENERATION_TIMEOUT:-120}
+      - S3_ENDPOINT=minio:9000
+      - S3_ACCESS_KEY=${MINIO_ROOT_USER:-minioadmin}
+      - S3_SECRET_KEY=${MINIO_ROOT_PASSWORD}
+      - S3_BUCKET_NAME=vitte-bot
+      - S3_SECURE=false
+      - PUBLIC_STORAGE_URL=https://craveme.tech/storage
     depends_on:
       redis:
         condition: service_healthy
+      minio:
+        condition: service_started
     healthcheck:
       test: ["CMD-SHELL", "celery -A app.tasks inspect ping -d image-generator@$$HOSTNAME 2>/dev/null || test -f /proc/1/status"]
       interval: 60s

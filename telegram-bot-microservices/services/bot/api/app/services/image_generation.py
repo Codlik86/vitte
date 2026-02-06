@@ -133,9 +133,14 @@ class ImageGenerationService:
             # This avoids NotRegistered error since we don't need task definition
             async_result = AsyncResult(task.id, app=self.celery_app)
 
+            logger.info(f"AsyncResult created, state={async_result.state}, ready={async_result.ready()}")
+
             # Wait for task to complete (blocking)
             # propagate=False prevents raising exceptions from task
+            logger.info(f"Calling async_result.get() with timeout={timeout}s...")
             result = async_result.get(timeout=timeout, propagate=False)
+
+            logger.info(f"Got result: type={type(result)}, value={result}")
 
             if result and isinstance(result, dict) and result.get('success'):
                 image_url = result.get('image_url')
