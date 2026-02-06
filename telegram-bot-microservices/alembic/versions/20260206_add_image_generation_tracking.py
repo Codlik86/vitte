@@ -1,15 +1,15 @@
 """Add image generation tracking to dialogs
 
-Revision ID: 020
-Revises: 019
+Revision ID: 021
+Revises: 020
 Create Date: 2026-02-06
 
 """
 from alembic import op
 import sqlalchemy as sa
 
-revision = '020'
-down_revision = '019'
+revision = '021'
+down_revision = '020'
 branch_labels = None
 depends_on = None
 
