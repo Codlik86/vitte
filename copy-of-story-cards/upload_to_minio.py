@@ -12,7 +12,7 @@ import os
 # MinIO configuration
 MINIO_ENDPOINT = "195.209.210.96:9000"
 MINIO_ACCESS_KEY = os.getenv("MINIO_ROOT_USER", "minioadmin")
-MINIO_SECRET_KEY = os.getenv("MINIO_ROOT_PASSWORD", "minioadmin")
+MINIO_SECRET_KEY = os.getenv("MINIO_ROOT_PASSWORD", "MIn!o_pASS_vitte2006_&&_pic$")
 BUCKET_NAME = "vitte-bot"
 UPLOAD_FOLDER = "persona-dialogs"
 
