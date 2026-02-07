@@ -528,6 +528,7 @@ services:
       - "443:443"
     volumes:
       - /etc/letsencrypt:/etc/letsencrypt:ro
+      - ../copy-of-story-cards/cropped_736x414:/var/www/persona-dialogs:ro
     depends_on:
       - api
       - admin
