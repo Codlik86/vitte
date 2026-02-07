@@ -93,14 +93,14 @@ def get_dialogs_keyboard_ru(dialogs: list[Dialog], can_create_new: bool = True) 
         if config.webapp_url:
             buttons.append([
                 InlineKeyboardButton(
-                    text="➕ Новый диалог",
+                    text="➕ Новый диалог • Персонажи",
                     web_app=WebAppInfo(url=config.webapp_url)
                 )
             ])
         else:
             buttons.append([
                 InlineKeyboardButton(
-                    text="➕ Новый диалог",
+                    text="➕ Новый диалог • Персонажи",
                     callback_data="menu:open_webapp"
                 )
             ])
@@ -138,6 +138,12 @@ def get_dialogs_keyboard_ru(dialogs: list[Dialog], can_create_new: bool = True) 
             )
         ])
 
+    # Clear all button (only if there are dialogs)
+    if dialogs:
+        buttons.append([
+            InlineKeyboardButton(text="🗑 Очистить диалоги", callback_data="chat:clear_all")
+        ])
+
     # Back button
     buttons.append([
         InlineKeyboardButton(text="⬅️ Назад", callback_data="chat:back_to_menu")
@@ -155,14 +161,14 @@ def get_dialogs_keyboard_en(dialogs: list[Dialog], can_create_new: bool = True) 
         if config.webapp_url:
             buttons.append([
                 InlineKeyboardButton(
-                    text="➕ New dialog",
+                    text="➕ New dialog • Characters",
                     web_app=WebAppInfo(url=config.webapp_url)
                 )
             ])
         else:
             buttons.append([
                 InlineKeyboardButton(
-                    text="➕ New dialog",
+                    text="➕ New dialog • Characters",
                     callback_data="menu:open_webapp"
                 )
             ])
@@ -198,6 +204,12 @@ def get_dialogs_keyboard_en(dialogs: list[Dialog], can_create_new: bool = True) 
                 text="❌",
                 callback_data=f"chat:delete:{dialog.id}"
             )
+        ])
+
+    # Clear all button (only if there are dialogs)
+    if dialogs:
+        buttons.append([
+            InlineKeyboardButton(text="🗑 Clear dialogs", callback_data="chat:clear_all")
         ])
 
     # Back button
@@ -615,6 +627,89 @@ async def on_delete_cancel(callback: CallbackQuery):
 
     # Show dialogs list again
     await _show_chat_screen(user_id, callback.message.answer)
+
+
+@router.callback_query(F.data == "chat:clear_all")
+async def on_clear_all_dialogs(callback: CallbackQuery):
+    """Handle clear all dialogs button - show confirmation"""
+    await callback.answer()
+    user_id = callback.from_user.id
+    lang = await get_user_language(user_id)
+
+    if lang == "ru":
+        text = "🗑 Удалить <b>все</b> диалоги?\n\nВся история переписки будет удалена безвозвратно."
+        confirm_btn_text = "✅ Да, удалить все"
+        cancel_btn_text = "❌ Отмена"
+    else:
+        text = "🗑 Delete <b>all</b> dialogs?\n\nAll chat history will be permanently deleted."
+        confirm_btn_text = "✅ Yes, delete all"
+        cancel_btn_text = "❌ Cancel"
+
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=confirm_btn_text, callback_data="chat:clear_all_confirm")],
+        [InlineKeyboardButton(text=cancel_btn_text, callback_data="chat:delete_cancel")],
+    ])
+
+    await callback.message.answer(text, reply_markup=keyboard, parse_mode="HTML")
+
+
+@router.callback_query(F.data == "chat:clear_all_confirm")
+async def on_clear_all_confirm(callback: CallbackQuery):
+    """Handle clear all confirmation - delete all user dialogs"""
+    await callback.answer()
+    user_id = callback.from_user.id
+
+    async for db in get_db():
+        # Get all active dialogs
+        result = await db.execute(
+            select(Dialog).where(Dialog.user_id == user_id, Dialog.is_active == True)
+        )
+        dialogs = list(result.scalars().all())
+
+        if not dialogs:
+            await callback.message.edit_text("Нет диалогов для удаления")
+            return
+
+        dialog_ids = [d.id for d in dialogs]
+
+        # Delete all from PostgreSQL (cascade deletes messages)
+        for dialog in dialogs:
+            await db.delete(dialog)
+        await db.commit()
+
+        # Delete all from Qdrant
+        try:
+            qdrant_url = config.qdrant_url if hasattr(config, 'qdrant_url') else "http://qdrant:6333"
+            collection = "vitte_memories"
+
+            async with httpx.AsyncClient() as client:
+                await client.post(
+                    f"{qdrant_url}/collections/{collection}/points/delete",
+                    json={
+                        "filter": {
+                            "must": [
+                                {"key": "user_id", "match": {"value": user_id}},
+                            ]
+                        }
+                    },
+                    timeout=10.0,
+                )
+        except Exception as e:
+            logger.warning(f"Failed to delete Qdrant memories for user {user_id}: {e}")
+
+        lang = await get_user_language(user_id)
+        if lang == "ru":
+            success_text = f"✅ Удалено диалогов: {len(dialog_ids)}"
+        else:
+            success_text = f"✅ Deleted dialogs: {len(dialog_ids)}"
+
+        await callback.message.edit_text(success_text)
+
+        # Show updated (empty) dialogs list
+        await _show_chat_screen(user_id, callback.message)
+
+        logger.info(f"User {user_id} cleared all dialogs: {dialog_ids}")
+        break
 
 
 @router.callback_query(F.data == "chat:back_to_menu")
