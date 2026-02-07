@@ -368,15 +368,24 @@ async def _show_chat_screen(user_id: int, target):
             ext = persona_extensions[last_dialog_persona_key]
             photo_url = f"https://craveme.tech/storage/persona-dialogs/{last_dialog_persona_key}.{ext}"
         else:
-            # Fallback to default
             photo_url = config.start_image_url
 
-        # Send with photo
-        await target.answer_photo(
-            photo=photo_url,
-            caption=text,
-            reply_markup=keyboard
-        )
+        logger.info(f"Dialog photo URL for user {user_id}: {photo_url}")
+
+        # Send with photo, fallback to default on error
+        try:
+            await target.answer_photo(
+                photo=photo_url,
+                caption=text,
+                reply_markup=keyboard
+            )
+        except Exception as e:
+            logger.warning(f"Failed to send persona photo ({photo_url}): {e}, falling back to default")
+            await target.answer_photo(
+                photo=config.start_image_url,
+                caption=text,
+                reply_markup=keyboard
+            )
     else:
         # No dialogs - show without photo
         if lang == "ru":
