@@ -73,12 +73,12 @@ def get_story_title(persona_key: str, story_key: str) -> str | None:
     """Get story title from persona stories"""
     try:
         persona_data = PERSONAS.get(persona_key)
-        if not persona_data or not hasattr(persona_data, 'stories'):
+        if not persona_data or "stories" not in persona_data:
             return None
 
-        story = persona_data.stories.get(story_key)
-        if story and 'title' in story:
-            return story['title']
+        story = persona_data["stories"].get(story_key)
+        if story and "title" in story:
+            return story["title"]
         return None
     except Exception:
         return None
