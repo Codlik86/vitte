@@ -347,14 +347,23 @@ async def _show_chat_screen(user_id: int, target):
             keyboard = get_dialogs_keyboard_en(dialogs, can_create_new)
         logger.info(f"User {user_id} has {len(dialogs)} active dialog(s)")
 
-        # Get last dialog's persona key for dynamic image
-        last_persona_key = dialogs[0].persona.key if dialogs[0].persona else None
+        # Get story image for last active dialog
+        last_dialog = dialogs[0]
+        last_persona_key = last_dialog.persona.key if last_dialog.persona else None
+        last_story_id = last_dialog.story_id
 
-        # All persona images stored as JPEG in MinIO (v2 to bust Telegram cache)
-        if last_persona_key:
-            photo_url = f"https://craveme.tech/storage/persona-dialogs/{last_persona_key}.jpeg?v=2"
-        else:
-            photo_url = config.start_image_url
+        photo_url = config.start_image_url  # fallback
+        if last_persona_key and last_story_id:
+            try:
+                persona_data = PERSONAS.get(last_persona_key)
+                if persona_data:
+                    story = persona_data["stories"].get(last_story_id)
+                    if story and "image" in story:
+                        # Convert original image name to JPEG: "lina-story-support.png" -> "lina-story-support.jpeg"
+                        img_name = story["image"].rsplit(".", 1)[0] + ".jpeg"
+                        photo_url = f"https://craveme.tech/storage/story-dialogs/{img_name}"
+            except Exception:
+                pass
 
         # Send with photo, fallback to default on error
         try:
