@@ -78,6 +78,10 @@ Choose a character and start chatting."""
 MENU_VARIANTS_RU = [MENU_VARIANT_1_RU, MENU_VARIANT_2_RU, MENU_VARIANT_3_RU, MENU_VARIANT_4_RU, MENU_VARIANT_5_RU]
 MENU_VARIANTS_EN = [MENU_VARIANT_1_EN, MENU_VARIANT_2_EN, MENU_VARIANT_3_EN, MENU_VARIANT_4_EN, MENU_VARIANT_5_EN]
 
+# Aliases for backward compatibility (random choice)
+MAIN_MENU_TEXT_RU = random.choice(MENU_VARIANTS_RU)
+MAIN_MENU_TEXT_EN = random.choice(MENU_VARIANTS_EN)
+
 
 # ==================== WELCOME TEXT (FIRST TIME) ====================
 

@@ -268,7 +268,7 @@ async def get_active_dialogs_with_personas(user_id: int) -> list[Dialog]:
             .options(selectinload(Dialog.persona))
             .where(Dialog.user_id == user_id, Dialog.is_active == True)
             .order_by(Dialog.updated_at.desc())
-            .limit(5)
+            .limit(10)
         )
         return list(result.scalars().all())
     return []
@@ -338,7 +338,7 @@ async def _show_chat_screen(user_id: int, target):
 
     if dialogs:
         # User has dialogs - show with photo
-        can_create_new = len(dialogs) < 5
+        can_create_new = len(dialogs) < 10
         if lang == "ru":
             text = HAS_DIALOGS_RU
             keyboard = get_dialogs_keyboard_ru(dialogs, can_create_new)

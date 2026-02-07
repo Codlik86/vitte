@@ -66,7 +66,7 @@ export function Dialogs() {
     navigate("/characters");
   };
 
-  const canStartNew = dialogs.length < 3;
+  const canStartNew = dialogs.length < 10;
 
   return (
     <div className="min-h-dvh bg-bg-dark text-text-main pt-6">

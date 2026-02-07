@@ -47,7 +47,7 @@ from app.utils.celery_client import celery_app
 logger = logging.getLogger(__name__)
 debug_logger = logging.getLogger('uvicorn.error')  # Для debug-логов которые точно выведутся
 
-MAX_DIALOG_SLOTS = 5
+MAX_DIALOG_SLOTS = 10
 RECENT_MESSAGES_COUNT = 12
 FEATURES_CACHE_TTL = 300  # 5 минут кэш для фич
 
@@ -147,22 +147,22 @@ class ChatFlow:
         Получить или создать диалог для пользователя с персонажем.
         Использует 3-slot систему.
         """
-        # Ищем существующий активный диалог с этим персонажем
-        result = await self.db.execute(
-            select(Dialog).where(
-                and_(
-                    Dialog.user_id == user.id,
-                    Dialog.persona_id == persona_id,
-                    Dialog.is_active == True,
-                )
+        # Ищем существующий активный диалог с этим персонажем И этой историей
+        query = select(Dialog).where(
+            and_(
+                Dialog.user_id == user.id,
+                Dialog.persona_id == persona_id,
+                Dialog.is_active == True,
             )
         )
+        if story_id:
+            query = query.where(Dialog.story_id == story_id)
+
+        result = await self.db.execute(query)
         dialog = result.scalar_one_or_none()
 
         if dialog:
-            # Обновляем story_id и atmosphere если изменились
-            if story_id and dialog.story_id != story_id:
-                dialog.story_id = story_id
+            # Обновляем atmosphere если изменилась
             if atmosphere and dialog.atmosphere != atmosphere:
                 dialog.atmosphere = atmosphere
             return dialog
