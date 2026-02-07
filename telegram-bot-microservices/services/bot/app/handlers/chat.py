@@ -350,9 +350,9 @@ async def _show_chat_screen(user_id: int, target):
         # Get last dialog's persona key for dynamic image
         last_persona_key = dialogs[0].persona.key if dialogs[0].persona else None
 
-        # All persona images stored as JPEG in MinIO
+        # All persona images stored as JPEG in MinIO (v2 to bust Telegram cache)
         if last_persona_key:
-            photo_url = f"https://craveme.tech/storage/persona-dialogs/{last_persona_key}.jpeg"
+            photo_url = f"https://craveme.tech/storage/persona-dialogs/{last_persona_key}.jpeg?v=2"
         else:
             photo_url = config.start_image_url
 
