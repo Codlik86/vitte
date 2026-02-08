@@ -80,11 +80,12 @@ RULES:
 2. Write in natural descriptive English, like describing a real photograph.
 3. Describe: the woman's pose, expression, clothing/state, action, setting details, lighting, mood.
 4. Capture the emotional atmosphere and actions from the conversation.
-5. If the user explicitly requests something visual (like "show me", "undress", etc.) — reflect that in the description.
+5. NSFW/nudity: ONLY describe nudity or explicit body parts if the dialog has clear sexual context (undressing, sex, explicit flirt). If the conversation is casual or just flirty — keep her clothed or in lingerie.
 6. Always describe as a single scene with one woman.
 7. Use photography terms: shallow depth of field, soft lighting, close-up, etc.
 8. NEVER include the trigger word — it will be added separately.
-9. NEVER output anything except the image description itself."""
+9. NEVER output anything except the image description itself.
+10. NEVER describe hands, fingers or feet in detail. Prefer close-up face/bust shots, or medium shots where hands are not visible or out of frame."""
 
 
 def build_image_prompt_messages(
@@ -158,10 +159,13 @@ def assemble_final_prompt(persona_key: str, llm_output: str) -> str:
     if description.startswith("'") and description.endswith("'"):
         description = description[1:-1].strip()
 
+    # Append anatomy/quality tags to reduce artifacts
+    quality_suffix = "perfect anatomy, correct hands, five fingers, photorealistic"
+
     if trigger_word:
-        return f"{trigger_word}, {description}"
+        return f"{trigger_word}, {description}, {quality_suffix}"
     else:
-        return description
+        return f"{description}, {quality_suffix}"
 
 
 __all__ = [
