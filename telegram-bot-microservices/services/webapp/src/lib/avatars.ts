@@ -10,11 +10,11 @@ const AVATARS: Record<string, { card: string; chat: string }> = {
   "джули": { card: pub("personas/julie-card.png"), chat: pub("personas/julie-chat.png") },
   "эш": { card: pub("personas/ash-card.png"), chat: pub("personas/ash-chat.png") },
   "юна": { card: pub("personas/yuna-card.jpg"), chat: pub("personas/yuna-chat.jpg") },
-  "анастасия романовна": { card: pub("personas/anastasia-card.jpeg"), chat: pub("personas/anastasia-chat.jpeg") },
-  "саша": { card: pub("personas/sasha-card.jpeg"), chat: pub("personas/sasha-chat.jpeg") },
-  "рокси": { card: pub("personas/roxy-card.jpeg"), chat: pub("personas/roxy-chat.jpeg") },
+  "анастасия романовна": { card: pub("personas/anastasia-card.png"), chat: pub("personas/anastasia-chat.jpeg") },
+  "саша": { card: pub("personas/sasha-card.png"), chat: pub("personas/sasha-chat.jpeg") },
+  "рокси": { card: pub("personas/roxy-card.png"), chat: pub("personas/roxy-chat.jpeg") },
   "пай": { card: pub("personas/pai-card.jpeg"), chat: pub("personas/pai-chat.jpeg") },
-  "хани": { card: pub("personas/hani-card.jpeg"), chat: pub("personas/hani-chat.jpeg") },
+  "хани": { card: pub("personas/hani-card.png"), chat: pub("personas/hani-chat.jpeg") },
 };
 
 const DEFAULT_AVATAR = {

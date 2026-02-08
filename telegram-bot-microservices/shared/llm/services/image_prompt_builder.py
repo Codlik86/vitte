@@ -27,6 +27,11 @@ PERSONA_TRIGGER_WORDS: Dict[str, str] = {
     "mei": "asig2",
     "ash": "brit-woman",
     "julie": "elvaross",
+    "anastasia": "",
+    "sasha": "eurameg1",
+    "roxy": "Chase Infinity, African American, young woman",
+    "pai": "DENISE",
+    "hani": "l34n0r, chubby woman",
 }
 
 
@@ -67,6 +72,30 @@ STORY_SCENE_MAP: Dict[str, Dict[str, str]] = {
     "ash": {
         "living_room": "in a stylish living room, dim lighting, latex outfit, high heels, prepared for special evening",
         "bedroom": "in a bedroom, intimate setting, fetish collection displayed, leather and latex, low lighting",
+    },
+    "anastasia": {
+        "classroom": "in an empty classroom after school, teacher's desk, strict suit, tight skirt, glasses, pointer on desk, confrontational atmosphere",
+        "bathroom": "in a bathroom, locked door, steamy mirror, strict teacher without underwear, challenging look over glasses",
+    },
+    "sasha": {
+        "auction": "at a luxury auction event, elegant dress, confident smile, VIP setting, glamorous atmosphere, stage lighting",
+        "plane": "in first class airplane seat, luxury cabin, close seating, long flight, intimate enclosed space",
+        "party": "in a VIP room at a party, dim lights, loud music behind the door, forbidden flirt, glamorous outfit",
+    },
+    "roxy": {
+        "hitchhiker": "on a rainy highway at night, wet clothes clinging to body, inside a car, foggy windows, provocative atmosphere",
+        "maid": "in a house wearing short maid outfit, bending over, no underwear, domestic setting, forbidden flirt",
+        "beach": "on a deserted beach, sunny day, dark skin glistening, lying on sand, bold and confident",
+    },
+    "pai": {
+        "dinner": "in a kitchen wearing only an apron, cooking, curvy body visible from behind, cozy home, warm lighting",
+        "window": "in a bedroom near a window, curvy figure silhouetted, soft light, provocative pose from behind",
+        "car": "at a parking lot near a car, tight dress, curvy figure, playful negotiation atmosphere",
+    },
+    "hani": {
+        "photoshoot": "in a photo studio, soft professional lighting, lingerie model, curvy plus-size body, changing outfits",
+        "pool": "in a luxury hotel pool, evening, bright bikini, curvy wet body, water drops, warm pool lighting",
+        "elevator": "in a hotel elevator, lace stockings, dress, close space, stopped between floors, intimate tension",
     },
 }
 
