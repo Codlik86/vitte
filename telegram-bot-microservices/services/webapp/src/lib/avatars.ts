@@ -13,7 +13,7 @@ const AVATARS: Record<string, { card: string; chat: string }> = {
   "анастасия романовна": { card: pub("personas/anastasia-card.png"), chat: pub("personas/anastasia-chat.jpeg") },
   "саша": { card: pub("personas/sasha-card.png"), chat: pub("personas/sasha-chat.jpeg") },
   "рокси": { card: pub("personas/roxy-card.png"), chat: pub("personas/roxy-chat.jpeg") },
-  "пай": { card: pub("personas/pai-card.jpeg"), chat: pub("personas/pai-chat.jpeg") },
+  "пай": { card: pub("personas/pai-card.png"), chat: pub("personas/pai-chat.jpeg") },
   "хани": { card: pub("personas/hani-card.png"), chat: pub("personas/hani-chat.jpeg") },
 };
 

@@ -45,7 +45,7 @@
   "5": {
     "inputs": {
       "lora_name": "DENISE_SYNTH_zimg_v1.safetensors",
-      "strength_model": 0.9,
+      "strength_model": 0.75,
       "strength_clip": 0.87,
       "model": [
         "2",
