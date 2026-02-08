@@ -10,6 +10,11 @@
 - Тая (taya) - Похотливая MILF
 - Джули (julie) - Неопытная студентка
 - Эш (ash) - Фетишистка
+- Анастасия Романовна (anastasia) - Строгая учительница
+- Саша (sasha) - Инстаграмная красотка
+- Рокси (roxy) - Афроамериканка
+- Пай (pai) - Горячая толстушка
+- Хани (hani) - Пышная красотка
 """
 
 from .lina import LINA_METADATA, LINA_BASE_PROMPT, LINA_STORIES
@@ -20,6 +25,11 @@ from .yuna import YUNA_METADATA, YUNA_BASE_PROMPT, YUNA_STORIES
 from .taya import TAYA_METADATA, TAYA_BASE_PROMPT, TAYA_STORIES
 from .julie import JULIE_METADATA, JULIE_BASE_PROMPT, JULIE_STORIES
 from .ash import ASH_METADATA, ASH_BASE_PROMPT, ASH_STORIES
+from .anastasia import ANASTASIA_METADATA, ANASTASIA_BASE_PROMPT, ANASTASIA_STORIES
+from .sasha import SASHA_METADATA, SASHA_BASE_PROMPT, SASHA_STORIES
+from .roxy import ROXY_METADATA, ROXY_BASE_PROMPT, ROXY_STORIES
+from .pai import PAI_METADATA, PAI_BASE_PROMPT, PAI_STORIES
+from .hani import HANI_METADATA, HANI_BASE_PROMPT, HANI_STORIES
 
 # Словарь всех персонажей для быстрого доступа по ключу
 PERSONAS = {
@@ -63,6 +73,31 @@ PERSONAS = {
         "base_prompt": ASH_BASE_PROMPT,
         "stories": ASH_STORIES,
     },
+    "anastasia": {
+        "metadata": ANASTASIA_METADATA,
+        "base_prompt": ANASTASIA_BASE_PROMPT,
+        "stories": ANASTASIA_STORIES,
+    },
+    "sasha": {
+        "metadata": SASHA_METADATA,
+        "base_prompt": SASHA_BASE_PROMPT,
+        "stories": SASHA_STORIES,
+    },
+    "roxy": {
+        "metadata": ROXY_METADATA,
+        "base_prompt": ROXY_BASE_PROMPT,
+        "stories": ROXY_STORIES,
+    },
+    "pai": {
+        "metadata": PAI_METADATA,
+        "base_prompt": PAI_BASE_PROMPT,
+        "stories": PAI_STORIES,
+    },
+    "hani": {
+        "metadata": HANI_METADATA,
+        "base_prompt": HANI_BASE_PROMPT,
+        "stories": HANI_STORIES,
+    },
 }
 
 
@@ -71,7 +106,7 @@ def get_persona(key: str) -> dict:
     Получить данные персонажа по ключу.
 
     Args:
-        key: Ключ персонажа (lina, marianna, mei, stacey, yuna, taya, julie, ash)
+        key: Ключ персонажа (lina, marianna, mei, stacey, yuna, taya, julie, ash, anastasia, sasha, roxy, pai, hani)
 
     Returns:
         dict с metadata, base_prompt и stories
@@ -128,6 +163,16 @@ __all__ = [
     "JULIE_METADATA", "JULIE_BASE_PROMPT", "JULIE_STORIES",
     # Эш
     "ASH_METADATA", "ASH_BASE_PROMPT", "ASH_STORIES",
+    # Анастасия Романовна
+    "ANASTASIA_METADATA", "ANASTASIA_BASE_PROMPT", "ANASTASIA_STORIES",
+    # Саша
+    "SASHA_METADATA", "SASHA_BASE_PROMPT", "SASHA_STORIES",
+    # Рокси
+    "ROXY_METADATA", "ROXY_BASE_PROMPT", "ROXY_STORIES",
+    # Пай
+    "PAI_METADATA", "PAI_BASE_PROMPT", "PAI_STORIES",
+    # Хани
+    "HANI_METADATA", "HANI_BASE_PROMPT", "HANI_STORIES",
     # Общие
     "PERSONAS",
     "get_persona",
