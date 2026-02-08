@@ -254,18 +254,12 @@ async def handle_text_message(message: Message):
 
         # Check if image was generated
         if result.image_url:
-            # Send photo first, then text response
-            try:
-                await placeholder.delete()
-            except Exception:
-                pass
+            import httpx
+            from aiogram.types import BufferedInputFile
 
-            # Send photo as bytes (Telegram can't fetch URL from our server)
+            # Download image from MinIO BEFORE deleting placeholder
+            photo_file = None
             try:
-                import httpx
-                from aiogram.types import BufferedInputFile
-                # Convert public URL to internal MinIO URL
-                # https://craveme.tech/storage/X -> http://minio:9000/vitte-bot/X
                 internal_url = result.image_url.replace(
                     "https://craveme.tech/storage/", "http://minio:9000/vitte-bot/"
                 )
@@ -273,21 +267,30 @@ async def handle_text_message(message: Message):
                     img_resp = await http_client.get(internal_url, timeout=10.0)
                     if img_resp.status_code == 200:
                         photo_file = BufferedInputFile(img_resp.content, filename="photo.png")
-                        await message.answer_photo(photo=photo_file)
-                        logger.info(f"User {user_id} got image from {persona_name}")
                     else:
                         logger.error(f"Failed to download image: HTTP {img_resp.status_code} from {internal_url}")
             except Exception as e:
-                logger.error(f"Failed to send photo: {e}")
+                logger.error(f"Failed to download photo: {e}")
 
-            # Send text response separately
+            # Delete placeholder, then send photo + text back-to-back
+            try:
+                await placeholder.delete()
+            except Exception:
+                pass
+
+            if photo_file:
+                try:
+                    await message.answer_photo(photo=photo_file)
+                except Exception as e:
+                    logger.error(f"Failed to send photo: {e}")
+
             try:
                 await message.answer(
                     f"<b>{persona_name}</b>\n\n{result.response}",
                     parse_mode="HTML",
                     reply_markup=refresh_keyboard
                 )
-                logger.info(f"User {user_id} got response from {persona_name} (dialog {result.dialog_id})")
+                logger.info(f"User {user_id} got image + response from {persona_name} (dialog {result.dialog_id})")
             except Exception as e:
                 logger.error(f"Failed to send text after photo: {e}")
         else:
