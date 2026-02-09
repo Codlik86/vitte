@@ -188,7 +188,7 @@ def get_payment_method_keyboard_ru(pack_id: str) -> InlineKeyboardMarkup:
             InlineKeyboardButton(text="⭐ Telegram Stars", callback_data=f"shop_pay:stars:{pack_id}"),
         ],
         [
-            InlineKeyboardButton(text="₮ CryptoPay USDT", callback_data=f"shop_pay:crypto:{pack_id}"),
+            InlineKeyboardButton(text="💲 CryptoPay USDT", callback_data=f"shop_pay:crypto:{pack_id}"),
         ],
         [
             InlineKeyboardButton(text="⬅️ Назад к пакетам", callback_data="shop:images"),
@@ -203,7 +203,7 @@ def get_payment_method_keyboard_en(pack_id: str) -> InlineKeyboardMarkup:
             InlineKeyboardButton(text="⭐ Telegram Stars", callback_data=f"shop_pay:stars:{pack_id}"),
         ],
         [
-            InlineKeyboardButton(text="₮ CryptoPay USDT", callback_data=f"shop_pay:crypto:{pack_id}"),
+            InlineKeyboardButton(text="💲 CryptoPay USDT", callback_data=f"shop_pay:crypto:{pack_id}"),
         ],
         [
             InlineKeyboardButton(text="⬅️ Back to packs", callback_data="shop:images"),
