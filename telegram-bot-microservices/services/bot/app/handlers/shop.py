@@ -15,6 +15,7 @@ from datetime import datetime
 from shared.database import get_db, User, ImageBalance, Purchase
 from shared.database.services import get_user_by_id, get_subscription_by_user_id
 from shared.utils import get_logger
+from shared.services import CryptoPayService
 from sqlalchemy import select
 from app.config import config
 
@@ -187,6 +188,9 @@ def get_payment_method_keyboard_ru(pack_id: str) -> InlineKeyboardMarkup:
             InlineKeyboardButton(text="⭐ Telegram Stars", callback_data=f"shop_pay:stars:{pack_id}"),
         ],
         [
+            InlineKeyboardButton(text="₮ CryptoPay USDT", callback_data=f"shop_pay:crypto:{pack_id}"),
+        ],
+        [
             InlineKeyboardButton(text="⬅️ Назад к пакетам", callback_data="shop:images"),
         ]
     ])
@@ -197,6 +201,9 @@ def get_payment_method_keyboard_en(pack_id: str) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=[
         [
             InlineKeyboardButton(text="⭐ Telegram Stars", callback_data=f"shop_pay:stars:{pack_id}"),
+        ],
+        [
+            InlineKeyboardButton(text="₮ CryptoPay USDT", callback_data=f"shop_pay:crypto:{pack_id}"),
         ],
         [
             InlineKeyboardButton(text="⬅️ Back to packs", callback_data="shop:images"),
@@ -412,6 +419,87 @@ async def on_pay_with_stars(callback: CallbackQuery, bot: Bot):
     )
 
     logger.info(f"User {user_id} initiated Stars payment for {pack_id}")
+
+
+@router.callback_query(F.data.startswith("shop_pay:crypto:"))
+async def on_pay_with_crypto(callback: CallbackQuery, bot: Bot):
+    """Handle CryptoPay USDT payment - send payment link"""
+    await callback.answer()
+
+    # Extract pack_id from callback data (shop_pay:crypto:pack_20 -> pack_20)
+    pack_id = callback.data.replace("shop_pay:crypto:", "")
+    pack = IMAGE_PACKS.get(pack_id)
+
+    if not pack:
+        await callback.answer("❌ Пакет не найден", show_alert=True)
+        return
+
+    user_id = callback.from_user.id
+    lang = await get_user_language(user_id)
+
+    if not config.cryptopay_token:
+        error_text = "❌ CryptoPay временно недоступен" if lang == "ru" else "❌ CryptoPay temporarily unavailable"
+        await callback.message.answer(error_text)
+        return
+
+    cryptopay = CryptoPayService(config.cryptopay_token)
+
+    # Convert Stars to USDT
+    price_usdt = CryptoPayService.convert_stars_to_usdt(pack["price_stars"])
+
+    # Create CryptoPay invoice
+    pack_name = pack["name_ru"] if lang == "ru" else pack["name_en"]
+
+    description = (
+        f"Пакет из {pack['images']} изображений для генерации"
+        if lang == "ru" else
+        f"Pack of {pack['images']} images for generation"
+    )
+
+    payload = f"images:{pack_id}:{user_id}"
+
+    invoice_data = await cryptopay.create_invoice(
+        amount=price_usdt,
+        asset="USDT",
+        description=description,
+        payload=payload,
+    )
+
+    if not invoice_data:
+        error_text = "❌ Не удалось создать счёт. Попробуйте позже." if lang == "ru" else "❌ Failed to create invoice. Try again later."
+        await callback.message.answer(error_text)
+        return
+
+    pay_url = CryptoPayService.get_pay_url(invoice_data)
+
+    if not pay_url:
+        error_text = "❌ Ошибка получения ссылки на оплату" if lang == "ru" else "❌ Failed to get payment link"
+        await callback.message.answer(error_text)
+        return
+
+    # Send payment link
+    pay_text = (
+        f"💳 <b>Оплата через CryptoPay</b>\n\n"
+        f"Пакет: <b>{pack_name}</b>\n"
+        f"Сумма: <b>{price_usdt} USDT</b>\n\n"
+        f"Нажми на кнопку ниже для оплаты:"
+        if lang == "ru" else
+        f"💳 <b>Payment via CryptoPay</b>\n\n"
+        f"Pack: <b>{pack_name}</b>\n"
+        f"Amount: <b>{price_usdt} USDT</b>\n\n"
+        f"Click the button below to pay:"
+    )
+
+    pay_button_text = "💳 Оплатить USDT" if lang == "ru" else "💳 Pay USDT"
+    menu_button_text = "🏠 Главное меню" if lang == "ru" else "🏠 Main Menu"
+
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=pay_button_text, url=pay_url)],
+        [InlineKeyboardButton(text=menu_button_text, callback_data="shop:back_to_menu")]
+    ])
+
+    await callback.message.answer(pay_text, reply_markup=keyboard, parse_mode="HTML")
+    logger.info(f"User {user_id} initiated CryptoPay payment for {pack_id} ({price_usdt} USDT)")
 
 
 @router.pre_checkout_query()

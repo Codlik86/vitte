@@ -15,7 +15,9 @@ from datetime import datetime
 from shared.database import get_db, User, FeatureUnlock, Purchase, Subscription
 from shared.database.services import get_user_by_id, get_subscription_by_user_id
 from shared.utils import get_logger, redis_client
+from shared.services import CryptoPayService
 from sqlalchemy import select
+from app.config import config
 
 logger = get_logger(__name__)
 router = Router(name="upgrades")

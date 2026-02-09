@@ -1,8 +1,10 @@
 """
-Invoice service for creating Telegram Stars invoices
+Invoice service for creating Telegram Stars and CryptoPay invoices
 
 Uses Telegram Bot API directly (via httpx) to create invoice links
 that can be opened in WebApp via Telegram.WebApp.openInvoice()
+
+Also supports CryptoPay (Telegram Crypto Bot) for USDT payments
 """
 
 import httpx
@@ -10,6 +12,7 @@ import logging
 from typing import Optional
 
 from app.config import config
+from shared.services import CryptoPayService
 
 logger = logging.getLogger(__name__)
 
@@ -155,3 +158,119 @@ async def create_feature_invoice(
         payload=payload,
         price_stars=price_stars,
     )
+
+
+# ==================== CRYPTOPAY INVOICES ====================
+
+async def create_cryptopay_subscription_invoice(
+    plan_code: str,
+    plan_name: str,
+    duration_days: int,
+    price_stars: int,
+    user_id: int,
+    lang: str = "ru"
+) -> Optional[str]:
+    """Create CryptoPay invoice for subscription plan."""
+    if not config.cryptopay_token:
+        logger.error("CRYPTOPAY_TOKEN not configured")
+        return None
+
+    cryptopay = CryptoPayService(config.cryptopay_token)
+
+    # Convert Stars to USDT
+    price_usdt = CryptoPayService.convert_stars_to_usdt(price_stars)
+
+    title = f"Vitte Premium - {plan_name}"
+
+    if lang == "ru":
+        description = (
+            f"Подписка на {duration_days} дней: безлимитные сообщения, "
+            f"20 изображений в день, продвинутые модели ИИ"
+        )
+    else:
+        description = (
+            f"{duration_days}-day subscription: unlimited messages, "
+            f"20 images per day, advanced AI models"
+        )
+
+    payload = f"sub:{plan_code}:{user_id}"
+
+    invoice_data = await cryptopay.create_invoice(
+        amount=price_usdt,
+        asset="USDT",
+        description=f"{title} - {description}",
+        payload=payload,
+    )
+
+    if invoice_data:
+        return CryptoPayService.get_pay_url(invoice_data)
+    return None
+
+
+async def create_cryptopay_image_pack_invoice(
+    pack_code: str,
+    images_count: int,
+    price_stars: int,
+    user_id: int,
+    lang: str = "ru"
+) -> Optional[str]:
+    """Create CryptoPay invoice for image pack."""
+    if not config.cryptopay_token:
+        logger.error("CRYPTOPAY_TOKEN not configured")
+        return None
+
+    cryptopay = CryptoPayService(config.cryptopay_token)
+
+    # Convert Stars to USDT
+    price_usdt = CryptoPayService.convert_stars_to_usdt(price_stars)
+
+    if lang == "ru":
+        title = f"{images_count} изображений"
+        description = f"Пакет из {images_count} изображений для генерации"
+    else:
+        title = f"{images_count} images"
+        description = f"Pack of {images_count} images for generation"
+
+    payload = f"images:{pack_code}:{user_id}"
+
+    invoice_data = await cryptopay.create_invoice(
+        amount=price_usdt,
+        asset="USDT",
+        description=f"{title} - {description}",
+        payload=payload,
+    )
+
+    if invoice_data:
+        return CryptoPayService.get_pay_url(invoice_data)
+    return None
+
+
+async def create_cryptopay_feature_invoice(
+    feature_code: str,
+    feature_title: str,
+    feature_description: str,
+    price_stars: int,
+    user_id: int,
+) -> Optional[str]:
+    """Create CryptoPay invoice for feature unlock."""
+    if not config.cryptopay_token:
+        logger.error("CRYPTOPAY_TOKEN not configured")
+        return None
+
+    cryptopay = CryptoPayService(config.cryptopay_token)
+
+    # Convert Stars to USDT
+    price_usdt = CryptoPayService.convert_stars_to_usdt(price_stars)
+
+    payload = f"upgrade:{feature_code}:{user_id}"
+
+    invoice_data = await cryptopay.create_invoice(
+        amount=price_usdt,
+        asset="USDT",
+        description=f"{feature_title} - {feature_description}",
+        payload=payload,
+    )
+
+    if invoice_data:
+        return CryptoPayService.get_pay_url(invoice_data)
+    return None

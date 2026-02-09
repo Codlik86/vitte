@@ -127,6 +127,7 @@ services:
       - BOT_TOKEN=${BOT_TOKEN}
       - DATABASE_URL=${DATABASE_URL}
       - WEBAPP_URL=${WEBAPP_URL}
+      - CRYPTOPAY_TOKEN=${CRYPTOPAY_TOKEN:-}
     depends_on:
       postgres:
         condition: service_healthy
@@ -213,6 +214,7 @@ services:
       - OPENROUTER_API_KEY=${OPENROUTER_API_KEY}
       - QDRANT_URL=http://qdrant:6333
       - BOT_TOKEN=${BOT_TOKEN}
+      - CRYPTOPAY_TOKEN=${CRYPTOPAY_TOKEN:-}
     # Internal only - access via Nginx
     expose:
       - "8000"

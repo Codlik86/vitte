@@ -15,7 +15,9 @@ from datetime import datetime, timedelta, timezone
 from shared.database import get_db, User, Subscription, Purchase, ImageBalance
 from shared.database.services import get_user_by_id
 from shared.utils import get_logger, redis_client
+from shared.services import CryptoPayService
 from sqlalchemy import select
+from app.config import config as app_config
 
 # Константы лимитов для Premium подписки
 PREMIUM_DAILY_IMAGES = 20  # Ежедневная квота фото для Premium
@@ -162,6 +164,9 @@ def get_payment_method_keyboard_ru(plan_id: str) -> InlineKeyboardMarkup:
             InlineKeyboardButton(text="⭐ Telegram Stars", callback_data=f"pay:stars:{plan_id}"),
         ],
         [
+            InlineKeyboardButton(text="₮ CryptoPay USDT", callback_data=f"pay:crypto:{plan_id}"),
+        ],
+        [
             InlineKeyboardButton(text="⬅️ Назад к тарифам", callback_data="sub:back_to_plans"),
         ]
     ])
@@ -190,6 +195,9 @@ def get_payment_method_keyboard_en(plan_id: str) -> InlineKeyboardMarkup:
     return InlineKeyboardMarkup(inline_keyboard=[
         [
             InlineKeyboardButton(text="⭐ Telegram Stars", callback_data=f"pay:stars:{plan_id}"),
+        ],
+        [
+            InlineKeyboardButton(text="₮ CryptoPay USDT", callback_data=f"pay:crypto:{plan_id}"),
         ],
         [
             InlineKeyboardButton(text="⬅️ Back to plans", callback_data="sub:back_to_plans"),
@@ -380,6 +388,88 @@ async def on_pay_with_stars(callback: CallbackQuery, bot: Bot):
     )
 
     logger.info(f"User {user_id} initiated Stars payment for {plan_id}")
+
+
+@router.callback_query(F.data.startswith("pay:crypto:"))
+async def on_pay_with_crypto(callback: CallbackQuery, bot: Bot):
+    """Handle CryptoPay USDT payment - send payment link"""
+    await callback.answer()
+
+    # Extract plan_id from callback data (pay:crypto:plus_30d -> plus_30d)
+    plan_id = callback.data.replace("pay:crypto:", "")
+    plan = SUBSCRIPTION_PLANS.get(plan_id)
+
+    if not plan:
+        await callback.answer("❌ План не найден", show_alert=True)
+        return
+
+    user_id = callback.from_user.id
+    lang = await get_user_language(user_id)
+
+    if not app_config.cryptopay_token:
+        error_text = "❌ CryptoPay временно недоступен" if lang == "ru" else "❌ CryptoPay temporarily unavailable"
+        await callback.message.answer(error_text)
+        return
+
+    cryptopay = CryptoPayService(app_config.cryptopay_token)
+
+    # Convert Stars to USDT
+    price_usdt = CryptoPayService.convert_stars_to_usdt(plan["price_stars"])
+
+    # Create CryptoPay invoice
+    plan_name = plan["name_ru"] if lang == "ru" else plan["name_en"]
+
+    title = f"💎 CraveMe Premium - {plan_name}"
+    description = (
+        f"Подписка на {plan['days']} дней: безлимитные сообщения, 20 изображений в день"
+        if lang == "ru" else
+        f"{plan['days']}-day subscription: unlimited messages, 20 images per day"
+    )
+
+    payload = f"sub:{plan_id}:{user_id}"
+
+    invoice_data = await cryptopay.create_invoice(
+        amount=price_usdt,
+        asset="USDT",
+        description=description,
+        payload=payload,
+    )
+
+    if not invoice_data:
+        error_text = "❌ Не удалось создать счёт. Попробуйте позже." if lang == "ru" else "❌ Failed to create invoice. Try again later."
+        await callback.message.answer(error_text)
+        return
+
+    pay_url = CryptoPayService.get_pay_url(invoice_data)
+
+    if not pay_url:
+        error_text = "❌ Ошибка получения ссылки на оплату" if lang == "ru" else "❌ Failed to get payment link"
+        await callback.message.answer(error_text)
+        return
+
+    # Send payment link
+    pay_text = (
+        f"💳 <b>Оплата через CryptoPay</b>\n\n"
+        f"Тариф: <b>{plan_name}</b>\n"
+        f"Сумма: <b>{price_usdt} USDT</b>\n\n"
+        f"Нажми на кнопку ниже для оплаты:"
+        if lang == "ru" else
+        f"💳 <b>Payment via CryptoPay</b>\n\n"
+        f"Plan: <b>{plan_name}</b>\n"
+        f"Amount: <b>{price_usdt} USDT</b>\n\n"
+        f"Click the button below to pay:"
+    )
+
+    pay_button_text = "💳 Оплатить USDT" if lang == "ru" else "💳 Pay USDT"
+    menu_button_text = "🏠 Главное меню" if lang == "ru" else "🏠 Main Menu"
+
+    keyboard = InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text=pay_button_text, url=pay_url)],
+        [InlineKeyboardButton(text=menu_button_text, callback_data="sub:back_to_menu")]
+    ])
+
+    await callback.message.answer(pay_text, reply_markup=keyboard, parse_mode="HTML")
+    logger.info(f"User {user_id} initiated CryptoPay payment for {plan_id} ({price_usdt} USDT)")
 
 
 @router.pre_checkout_query()

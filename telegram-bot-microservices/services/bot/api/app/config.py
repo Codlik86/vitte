@@ -16,6 +16,9 @@ class APIConfig(BaseSettings):
     # Bot token for invoice creation
     bot_token: str = os.getenv("BOT_TOKEN", "")
 
+    # CryptoPay token
+    cryptopay_token: str = os.getenv("CRYPTOPAY_TOKEN", "")
+
     # Database
     database_url: str = os.getenv("DATABASE_URL", "postgresql+asyncpg://vitte_user:password@postgres:5432/vitte_bot")
     

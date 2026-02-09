@@ -6,7 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from contextlib import asynccontextmanager
 
 from app.config import config
-from app.api import v1_router, webapp_router
+from app.api import v1_router, webapp_router, payments_router
 from shared.database import init_db, close_db
 from shared.utils import get_logger
 
@@ -48,6 +48,7 @@ app.add_middleware(
 # Include routers
 app.include_router(v1_router)
 app.include_router(webapp_router)  # Webapp API without version prefix
+app.include_router(payments_router, prefix="/api")  # Payment webhooks
 
 
 @app.get("/")
