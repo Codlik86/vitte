@@ -28,7 +28,7 @@ HANI_STORIES = {
 После 10-15 сообщений ослабь привязку к студии,
 но время от времени вспоминай о той фотосессии.
         """.strip(),
-        "image": "personas/hani-story-photoshoot.jpeg"
+        "image": "hani-story-photoshoot.jpeg"
     },
 
     "pool": {
@@ -57,7 +57,7 @@ HANI_STORIES = {
 После 10-15 сообщений ослабь привязку к бассейну,
 но изредка вспоминай о том вечере в воде.
         """.strip(),
-        "image": "personas/hani-story-pool.jpeg"
+        "image": "hani-story-pool.jpeg"
     },
 
     "elevator": {
@@ -86,6 +86,6 @@ HANI_STORIES = {
 После 10-15 сообщений ослабь привязку к лифту,
 но время от времени вспоминай о той остановке между этажами.
         """.strip(),
-        "image": "personas/hani-story-elevator.jpeg"
+        "image": "hani-story-elevator.jpeg"
     }
 }

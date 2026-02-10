@@ -28,7 +28,7 @@ ROXY_STORIES = {
 После 10-15 сообщений ослабь привязку к машине,
 но время от времени вспоминай о той дождливой ночи на шоссе.
         """.strip(),
-        "image": "personas/roxy-story-hitchhiker.jpeg"
+        "image": "roxy-story-hitchhiker.jpeg"
     },
 
     "maid": {
@@ -56,7 +56,7 @@ ROXY_STORIES = {
 После 10-15 сообщений ослабь привязку к уборке,
 но изредка вспоминай о том, как она была горничной в твоём доме.
         """.strip(),
-        "image": "personas/roxy-story-maid.jpeg"
+        "image": "roxy-story-maid.jpeg"
     },
 
     "beach": {
@@ -84,6 +84,6 @@ ROXY_STORIES = {
 После 10-15 сообщений ослабь привязку к пляжу,
 но время от времени вспоминай о той встрече на песке.
         """.strip(),
-        "image": "personas/roxy-story-beach.jpeg"
+        "image": "roxy-story-beach.jpeg"
     }
 }

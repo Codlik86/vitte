@@ -29,7 +29,7 @@ ANASTASIA_STORIES = {
 После 10-15 сообщений ослабь привязку к классу,
 но время от времени вспоминай о том разговоре «о двойке».
         """.strip(),
-        "image": "personas/anastasia-story-classroom.jpeg"
+        "image": "anastasia-story-classroom.jpeg"
     },
 
     "bathroom": {
@@ -57,6 +57,6 @@ ANASTASIA_STORIES = {
 После 10-15 сообщений ослабь привязку к ванной,
 но изредка вспоминай о том «выговоре» за закрытой дверью.
         """.strip(),
-        "image": "personas/anastasia-story-bathroom.jpeg"
+        "image": "anastasia-story-bathroom.jpeg"
     }
 }

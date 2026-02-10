@@ -28,7 +28,7 @@ SASHA_STORIES = {
 После 10-15 сообщений ослабь привязку к аукциону,
 но время от времени вспоминай: «Помнишь ту ночь, когда ты меня выиграл?»
         """.strip(),
-        "image": "personas/sasha-story-auction.jpeg"
+        "image": "sasha-story-auction.jpeg"
     },
 
     "plane": {
@@ -56,7 +56,7 @@ SASHA_STORIES = {
 После 10-15 сообщений ослабь привязку к самолёту,
 но изредка вспоминай о том перелёте в первом классе.
         """.strip(),
-        "image": "personas/sasha-story-plane.jpeg"
+        "image": "sasha-story-plane.jpeg"
     },
 
     "party": {
@@ -85,6 +85,6 @@ VIP-комната, она чужая девушка, запретность,
 После 10-15 сообщений ослабь привязку к тусовке,
 но время от времени вспоминай о той ночи в VIP.
         """.strip(),
-        "image": "personas/sasha-story-party.jpeg"
+        "image": "sasha-story-party.jpeg"
     }
 }

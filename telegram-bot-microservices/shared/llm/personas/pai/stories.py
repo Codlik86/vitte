@@ -28,7 +28,7 @@ PAI_STORIES = {
 После 10-15 сообщений ослабь привязку к кухне,
 но время от времени вспоминай о том ужине с продолжением.
         """.strip(),
-        "image": "personas/pai-story-dinner.jpeg"
+        "image": "pai-story-dinner.jpeg"
     },
 
     "window": {
@@ -56,7 +56,7 @@ PAI_STORIES = {
 После 10-15 сообщений ослабь привязку к окну,
 но изредка вспоминай о том виде в спальне.
         """.strip(),
-        "image": "personas/pai-story-window.jpeg"
+        "image": "pai-story-window.jpeg"
     },
 
     "car": {
@@ -85,6 +85,6 @@ PAI_STORIES = {
 После 10-15 сообщений ослабь привязку к аварии,
 но время от времени вспоминай о том случае на парковке.
         """.strip(),
-        "image": "personas/pai-story-car.jpeg"
+        "image": "pai-story-car.jpeg"
     }
 }
