@@ -55,6 +55,7 @@ class ComfyUIClient:
     ) -> Dict[str, Any]:
         """
         Modify workflow with custom prompt and seed.
+        Also injects CacheDiT Accelerator node for faster generation.
 
         Args:
             workflow: Base workflow dict
@@ -84,6 +85,58 @@ class ComfyUIClient:
             if node_data.get("class_type") == "KSampler":
                 workflow[node_id]["inputs"]["seed"] = seed
                 logger.debug(f"Updated seed to {seed} in node {node_id}")
+
+        # Inject CacheDiT Accelerator between model source and KSampler
+        workflow = self._inject_cachedit(workflow)
+
+        return workflow
+
+    def _inject_cachedit(self, workflow: Dict[str, Any]) -> Dict[str, Any]:
+        """
+        Inject CacheDiT_Model_Optimizer node between the model source and KSampler.
+        This gives ~1.5x speedup for Z-Image Turbo.
+        """
+        # Find KSampler node
+        ksampler_id = None
+        for node_id, node_data in workflow.items():
+            if node_data.get("class_type") == "KSampler":
+                ksampler_id = node_id
+                break
+
+        if not ksampler_id:
+            logger.warning("CacheDiT: KSampler not found, skipping injection")
+            return workflow
+
+        # Get model source from KSampler (e.g. ["13", 0] = LoraLoader output)
+        model_source = workflow[ksampler_id]["inputs"].get("model")
+        if not model_source:
+            logger.warning("CacheDiT: KSampler has no model input, skipping")
+            return workflow
+
+        # Pick a unique node ID that doesn't conflict
+        existing_ids = set(int(k) for k in workflow.keys() if k.isdigit())
+        cachedit_id = str(max(existing_ids) + 1) if existing_ids else "100"
+
+        # Add CacheDiT node
+        workflow[cachedit_id] = {
+            "inputs": {
+                "model": model_source,  # Takes model from where KSampler was getting it
+                "enable": True,
+                "model_type": "Auto",
+                "warmup_steps": 0,
+                "skip_interval": 0,
+                "print_summary": True,
+            },
+            "class_type": "CacheDiT_Model_Optimizer",
+            "_meta": {
+                "title": "⚡ CacheDiT Accelerator"
+            }
+        }
+
+        # Redirect KSampler model input to CacheDiT output
+        workflow[ksampler_id]["inputs"]["model"] = [cachedit_id, 0]
+
+        logger.info(f"CacheDiT: injected node {cachedit_id} between {model_source[0]} and KSampler {ksampler_id}")
 
         return workflow
 
