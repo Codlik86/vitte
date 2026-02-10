@@ -100,6 +100,76 @@ STORY_SCENE_MAP: Dict[str, Dict[str, str]] = {
 }
 
 
+# Seeds extracted from original story cover images (ComfyUI KSampler)
+# Using story seed keeps generated images visually close to the cover
+STORY_SEED_MAP: Dict[str, Dict[str, int]] = {
+    "lina": {
+        "sauna_support": 656755850281819,
+        "shower_flirt": 112315912076405,
+        "gym_late": 85003959885866,
+        "competition_prep": 192108570398182,
+    },
+    "marianna": {
+        "support": 105221863419341,
+        "cozy": 1106517916080220,
+        "flirt": 994846394465755,
+        "serious": 998993951784854,
+    },
+    "mei": {
+        "mall_bench": 861005257413862,
+        "car_ride": 40464755444875,
+        "home_visit": 34558265822501,
+        "regular_visits": 217474263031081,
+    },
+    "taya": {
+        "bar": 314029085449603,
+        "gaming": 355937291397089,
+        "friend": 1104607118420134,
+        "office": 452099311126967,
+    },
+    "julie": {
+        "home_tutor": 644758794086270,
+        "teacher_punishment": 945644158643537,
+        "bus_fun": 540285820336111,
+    },
+    "ash": {
+        "living_room": 841674637352483,
+        "bedroom": 1102831278917405,
+    },
+    "anastasia": {
+        "classroom": 109031112687797,
+        "bathroom": 275706753580744,
+    },
+    "sasha": {
+        "auction": 595699482374484,
+        "plane": 884921992830667,
+        "party": 410756799592044,
+    },
+    "roxy": {
+        "hitchhiker": 656570736418155,
+        "maid": 214062548803426,
+        "beach": 1060190116269833,
+    },
+    "pai": {
+        "dinner": 205179185577168,
+        "window": 705722453588220,
+        "car": 965140167639980,
+    },
+    "hani": {
+        "photoshoot": 113666949531807,
+        "pool": 741201838605907,
+        "elevator": 442941847325952,
+    },
+}
+
+
+def get_story_seed(persona_key: str, story_key: Optional[str]) -> Optional[int]:
+    """Get the original cover seed for a story. Returns None if not found."""
+    if not story_key:
+        return None
+    return STORY_SEED_MAP.get(persona_key, {}).get(story_key)
+
+
 SYSTEM_PROMPT = """You are an image prompt generator for Z-Image Turbo AI model.
 
 Your task: generate a short English image description (40-60 words) based on the dialog context.
@@ -200,6 +270,8 @@ def assemble_final_prompt(persona_key: str, llm_output: str) -> str:
 __all__ = [
     "PERSONA_TRIGGER_WORDS",
     "STORY_SCENE_MAP",
+    "STORY_SEED_MAP",
+    "get_story_seed",
     "build_image_prompt_messages",
     "assemble_final_prompt",
 ]

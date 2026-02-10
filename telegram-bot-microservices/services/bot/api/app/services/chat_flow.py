@@ -37,6 +37,7 @@ from celery.result import AsyncResult
 from shared.llm.services.image_prompt_builder import (
     build_image_prompt_messages,
     assemble_final_prompt,
+    get_story_seed,
 )
 
 from .llm_client import llm_client
@@ -547,9 +548,11 @@ class ChatFlow:
                         comfy_prompt = f"{tw}, a beautiful woman, soft lighting, realistic photography" if tw else "a beautiful woman, soft lighting, realistic photography"
 
                     # Step 2: Start ComfyUI generation with the LLM-generated prompt
+                    # Use story cover seed for visual consistency with the cover image
+                    story_seed = get_story_seed(persona.key, story_id or dialog.story_id)
                     image_celery_task = celery_app.send_task(
                         'image_generator.generate_image',
-                        args=[persona.key, comfy_prompt, None],
+                        args=[persona.key, comfy_prompt, story_seed],
                         queue='image_generation',
                     )
                     dialog.last_image_generation_at = current_count
