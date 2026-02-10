@@ -279,10 +279,14 @@ async def handle_text_message(message: Message):
                 pass
 
             if photo_file:
-                try:
-                    await message.answer_photo(photo=photo_file)
-                except Exception as e:
-                    logger.error(f"Failed to send photo: {e}")
+                for attempt in range(3):
+                    try:
+                        await message.answer_photo(photo=photo_file)
+                        break
+                    except Exception as e:
+                        logger.error(f"Failed to send photo (attempt {attempt+1}/3): {e}")
+                        if attempt < 2:
+                            await asyncio.sleep(2)
 
             try:
                 await message.answer(

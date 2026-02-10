@@ -588,10 +588,10 @@ class ChatFlow:
         # 11.5. Wait for ComfyUI image generation result (up to 25 sec)
         if image_celery_task:
             try:
-                debug_logger.warning(f"IMG: LLM done, waiting for ComfyUI task_id={image_celery_task.id} (max 35s)")
+                debug_logger.warning(f"IMG: LLM done, waiting for ComfyUI task_id={image_celery_task.id} (max 90s)")
                 async_result = AsyncResult(image_celery_task.id, app=celery_app)
                 result_data = await asyncio.to_thread(
-                    async_result.get, timeout=35, propagate=False
+                    async_result.get, timeout=90, propagate=False
                 )
                 if result_data and isinstance(result_data, dict) and result_data.get('success'):
                     image_url = result_data.get('image_url')
