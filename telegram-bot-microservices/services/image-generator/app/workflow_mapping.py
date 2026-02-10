@@ -10,13 +10,18 @@ from app.config import config
 # Persona key → Workflow filename mapping
 PERSONA_WORKFLOW_MAP: Dict[str, str] = {
     "lina": "LINA_PROD_MVP.json",
-    "marianna": "MARRIANA_PROD_MVP.json",  # Note: typo in filename (MARRIANA vs MARIANNA)
-    "mei": "MAY_PROD_MVP.json",  # Note: different name (MAY vs MEI)
-    "stacey": "STACY_PROD_MVP.json",  # Note: missing 'e' (STACY vs STACEY)
-    "yuna": "UNA_PROD_MVP.json",  # Note: missing 'Y' (UNA vs YUNA)
+    "marianna": "MARRIANA_PROD_MVP.json",
+    "mei": "MAY_PROD_MVP.json",
+    "stacey": "STACY_PROD_MVP.json",
+    "yuna": "UNA_PROD_MVP.json",
     "taya": "TAYA_PROD_MVP.json",
     "julie": "JULIE_PROD_MVP.json",
     "ash": "ASH_PROD_MVP.json",
+    "anastasia": "ANASTASYA_PROD_MVP.json",
+    "sasha": "SASHA_PROD_MVP.json",
+    "roxy": "ROX_PROD_MVP.json",
+    "pai": "PAY_PROD_MVP.json",
+    "hani": "HOONEY_PROD_MVP.json",
 }
 
 
@@ -30,6 +35,11 @@ PERSONA_TRIGGER_MAP: Dict[str, str] = {
     "mei": "asig2",
     "ash": "brit-woman",
     "julie": "elvaross",
+    "anastasia": "",
+    "sasha": "eurameg1",
+    "roxy": "Chase Infinity, African American, young woman",
+    "pai": "DENISE",
+    "hani": "l34n0r, chubby woman",
 }
 
 
