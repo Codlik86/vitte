@@ -40,7 +40,7 @@ PERSONA_TRIGGER_WORDS: Dict[str, str] = {
 STORY_SCENE_MAP: Dict[str, Dict[str, str]] = {
     "lina": {
         "sauna_support": "in a sauna after workout, steam and warm lighting, towels, relaxed atmosphere",
-        "shower_flirt": "near shower area after swimming pool, wet hair, towel wrapped, water drops",
+        "shower_flirt": "near shower area after swimming pool, towel wrapped, warm humid atmosphere",
         "gym_late": "in a gym late at night, dim lighting, workout equipment, empty gym, energetic mood",
         "competition_prep": "personal training session in gym, sporty outfit, exercise equipment, motivational atmosphere",
     },
@@ -75,7 +75,7 @@ STORY_SCENE_MAP: Dict[str, Dict[str, str]] = {
     },
     "anastasia": {
         "classroom": "in an empty classroom after school, teacher's desk, strict suit, tight skirt, glasses, pointer on desk, confrontational atmosphere",
-        "bathroom": "in a bathroom, locked door, steamy mirror, strict teacher without underwear, challenging look over glasses",
+        "bathroom": "in a bathroom, steamy mirror, strict teacher look, glasses, challenging expression, intimate setting",
     },
     "sasha": {
         "auction": "at a luxury auction event, elegant dress, confident smile, VIP setting, glamorous atmosphere, stage lighting",
@@ -83,18 +83,18 @@ STORY_SCENE_MAP: Dict[str, Dict[str, str]] = {
         "party": "in a VIP room at a party, dim lights, loud music behind the door, forbidden flirt, glamorous outfit",
     },
     "roxy": {
-        "hitchhiker": "on a rainy highway at night, wet clothes clinging to body, inside a car, foggy windows, provocative atmosphere",
-        "maid": "in a house wearing short maid outfit, bending over, no underwear, domestic setting, forbidden flirt",
-        "beach": "on a deserted beach, sunny day, dark skin glistening, lying on sand, bold and confident",
+        "hitchhiker": "on a rainy highway at night, standing near a car, foggy windows, wet atmosphere, provocative mood",
+        "maid": "in a house wearing short maid outfit, standing in doorway, domestic setting, playful atmosphere",
+        "beach": "on a deserted sunny beach, standing confidently on the sand, warm natural light, bold expression",
     },
     "pai": {
-        "dinner": "in a kitchen wearing only an apron, cooking, curvy body visible from behind, cozy home, warm lighting",
-        "window": "in a bedroom near a window, curvy figure silhouetted, soft light, provocative pose from behind",
+        "dinner": "in a kitchen wearing an apron, standing by the counter, cozy home, warm lighting",
+        "window": "in a bedroom near a window, soft light, silhouette, calm and intimate atmosphere",
         "car": "at a parking lot near a car, tight dress, curvy figure, playful negotiation atmosphere",
     },
     "hani": {
-        "photoshoot": "in a photo studio, soft professional lighting, lingerie model, curvy plus-size body, changing outfits",
-        "pool": "in a luxury hotel pool, evening, bright bikini, curvy wet body, water drops, warm pool lighting",
+        "photoshoot": "in a photo studio, soft professional lighting, lingerie, posing confidently, studio backdrop",
+        "pool": "in a luxury hotel pool area, evening, bright bikini, standing by the poolside, warm lighting",
         "elevator": "in a hotel elevator, lace stockings, dress, close space, stopped between floors, intimate tension",
     },
 }
@@ -261,7 +261,7 @@ def assemble_final_prompt(persona_key: str, llm_output: str) -> str:
         description = description[1:-1].strip()
 
     # Append anatomy/quality tags to reduce artifacts
-    quality_suffix = "perfect anatomy, correct hands, five fingers, photorealistic"
+    quality_suffix = "photorealistic, sharp focus, high quality, natural proportions"
 
     if trigger_word:
         return f"{trigger_word}, {description}, {quality_suffix}"
