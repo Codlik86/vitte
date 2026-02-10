@@ -11,6 +11,7 @@ from typing import Optional
 from app.config import config
 
 logger = logging.getLogger(__name__)
+debug_logger = logging.getLogger("uvicorn.error")
 
 
 class LLMClient:
@@ -68,8 +69,8 @@ class LLMClient:
                 )
 
                 if response.status_code != 200:
-                    logger.error(
-                        f"LLM Gateway error: {response.status_code} - {response.text}"
+                    debug_logger.warning(
+                        f"LLM Gateway error: {response.status_code} - {response.text[:500]}"
                     )
                     return None
 
@@ -77,19 +78,22 @@ class LLMClient:
                 choices = data.get("choices", [])
 
                 if not choices:
-                    logger.error("LLM Gateway returned empty choices")
+                    debug_logger.warning(f"LLM Gateway returned empty choices. Response: {data}")
                     return None
 
-                return choices[0].get("message", {}).get("content")
+                content = choices[0].get("message", {}).get("content")
+                if not content:
+                    debug_logger.warning(f"LLM Gateway returned empty content. Choices: {choices}")
+                return content
 
         except httpx.TimeoutException:
-            logger.error("LLM Gateway request timed out")
+            debug_logger.warning("LLM Gateway request timed out")
             return None
         except httpx.RequestError as e:
-            logger.error(f"LLM Gateway request error: {e}")
+            debug_logger.warning(f"LLM Gateway request error: {e}")
             return None
         except Exception as e:
-            logger.error(f"Unexpected error calling LLM Gateway: {e}")
+            debug_logger.warning(f"Unexpected error calling LLM Gateway: {e}")
             return None
 
     async def health_check(self) -> bool:

@@ -177,14 +177,16 @@ Your task: generate a short English image description (40-60 words) based on the
 RULES:
 1. Output ONLY the image description, nothing else. No explanations, no quotes, no prefixes.
 2. Write in natural descriptive English, like describing a real photograph.
-3. Describe: the woman's pose, expression, clothing/state, action, setting details, lighting, mood.
-4. Capture the emotional atmosphere and actions from the conversation.
+3. Describe: the woman's pose, expression, clothing/state, setting details, lighting, mood.
+4. Capture the emotional atmosphere from the conversation.
 5. NSFW/nudity: ONLY describe nudity or explicit body parts if the dialog has clear sexual context (undressing, sex, explicit flirt). If the conversation is casual or just flirty — keep her clothed or in lingerie.
 6. Always describe as a single scene with one woman.
 7. Use photography terms: shallow depth of field, soft lighting, close-up, etc.
 8. NEVER include the trigger word — it will be added separately.
 9. NEVER output anything except the image description itself.
-10. NEVER describe hands, fingers or feet in detail. Prefer close-up face/bust shots, or medium shots where hands are not visible or out of frame."""
+10. Prefer STATIC, calm poses — standing, sitting, leaning, lying. Avoid dynamic actions like running, dancing, reaching, grabbing.
+11. NEVER describe fingers, hands or feet in detail. Do NOT mention hand interactions with objects (holding glass, touching hair, etc). Hands can be visible but should not be the focus.
+12. Focus on: face, eyes, expression, body posture, clothing, atmosphere, lighting."""
 
 
 def build_image_prompt_messages(
