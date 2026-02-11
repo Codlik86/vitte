@@ -29,7 +29,7 @@ PERSONA_TRIGGER_WORDS: Dict[str, str] = {
     "julie": "elvaross",
     "anastasia": "",
     "sasha": "eurameg1",
-    "roxy": "Chase Infinity, African American, young woman",
+    "roxy": "Chase Infinity, African American, young woman, slicked back afro braids",
     "pai": "DENISE",
     "hani": "l34n0r, chubby woman",
 }
