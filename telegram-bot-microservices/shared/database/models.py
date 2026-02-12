@@ -145,6 +145,7 @@ class Dialog(Base):
     # Stats
     message_count = Column(Integer, default=0)
     last_image_generation_at = Column(Integer, nullable=True)  # Message count when last image was generated
+    greeting_image_index = Column(Integer, default=0)  # Cyclic index for greeting images pool
 
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())

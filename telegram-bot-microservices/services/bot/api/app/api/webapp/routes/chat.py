@@ -142,13 +142,31 @@ async def get_greeting(
 
     # Send to Telegram if requested
     if result.success and result.response and request.send_to_telegram:
+        from shared.database import Dialog
         persona = await db.get(Persona, request.persona_id)
         persona_name = persona.name if persona else "Персонаж"
+        persona_key = persona.key if persona else None
+        story_key = request.story_id
+
+        # Get greeting image index from dialog
+        greeting_image_index = 0
+        dialog = await db.get(Dialog, result.dialog_id) if result.dialog_id else None
+        if dialog:
+            greeting_image_index = dialog.greeting_image_index or 0
+
         await send_greeting(
             chat_id=request.telegram_id,
             persona_name=persona_name,
             greeting_text=result.response,
+            persona_key=persona_key,
+            story_key=story_key or (dialog.story_id if dialog else None),
+            greeting_image_index=greeting_image_index,
         )
+
+        # Increment greeting image index
+        if dialog:
+            dialog.greeting_image_index = (greeting_image_index + 1)
+            await db.commit()
 
     return GreetingResponse(
         success=result.success,

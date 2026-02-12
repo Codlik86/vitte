@@ -158,31 +158,86 @@ async def send_photo(
         return False
 
 
+async def send_photo_bytes(
+    chat_id: int,
+    photo_bytes: bytes,
+    caption: Optional[str] = None,
+    parse_mode: str = "HTML",
+    filename: str = "photo.png",
+) -> bool:
+    """Send photo as bytes (multipart upload) to Telegram."""
+    if not config.bot_token:
+        return False
+
+    data = {
+        "chat_id": str(chat_id),
+        "parse_mode": parse_mode,
+    }
+    if caption:
+        data["caption"] = caption
+
+    files = {"photo": (filename, photo_bytes, "image/png")}
+
+    try:
+        async with httpx.AsyncClient() as client:
+            response = await client.post(
+                f"{TELEGRAM_API_URL}/sendPhoto",
+                data=data,
+                files=files,
+                timeout=15.0,
+            )
+            result = response.json()
+            if result.get("ok"):
+                logger.info(f"Sent photo bytes to {chat_id}")
+                return True
+            else:
+                logger.error(f"Failed to send photo bytes: {result.get('description')}")
+                return False
+    except Exception as e:
+        logger.error(f"Error sending photo bytes: {e}")
+        return False
+
+
 async def send_greeting(
     chat_id: int,
     persona_name: str,
     greeting_text: str,
-    image_url: Optional[str] = None,
+    persona_key: Optional[str] = None,
+    story_key: Optional[str] = None,
+    greeting_image_index: int = 0,
 ) -> bool:
     """
     Send greeting message from persona to user with image.
-
-    Args:
-        chat_id: Telegram user ID
-        persona_name: Name of the persona
-        greeting_text: Generated greeting text
-        image_url: Optional custom image URL (defaults to universal_pic)
-
-    Returns:
-        True if sent successfully
+    Uses cycling images from MinIO pool when persona_key and story_key are provided.
     """
-    # Format caption with persona context
+    from shared.llm.services.greeting_images import get_greeting_image_url
+
+    # Try to get image from greeting pool
+    photo_sent = False
+    if persona_key and story_key:
+        minio_url = get_greeting_image_url(persona_key, story_key, greeting_image_index)
+        if minio_url:
+            try:
+                async with httpx.AsyncClient() as client:
+                    img_resp = await client.get(minio_url, timeout=10.0)
+                    if img_resp.status_code == 200:
+                        # Send photo first, then text separately
+                        photo_sent = await send_photo_bytes(chat_id, img_resp.content)
+                    else:
+                        logger.error(f"Failed to download greeting image: HTTP {img_resp.status_code} from {minio_url}")
+            except Exception as e:
+                logger.error(f"Error downloading greeting image: {e}")
+
+    # Send text message (always)
     caption = f"💬 <b>{persona_name}</b>\n\n{greeting_text}"
 
-    # Use default image if not specified
-    photo_url = image_url or DEFAULT_GREETING_IMAGE
+    if not photo_sent:
+        # Fallback: send with default image URL
+        return await send_photo(chat_id, DEFAULT_GREETING_IMAGE, caption)
 
-    return await send_photo(chat_id, photo_url, caption)
+    # Photo already sent, send text separately
+    await send_message(chat_id, caption)
+    return True
 
 
 async def send_chat_action(
