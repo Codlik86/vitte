@@ -31,6 +31,7 @@ class ChatResult:
     is_safety_block: bool = False
     message_count: int = 0
     image_url: Optional[str] = None  # URL сгенерированного изображения
+    no_image_quota: bool = False  # True when image was due but user has no quota
 
 
 async def generate_greeting(
@@ -147,6 +148,7 @@ async def send_chat_message(
                     is_safety_block=result.get("is_safety_block", False),
                     message_count=result.get("message_count", 0),
                     image_url=result.get("image_url"),  # Parse image URL from API
+                    no_image_quota=result.get("no_image_quota", False),
                 )
             else:
                 logger.error(f"Chat API error {response.status_code}: {response.text}")

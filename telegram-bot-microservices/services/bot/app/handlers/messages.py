@@ -313,6 +313,22 @@ async def handle_text_message(message: Message):
 
             logger.info(f"User {user_id} got response from {persona_name} (dialog {result.dialog_id})")
 
+        # Notify user if image was due but no quota
+        if result.no_image_quota:
+            try:
+                if lang == "ru":
+                    no_quota_text = "🖼 На вашем балансе нет изображений"
+                    buy_btn_text = "🛍 Купить изображения"
+                else:
+                    no_quota_text = "🖼 You have no images on your balance"
+                    buy_btn_text = "🛍 Buy Images"
+                no_quota_kb = InlineKeyboardMarkup(inline_keyboard=[
+                    [InlineKeyboardButton(text=buy_btn_text, callback_data="shop:images")]
+                ])
+                await message.answer(no_quota_text, reply_markup=no_quota_kb)
+            except Exception as e:
+                logger.warning(f"Failed to send no-quota notification: {e}")
+
     elif result.is_safety_block:
         safety_text = SAFETY_BLOCK_RU if lang == "ru" else SAFETY_BLOCK_EN
         await placeholder.edit_text(safety_text, parse_mode="HTML")

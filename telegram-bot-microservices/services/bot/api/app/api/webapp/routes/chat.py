@@ -37,6 +37,7 @@ class ChatResponse(BaseModel):
     is_safety_block: bool = False
     message_count: int = 0
     image_url: Optional[str] = None
+    no_image_quota: bool = False
 
 
 class GreetingRequest(BaseModel):
@@ -106,6 +107,7 @@ async def send_message(
         is_safety_block=result.is_safety_block,
         message_count=result.message_count,
         image_url=result.image_url,
+        no_image_quota=result.no_image_quota,
     )
 
 

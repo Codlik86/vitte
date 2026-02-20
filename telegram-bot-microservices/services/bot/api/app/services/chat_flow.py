@@ -70,6 +70,7 @@ class ChatResult:
     is_safety_block: bool = False
     message_count: int = 0
     image_url: Optional[str] = None  # URL сгенерированного изображения
+    no_image_quota: bool = False  # True when image was due but user has no quota
 
 
 def _remove_duplicate_sentences(text: str) -> str:
@@ -506,6 +507,7 @@ class ChatFlow:
         image_url = None
         image_celery_task = None  # Celery task object if we triggered ComfyUI
         sex_image_from_pool = False  # Flag: image came from sex pool (no quota deduction)
+        no_quota_flag = False  # Flag: image was due but user has no quota
         try:
             service = ImageGenerationService(celery_app)
             current_count = (dialog.message_count or 0) + 2
@@ -604,6 +606,8 @@ class ChatFlow:
                         dialog.last_image_generation_at = current_count
                         debug_logger.warning(f"IMG: started parallel generation task_id={image_celery_task.id}")
                     else:
+                        sex_image_from_pool = False  # ensure no pool flag
+                        no_quota_flag = True
                         debug_logger.warning(f"IMG: skipped - no image quota remaining")
         except Exception as e:
             debug_logger.warning(f"IMG ERROR (trigger): {e}", exc_info=True)
@@ -682,6 +686,7 @@ class ChatFlow:
             dialog_id=dialog.id,
             image_url=image_url,  # Include generated image URL
             message_count=dialog.message_count or 0,
+            no_image_quota=no_quota_flag,
         )
 
     async def generate_greeting(
