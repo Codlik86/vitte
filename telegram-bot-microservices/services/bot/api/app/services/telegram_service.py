@@ -209,24 +209,45 @@ async def send_greeting(
     """
     Send greeting message from persona to user with image.
     Uses cycling images from MinIO pool when persona_key and story_key are provided.
+    Index is managed via Redis (persistent across dialog deletions).
     """
     from shared.llm.services.greeting_images import get_greeting_image_url
+    import redis.asyncio as aioredis
 
-    # Try to get image from greeting pool
+    debug_logger = logging.getLogger('uvicorn.error')
+
+    # Get greeting image index from Redis (persists across dialog re-creations)
     photo_sent = False
     if persona_key and story_key:
+        try:
+            r = aioredis.from_url(config.redis_url)
+            redis_key = f"greeting_idx:{chat_id}:{persona_key}:{story_key}"
+            # Get current index, then increment for next time
+            current_idx = await r.get(redis_key)
+            if current_idx is not None:
+                greeting_image_index = int(current_idx)
+            # else: use 0 (first time)
+            await r.incr(redis_key)
+            await r.close()
+        except Exception as e:
+            debug_logger.warning(f"GREETING: Redis error getting index: {e}")
+
         minio_url = get_greeting_image_url(persona_key, story_key, greeting_image_index)
+        debug_logger.warning(f"GREETING: persona={persona_key}, story={story_key}, index={greeting_image_index}, url={minio_url}")
+
         if minio_url:
             try:
                 async with httpx.AsyncClient() as client:
                     img_resp = await client.get(minio_url, timeout=10.0)
                     if img_resp.status_code == 200:
-                        # Send photo first, then text separately
                         photo_sent = await send_photo_bytes(chat_id, img_resp.content)
+                        debug_logger.warning(f"GREETING: photo sent OK, size={len(img_resp.content)}")
                     else:
-                        logger.error(f"Failed to download greeting image: HTTP {img_resp.status_code} from {minio_url}")
+                        debug_logger.warning(f"GREETING: download failed HTTP {img_resp.status_code} from {minio_url}")
             except Exception as e:
-                logger.error(f"Error downloading greeting image: {e}")
+                debug_logger.warning(f"GREETING: download error: {e}")
+    else:
+        debug_logger.warning(f"GREETING: no persona_key={persona_key} or story_key={story_key}, skipping pool")
 
     # Send text message (always)
     caption = f"💬 <b>{persona_name}</b>\n\n{greeting_text}"
