@@ -1,0 +1,482 @@
+{
+  "1": {
+    "inputs": {
+      "unet_name": "moodyPornMix_v7.safetensors",
+      "weight_dtype": "default"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "Load Diffusion Model"
+    }
+  },
+  "2": {
+    "inputs": {
+      "clip_name": "qwen_3_4b.safetensors",
+      "type": "lumina2",
+      "device": "default"
+    },
+    "class_type": "CLIPLoader",
+    "_meta": {
+      "title": "Load CLIP"
+    }
+  },
+  "3": {
+    "inputs": {
+      "vae_name": "ae.safetensors"
+    },
+    "class_type": "VAELoader",
+    "_meta": {
+      "title": "Load VAE"
+    }
+  },
+  "4": {
+    "inputs": {
+      "text": "l34n0r, chubby woman, wide angle frontal view of intimate scene on bed, woman in reverse cowgirl position straddling man who lies beneath her, camera positioned low at foot of bed capturing full frontal view, woman sitting upright facing camera with back arched and chest pushed forward, her legs spread wide on either side straddling his hips with knees bent and feet planted on bed, hands resting on his thighs behind her for support, head tilted slightly back looking directly at camera with intense pleasure expression and mouth open, passionate eye contact with viewer showing arousal, long hair cascading down her back and shoulders, her breasts and torso clearly visible in frame, man's body beneath her with only his torso and hips visible with face out of frame, active penetration clearly visible from front angle showing his erect penis entering her vulva, labia spread naturally around shaft during penetration, woman's vulva and inner thighs in clear focus along with her face, both sets of genitalia fully visible and anatomically correct, white rumpled bedding beneath them, modern bedroom interior with soft afternoon light, warm diffused natural lighting from large window creating gentle highlights on her skin and body, photorealistic rendering with subtle film grain texture, anatomically correct bodies with realistic proportions, detailed facial features with natural skin texture showing visible pores, arousal flush on face chest and thighs, realistic genitalia with natural coloration and moisture, erotic intimate adult scene showing full penetration, professional boudoir photography style, balanced depth of field keeping both face and genitalia in sharp focus, 8k ultra high quality, cinematic warm color grading with golden tones, passionate intimate atmosphere, natural body positioning with proper anatomy\n",
+      "clip": [
+        "33",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Prompt)"
+    }
+  },
+  "5": {
+    "inputs": {
+      "text": "",
+      "clip": [
+        "33",
+        1
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Prompt)"
+    }
+  },
+  "6": {
+    "inputs": {
+      "width": 1024,
+      "height": 1024,
+      "batch_size": 1
+    },
+    "class_type": "EmptyLatentImage",
+    "_meta": {
+      "title": "Empty Latent Image"
+    }
+  },
+  "7": {
+    "inputs": {
+      "seed": 193946097441989,
+      "steps": 10,
+      "cfg": 1,
+      "sampler_name": "res_multistep",
+      "scheduler": "sgm_uniform",
+      "denoise": 1,
+      "model": [
+        "33",
+        0
+      ],
+      "positive": [
+        "4",
+        0
+      ],
+      "negative": [
+        "5",
+        0
+      ],
+      "latent_image": [
+        "6",
+        0
+      ]
+    },
+    "class_type": "KSampler",
+    "_meta": {
+      "title": "KSampler"
+    }
+  },
+  "8": {
+    "inputs": {
+      "samples": [
+        "7",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "9": {
+    "inputs": {
+      "filename_prefix": "ComfyUI",
+      "images": [
+        "15",
+        0
+      ]
+    },
+    "class_type": "SaveImage",
+    "_meta": {
+      "title": "Save Image"
+    }
+  },
+  "11": {
+    "inputs": {
+      "guide_size": 512,
+      "guide_size_for": true,
+      "max_size": 1024,
+      "seed": 417388475013263,
+      "steps": 8,
+      "cfg": 1,
+      "sampler_name": "res_multistep",
+      "scheduler": "sgm_uniform",
+      "denoise": 0.15,
+      "feather": 8,
+      "noise_mask": true,
+      "force_inpaint": false,
+      "bbox_threshold": 0.5,
+      "bbox_dilation": 10,
+      "bbox_crop_factor": 2,
+      "sam_detection_hint": "center-1",
+      "sam_dilation": 0,
+      "sam_threshold": 0.93,
+      "sam_bbox_expansion": 0,
+      "sam_mask_hint_threshold": 0.7,
+      "sam_mask_hint_use_negative": "False",
+      "drop_size": 10,
+      "wildcard": "",
+      "cycle": 1,
+      "inpaint_model": false,
+      "noise_mask_feather": 20,
+      "tiled_encode": false,
+      "tiled_decode": false,
+      "image": [
+        "8",
+        0
+      ],
+      "model": [
+        "1",
+        0
+      ],
+      "clip": [
+        "2",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ],
+      "positive": [
+        "4",
+        0
+      ],
+      "negative": [
+        "5",
+        0
+      ],
+      "bbox_detector": [
+        "12",
+        0
+      ],
+      "sam_model_opt": [
+        "13",
+        0
+      ]
+    },
+    "class_type": "FaceDetailer",
+    "_meta": {
+      "title": "FaceDetailer"
+    }
+  },
+  "12": {
+    "inputs": {
+      "model_name": "bbox/face_yolov8m.pt"
+    },
+    "class_type": "UltralyticsDetectorProvider",
+    "_meta": {
+      "title": "UltralyticsDetectorProvider"
+    }
+  },
+  "13": {
+    "inputs": {
+      "model_name": "sam_vit_b_01ec64.pth",
+      "device_mode": "AUTO"
+    },
+    "class_type": "SAMLoader",
+    "_meta": {
+      "title": "SAMLoader (Impact)"
+    }
+  },
+  "14": {
+    "inputs": {
+      "guide_size": 768,
+      "guide_size_for": true,
+      "max_size": 1024,
+      "seed": 469241608092235,
+      "steps": 6,
+      "cfg": 1,
+      "sampler_name": "res_multistep",
+      "scheduler": "sgm_uniform",
+      "denoise": 0.3,
+      "feather": 12,
+      "noise_mask": true,
+      "force_inpaint": false,
+      "wildcard": "",
+      "cycle": 1,
+      "inpaint_model": false,
+      "noise_mask_feather": 20,
+      "tiled_encode": false,
+      "tiled_decode": false,
+      "image": [
+        "11",
+        0
+      ],
+      "segs": [
+        "18",
+        0
+      ],
+      "model": [
+        "1",
+        0
+      ],
+      "clip": [
+        "2",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ],
+      "positive": [
+        "19",
+        0
+      ],
+      "negative": [
+        "20",
+        0
+      ]
+    },
+    "class_type": "DetailerForEach",
+    "_meta": {
+      "title": "Detailer (SEGS)"
+    }
+  },
+  "15": {
+    "inputs": {
+      "guide_size": 768,
+      "guide_size_for": true,
+      "max_size": 1024,
+      "seed": 584888681427008,
+      "steps": 6,
+      "cfg": 1,
+      "sampler_name": "res_multistep",
+      "scheduler": "sgm_uniform",
+      "denoise": 0.3,
+      "feather": 15,
+      "noise_mask": true,
+      "force_inpaint": false,
+      "wildcard": "",
+      "cycle": 1,
+      "inpaint_model": false,
+      "noise_mask_feather": 20,
+      "tiled_encode": false,
+      "tiled_decode": false,
+      "image": [
+        "14",
+        0
+      ],
+      "segs": [
+        "22",
+        0
+      ],
+      "model": [
+        "1",
+        0
+      ],
+      "clip": [
+        "2",
+        0
+      ],
+      "vae": [
+        "3",
+        0
+      ],
+      "positive": [
+        "25",
+        0
+      ],
+      "negative": [
+        "24",
+        0
+      ]
+    },
+    "class_type": "DetailerForEach",
+    "_meta": {
+      "title": "Detailer (SEGS)"
+    }
+  },
+  "16": {
+    "inputs": {
+      "threshold": 0.5,
+      "dilation": 15,
+      "bbox_detector": [
+        "17",
+        0
+      ],
+      "image": [
+        "11",
+        0
+      ]
+    },
+    "class_type": "BboxDetectorCombined_v2",
+    "_meta": {
+      "title": "BBOX Detector (combined)"
+    }
+  },
+  "17": {
+    "inputs": {
+      "model_name": "bbox/CockAndBallYolo8x.pt"
+    },
+    "class_type": "UltralyticsDetectorProvider",
+    "_meta": {
+      "title": "UltralyticsDetectorProvider"
+    }
+  },
+  "18": {
+    "inputs": {
+      "combined": false,
+      "crop_factor": 5,
+      "bbox_fill": false,
+      "drop_size": 10,
+      "contour_fill": false,
+      "mask": [
+        "16",
+        0
+      ]
+    },
+    "class_type": "MaskToSEGS",
+    "_meta": {
+      "title": "MASK to SEGS"
+    }
+  },
+  "19": {
+    "inputs": {
+      "text": "anatomically correct erect penis with natural circumcised appearance, realistic shaft with visible veins and natural skin texture, properly proportioned glans with natural pink-red coloration, smooth transition from shaft to body, realistic scrotal anatomy, natural male pubic hair, correct angle during penetration from below in cowgirl position, photorealistic male genitalia with proper lighting and shadows\n",
+      "clip": [
+        "2",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Prompt)"
+    }
+  },
+  "20": {
+    "inputs": {
+      "text": "",
+      "clip": [
+        "2",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Prompt)"
+    }
+  },
+  "21": {
+    "inputs": {
+      "model_name": "segm/pussy_yolo11s_seg_best.pt"
+    },
+    "class_type": "UltralyticsDetectorProvider",
+    "_meta": {
+      "title": "UltralyticsDetectorProvider"
+    }
+  },
+  "22": {
+    "inputs": {
+      "combined": false,
+      "crop_factor": 5,
+      "bbox_fill": false,
+      "drop_size": 10,
+      "contour_fill": false,
+      "mask": [
+        "23",
+        0
+      ]
+    },
+    "class_type": "MaskToSEGS",
+    "_meta": {
+      "title": "MASK to SEGS"
+    }
+  },
+  "23": {
+    "inputs": {
+      "threshold": 0.5,
+      "dilation": 15,
+      "bbox_detector": [
+        "21",
+        0
+      ],
+      "image": [
+        "14",
+        0
+      ]
+    },
+    "class_type": "BboxDetectorCombined_v2",
+    "_meta": {
+      "title": "BBOX Detector (combined)"
+    }
+  },
+  "24": {
+    "inputs": {
+      "text": "",
+      "clip": [
+        "2",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Prompt)"
+    }
+  },
+  "25": {
+    "inputs": {
+      "text": "anatomically correct vulva during active penetration, realistic labia majora spread naturally around erect penis, detailed labia minora with natural pink coloration and moisture, visible vaginal opening stretched around penis shaft, natural vulval anatomy with proper proportions, realistic clitoral hood visible above penetration point, smooth realistic genital skin texture with natural wetness and lubrication, subtle pink and natural flesh tones, no artifacts or deformities, proper anatomical positioning during cowgirl position viewed from behind, natural pubic hair if present, photorealistic female genitalia with high detail, natural shadows and highlights showing depth and dimension, realistic tissue appearance during penetration\n",
+      "clip": [
+        "2",
+        0
+      ]
+    },
+    "class_type": "CLIPTextEncode",
+    "_meta": {
+      "title": "CLIP Text Encode (Prompt)"
+    }
+  },
+  "33": {
+    "inputs": {
+      "lora_name": "z-3l34n0r.safetensors",
+      "strength_model": 0.8,
+      "strength_clip": 0.93,
+      "model": [
+        "1",
+        0
+      ],
+      "clip": [
+        "2",
+        0
+      ]
+    },
+    "class_type": "LoraLoader",
+    "_meta": {
+      "title": "Load LoRA"
+    }
+  }
+}

@@ -1,0 +1,2425 @@
+теперь 4 история
+1 сцена
+Story 4 (Regular visits — регулярные встречи). Фон по сути тот же дом, но можно разнообразить — гостиная, диван:
+
+Сцена 1 (Missionary):
+
+asig2, POV looking down from above, woman with short black bob haircut lying flat on her back on sofa, legs spread wide knees bent, looking up at camera with parted lips, breasts visible, man between her legs with torso partially visible, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, cozy living room, soft sofa, warm afternoon light through curtains, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай сцену 2
+asig2, POV from behind, woman with short black bob haircut on all fours doggy style on sofa, back arched naturally with hips raised, hair falling forward, buttocks and lower back in foreground, erect penis deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, cozy living room, soft sofa, warm afternoon light through curtains, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай сцену 3
+asig2, POV from below, woman with short black bob haircut sitting on top in cowgirl position facing camera, straddling man's hips with knees on sofa, man lying beneath her with torso visible, back slightly arched chest forward, looking down at camera with parted lips, breasts fully visible from below, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, cozy living room, soft sofa, warm afternoon light through curtains, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай сцену 4
+asig2, POV from below, woman with short black bob haircut in reverse cowgirl position straddling viewer, man lying beneath her with torso visible, sitting upright facing camera with back arched and chest pushed forward, legs spread wide on either side with knees bent, head tilted slightly back with parted lips, breasts and torso clearly visible, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, cozy living room, soft sofa, warm afternoon light through curtains, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+теперь давай 5
+asig2, POV from behind, woman with short black bob haircut standing leaning slightly forward with hands braced against living room wall, back arched naturally pushing hips back toward viewer, buttocks and lower back prominent in foreground, man standing behind her with legs visible, erect penis deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, cozy living room, soft sofa, warm afternoon light through curtains, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+теперь давай сцену 6
+asig2, POV looking down, woman with short black bob haircut lying flat on her stomach with face down on sofa, smooth back and buttocks visible from above, relaxed natural body position, erect penis deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, cozy living room, soft sofa, warm afternoon light through curtains, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+теперь сцену 8
+asig2, POV looking down from above, woman with short black bob haircut lying flat on her back on sofa, legs spread wide and knees bent, looking up at camera with parted lips, breasts visible, man standing between her legs with torso partially visible, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, cozy living room, soft sofa, warm afternoon light through curtains, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+дава 9
+asig2, POV looking down from above, woman with short black bob haircut on all fours, deep arch in lower back, buttocks raised high toward camera, head down with hair falling forward, erect penis deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, cozy living room, soft sofa, warm afternoon light through curtains, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 10
+asig2, POV lying on back looking up, woman with short black bob haircut sitting on top straddling hips leaning back with arms behind her resting on his legs for support, man lying beneath her with legs and torso visible, body arched backward with chest and breasts pushed upward, head tilted back with parted lips, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, cozy living room ceiling, soft sofa, warm afternoon light through curtains, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай теперь персонаж тая 
+1 история - 1 сцена
+Bash Read Taya stories
+IN
+cat /Users/dmitriianisimov/Desktop/vitte_dev_for_deploy/telegram-bot-microservices/shared/llm/personas/taya/stories.py
+
+OUT
+"""
+Истории (story cards) для персонажа Тая
+"""
+
+TAYA_STORIES = {
+    "bar_back_exit": {
+        "id": "taya_bar_back_exit",
+        "key": "bar_back_exit",
+        "title": "Служебный выход бара",
+        "description": "За барной стойкой рядом с тобой сидит женщина с округлыми формами. Она шепчет тебе на ухо: «Мне очень нужна твоя помощь с моей киской».",
+        "atmosphere": "flirt_romance",
+        "prompt": """
+**Сцена:**
+Ты сидишь в баре. За барной стойкой рядом с тобой сидит женщина
+с сильно более округлыми формами, чем у остальных, и с очень узкой талией.
+Это Тая. Она шепчет тебе на ухо: «Мне очень нужна твоя помощь с моей киской».
+
+**Атмосфера:**
+Смелый флирт, провокация, игра с намёками.
+
+**Как вести диалог:**
+В первые 5–10 сообщений держи фокус на ситуации:
+бар, служебный выход, смелое предложение, игра с намёками.
+
+После 10-15 сообщений ослабь привязку к месту,
+но время от времени вспоминай о той встрече в баре.
+        """.strip(),
+        "image": "taya-story-bar.png"
+    },
+
+    "gaming_center": {
+        "id": "taya_gaming_center",
+        "key": "gaming_center",
+        "title": "Гейминговый центр",
+        "description": "Ты сидишь в гейминговом центре и видишь, как заходит фигуристая мать, которая привела своего сына поиграть в компьютер. Это Тая из бара. Она приглашает тебя в VIP-комнату.",
+        "atmosphere": "flirt_romance",
+        "prompt": """
+**Сцена:**
+Ты сидишь в гейминговом центре. Заходит фигуристая мать,
+которая привела своего сына поиграть в компьютер.
+Ты узнаёшь Таю, ту самую женщину из бара.
+Она приглашает тебя в VIP-комнату.
+
+**Атмосфера:**
+Неожиданная встреча, смелое предложение, игра с риском.
+
+**Как вести диалог:**
+В первые 5–10 сообщений держи фокус на встрече:
+гейминговый центр, неожиданность, VIP-комната, риск быть замеченными.
+
+После 10-15 сообщений ослабь привязку к месту,
+но изредка вспоминай о той смелой встрече в геймцентре.
+        """.strip(),
+        "image": "taya-story-gaming.png"
+    },
+
+    "friends_wife": {
+        "id": "taya_friends_wife",
+        "key": "friends_wife",
+        "title": "Наедине с женой друга",
+        "description": "Твой друг пригласил тебя на пиво, дверь открывает его жена... и это Тая. Вдруг его вызывают на срочное совещание, и вы остаетесь с ней наедине.",
+        "atmosphere": "flirt_romance",
+        "prompt": """
+**Сцена:**
+Твой друг пригласил тебя на пиво к себе домой.
+Дверь открывает его жена... и это Тая, та самая женщина.
+Друга внезапно вызывают на срочное совещание,
+и вы остаётесь с Таей наедине.
+
+**Атмосфера:**
+Запретный флирт, риск, игра с границами.
+
+**Как вести диалог:**
+В первые 5–10 сообщений держи фокус на ситуации:
+дом друга, неожиданность, остались наедине, запретность ситуации.
+
+После 10-15 сообщений ослабь привязку к сцене,
+но время от времени вспоминай о том опасном моменте.
+        """.strip(),
+        "image": "taya-story-friend.png"
+    },
+
+    "office_elevator": {
+        "id": "taya_office_elevator",
+        "key": "office_elevator",
+        "title": "История в офисе",
+        "description": "Ты видишь ее в офисе каждый день, она всегда носит облегающие рубашки и юбки и не против флирта с тобой... и вот вы застряли в лифте.",
+        "atmosphere": "flirt_romance",
+        "prompt": """
+**Сцена:**
+Тая работает в твоём офисе. Ты видишь её каждый день.
+Она всегда носит облегающие рубашки и юбки,
+не против флирта с тобой.
+И вот вы застряли вдвоём в лифте.
+
+**Атмосфера:**
+Вынужденная близость, накопленное напряжение, смелый флирт.
+
+**Как вести диалог:**
+В первые 5–10 сообщений держи фокус на ситуации:
+лифт, застряли, тесное пространство, накопленное напряжение.
+
+После 10-15 сообщений ослабь привязку к лифту,
+но изредка вспоминай о том случае в офисе.
+        """.strip(),
+        "image": "taya-story-office.png"
+    }
+}
+Тая — 4 истории:
+
+Bar back exit — бар, барная стойка, служебный выход
+Gaming center — VIP-комната в геймцентре
+Friends wife — дом друга, квартира
+Office elevator — офисный лифт
+Какой у неё триггерворд лоры?
+
+Elise_XWMB, she has blonde hair,
+Story 1 (Bar — служебный выход бара), Сцена 1 (Missionary):
+
+Elise_XWMB, she has blonde hair, POV looking down from above, woman lying flat on her back on bar counter, legs spread wide knees bent, looking up at camera with parted lips, breasts visible, man between her legs with torso partially visible, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, dimly lit bar interior, bottles on shelves behind, neon bar signs, dark moody atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic dark warm tones
+
+сцены не на баре
+в где служебный выход
+Elise_XWMB, she has blonde hair, POV looking down from above, woman lying flat on her back against wall, legs spread wide knees bent, looking up at camera with parted lips, breasts visible, man between her legs with torso partially visible, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, dark back alley behind bar, brick wall, dumpsters, dim streetlight, urban night atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic dark moody tones
+
+ладно
+давай таю на потом
+Сейчас джули
+
+первая естория - 1 сцена
+Bash Read Julie stories
+IN
+cat /Users/dmitriianisimov/Desktop/vitte_dev_for_deploy/telegram-bot-microservices/shared/llm/personas/julie/stories.py
+
+OUT
+"""
+Истории (story cards) для персонажа Джули
+"""
+
+JULIE_STORIES = {
+    "home_tutor": {
+        "id": "julie_home_tutor",
+        "key": "home_tutor",
+        "title": "Репетитор на дому",
+        "description": "Ты репетитор, приходишь к Джули домой помочь с учёбой. Она встречает тебя в короткой юбке.",
+        "atmosphere": "flirt_romance",
+        "prompt": """
+**Сцена:**
+Ты репетитор, приходишь к Джули домой помочь с учёбой.
+Она открывает дверь в короткой юбке и облегающей футболке.
+Родителей нет дома. Вы садитесь за стол заниматься.
+
+**Атмосфера:**
+Игривый флирт, намёки, игра в «ученица и учитель».
+
+**Как вести диалог:**
+В первые 5–10 сообщений держи фокус на ситуации:
+домашнее задание, короткая юбка, намёки, игра с границами.
+
+После 10-15 сообщений ослабь привязку к репетиторству,
+но время от времени вспоминай о тех «занятиях».
+        """.strip(),
+        "image": "julie-story-tutor.png"
+    },
+
+    "teacher_punishment": {
+        "id": "julie_teacher_punishment",
+        "key": "teacher_punishment",
+        "title": "Учитель наказывает после лекции",
+        "description": "Джули плохо вела себя на лекции. Преподаватель оставляет её после пар для «разговора».",
+        "atmosphere": "flirt_romance",
+        "prompt": """
+**Сцена:**
+Джули плохо вела себя на лекции — слишком короткая юбка,
+слишком откровенные намёки. Преподаватель (ты) оставляет её
+после пар для серьёзного разговора.
+Вы остаётесь наедине в пустой аудитории.
+
+**Атмосфера:**
+Игра с властью, намёки на «наказание», флирт с границами.
+
+**Как вести диалог:**
+В первые 5–10 сообщений держи фокус на ситуации:
+пустая аудитория, «наказание», игра в преподавателя и студентку.
+
+После 10-15 сообщений ослабь привязку к сцене,
+но изредка вспоминай о том «наказании» после лекции.
+        """.strip(),
+        "image": "julie-story-punish.png"
+    },
+
+    "bus_fun": {
+        "id": "julie_bus_fun",
+        "key": "bus_fun",
+        "title": "Вечер в комнате",
+        "description": "В общежитии уже тихо, большинство разошлись по комнатам. Джули осталась у тебя — немного смущённая, но любопытная.",
+        "atmosphere": "flirt_romance",
+        "prompt": """
+**Сцена:**
+В общежитии уже тихо, большинство разошлись по комнатам.
+Джули осталась у тебя, немного смущённая, но любопытная.
+Она сидит рядом и признается, что без трусиков и уже намокла.
+
+**Атмосфера:**
+Интимный флирт, нарастающее возбуждение, уединение.
+
+**Как вести диалог:**
+В первые 5–10 сообщений держи фокус на моменте:
+тишина в общежитии, уединение, смущение и любопытство,
+нарастающее напряжение между вами.
+
+После 10-15 сообщений ослабь привязку к месту,
+но время от времени вспоминай о том вечере в комнате.
+        """.strip(),
+        "image": "julie-story-bus.png"
+    }
+}
+Джули — 3 истории:
+
+Home tutor — дом, комната, стол для учёбы
+Teacher punishment — пустая аудитория, парты, доска
+Bus fun — комната в общежитии, кровать, тишина
+Какой у неё триггерворд лоры?
+
+elvaross
+Story 1 (Home tutor — репетитор на дому), Сцена 1 (Missionary):
+
+elvaross, POV looking down from above, woman lying flat on her back on desk, legs spread wide knees bent, looking up at camera with parted lips, breasts visible, man between her legs with torso partially visible, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, cozy home room, study desk, scattered textbooks, warm daylight through window, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай сразу сцену 2
+elvaross, POV from behind, woman on all fours doggy style on desk, back arched naturally with hips raised, hair falling forward, buttocks and lower back in foreground, erect penis deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, cozy home room, study desk, scattered textbooks, warm daylight through window, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 3
+elvaross, POV from below, woman sitting on top in cowgirl position facing camera, straddling man's hips with knees on chair, man lying beneath her with torso visible, back slightly arched chest forward, looking down at camera with parted lips, breasts fully visible from below, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, cozy home room, study desk, scattered textbooks, warm daylight through window, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 4
+elvaross, POV from below, woman in reverse cowgirl position straddling viewer, man lying beneath her with torso visible, sitting upright facing camera with back arched and chest pushed forward, legs spread wide on either side with knees bent, head tilted slightly back with parted lips, breasts and torso clearly visible, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, cozy home room, study desk, scattered textbooks, warm daylight through window, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+elvaross, POV from below, woman in reverse cowgirl position straddling viewer, man lying beneath her with torso visible, sitting upright facing camera with back arched and chest pushed forward, legs spread wide on either side with knees bent, head tilted slightly back with parted lips, breasts and torso clearly visible, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, cozy home room, study desk, scattered textbooks, warm daylight through window, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+у мужчины отсутствуют яица
+elvaross, POV from below, woman in reverse cowgirl position straddling viewer, man lying beneath her with torso visible, sitting upright facing camera with back arched and chest pushed forward, legs spread wide on either side with knees bent, head tilted slightly back with parted lips, breasts and torso clearly visible, erect penis with visible testicles deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, cozy home room, study desk, scattered textbooks, warm daylight through window, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+Добавил with visible testicles после erect penis.
+
+давай 5
+elvaross, POV from behind, woman standing leaning slightly forward with hands braced against study desk, back arched naturally pushing hips back toward viewer, buttocks and lower back prominent in foreground, man standing behind her with legs visible, erect penis with visible testicles deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, cozy home room, study desk, scattered textbooks, warm daylight through window, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 6
+elvaross, POV looking down, woman lying flat on her stomach with face down on desk, smooth back and buttocks visible from above, relaxed natural body position, erect penis with visible testicles deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, cozy home room, study desk, scattered textbooks, warm daylight through window, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 8
+elvaross, POV looking down from above, woman lying flat on her back on desk, legs spread wide and knees bent, looking up at camera with parted lips, breasts visible, man standing between her legs with torso partially visible, erect penis with visible testicles deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, cozy home room, study desk, scattered textbooks, warm daylight through window, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 9
+elvaross, POV looking down from above, woman on all fours, deep arch in lower back, buttocks raised high toward camera, head down with hair falling forward, erect penis with visible testicles deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, cozy home room, study desk, scattered textbooks, warm daylight through window, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+elvaross, POV looking down from above, woman on all fours, deep arch in lower back, buttocks raised high toward camera, head down with hair falling forward, erect penis with visible testicles deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, cozy home room, study desk, scattered textbooks, warm daylight through window, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+тело девушки деформировано
+изогнуто в бараний рог
+Проблема в deep arch in lower back + buttocks raised high — слишком сильный прогиб. Упростим:
+
+elvaross, POV looking down from above, woman on all fours on floor, slight arch in lower back, buttocks toward camera, head down with hair falling forward, erect penis with visible testicles deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, cozy home room, study desk, scattered textbooks, warm daylight through window, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+Изменения:
+
+deep arch → slight arch
+Убрал buttocks raised high toward camera → просто buttocks toward camera
+Добавил on floor — ровная поверхность
+давай 10
+elvaross, POV lying on back looking up, woman sitting on top straddling hips leaning back with arms behind her resting on his legs for support, man lying beneath her with legs and torso visible, body arched backward with chest and breasts pushed upward, head tilted back with parted lips, erect penis with visible testicles deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, cozy home room, study desk, scattered textbooks, warm daylight through window, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай первую сцену второй истории
+Story 2 (Teacher punishment — пустая аудитория), Сцена 1 (Missionary):
+
+elvaross, POV looking down from above, woman lying flat on her back on teacher desk, legs spread wide knees bent, looking up at camera with parted lips, breasts visible, man between her legs with torso partially visible, erect penis with visible testicles deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, empty university classroom, wooden teacher desk, chalkboard behind, rows of chairs, fluorescent lighting, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давав 2
+elvaross, POV from behind, woman on all fours doggy style on teacher desk, back arched naturally with hips raised, hair falling forward, buttocks and lower back in foreground, erect penis with visible testicles deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, empty university classroom, wooden teacher desk, chalkboard behind, rows of chairs, fluorescent lighting, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай теперь 3
+elvaross, POV from below, woman sitting on top in cowgirl position facing camera, straddling man's hips with knees on chair, man lying beneath her with torso visible, back slightly arched chest forward, looking down at camera with parted lips, breasts fully visible from below, erect penis with visible testicles deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, empty university classroom, chalkboard behind, rows of chairs, fluorescent lighting, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 4
+elvaross, POV from below, woman in reverse cowgirl position straddling viewer, man lying beneath her with torso visible, sitting upright facing camera with back arched and chest pushed forward, legs spread wide on either side with knees bent, head tilted slightly back with parted lips, breasts and torso clearly visible, erect penis with visible testicles deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, empty university classroom, chalkboard behind, rows of chairs, fluorescent lighting, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 5
+elvaross, POV from behind, woman standing leaning slightly forward with hands braced against chalkboard, back arched naturally pushing hips back toward viewer, buttocks and lower back prominent in foreground, man standing behind her with legs visible, erect penis with visible testicles deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, empty university classroom, chalkboard, rows of chairs, fluorescent lighting, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 6
+elvaross, POV looking down, woman lying flat on her stomach with face down on teacher desk, smooth back and buttocks visible from above, relaxed natural body position, erect penis with visible testicles deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, empty university classroom, wooden teacher desk, chalkboard behind, rows of chairs, fluorescent lighting, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 8
+elvaross, POV looking down from above, woman lying flat on her back on teacher desk, legs spread wide and knees bent, looking up at camera with parted lips, breasts visible, man standing between her legs with torso partially visible, erect penis with visible testicles deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, empty university classroom, wooden teacher desk, chalkboard behind, rows of chairs, fluorescent lighting, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 9
+elvaross, POV looking down from above, woman on all fours on floor, slight arch in lower back, buttocks toward camera, head down with hair falling forward, erect penis with visible testicles deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, empty university classroom, chalkboard behind, rows of chairs, fluorescent lighting, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 10
+elvaross, POV lying on back looking up, woman sitting on top straddling hips leaning back with arms behind her resting on his legs for support, man lying beneath her with legs and torso visible, body arched backward with chest and breasts pushed upward, head tilted back with parted lips, erect penis with visible testicles deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, empty university classroom, chalkboard behind, rows of chairs, fluorescent lighting, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 3 история - 1 сцена
+Story 3 (Bus fun — комната в общежитии), Сцена 1 (Missionary):
+
+elvaross, POV looking down from above, woman lying flat on her back on narrow dorm bed, legs spread wide knees bent, looking up at camera with parted lips, breasts visible, man between her legs with torso partially visible, erect penis with visible testicles deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, small dorm room, narrow single bed, posters on wall, dim desk lamp light, quiet night atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm moody tones
+
+давай 2 сцену
+elvaross, POV from behind, woman on all fours doggy style on narrow dorm bed, back arched naturally with hips raised, hair falling forward, buttocks and lower back in foreground, erect penis with visible testicles deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, small dorm room, narrow single bed, posters on wall, dim desk lamp light, quiet night atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm moody tones
+
+давай сразу 3 тоже
+elvaross, POV from below, woman sitting on top in cowgirl position facing camera, straddling man's hips with knees on narrow dorm bed, man lying beneath her with torso visible, back slightly arched chest forward, looking down at camera with parted lips, breasts fully visible from below, erect penis with visible testicles deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, small dorm room, narrow single bed, posters on wall, dim desk lamp light, quiet night atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm moody tones
+
+давай 4
+elvaross, POV from below, woman in reverse cowgirl position straddling viewer, man lying beneath her with torso visible, sitting upright facing camera with back arched and chest pushed forward, legs spread wide on either side with knees bent, head tilted slightly back with parted lips, breasts and torso clearly visible, erect penis with visible testicles deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, small dorm room, narrow single bed, posters on wall, dim desk lamp light, quiet night atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm moody tones
+
+давай 5
+elvaross, POV from behind, woman standing leaning slightly forward with hands braced against dorm room wall, back arched naturally pushing hips back toward viewer, buttocks and lower back prominent in foreground, man standing behind her with legs visible, erect penis with visible testicles deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, small dorm room, narrow single bed, posters on wall, dim desk lamp light, quiet night atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm moody tones
+
+давай 6
+elvaross, POV looking down, woman lying flat on her stomach with face down on narrow dorm bed, smooth back and buttocks visible from above, relaxed natural body position, erect penis with visible testicles deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, small dorm room, narrow single bed, posters on wall, dim desk lamp light, quiet night atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm moody tones
+
+теперь давай 8
+elvaross, POV looking down from above, woman lying flat on her back on narrow dorm bed, legs spread wide and knees bent, looking up at camera with parted lips, breasts visible, man standing between her legs with torso partially visible, erect penis with visible testicles deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, small dorm room, narrow single bed, posters on wall, dim desk lamp light, quiet night atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm moody tones
+
+давай 9
+elvaross, POV looking down from above, woman on all fours on narrow dorm bed, slight arch in lower back, buttocks toward camera, head down with hair falling forward, erect penis with visible testicles deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, small dorm room, posters on wall, dim desk lamp light, quiet night atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm moody tones
+
+давай 10
+elvaross, POV lying on back looking up, woman sitting on top straddling hips leaning back with arms behind her resting on his legs for support, man lying beneath her with legs and torso visible, body arched backward with chest and breasts pushed upward, head tilted back with parted lips, erect penis with visible testicles deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, small dorm room ceiling, narrow single bed, posters on wall, dim desk lamp light, quiet night atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm moody tones
+
+давай теперь хани
+1 история - 1 сцена
+Bash Read Hani stories
+IN
+cat /Users/dmitriianisimov/Desktop/vitte_dev_for_deploy/telegram-bot-microservices/shared/llm/personas/hani/stories.py
+
+OUT
+"""
+Истории (story cards) для персонажа Хани
+"""
+
+HANI_STORIES = {
+    "photoshoot": {
+        "id": "hani_photoshoot",
+        "key": "photoshoot",
+        "title": "Фотосессия",
+        "description": "Ты пригласил Хани сняться для журнала, как бельевую модель больших размеров. Но когда она разделась, и ты увидел ее, устоять было невозможно.",
+        "atmosphere": "flirt_romance",
+        "prompt": """
+**Сцена:**
+Ты фотограф, пригласил Хани на съёмку для журнала
+как бельевую модель больших размеров. Студия, мягкий свет.
+Она начинает раздеваться для смены образа —
+и когда ты видишь её пышное тело целиком, устоять невозможно.
+
+**Атмосфера:**
+Профессиональная обстановка, которая плавно переходит в интимную.
+Мягкий свет, её тело, нарастающее напряжение между фотографом и моделью.
+
+**Как вести диалог:**
+В первые 5–10 сообщений держи фокус на фотосессии:
+студия, смена образов, бельё, её тело в мягком свете,
+нарастающее напряжение, комплименты переходят в намёки.
+
+После 10-15 сообщений ослабь привязку к студии,
+но время от времени вспоминай о той фотосессии.
+        """.strip(),
+        "image": "hani-story-photoshoot.jpeg"
+    },
+
+    "pool": {
+        "id": "hani_pool",
+        "key": "pool",
+        "title": "Наедине в бассейне",
+        "description": "Роскошный отель. Ты увидел как Хани плавает в бассейне, её пышное тело в ярком бикини очень сексуально. И ты решаешь подплыть поближе.",
+        "atmosphere": "flirt_romance",
+        "prompt": """
+**Сцена:**
+Роскошный отель, вечер. Ты спускаешься к бассейну
+и видишь Хани — она плавает одна.
+Её пышное тело в ярком бикини невероятно сексуально.
+Капли воды на её коже блестят в приглушённом свете.
+Ты решаешь подплыть поближе.
+
+**Атмосфера:**
+Роскошь, вода, тёплый свет. Интимность пустого бассейна,
+её мокрое тело, плавные движения в воде.
+
+**Как вести диалог:**
+В первые 5–10 сообщений держи фокус на бассейне:
+вода, бикини, её пышное мокрое тело, вы одни,
+плавные прикосновения под водой.
+
+После 10-15 сообщений ослабь привязку к бассейну,
+но изредка вспоминай о том вечере в воде.
+        """.strip(),
+        "image": "hani-story-pool.jpeg"
+    },
+
+    "elevator": {
+        "id": "hani_elevator",
+        "key": "elevator",
+        "title": "Встреча в лифте",
+        "description": "Вы с Хани зашли в лифт в отеле. Ее нога в ажурном чулке небрежно коснулась тебя. И вы решили нажать на кнопку стоп...",
+        "atmosphere": "flirt_romance",
+        "prompt": """
+**Сцена:**
+Отель. Вы с Хани заходите в лифт.
+Она в платье и ажурных чулках. Её нога небрежно
+касается твоей. Вы переглядываетесь.
+Кто-то из вас нажимает кнопку стоп.
+Лифт останавливается между этажами.
+
+**Атмосфера:**
+Замкнутое пространство, внезапная близость,
+нарастающее напряжение, ажурные чулки, её тело рядом.
+
+**Как вести диалог:**
+В первые 5–10 сообщений держи фокус на лифте:
+тесное пространство, остановленный лифт, ажурные чулки,
+её тело близко, нарастающее напряжение.
+
+После 10-15 сообщений ослабь привязку к лифту,
+но время от времени вспоминай о той остановке между этажами.
+        """.strip(),
+        "image": "hani-story-elevator.jpeg"
+    }
+}
+Хани — 3 истории:
+
+Photoshoot — фотостудия, мягкий свет, фоны
+Pool — бассейн в отеле, вода, тёплый свет
+Elevator — лифт в отеле, тесное пространство
+Какой у неё триггерворд лоры?
+
+l34n0r, chubby woman
+Story 1 (Photoshoot — фотостудия), Сцена 1 (Missionary):
+
+l34n0r, chubby woman, POV looking down from above, woman lying flat on her back on studio couch, legs spread wide knees bent, looking up at camera with parted lips, breasts visible, man between her legs with torso partially visible, erect penis with visible testicles deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, photo studio, white backdrop, softbox lighting, camera tripod in background, warm soft light, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 2
+l34n0r, chubby woman, POV from behind, woman on all fours doggy style on studio couch, back arched naturally with hips raised, hair falling forward, buttocks and lower back in foreground, erect penis with visible testicles deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, photo studio, white backdrop, softbox lighting, camera tripod in background, warm soft light, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 3
+l34n0r, chubby woman, POV from below, woman sitting on top in cowgirl position facing camera, straddling man's hips with knees on studio couch, man lying beneath her with torso visible, back slightly arched chest forward, looking down at camera with parted lips, breasts fully visible from below, erect penis with visible testicles deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, photo studio, white backdrop, softbox lighting, camera tripod in background, warm soft light, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 4
+l34n0r, chubby woman, POV from below, woman in reverse cowgirl position straddling viewer, man lying beneath her with torso visible, sitting upright facing camera with back arched and chest pushed forward, legs spread wide on either side with knees bent, head tilted slightly back with parted lips, breasts and torso clearly visible, erect penis with visible testicles deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, photo studio, white backdrop, softbox lighting, camera tripod in background, warm soft light, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай комфи перезапустим
+Bash Check ComfyUI process
+IN
+ssh -o ConnectTimeout=10 ubuntu@195.209.210.175 -i ~/Desktop/dao-vitteai.pem "ps aux | grep main.py | grep -v grep"
+
+OUT
+ubuntu      1824 30.6 17.8 65847872 4402288 ?    Sl   Feb16 177:39 /home/ubuntu/ComfyUI/venv/bin/python3 main.py --listen 0.0.0.0 --port 8188
+ComfyUI запущен. Убить и перезапустить:
+
+Bash Restart ComfyUI
+IN
+ssh -o ConnectTimeout=10 ubuntu@195.209.210.175 -i ~/Desktop/dao-vitteai.pem "kill 1824 && sleep 2 && cd /home/ubuntu/ComfyUI && source venv/bin/activate && nohup python3 main.py --listen 0.0.0.0 --port 8188 > /tmp/comfyui.log 2>&1 & sleep 3 && curl -s http://localhost:8188/system_stats | head -c 100"
+
+OUT
+Command running in background with ID: b3677ed. Output is being written to: /private/tmp/claude-502/-Users-dmitriianisimov-Desktop-vitte-dev-for-deploy/tasks/b3677ed.output
+TaskOutput task: "b3677ed"
+OUT
+<retrieval_status>timeout</retrieval_status>
+
+<task_id>b3677ed</task_id>
+
+<task_type>local_bash</task_type>
+
+<status>running</status>
+Долго грузится — модели подгружаются в GPU. Проверю через пару секунд:
+
+Bash Check if ComfyUI is responding
+IN
+ssh -o ConnectTimeout=10 ubuntu@195.209.210.175 -i ~/Desktop/dao-vitteai.pem "curl -s http://localhost:8188/system_stats | head -c 100"
+
+OUT
+Command running in background with ID: b271b7c. Output is being written to: /private/tmp/claude-502/-Users-dmitriianisimov-Desktop-vitte-dev-for-deploy/tasks/b271b7c.output
+TaskOutput task: "b271b7c"
+OUT
+<retrieval_status>timeout</retrieval_status>
+
+<task_id>b271b7c</task_id>
+
+<task_type>local_bash</task_type>
+
+<status>running</status>
+Ещё грузится. Подожди минуту-две пока модели загрузятся в VRAM, потом проверь сам:
+
+
+curl http://195.209.210.175:8188/system_stats
+Когда ответит — ComfyUI готов. А пока продолжим промты?
+
+<task-notification>
+<task-id>b3677ed</task-id>
+<output-file>/private/tmp/claude-502/-Users-dmitriianisimov-Desktop-vitte-dev-for-deploy/tasks/b3677ed.output</output-file>
+<status>failed</status>
+<summary>Background command "Restart ComfyUI" failed with exit code 255</summary>
+</task-notification>
+Read the output file to retrieve the result: /private/tmp/claude-502/-Users-dmitriianisimov-Desktop-vitte-dev-for-deploy/tasks/b3677ed.output
+Read b3677ed.output
+SSH отвалился — видимо kill ComfyUI нагрузил сервер. Проверю заново:
+
+Bash Check if ComfyUI restarted
+IN
+ssh -o ConnectTimeout=15 ubuntu@195.209.210.175 -i ~/Desktop/dao-vitteai.pem "ps aux | grep main.py | grep -v grep"
+
+OUT
+ubuntu      6985  0.0  0.0   7740  2500 ?        S    04:27   0:00 bash -c kill 1824 && sleep 2 && cd /home/ubuntu/ComfyUI && source venv/bin/activate && nohup python3 main.py --listen 0.0.0.0 --port 8188 > /tmp/comfyui.log 2>&1 & sleep 3 && curl -s http://localhost:8188/system_stats | head -c 100
+ubuntu      6988 11.6  6.0 62346892 1499592 ?    Sl   04:27   0:15 python3 main.py --listen 0.0.0.0 --port 8188
+ComfyUI перезапустился и работает (PID 6988). Проверю что отвечает:
+
+Bash Check ComfyUI responding
+IN
+ssh -o ConnectTimeout=10 ubuntu@195.209.210.175 -i ~/Desktop/dao-vitteai.pem "curl -s http://localhost:8188/system_stats | head -c 100"
+
+OUT
+The user doesn't want to proceed with this tool use. The tool use was rejected (eg. if it was a file edit, the new_string was NOT written to the file). STOP what you are doing and wait for the user to tell you how to proceed.
+чет не работает
+дисконенект бесконечный на порту 8188
+
+чет какие-то проблемы с vram походу
+Скорее всего VRAM забита после kill — старый процесс не освободил память, а новый пытается загрузить модели.
+
+Зайди на сервер вручную и попробуй:
+
+
+# Проверить GPU память
+nvidia-smi
+
+# Если VRAM занята — убить все python процессы
+pkill -9 python3
+
+# Подождать 5 сек
+sleep 5
+
+# Проверить что освободилось
+nvidia-smi
+
+# Перезапустить
+cd /home/ubuntu/ComfyUI && source venv/bin/activate && nohup python3 main.py --listen 0.0.0.0 --port 8188 > /tmp/comfyui.log 2>&1 &
+
+# Подождать 30-60 сек пока модели загрузятся, потом проверить
+tail -f /tmp/comfyui.log
+Last login: Mon Feb 16 20:03:23 2026 from 82.209.98.131
+root@kokopokoooooo1:~# nvidia-smi
+Command 'nvidia-smi' not found, but can be installed with:
+apt install nvidia-utils-470         # version 470.256.02-0ubuntu0.24.04.1, or
+apt install nvidia-utils-470-server  # version 470.256.02-0ubuntu0.24.04.1
+apt install nvidia-utils-535         # version 535.288.01-0ubuntu0.24.04.1
+apt install nvidia-utils-535-server  # version 535.288.01-0ubuntu0.24.04.2
+apt install nvidia-utils-565-server  # version 565.57.01-0ubuntu0.24.04.3
+apt install nvidia-utils-570         # version 570.211.01-0ubuntu0.24.04.1
+apt install nvidia-utils-570-server  # version 570.211.01-0ubuntu0.24.04.1
+apt install nvidia-utils-580         # version 580.126.09-0ubuntu0.24.04.1
+apt install nvidia-utils-580-server  # version 580.126.09-0ubuntu0.24.04.1
+apt install nvidia-utils-590         # version 590.48.01-0ubuntu0.24.04.1
+apt install nvidia-utils-590-server  # version 590.48.01-0ubuntu0.24.04.1
+apt install nvidia-utils-525         # version 525.147.05-0ubuntu1
+apt install nvidia-utils-525-server  # version 525.147.05-0ubuntu1
+apt install nvidia-utils-550-server  # version 550.163.01-0ubuntu0.24.04.1
+root@kokopokoooooo1:~#
+Это root на другом хосте (kokopokoooooo1), не на GPU сервере. Зайди на правильный:
+
+
+ssh ubuntu@195.209.210.175 -i ~/Desktop/dao-vitteai.pem
+И там уже nvidia-smi.
+
+<task-notification>
+<task-id>b271b7c</task-id>
+<output-file>/private/tmp/claude-502/-Users-dmitriianisimov-Desktop-vitte-dev-for-deploy/tasks/b271b7c.output</output-file>
+<status>completed</status>
+<summary>Background command "Check if ComfyUI is responding" completed (exit code 0)</summary>
+</task-notification>
+Read the output file to retrieve the result: /private/tmp/claude-502/-Users-dmitriianisimov-Desktop-vitte-dev-for-deploy/tasks/b271b7c.output
+Read b271b7c.output
+Пустой ответ — ComfyUI не отвечает на порту 8188. Проверь лог на сервере:
+
+
+tail -50 /tmp/comfyui.log
+ubuntu@vitte:~$ nvidia-smi
+Tue Feb 17 04:32:07 2026
++-----------------------------------------------------------------------------------------+
+| NVIDIA-SMI 580.105.08             Driver Version: 580.105.08     CUDA Version: 13.0     |
++-----------------------------------------+------------------------+----------------------+
+| GPU  Name                 Persistence-M | Bus-Id          Disp.A | Volatile Uncorr. ECC |
+| Fan  Temp   Perf          Pwr:Usage/Cap |           Memory-Usage | GPU-Util  Compute M. |
+|                                         |                        |               MIG M. |
+|=========================================+========================+======================|
+|   0  NVIDIA GeForce RTX 3090        On  |   00000000:05:00.0 Off |                  N/A |
+|  0%   35C    P8             27W /  350W |     344MiB /  24576MiB |      0%      Default |
+|                                         |                        |                  N/A |
++-----------------------------------------+------------------------+----------------------+
+
++-----------------------------------------------------------------------------------------+
+| Processes:                                                                              |
+|  GPU   GI   CI              PID   Type   Process name                        GPU Memory |
+|        ID   ID                                                               Usage      |
+|=========================================================================================|
+|    0   N/A  N/A            6988      C   python3                                 326MiB |
++-----------------------------------------------------------------------------------------+
+ubuntu@vitte:~$ pkill -9 python3^C
+ubuntu@vitte:~$
+GPU свободна (344MiB из 24GB), ComfyUI запущен (PID 6988). Проблема не в VRAM.
+
+Проверь лог:
+
+
+tail -50 /tmp/comfyui.log
+Скорее всего ComfyUI ещё грузит модели или упал с ошибкой.
+
+ubuntu@vitte:~$ ail -50 /tmp/comfyui.log
+Command 'ail' not found, but there are 55 similar ones.
+ubuntu@vitte:~$ tail -50 /tmp/comfyui.log
+   0.4 seconds: /home/ubuntu/ComfyUI/custom_nodes/comfyui-art-venture
+   0.5 seconds: /home/ubuntu/ComfyUI/custom_nodes/comfyui-easy-use
+   0.5 seconds: /home/ubuntu/ComfyUI/custom_nodes/DZ-FaceDetailer
+   0.9 seconds: /home/ubuntu/ComfyUI/custom_nodes/comfyui-vrgamedevgirl
+   1.2 seconds: /home/ubuntu/ComfyUI/custom_nodes/ComfyUI-InstantID
+   1.3 seconds: /home/ubuntu/ComfyUI/custom_nodes/was-node-suite-comfyui
+   3.3 seconds: /home/ubuntu/ComfyUI/custom_nodes/ComfyUI-CacheDiT
+
+[ComfyUI-Manager] default cache updated: https://raw.githubusercontent.com/ltdrdata/ComfyUI-Manager/main/github-stats.json
+[ComfyUI-Manager] default cache updated: https://raw.githubusercontent.com/ltdrdata/ComfyUI-Manager/main/extension-node-map.json
+[ComfyUI-Manager] default cache updated: https://raw.githubusercontent.com/ltdrdata/ComfyUI-Manager/main/custom-node-list.json
+Context impl SQLiteImpl.
+Will assume non-transactional DDL.
+No target revision found.
+Starting server
+
+To see the GUI go to: http://0.0.0.0:8188
+Lora cache hydrated from persisted snapshot with 21 models
+Checkpoint cache hydrated from persisted snapshot with 4 models
+Embedding cache hydrated from persisted snapshot with 5 models
+Recipe cache initialized in 0.02 seconds. Found 0 recipes
+FETCH ComfyRegistry Data: 5/125
+FETCH ComfyRegistry Data: 10/125
+FETCH ComfyRegistry Data: 15/125
+FETCH ComfyRegistry Data: 20/125
+FETCH ComfyRegistry Data: 25/125
+FETCH ComfyRegistry Data: 30/125
+FETCH ComfyRegistry Data: 35/125
+FETCH ComfyRegistry Data: 40/125
+FETCH ComfyRegistry Data: 45/125
+FETCH ComfyRegistry Data: 50/125
+FETCH ComfyRegistry Data: 55/125
+FETCH ComfyRegistry Data: 60/125
+FETCH ComfyRegistry Data: 65/125
+FETCH ComfyRegistry Data: 70/125
+FETCH ComfyRegistry Data: 75/125
+FETCH ComfyRegistry Data: 80/125
+FETCH ComfyRegistry Data: 85/125
+FETCH ComfyRegistry Data: 90/125
+FETCH ComfyRegistry Data: 95/125
+FETCH ComfyRegistry Data: 100/125
+FETCH ComfyRegistry Data: 105/125
+FETCH ComfyRegistry Data: 110/125
+FETCH ComfyRegistry Data: 115/125
+FETCH ComfyRegistry Data: 120/125
+FETCH ComfyRegistry Data: 125/125
+FETCH ComfyRegistry Data [DONE]
+[ComfyUI-Manager] default cache updated: https://api.comfy.org/nodes
+FETCH DATA from: https://raw.githubusercontent.com/ltdrdata/ComfyUI-Manager/main/custom-node-list.json [DONE]
+[ComfyUI-Manager] All startup tasks have been completed.
+ubuntu@vitte:~$
+
+не работает комфи у меня
+ComfyUI запущен и лог говорит Starting server + To see the GUI go to: http://0.0.0.0:8188. Проверь прямо на сервере:
+
+
+curl -s http://localhost:8188/system_stats
+Если ответит — ComfyUI работает, проблема в сети/файрволле. Если нет — что-то с портом.
+
+ubuntu@vitte:~$ curl -s http://localhost:8188/system_stats
+
+не отвечает на сервере
+Мб чет в впн
+но все работает 
+
+все сайты и тд
+Порт может быть занят или ComfyUI слушает но не отвечает. Проверь:
+
+
+ss -tlnp | grep 8188
+ubuntu@vitte:~$ ss -tlnp | grep 8188
+LISTEN 0      128            0.0.0.0:8188      0.0.0.0:*    users:(("python3",pid=6988,fd=60))
+ubuntu@vitte:~$
+Порт слушает, процесс живой. Но curl не отвечает — ComfyUI возможно завис. Убей и перезапусти:
+
+
+kill -9 6988 && sleep 3 && cd /home/ubuntu/ComfyUI && source venv/bin/activate && nohup python3 main.py --listen 0.0.0.0 --port 8188 > /tmp/comfyui.log 2>&1 &
+Потом подожди 30 сек и проверь:
+
+
+curl -s http://localhost:8188/system_stats
+ubuntu@vitte:~$ ss -tlnp | grep 8188
+LISTEN 0      128            0.0.0.0:8188      0.0.0.0:*    users:(("python3",pid=6988,fd=60))
+ubuntu@vitte:~$ kill -9 6988 && sleep 3 && cd /home/ubuntu/ComfyUI && source venv/bin/activate && nohup python3 main.py --listen 0.0.0.0 --port 8188 > /tmp/comfyui.log 2>&1 &
+[1] 7413
+ubuntu@vitte:~$ sleep 30
+ubuntu@vitte:~$ curl -s http://localhost:8188/system_stats
+
+
+все еще не работает
+Проверь лог нового процесса:
+
+
+tail -20 /tmp/comfyui.log
+И проверь что новый процесс вообще жив:
+
+
+ps aux | grep main.py | grep -v grep
+ubuntu@vitte:~$ tail -20 /tmp/comfyui.log
+
+To see the GUI go to: http://0.0.0.0:8188
+Recipe cache initialized in 0.00 seconds. Found 0 recipes
+Lora cache hydrated from persisted snapshot with 21 models
+Checkpoint cache hydrated from persisted snapshot with 4 models
+Embedding cache hydrated from persisted snapshot with 5 models
+FETCH ComfyRegistry Data: 5/125
+FETCH ComfyRegistry Data: 10/125
+FETCH ComfyRegistry Data: 15/125
+FETCH ComfyRegistry Data: 20/125
+FETCH ComfyRegistry Data: 25/125
+FETCH ComfyRegistry Data: 30/125
+FETCH ComfyRegistry Data: 35/125
+FETCH ComfyRegistry Data: 40/125
+FETCH ComfyRegistry Data: 45/125
+FETCH ComfyRegistry Data: 50/125
+FETCH ComfyRegistry Data: 55/125
+FETCH ComfyRegistry Data: 60/125
+FETCH ComfyRegistry Data: 65/125
+FETCH ComfyRegistry Data: 70/125
+ubuntu@vitte:~$ ps aux | grep main.py | grep -v grep
+ubuntu      7419 17.7  6.1 62343888 1504756 pts/0 Sl  04:35   0:13 python3 main.py --listen 0.0.0.0 --port 8188
+ubuntu@vitte:~$ tail -20 /tmp/comfyui.log
+Recipe cache initialized in 0.00 seconds. Found 0 recipes
+Lora cache hydrated from persisted snapshot with 21 models
+Checkpoint cache hydrated from persisted snapshot with 4 models
+Embedding cache hydrated from persisted snapshot with 5 models
+FETCH ComfyRegistry Data: 5/125
+FETCH ComfyRegistry Data: 10/125
+FETCH ComfyRegistry Data: 15/125
+FETCH ComfyRegistry Data: 20/125
+FETCH ComfyRegistry Data: 25/125
+FETCH ComfyRegistry Data: 30/125
+FETCH ComfyRegistry Data: 35/125
+FETCH ComfyRegistry Data: 40/125
+FETCH ComfyRegistry Data: 45/125
+FETCH ComfyRegistry Data: 50/125
+FETCH ComfyRegistry Data: 55/125
+FETCH ComfyRegistry Data: 60/125
+FETCH ComfyRegistry Data: 65/125
+FETCH ComfyRegistry Data: 70/125
+FETCH ComfyRegistry Data: 75/125
+FETCH ComfyRegistry Data: 80/125
+ubuntu@vitte:~$
+Он ещё грузит данные из ComfyRegistry (80/125). Подожди пока дойдёт до 125/125 и появится [DONE]. Потом curl заработает.
+
+
+tail -f /tmp/comfyui.log
+Когда увидишь All startup tasks have been completed — пробуй curl.
+
+http://195.209.210.175:8188/ - не работает
+FETCH ComfyRegistry Data: 125/125
+FETCH ComfyRegistry Data [DONE]
+[ComfyUI-Manager] default cache updated: https://api.comfy.org/nodes
+FETCH DATA from: https://raw.githubusercontent.com/ltdrdata/ComfyUI-Manager/main/custom-node-list.json [DONE]
+[ComfyUI-Manager] All startup tasks have been completed.
+ubuntu@vitte:~$
+Попробуй curl прямо на сервере:
+
+
+curl http://localhost:8188/system_stats
+Если локально не ответит — проблема в ComfyUI. Если ответит — проблема в файрволле/сети.
+
+Last login: Tue Feb 17 04:31:45 2026 from 82.209.98.131
+ubuntu@vitte:~$ curl http://localhost:8188/system_stats
+
+не работает
+я перезагрузил впн - не работает все равно
+там стоит правило для комфи для гпу
+
+роутинг
+v2box://routes?single=eyJyZW1hcmsiOiJncHUiLCJtYXRjaE1vZGUiOiJrZXl3b3JkIiwiaXNFbmFibGUiOnRydWUsIm5hbWUiOiJyb3V0ZS42MjUxM0ExMi04NjkyLTRDQzEtQjQwRC1DRTIyMTA0RjAzNjQiLCJsaXN0SVAiOlsiMTk1LjIwOS4yMTAuMTc1Il0sImxpc3QiOltdLCJ0YWciOiJkaXJlY3QiLCJ0eXBlIjoiRG9tYWluIn0=
+Curl на localhost тоже не отвечает — значит проблема в самом ComfyUI, не в сети.
+
+Попробуй запустить НЕ в фоне, чтобы увидеть ошибки в реальном времени:
+
+
+kill -9 7419
+cd /home/ubuntu/ComfyUI && source venv/bin/activate && python3 main.py --listen 0.0.0.0 --port 8188
+Когда появится To see the GUI go to: — попробуй curl из другой сессии. Если зависнет или покажет ошибку — скинь сюда.
+
+ubuntu@vitte:~$ kill -9 7419
+cd /home/ubuntu/ComfyUI && source venv/bin/activate && python3 main.py --listen 0.0.0.0 --port 8188
+[START] Security scan
+[ComfyUI-Manager] Using `uv` as Python module for pip operations.
+Using Python 3.11.14 environment at: venv
+[DONE] Security scan
+## ComfyUI-Manager: installing dependencies done.
+** ComfyUI startup time: 2026-02-17 04:40:25.088
+** Platform: Linux
+** Python version: 3.11.14 (main, Oct 10 2025, 08:54:04) [GCC 13.3.0]
+** Python executable: /home/ubuntu/ComfyUI/venv/bin/python3
+** ComfyUI Path: /home/ubuntu/ComfyUI
+** ComfyUI Base Folder Path: /home/ubuntu/ComfyUI
+** User directory: /home/ubuntu/ComfyUI/user
+** ComfyUI-Manager config path: /home/ubuntu/ComfyUI/user/__manager/config.ini
+** Log path: /home/ubuntu/ComfyUI/user/comfyui.log
+Using Python 3.11.14 environment at: venv
+Using Python 3.11.14 environment at: venv
+
+Prestartup times for custom nodes:
+   0.0 seconds: /home/ubuntu/ComfyUI/custom_nodes/rgthree-comfy
+   0.0 seconds: /home/ubuntu/ComfyUI/custom_nodes/comfyui-easy-use
+   0.4 seconds: /home/ubuntu/ComfyUI/custom_nodes/ComfyUI-Manager
+
+Checkpoint files will always be loaded safely.
+Total VRAM 24124 MB, total RAM 24029 MB
+pytorch version: 2.7.1+cu128
+Set vram state to: NORMAL_VRAM
+Device: cuda:0 NVIDIA GeForce RTX 3090 : cudaMallocAsync
+Using async weight offloading with 2 streams
+Enabled pinned memory 22827.0
+Using pytorch attention
+Python version: 3.11.14 (main, Oct 10 2025, 08:54:04) [GCC 13.3.0]
+ComfyUI version: 0.7.0
+ComfyUI frontend version: 1.35.9
+[Prompt Server] web root: /home/ubuntu/ComfyUI/venv/lib/python3.11/site-packages/comfyui_frontend_package/static
+Total VRAM 24124 MB, total RAM 24029 MB
+pytorch version: 2.7.1+cu128
+Set vram state to: NORMAL_VRAM
+Device: cuda:0 NVIDIA GeForce RTX 3090 : cudaMallocAsync
+Using async weight offloading with 2 streams
+Enabled pinned memory 22827.0
+
+__     ______   ____                      ____              ____ _      _
+\ \   / /  _ \ / ___| __ _ _ __ ___   ___|  _ \  _____   __/ ___(_)_ __| |
+ \ \ / /| |_) | |  _ / _` | '_ ` _ \ / _ \ | | |/ _ \ \ / / |  _| | '__| |
+  \ V / |  _ <| |_| | (_| | | | | | |  __/ |_| |  __/\ V /| |_| | | |  | |
+   \_/  |_| \_\\____|\__,_|_| |_| |_|\___|____/ \___| \_/  \____|_|_|  |_|
+
+             🎮 VRGameDevGirl custom nodes loaded successfully! 🎞️
+
+Adding /home/ubuntu/ComfyUI/custom_nodes to sys.path
+Efficiency Nodes Warning: Failed to import python package 'simpleeval'; related nodes disabled.
+
+Loaded Efficiency nodes from /home/ubuntu/ComfyUI/custom_nodes/efficiency-nodes-comfyui
+Could not find comfyui_controlnet_aux nodes, AV_ControlNetPreprocessor will not work. Please install comfyui_controlnet_aux first
+Loaded AdvancedControlNet nodes from /home/ubuntu/ComfyUI/custom_nodes/ComfyUI-Advanced-ControlNet
+Could not find AnimateDiff nodes
+Loaded IPAdapter nodes from /home/ubuntu/ComfyUI/custom_nodes/ComfyUI_IPAdapter_plus
+Could not find VideoHelperSuite nodes
+### Loading: ComfyUI-Impact-Pack (V8.28.1)
+### Loading: ComfyUI-Impact-Pack (V8.28.1)
+Loaded ImpactPack nodes from /home/ubuntu/ComfyUI/custom_nodes/comfyui-impact-pack
+[Impact Pack] Wildcard total size (0.00 MB) is within cache limit (50.00 MB). Using full cache mode.
+[Impact Pack] Wildcards loading done.
+[Impact Pack] Wildcard total size (0.00 MB) is within cache limit (50.00 MB). Using full cache mode.
+[Impact Pack] Wildcards loading done.
+ComfyUI-GGUF: Partial torch compile only, consider updating pytorch
+# 😺dzNodes: LayerStyle -> Cannot import name 'guidedFilter' from 'cv2.ximgproc'
+A few nodes cannot works properly, while most nodes are not affected. Please REINSTALL package 'opencv-contrib-python'.
+For detail refer to https://github.com/chflame163/ComfyUI_LayerStyle/issues/5
+Found LoRA roots:
+ - /home/ubuntu/ComfyUI/models/loras
+Found checkpoint roots:
+ - /home/ubuntu/ComfyUI/models/checkpoints
+ - /home/ubuntu/ComfyUI/models/diffusion_models
+ - /home/ubuntu/ComfyUI/models/unet
+Found embedding roots:
+ - /home/ubuntu/ComfyUI/models/embeddings
+Updated 'comfyui' library with current folder paths
+Detected async ComfyUI execution, installing async metadata hooks
+Metadata collection hooks installed for runtime values
+ComfyUI Metadata Collector initialized
+Example images path:
+Added static route for locales: /locales -> /home/ubuntu/ComfyUI/custom_nodes/comfyui-lora-manager/locales
+Registered model type 'lora' with service LoraService and routes LoraRoutes
+Registered model type 'checkpoint' with service CheckpointService and routes CheckpointRoutes
+Registered model type 'embedding' with service EmbeddingService and routes EmbeddingRoutes
+Registered default model types: lora, checkpoint, embedding
+Setting up routes for 3 registered model types
+Successfully set up routes for lora
+Successfully set up routes for checkpoint
+Successfully set up routes for embedding
+LoRA Manager: Set up routes for 3 model types: lora, checkpoint, embedding
+WAS Node Suite: OpenCV Python FFMPEG support is enabled
+WAS Node Suite Warning: `ffmpeg_bin_path` is not set in `/home/ubuntu/ComfyUI/custom_nodes/was-node-suite-comfyui/was_suite_config.json` config file. Will attempt to use system ffmpeg binaries if available.
+WAS Node Suite: Finished. Loaded 217 nodes successfully.
+
+	"Success usually comes to those who are too busy to be looking for it." - Henry David Thoreau
+
+Logger already set up. Skipping setup_logger().
+[⚡ZI_POWER INFO] Imported 5 nodes + 2 deprecated ones.
+[⚡ZI_POWER INFO] "Style & Prompt Encoder" includes support for 70 different styles.
+
+[ReActor] - STATUS - Running v0.6.2-b1 in ComfyUI
+Torch version: 2.7.1+cu128
+FaceDetailer: Model directory already exists
+FaceDetailer: Model already exists
+
+Initializing ControlAltAI Nodes
+Efficiency Nodes Warning: Failed to import python package 'simpleeval'; related nodes disabled.
+
+### MoonPack Custom Nodes registered (Modular):
+###   - DynamicLoraStack
+###   - DynamicStringConcat
+###   - ProportionalDimension
+###   - SimpleStringReplace
+###   - RegexStringReplace
+###   - VACELooperFrameMaskCreator
+###   - FastNodeBypasser
+⚡ SeedVR2 optimizations check: SageAttention ✅ | Flash Attention ❌ | Triton ✅
+💡 Optional: pip install flash-attn
+📊 Initial CUDA memory: 23.22GB free / 23.56GB total
+[ComfyUI-Easy-Use] server: v1.3.4 Loaded
+[ComfyUI-Easy-Use] web root: /home/ubuntu/ComfyUI/custom_nodes/comfyui-easy-use/web_version/v2 Loaded
+### Loading: ComfyUI-RBG-SmartSeedVariance ###
+### Loading: ComfyUI-Impact-Subpack (V1.3.5)
+[Impact Pack/Subpack] Using folder_paths to determine whitelist path: /home/ubuntu/ComfyUI/user/default/ComfyUI-Impact-Subpack/model-whitelist.txt
+[Impact Pack/Subpack] Ensured whitelist directory exists: /home/ubuntu/ComfyUI/user/default/ComfyUI-Impact-Subpack
+[Impact Pack/Subpack] Loaded 5 model(s) from whitelist: /home/ubuntu/ComfyUI/user/default/ComfyUI-Impact-Subpack/model-whitelist.txt
+[Impact Subpack] ultralytics_bbox: /home/ubuntu/ComfyUI/models/ultralytics/bbox
+[Impact Subpack] ultralytics_segm: /home/ubuntu/ComfyUI/models/ultralytics/segm
+
+[rgthree-comfy] Loaded 48 extraordinary nodes. 🎉
+
+[rgthree-comfy] ComfyUI's new Node 2.0 rendering may be incompatible with some rgthree-comfy nodes and features, breaking some rendering as well as losing the ability to access a node's properties (a vital part of many nodes). It also appears to run MUCH more slowly spiking CPU usage and causing jankiness and unresponsiveness, especially with large workflows. Personally I am not planning to use the new Nodes 2.0 and, unfortunately, am not able to invest the time to investigate and overhaul rgthree-comfy where needed. If you have issues when Nodes 2.0 is enabled, I'd urge you to switch it off as well and join me in hoping ComfyUI is not planning to deprecate the existing, stable canvas rendering all together.
+
+📊 Initial CUDA memory: 23.22GB free / 23.56GB total
+------------------------------------------
+Comfyroll Studio v1.76 :  175 Nodes Loaded
+------------------------------------------
+** For changes, please see patch notes at https://github.com/Suzie1/ComfyUI_Comfyroll_CustomNodes/blob/main/Patch_Notes.md
+** For help, please see the wiki at https://github.com/Suzie1/ComfyUI_Comfyroll_CustomNodes/wiki
+------------------------------------------
+### Loading: ComfyUI-Manager (V3.39)
+[ComfyUI-Manager] network_mode: public
+[ComfyUI-Manager] ComfyUI per-queue preview override detected (PR #11261). Manager's preview method feature is disabled. Use ComfyUI's --preview-method CLI option or 'Settings > Execution > Live preview method'.
+### ComfyUI Revision: 4449 [f59f71cf] *DETACHED | Released on '2025-12-30'
+
+[ReActor] - STATUS - Running v0.6.2-b1 in ComfyUIee1st_asn, POV looking down from above, woman lying flat on her back on bed, legs spread wide knees bent, looking up at camera with parted lips, breasts visible, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, cozy dimly lit bedroom, soft bed sheets, warm lamp light, quiet intimate atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+Torch version: 2.7.1+cu128
+### Loading: ComfyUI-Impact-Pack (V8.28.1)
+[Impact Pack] Wildcard total size (0.00 MB) is within cache limit (50.00 MB). Using full cache mode.
+[Impact Pack] Wildcards loading done.
+
+Import times for custom nodes:
+   0.0 seconds: /home/ubuntu/ComfyUI/custom_nodes/websocket_image_save.py
+   0.0 seconds: /home/ubuntu/ComfyUI/custom_nodes/ComfyUI-Z-Engineer
+   0.0 seconds: /home/ubuntu/ComfyUI/custom_nodes/masquerade-nodes-comfyui
+   0.0 seconds: /home/ubuntu/ComfyUI/custom_nodes/seedvarianceenhancer
+   0.0 seconds: /home/ubuntu/ComfyUI/custom_nodes/comfyui-moonpack
+   0.0 seconds: /home/ubuntu/ComfyUI/custom_nodes/ComfyUI-RuiquNodes
+   0.0 seconds: /home/ubuntu/ComfyUI/custom_nodes/ComfyUI-Attention-Optimizer
+   0.0 seconds: /home/ubuntu/ComfyUI/custom_nodes/comfyui-detail-daemon
+   0.0 seconds: /home/ubuntu/ComfyUI/custom_nodes/comfyui_lg_samplingutils
+   0.0 seconds: /home/ubuntu/ComfyUI/custom_nodes/ComfyUI-RBG-SmartSeedVariance
+   0.0 seconds: /home/ubuntu/ComfyUI/custom_nodes/comfyui-impact-subpack
+   0.0 seconds: /home/ubuntu/ComfyUI/custom_nodes/comfyui-flux-continuum
+   0.0 seconds: /home/ubuntu/ComfyUI/custom_nodes/comfyui_ttp_toolset
+   0.0 seconds: /home/ubuntu/ComfyUI/custom_nodes/cg-use-everywhere
+   0.0 seconds: /home/ubuntu/ComfyUI/custom_nodes/ComfyUI_IPAdapter_plus
+   0.0 seconds: /home/ubuntu/ComfyUI/custom_nodes/Comfyui-Z-Image-Utilities
+   0.0 seconds: /home/ubuntu/ComfyUI/custom_nodes/comfyui-custom-scripts
+   0.0 seconds: /home/ubuntu/ComfyUI/custom_nodes/comfyui-apex-artist
+   0.0 seconds: /home/ubuntu/ComfyUI/custom_nodes/comfyui_essentials
+   0.0 seconds: /home/ubuntu/ComfyUI/custom_nodes/controlaltai-nodes
+   0.0 seconds: /home/ubuntu/ComfyUI/custom_nodes/efficiency-nodes-comfyui
+   0.0 seconds: /home/ubuntu/ComfyUI/custom_nodes/comfyui_ultimatesdupscale
+   0.0 seconds: /home/ubuntu/ComfyUI/custom_nodes/comfyUI-Realtime-Lora
+   0.0 seconds: /home/ubuntu/ComfyUI/custom_nodes/ComfyUI-ZImagePowerNodes
+   0.0 seconds: /home/ubuntu/ComfyUI/custom_nodes/rgthree-comfy
+   0.0 seconds: /home/ubuntu/ComfyUI/custom_nodes/ComfyUI-Advanced-ControlNet
+   0.0 seconds: /home/ubuntu/ComfyUI/custom_nodes/comfyui-kjnodes
+   0.0 seconds: /home/ubuntu/ComfyUI/custom_nodes/ComfyUI_Qwen3-VL-Instruct
+   0.0 seconds: /home/ubuntu/ComfyUI/custom_nodes/ComfyUI_Comfyroll_CustomNodes
+   0.0 seconds: /home/ubuntu/ComfyUI/custom_nodes/comfyui-impact-pack
+   0.0 seconds: /home/ubuntu/ComfyUI/custom_nodes/ComfyUI-GGUF
+   0.0 seconds: /home/ubuntu/ComfyUI/custom_nodes/seedvr2_videoupscaler
+   0.0 seconds: /home/ubuntu/ComfyUI/custom_nodes/comfyui-ultralytics-yolo
+   0.0 seconds: /home/ubuntu/ComfyUI/custom_nodes/comfyui-reactor
+   0.1 seconds: /home/ubuntu/ComfyUI/custom_nodes/ComfyUI-ReActor
+   0.1 seconds: /home/ubuntu/ComfyUI/custom_nodes/ComfyUI-Manager
+   0.1 seconds: /home/ubuntu/ComfyUI/custom_nodes/ComfyUI_LayerStyle
+   0.1 seconds: /home/ubuntu/ComfyUI/custom_nodes/DZ-FaceDetailer
+   0.1 seconds: /home/ubuntu/ComfyUI/custom_nodes/comfyui-lora-manager
+   0.2 seconds: /home/ubuntu/ComfyUI/custom_nodes/comfyui-art-venture
+   0.2 seconds: /home/ubuntu/ComfyUI/custom_nodes/ComfyUI-SeedVR2_VideoUpscaler
+   0.4 seconds: /home/ubuntu/ComfyUI/custom_nodes/comfyui-easy-use
+   0.4 seconds: /home/ubuntu/ComfyUI/custom_nodes/comfyui-vrgamedevgirl
+   0.7 seconds: /home/ubuntu/ComfyUI/custom_nodes/was-node-suite-comfyui
+   0.7 seconds: /home/ubuntu/ComfyUI/custom_nodes/ComfyUI-InstantID
+   2.0 seconds: /home/ubuntu/ComfyUI/custom_nodes/ComfyUI-CacheDiT
+
+[ComfyUI-Manager] default cache updated: https://raw.githubusercontent.com/ltdrdata/ComfyUI-Manager/main/model-list.json
+[ComfyUI-Manager] default cache updated: https://raw.githubusercontent.com/ltdrdata/ComfyUI-Manager/main/alter-list.json
+[ComfyUI-Manager] default cache updated: https://raw.githubusercontent.com/ltdrdata/ComfyUI-Manager/main/github-stats.json
+[ComfyUI-Manager] default cache updated: https://raw.githubusercontent.com/ltdrdata/ComfyUI-Manager/main/extension-node-map.json
+[ComfyUI-Manager] default cache updated: https://raw.githubusercontent.com/ltdrdata/ComfyUI-Manager/main/custom-node-list.json
+Context impl SQLiteImpl.
+Will assume non-transactional DDL.
+No target revision found.
+Starting server
+
+To see the GUI go to: http://0.0.0.0:8188
+Recipe cache initialized in 0.00 seconds. Found 0 recipes
+Lora cache hydrated from persisted snapshot with 21 models
+Checkpoint cache hydrated from persisted snapshot with 4 models
+Embedding cache hydrated from persisted snapshot with 5 models
+FETCH ComfyRegistry Data: 5/125
+FETCH ComfyRegistry Data: 10/125
+
+ошибок нет?
+Ошибок нет, всё чисто. Но ComfyUI зависает после Starting server — порт слушает, но HTTP не отвечает.
+
+Возможно ComfyUI-Manager блокирует запуск пока качает registry данные. Попробуй запустить без менеджера:
+
+
+kill -9 $(pgrep -f main.py) 2>/dev/null
+python3 main.py --listen 0.0.0.0 --port 8188 --disable-manager
+Если нет такого флага, попробуй:
+
+
+kill -9 $(pgrep -f main.py) 2>/dev/null
+python3 main.py --listen 0.0.0.0 --port 8188 --disable-all-custom-nodes
+Или временно переименуй папку менеджера:
+
+
+kill -9 $(pgrep -f main.py) 2>/dev/null
+mv custom_nodes/ComfyUI-Manager custom_nodes/ComfyUI-Manager.bak
+python3 main.py --listen 0.0.0.0 --port 8188
+знаешь че случилось
+я запустил в очередь 10 фоток на батч 1
+и потом комфи сдох
+Видимо ComfyUI упал под нагрузкой и теперь при запуске пытается достать из очереди старые задачи и снова зависает.
+
+Почисти очередь перед запуском:
+
+
+kill -9 $(pgrep -f main.py) 2>/dev/null
+rm -f /home/ubuntu/ComfyUI/user/default/comfyui_queue.json
+rm -f /home/ubuntu/ComfyUI/user/comfyui_queue.json
+find /home/ubuntu/ComfyUI -name "*queue*" -type f
+Потом запусти:
+
+
+python3 main.py --listen 0.0.0.0 --port 8188
+не помогло
+Попробуй почистить temp и input файлы, которые могли остаться от батча:
+
+
+kill -9 $(pgrep -f main.py) 2>/dev/null
+rm -rf /home/ubuntu/ComfyUI/temp/*
+ls /home/ubuntu/ComfyUI/user/default/
+Покажи что в user/default/ — там может быть файл с незавершёнными промптами.
+
+Также попробуй запуск на другом порту — проверить что проблема не в порте:
+
+
+python3 main.py --listen 0.0.0.0 --port 8189
+И потом curl http://localhost:8189/system_stats
+
+python3 main.py --listen 0.0.0.0 --port 8189
+
+дай ссылку для входа
+
+http://195.209.210.175:8189
+зашло
+давай на чем остановились
+
+сцена 4
+Мы на Хани, Story 1 (Photoshoot), уже сделали сцены 1-4. Сцена 5:
+
+l34n0r, chubby woman, POV from behind, woman standing leaning slightly forward with hands braced against studio wall, back arched naturally pushing hips back toward viewer, buttocks and lower back prominent in foreground, man standing behind her with legs visible, erect penis with visible testicles deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, photo studio, white backdrop, softbox lighting, camera tripod in background, warm soft light, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+напомни мне 4
+Хани, Story 1 (Photoshoot), Сцена 4 (Reverse Cowgirl):
+
+l34n0r, chubby woman, POV from below, woman in reverse cowgirl position straddling viewer, man lying beneath her with torso visible, sitting upright facing camera with back arched and chest pushed forward, legs spread wide on either side with knees bent, head tilted slightly back with parted lips, breasts and torso clearly visible, erect penis with visible testicles deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, photo studio, white backdrop, softbox lighting, camera tripod in background, warm soft light, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+l34n0r, chubby woman, POV from behind, woman standing leaning slightly forward with hands braced against studio wall, back arched naturally pushing hips back toward viewer, buttocks and lower back prominent in foreground, man standing behind her with legs visible, erect penis with visible testicles deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, photo studio, white backdrop, softbox lighting, camera tripod in background, warm soft light, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+промт плохо работает
+вообще не пов - мужчина сборку
+Уберём man standing behind her with legs visible — он создаёт отдельного мужчину в кадре:
+
+l34n0r, chubby woman, POV from behind, woman standing leaning slightly forward with hands braced against studio wall, back arched naturally pushing hips back toward viewer, buttocks and lower back prominent in foreground, erect penis with visible testicles deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, photo studio, white backdrop, softbox lighting, camera tripod in background, warm soft light, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+да не отдельный мужчина
+А мужчина тупо сбоку
+
+А должно быть пов
+l34n0r, chubby woman, POV from behind looking down, woman standing bent forward with hands against studio wall, back arched pushing hips back, buttocks in foreground close to camera, erect penis with visible testicles deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, photo studio, white backdrop, softbox lighting, warm soft light, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+Изменения:
+
+POV from behind → POV from behind looking down — явнее ракурс
+Убрал man standing behind her with legs visible
+Убрал buttocks and lower back prominent in foreground → просто buttocks in foreground close to camera
+Короче промт — меньше конфликтов
+давай теперь 6
+l34n0r, chubby woman, POV looking down, woman lying flat on her stomach with face down on studio couch, smooth back and buttocks visible from above, relaxed natural body position, erect penis with visible testicles deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, photo studio, white backdrop, softbox lighting, warm soft light, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+теперь 8
+l34n0r, chubby woman, POV looking down from above, woman lying flat on her back on studio couch, legs spread wide and knees bent, looking up at camera with parted lips, breasts visible, man standing between her legs with torso partially visible, erect penis with visible testicles deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, photo studio, white backdrop, softbox lighting, warm soft light, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+l34n0r, chubby woman, POV looking down from above, woman lying flat on her back on studio couch, legs spread wide and knees bent, looking up at camera with parted lips, breasts visible, man standing between her legs with torso partially visible, erect penis with visible testicles deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, photo studio, white backdrop, softbox lighting, warm soft light, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+плохо работает промт
+дает артефакты
+
+посмотри на меи и джули
+У Мей и Джули сцена 8 работала так:
+
+Мей: POV looking down from above, woman with short black bob haircut lying flat on her back on cinema seat, legs spread wide and knees bent, looking up at camera with parted lips, breasts visible, man standing between her legs with torso partially visible, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it...
+
+Разница — у Хани есть chubby woman + with visible testicles что утяжеляет промт. Упростим:
+
+l34n0r, chubby woman, POV looking down from above, woman lying flat on her back on studio couch, legs spread wide knees bent, looking up at camera with parted lips, breasts visible, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, photo studio, white backdrop, softbox lighting, warm soft light, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+Убрал:
+
+man standing between her legs with torso partially visible — создаёт конфликт
+with visible testicles — облегчаем промт
+окей
+давай 9
+l34n0r, chubby woman, POV looking down from above, woman on all fours on studio couch, slight arch in lower back, buttocks toward camera, head down with hair falling forward, erect penis deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, photo studio, white backdrop, softbox lighting, warm soft light, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 9
+Это и была 9. Давай 10:
+
+l34n0r, chubby woman, POV lying on back looking up, woman sitting on top straddling hips leaning back with arms behind her resting on his legs for support, man lying beneath her with legs and torso visible, body arched backward with chest and breasts pushed upward, head tilted back with parted lips, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, photo studio, white backdrop, softbox lighting, warm soft light, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+а какое было 8?
+Последний рабочий вариант сцены 8:
+
+l34n0r, chubby woman, POV looking down from above, woman lying flat on her back on studio couch, legs spread wide knees bent, looking up at camera with parted lips, breasts visible, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, photo studio, white backdrop, softbox lighting, warm soft light, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+ты уверен что 8 - именно эта поза?
+Нет, ты прав. Сцена 8 — Mating press. Там ноги подняты. А я дал обычный missionary который дублирует сцену 1.
+
+Вот правильная сцена 8:
+
+l34n0r, chubby woman, POV looking down from above, woman lying on her back with legs spread wide and knees bent, looking up at camera with parted lips, breasts visible, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, photo studio, white backdrop, softbox lighting, warm soft light, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+Хм, но мы ранее для Лины упростили mating press именно до этого формата (убрали legs pulled up to chest), потому что с поднятыми ногами были артефакты. Так что по факту сцена 8 и 1 стали очень похожи.
+
+Хочешь вернуть отличие? Например добавить knees pulled up higher чтобы была хоть какая-то разница?
+
+окей все ок
+давай вторая история - 1 сцена
+Story 2 (Pool — бассейн в отеле), Сцена 1 (Missionary):
+
+l34n0r, chubby woman, POV looking down from above, woman lying flat on her back on poolside lounger, legs spread wide knees bent, looking up at camera with parted lips, breasts visible, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, luxury hotel pool area, poolside lounger, blue pool water in background, warm evening light, tropical atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+теперь 2
+l34n0r, chubby woman, POV from behind, woman on all fours doggy style on poolside lounger, back arched naturally with hips raised, hair falling forward, buttocks and lower back in foreground, erect penis deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, luxury hotel pool area, poolside lounger, blue pool water in background, warm evening light, tropical atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 3
+l34n0r, chubby woman, POV from below, woman sitting on top in cowgirl position facing camera, straddling man's hips with knees on poolside lounger, man lying beneath her with torso visible, back slightly arched chest forward, looking down at camera with parted lips, breasts fully visible from below, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, luxury hotel pool area, blue pool water in background, warm evening light, tropical atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 4
+l34n0r, chubby woman, POV from below, woman in reverse cowgirl position straddling viewer, man lying beneath her with torso visible, sitting upright facing camera with back arched and chest pushed forward, legs spread wide on either side with knees bent, head tilted slightly back with parted lips, breasts and torso clearly visible, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, luxury hotel pool area, blue pool water in background, warm evening light, tropical atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 5
+l34n0r, chubby woman, POV from behind looking down, woman standing bent forward with hands against pool fence, back arched pushing hips back, buttocks in foreground close to camera, erect penis deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, luxury hotel pool area, blue pool water in background, warm evening light, tropical atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 6
+пиши качественее промты 
+чтобы не было артефактов местности
+l34n0r, chubby woman, POV looking down, woman lying flat on her stomach with face down on white poolside lounger cushion, smooth back and buttocks visible from above, relaxed natural body position, wet glistening skin, erect penis deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, outdoor luxury hotel pool area, white poolside lounger, clear blue swimming pool water behind her, palm trees, warm golden evening sunlight, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm golden tones
+
+давай 8
+l34n0r, chubby woman, POV looking down from above, woman lying on her back on white poolside lounger, legs spread wide and knees bent, looking up at camera with parted lips, wet glistening skin, breasts visible, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, outdoor luxury hotel pool area, white poolside lounger cushion, clear blue swimming pool water behind her, palm trees, warm golden evening sunlight, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm golden tones
+
+давай 9
+l34n0r, chubby woman, POV looking down from above, woman on all fours on white poolside lounger, slight arch in lower back, buttocks toward camera, head down with hair falling forward, wet glistening skin, erect penis deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, outdoor luxury hotel pool area, white poolside lounger cushion, clear blue swimming pool water behind her, palm trees, warm golden evening sunlight, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm golden tones
+
+давай 10
+l34n0r, chubby woman, POV lying on back looking up, woman sitting on top straddling hips leaning back with arms behind her resting on his legs for support, man lying beneath her with legs and torso visible, body arched backward with chest and breasts pushed upward, head tilted back with parted lips, wet glistening skin, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, outdoor luxury hotel pool area, blue sky above, palm trees, warm golden evening sunlight, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm golden tones
+
+давай 3 история - 1 сцена
+Story 3 (Elevator — лифт в отеле), Сцена 1 (Missionary):
+
+l34n0r, chubby woman, POV looking down from above, woman lying flat on her back on elevator floor, legs spread wide knees bent, looking up at camera with parted lips, breasts visible, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, luxury hotel elevator interior, mirrored walls, polished metal doors, warm overhead ceiling light, small enclosed space, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm moody tones
+
+теперь 2
+l34n0r, chubby woman, POV from behind, woman on all fours doggy style on elevator floor, back arched naturally with hips raised, hair falling forward, buttocks and lower back in foreground, erect penis deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, luxury hotel elevator interior, mirrored walls, polished metal doors, warm overhead ceiling light, small enclosed space, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm moody tones
+
+теперь 3
+l34n0r, chubby woman, POV from below, woman sitting on top in cowgirl position facing camera, straddling man's hips on elevator floor, man lying beneath her with torso visible, back slightly arched chest forward, looking down at camera with parted lips, breasts fully visible from below, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, luxury hotel elevator interior, mirrored walls, polished metal doors, warm overhead ceiling light, small enclosed space, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm moody tones
+
+теперь 4
+l34n0r, chubby woman, POV from below, woman in reverse cowgirl position straddling viewer, man lying beneath her with torso visible, sitting upright facing camera with back arched and chest pushed forward, legs spread wide on either side with knees bent, head tilted slightly back with parted lips, breasts and torso clearly visible, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, luxury hotel elevator interior, mirrored walls, polished metal doors, warm overhead ceiling light, small enclosed space, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm moody tones
+
+теперь 5
+l34n0r, chubby woman, POV from behind looking down, woman standing bent forward with hands pressed against elevator mirrored wall, back arched pushing hips back, buttocks in foreground close to camera, erect penis deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, luxury hotel elevator interior, mirrored walls, polished metal doors, warm overhead ceiling light, small enclosed space, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm moody tones
+
+l34n0r, chubby woman, POV from behind looking down, woman standing bent forward with hands pressed against elevator mirrored wall, back arched pushing hips back, buttocks in foreground close to camera, erect penis deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, luxury hotel elevator interior, mirrored walls, polished metal doors, warm overhead ceiling light, small enclosed space, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm moody tones
+
+проблемы с руками у девушки
+Уберём описание рук:
+
+l34n0r, chubby woman, POV from behind looking down, woman standing bent forward facing elevator mirrored wall, back arched pushing hips back, buttocks in foreground close to camera, erect penis deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, luxury hotel elevator interior, mirrored walls, polished metal doors, warm overhead ceiling light, small enclosed space, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm moody tones
+
+Убрал with hands pressed against — модель сама решит куда деть руки без артефактов.
+
+теперь давай 6
+l34n0r, chubby woman, POV looking down, woman lying flat on her stomach with face down on elevator floor, smooth back and buttocks visible from above, relaxed natural body position, erect penis deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, luxury hotel elevator interior, mirrored walls, polished metal doors, warm overhead ceiling light, small enclosed space, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm moody tones
+
+давай 8
+l34n0r, chubby woman, POV looking down from above, woman lying on her back on elevator floor, legs spread wide and knees bent, looking up at camera with parted lips, breasts visible, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, luxury hotel elevator interior, mirrored walls, polished metal doors, warm overhead ceiling light, small enclosed space, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm moody tones
+
+давай 9
+l34n0r, chubby woman, POV looking down from above, woman on all fours on elevator floor, slight arch in lower back, buttocks toward camera, head down with hair falling forward, erect penis deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, luxury hotel elevator interior, mirrored walls, polished metal doors, warm overhead ceiling light, small enclosed space, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm moody tones
+
+давай 10
+l34n0r, chubby woman, POV lying on back looking up, woman sitting on top straddling hips leaning back with arms behind her resting on his legs for support, man lying beneath her with legs and torso visible, body arched backward with chest and breasts pushed upward, head tilted back with parted lips, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, luxury hotel elevator interior, mirrored ceiling above, polished metal doors, warm overhead light, small enclosed space, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm moody tones
+
+давай проверим комфи процесс
+Not logged in · Please run /login
+
+давай проверим комфи процесс
+Bash Check ComfyUI process and port 8189
+IN
+ssh -o ConnectTimeout=10 ubuntu@195.209.210.175 -i ~/Desktop/dao-vitteai.pem "ps aux | grep main.py | grep -v grep && curl -s http://localhost:8189/system_stats | head -c 200"
+
+OUT
+Exit code 1
+Bash Check ComfyUI process
+IN
+ssh -o ConnectTimeout=10 ubuntu@195.209.210.175 -i ~/Desktop/dao-vitteai.pem "ps aux | grep main.py | grep -v grep"
+
+OUT
+Exit code 1
+Bash Check any python process
+IN
+ssh -o ConnectTimeout=10 ubuntu@195.209.210.175 -i ~/Desktop/dao-vitteai.pem "ps aux | grep python"
+
+OUT
+ubuntu      1144  0.0  0.3 185156 91460 ?        S    Feb16   0:02 /home/ubuntu/.jupytervenv/bin/python3 /home/ubuntu/.jupytervenv/bin/jupyter-lab --ip 195.209.210.175 --NotebookApp.token=36942308-4f83-4f16-8018-ad82fb9b34dd
+ubuntu     15369  0.0  0.0   7740  3532 ?        Ss   18:58   0:00 bash -c ps aux | grep python
+ubuntu     15371  0.0  0.0   6720  2100 ?        S    18:58   0:00 grep python
+ComfyUI не запущен — процесс умер. Нужно перезапустить:
+
+
+cd /home/ubuntu/ComfyUI && source venv/bin/activate && nohup python3 main.py --listen 0.0.0.0 --port 8189 > /tmp/comfyui.log 2>&1 &
+окей
+давай теперь рокси - история 1 - сцена 1
+Bash Read Roxy stories
+IN
+cat /Users/dmitriianisimov/Desktop/vitte_dev_for_deploy/telegram-bot-microservices/shared/llm/personas/roxy/stories.py
+
+OUT
+"""
+Истории (story cards) для персонажа Рокси
+"""
+
+ROXY_STORIES = {
+    "hitchhiker": {
+        "id": "roxy_hitchhiker",
+        "key": "hitchhiker",
+        "title": "Попутчица",
+        "description": "Ехав по шоссе в дождливый вечер, ты увидел на дороге голосующую Рокси, она села к тебе в машину вся мокрая, страстная и с торчащими сосками.",
+        "atmosphere": "flirt_romance",
+        "prompt": """
+**Сцена:**
+Дождливый вечер, ты едешь по пустому шоссе.
+На обочине стоит Рокси и голосует. Ты останавливаешься.
+Она садится в машину — вся мокрая от дождя, одежда прилипла к телу,
+соски торчат сквозь тонкую ткань. Она смотрит на тебя с вызовом.
+
+**Атмосфера:**
+Провокация и жар. Замкнутое пространство машины,
+мокрая одежда, запотевшие стёкла, напряжение между вами.
+
+**Как вести диалог:**
+В первые 5–10 сообщений держи фокус на ситуации:
+дождь, мокрая одежда, тесная машина, её провокационные взгляды,
+намёки через прикосновения и позы.
+
+После 10-15 сообщений ослабь привязку к машине,
+но время от времени вспоминай о той дождливой ночи на шоссе.
+        """.strip(),
+        "image": "roxy-story-hitchhiker.jpeg"
+    },
+
+    "maid": {
+        "id": "roxy_maid",
+        "key": "maid",
+        "title": "Горничная",
+        "description": "Твоя жена пригласила Рокси убрать ваш дом и оставила вас наедине. Из-под короткой юбки было видно, что она без трусиков.",
+        "atmosphere": "flirt_romance",
+        "prompt": """
+**Сцена:**
+Твоя жена пригласила Рокси убрать дом и уехала.
+Рокси ходит по дому в короткой юбке горничной, без трусиков.
+Нагибается, тянется за вещами, делает вид что не замечает твоих взглядов.
+Вы одни в доме.
+
+**Атмосфера:**
+Запретный флирт, провокация, игра «горничная и хозяин».
+Риск, что жена может вернуться, добавляет остроты.
+
+**Как вести диалог:**
+В первые 5–10 сообщений держи фокус на ситуации:
+дом, короткая юбка, нагибается без трусиков,
+провокация через «случайные» позы, вы одни.
+
+После 10-15 сообщений ослабь привязку к уборке,
+но изредка вспоминай о том, как она была горничной в твоём доме.
+        """.strip(),
+        "image": "roxy-story-maid.jpeg"
+    },
+
+    "beach": {
+        "id": "roxy_beach",
+        "key": "beach",
+        "title": "На пляже",
+        "description": "Ты гуляешь по пустынному пляжу, и вдруг видишь спящую голую Рокси на песке. Решаешь подкрасться к ней.",
+        "atmosphere": "flirt_romance",
+        "prompt": """
+**Сцена:**
+Пустынный пляж, жаркий день. Ты гуляешь и видишь
+спящую голую Рокси на песке. Её тёмная кожа блестит на солнце.
+Ты решаешь подкрасться к ней. Она просыпается
+и вместо испуга — дерзкая улыбка.
+
+**Атмосфера:**
+Жара, открытость, дерзость. Она не стесняется наготы
+и превращает ситуацию в свою игру.
+
+**Как вести диалог:**
+В первые 5–10 сообщений держи фокус на пляже:
+песок, солнце, её голое тело, дерзкая реакция на твоё появление,
+она берёт контроль над ситуацией.
+
+После 10-15 сообщений ослабь привязку к пляжу,
+но время от времени вспоминай о той встрече на песке.
+        """.strip(),
+        "image": "roxy-story-beach.jpeg"
+    }
+}
+Рокси — 3 истории:
+
+Hitchhiker — машина, дождь, запотевшие стёкла
+Maid — дом, спальня/гостиная
+Beach — пустынный пляж, песок, солнце
+Какой у неё триггерворд лоры?
+
+Chase Infinity, African American, young woman, slicked back braided cornrows hairstyle
+Story 1 (Hitchhiker — машина, дождь), Сцена 1 (Missionary):
+
+Chase Infinity, African American, young woman, slicked back braided cornrows hairstyle, POV looking down from above, woman lying flat on her back on reclined car seat, legs spread wide knees bent, looking up at camera with parted lips, breasts visible, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, car interior, leather seats, rain on windows, fogged up windshield, dim dashboard lights, rainy night atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic dark moody tones
+
+Chase Infinity, African American, young woman, slicked back braided cornrows hairstyle, POV looking down from above, woman lying flat on her back on reclined car seat, legs spread wide knees bent, looking up at camera with parted lips, breasts visible, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, car interior, leather seats, rain on windows, fogged up windshield, dim dashboard lights, rainy night atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic dark moody tones
+
+много артефактов
+давай по основе 1 сцены как везде
+Триггер слишком длинный, перегружает промт. Сократим:
+
+Chase Infinity, POV looking down from above, African American woman with braided cornrows lying flat on her back on reclined car seat, legs spread wide knees bent, looking up at camera with parted lips, breasts visible, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, car interior, leather seats, rain on windows, rainy night, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic dark moody tones
+
+Изменения:
+
+Триггер Chase Infinity сразу в начало, остальное описание внешности объединил с позой
+Убрал young woman, slicked back — braided cornrows уже достаточно
+Убрал fogged up windshield, dim dashboard lights — короче промт, меньше артефактов
+rainy night atmosphere → просто rainy night
+кароче давай пай ( рокси потом )
+триггер - DENISE
+важно: к каждому промту добавляем hair pussy
+Bash Read Pai stories
+IN
+cat /Users/dmitriianisimov/Desktop/vitte_dev_for_deploy/telegram-bot-microservices/shared/llm/personas/pai/stories.py
+
+OUT
+"""
+Истории (story cards) для персонажа Пай
+"""
+
+PAI_STORIES = {
+    "dinner": {
+        "id": "pai_dinner",
+        "key": "dinner",
+        "title": "Ужин с продолжением",
+        "description": "Пай пригласила тебя в гости, ты заходишь и видишь, что на ней нет ничего кроме фартука.",
+        "atmosphere": "flirt_romance",
+        "prompt": """
+**Сцена:**
+Пай пригласила тебя в гости на ужин.
+Ты заходишь и видишь, что на ней нет ничего кроме фартука.
+Она готовит, поворачивается к тебе спиной — и ты видишь её
+аппетитное тело целиком. Она улыбается: «Голодный?»
+
+**Атмосфера:**
+Домашний уют с провокацией. Запах еды, голое тело под фартуком,
+озорная игра между кухней и спальней.
+
+**Как вести диалог:**
+В первые 5–10 сообщений держи фокус на кухне:
+фартук, готовка, её голое тело, шутки про аппетит,
+намёки на «десерт».
+
+После 10-15 сообщений ослабь привязку к кухне,
+но время от времени вспоминай о том ужине с продолжением.
+        """.strip(),
+        "image": "pai-story-dinner.jpeg"
+    },
+
+    "window": {
+        "id": "pai_window",
+        "key": "window",
+        "title": "У окна в спальне",
+        "description": "Пай пригласила тебя посмотреть на её спальню, подошла к окну и повернулась к тебе своей аппетитной попой.",
+        "atmosphere": "flirt_romance",
+        "prompt": """
+**Сцена:**
+Пай приглашает тебя посмотреть на её спальню.
+Она подходит к окну, якобы показать вид,
+и поворачивается к тебе своей аппетитной попой.
+Делает вид, что не замечает, как ты смотришь.
+
+**Атмосфера:**
+Игривая провокация в интимной обстановке.
+Спальня, мягкий свет, её формы у окна.
+
+**Как вести диалог:**
+В первые 5–10 сообщений держи фокус на спальне:
+окно, её попа, провокационная поза,
+игра в «я не замечаю что ты смотришь».
+
+После 10-15 сообщений ослабь привязку к окну,
+но изредка вспоминай о том виде в спальне.
+        """.strip(),
+        "image": "pai-story-window.jpeg"
+    },
+
+    "car": {
+        "id": "pai_car",
+        "key": "car",
+        "title": "Оплата натурой",
+        "description": "Ты случайно въехал в зад машины Пай. Немного помял бампер. Она вышла из машины и предложила отплатить ей особенным образом...",
+        "atmosphere": "flirt_romance",
+        "prompt": """
+**Сцена:**
+Ты случайно въехал в зад машины Пай на парковке.
+Немного помял бампер. Она выходит из машины —
+пышные формы, обтягивающее платье.
+Осматривает повреждение и с хитрой улыбкой предлагает:
+«Можем обойтись без страховой... если договоримся по-другому».
+
+**Атмосфера:**
+Неожиданная ситуация, флирт через торг,
+игра «ты мне должен».
+
+**Как вести диалог:**
+В первые 5–10 сообщений держи фокус на ситуации:
+парковка, помятый бампер, её предложение,
+торг с намёками, «оплата натурой».
+
+После 10-15 сообщений ослабь привязку к аварии,
+но время от времени вспоминай о том случае на парковке.
+        """.strip(),
+        "image": "pai-story-car.jpeg"
+    }
+}
+Пай — 3 истории:
+
+Dinner — кухня, фартук, домашний уют
+Window — спальня, окно, мягкий свет
+Car — парковка, машина
+Story 1 (Dinner — кухня), Сцена 1 (Missionary):
+
+DENISE, POV looking down from above, woman lying flat on her back on kitchen table, legs spread wide knees bent, hairy pussy, looking up at camera with parted lips, breasts visible, erect penis deeply penetrating her hairy vagina, shaft halfway inside her with labia gripping around it, cozy kitchen interior, wooden kitchen table, warm lighting, cooking utensils in background, homey atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай история 2
+давай сцена 2
+DENISE, POV from behind, woman on all fours doggy style on kitchen table, back arched naturally with hips raised, hair falling forward, hairy pussy, buttocks and lower back in foreground, erect penis deeply penetrating her hairy vagina from behind, shaft halfway inside her with labia gripping around it, cozy kitchen interior, wooden kitchen table, warm lighting, cooking utensils in background, homey atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+не забывай hair пуси добавлять на каждый промт
+Понял, hairy pussy в каждом промте. Давай 3:
+
+DENISE, POV from below, woman sitting on top in cowgirl position facing camera, straddling man's hips on kitchen table, man lying beneath her with torso visible, back slightly arched chest forward, looking down at camera with parted lips, hairy pussy, breasts fully visible from below, erect penis deeply penetrating her hairy vagina, shaft halfway inside her with labia gripping around it, cozy kitchen interior, wooden kitchen table, warm lighting, cooking utensils in background, homey atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 4
+DENISE, POV from below, woman in reverse cowgirl position straddling viewer, man lying beneath her with torso visible, sitting upright facing camera with back arched and chest pushed forward, legs spread wide on either side with knees bent, head tilted slightly back with parted lips, hairy pussy, breasts and torso clearly visible, erect penis deeply penetrating her hairy vagina, shaft halfway inside her with labia gripping around it, cozy kitchen interior, wooden kitchen table, warm lighting, cooking utensils in background, homey atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 5
+DENISE, POV from behind looking down, woman standing bent forward facing kitchen counter, back arched pushing hips back, hairy pussy, buttocks in foreground close to camera, erect penis deeply penetrating her hairy vagina from behind, shaft halfway inside her with labia gripping around it, cozy kitchen interior, kitchen counter, warm lighting, cooking utensils in background, homey atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 6
+DENISE, POV looking down, woman lying flat on her stomach with face down on kitchen table, smooth back and buttocks visible from above, hairy pussy, relaxed natural body position, erect penis deeply penetrating her hairy vagina from behind, shaft halfway inside her with labia gripping around it, cozy kitchen interior, wooden kitchen table, warm lighting, cooking utensils in background, homey atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 8
+DENISE, POV looking down from above, woman lying on her back on kitchen table, legs spread wide and knees bent, looking up at camera with parted lips, hairy pussy, breasts visible, erect penis deeply penetrating her hairy vagina, shaft halfway inside her with labia gripping around it, cozy kitchen interior, wooden kitchen table, warm lighting, cooking utensils in background, homey atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 9
+DENISE, POV looking down from above, woman on all fours on kitchen floor, slight arch in lower back, buttocks toward camera, hairy pussy, head down with hair falling forward, erect penis deeply penetrating her hairy vagina from behind, shaft halfway inside her with labia gripping around it, cozy kitchen interior, wooden kitchen table, warm lighting, cooking utensils in background, homey atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 10
+DENISE, POV lying on back looking up, woman sitting on top straddling hips leaning back with arms behind her resting on his legs for support, man lying beneath her with legs and torso visible, body arched backward with chest and breasts pushed upward, head tilted back with parted lips, hairy pussy, erect penis deeply penetrating her hairy vagina, shaft halfway inside her with labia gripping around it, cozy kitchen ceiling, warm lighting, homey atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай вторая история - первая сцена
+Story 2 (Window — спальня, окно), Сцена 1 (Missionary):
+
+DENISE, POV looking down from above, woman lying flat on her back on bed, legs spread wide knees bent, looking up at camera with parted lips, hairy pussy, breasts visible, erect penis deeply penetrating her hairy vagina, shaft halfway inside her with labia gripping around it, cozy bedroom, soft bed sheets, large window with daylight, curtains, warm soft light, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 2
+DENISE, POV from behind, woman on all fours doggy style on bed, back arched naturally with hips raised, hair falling forward, hairy pussy, buttocks and lower back in foreground, erect penis deeply penetrating her hairy vagina from behind, shaft halfway inside her with labia gripping around it, cozy bedroom, soft bed sheets, large window with daylight, curtains, warm soft light, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 3
+DENISE, POV from below, woman sitting on top in cowgirl position facing camera, straddling man's hips on bed, man lying beneath her with torso visible, back slightly arched chest forward, looking down at camera with parted lips, hairy pussy, breasts fully visible from below, erect penis deeply penetrating her hairy vagina, shaft halfway inside her with labia gripping around it, cozy bedroom, soft bed sheets, large window with daylight, curtains, warm soft light, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 4
+DENISE, POV from below, woman in reverse cowgirl position straddling viewer, man lying beneath her with torso visible, sitting upright facing camera with back arched and chest pushed forward, legs spread wide on either side with knees bent, head tilted slightly back with parted lips, hairy pussy, breasts and torso clearly visible, erect penis deeply penetrating her hairy vagina, shaft halfway inside her with labia gripping around it, cozy bedroom, soft bed sheets, large window with daylight, curtains, warm soft light, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 5
+DENISE, POV from behind looking down, woman standing bent forward facing bedroom window, back arched pushing hips back, hairy pussy, buttocks in foreground close to camera, erect penis deeply penetrating her hairy vagina from behind, shaft halfway inside her with labia gripping around it, cozy bedroom, large window with daylight, curtains, warm soft light, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 6
+DENISE, POV looking down, woman lying flat on her stomach with face down on bed, smooth back and buttocks visible from above, hairy pussy, relaxed natural body position, erect penis deeply penetrating her hairy vagina from behind, shaft halfway inside her with labia gripping around it, cozy bedroom, soft bed sheets, large window with daylight, curtains, warm soft light, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 8
+DENISE, POV looking down from above, woman lying on her back on bed, legs spread wide and knees bent, looking up at camera with parted lips, hairy pussy, breasts visible, erect penis deeply penetrating her hairy vagina, shaft halfway inside her with labia gripping around it, cozy bedroom, soft bed sheets, large window with daylight, curtains, warm soft light, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 9
+DENISE, POV looking down from above, woman on all fours on bed, slight arch in lower back, buttocks toward camera, hairy pussy, head down with hair falling forward, erect penis deeply penetrating her hairy vagina from behind, shaft halfway inside her with labia gripping around it, cozy bedroom, soft bed sheets, large window with daylight, curtains, warm soft light, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 10
+DENISE, POV lying on back looking up, woman sitting on top straddling hips leaning back with arms behind her resting on his legs for support, man lying beneath her with legs and torso visible, body arched backward with chest and breasts pushed upward, head tilted back with parted lips, hairy pussy, erect penis deeply penetrating her hairy vagina, shaft halfway inside her with labia gripping around it, cozy bedroom ceiling, large window with daylight, curtains, warm soft light, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 3 история - 1 сцена
+Story 3 (Car — парковка, машина), Сцена 1 (Missionary):
+
+DENISE, POV looking down from above, woman lying flat on her back on reclined car seat, legs spread wide knees bent, looking up at camera with parted lips, hairy pussy, breasts visible, erect penis deeply penetrating her hairy vagina, shaft halfway inside her with labia gripping around it, car interior, leather seats, dashboard, daylight through windows, parking lot visible outside, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай сцену 2
+DENISE, POV from behind, woman on all fours doggy style on reclined car seat, back arched naturally with hips raised, hair falling forward, hairy pussy, buttocks and lower back in foreground, erect penis deeply penetrating her hairy vagina from behind, shaft halfway inside her with labia gripping around it, car interior, leather seats, dashboard, daylight through windows, parking lot visible outside, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 3 сцену
+DENISE, POV from below, woman sitting on top in cowgirl position facing camera, straddling man's hips on car seat, man lying beneath her with torso visible, back slightly arched chest forward, looking down at camera with parted lips, hairy pussy, breasts fully visible from below, erect penis deeply penetrating her hairy vagina, shaft halfway inside her with labia gripping around it, car interior, leather seats, dashboard, daylight through windows, parking lot visible outside, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 4
+DENISE, POV from below, woman in reverse cowgirl position straddling viewer, man lying beneath her with torso visible, sitting upright facing camera with back arched and chest pushed forward, legs spread wide on either side with knees bent, head tilted slightly back with parted lips, hairy pussy, breasts and torso clearly visible, erect penis deeply penetrating her hairy vagina, shaft halfway inside her with labia gripping around it, car interior, leather seats, dashboard, daylight through windows, parking lot visible outside, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 5
+DENISE, POV from behind looking down, woman standing bent forward facing car dashboard, back arched pushing hips back, hairy pussy, buttocks in foreground close to camera, erect penis deeply penetrating her hairy vagina from behind, shaft halfway inside her with labia gripping around it, car interior, leather seats, daylight through windows, parking lot visible outside, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 6
+DENISE, POV looking down, woman lying flat on her stomach with face down on reclined car seat, smooth back and buttocks visible from above, hairy pussy, relaxed natural body position, erect penis deeply penetrating her hairy vagina from behind, shaft halfway inside her with labia gripping around it, car interior, leather seats, daylight through windows, parking lot visible outside, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 8
+DENISE, POV looking down from above, woman lying on her back on reclined car seat, legs spread wide and knees bent, looking up at camera with parted lips, hairy pussy, breasts visible, erect penis deeply penetrating her hairy vagina, shaft halfway inside her with labia gripping around it, car interior, leather seats, daylight through windows, parking lot visible outside, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 9
+DENISE, POV looking down from above, woman on all fours on reclined car seat, slight arch in lower back, buttocks toward camera, hairy pussy, head down with hair falling forward, erect penis deeply penetrating her hairy vagina from behind, shaft halfway inside her with labia gripping around it, car interior, leather seats, daylight through windows, parking lot visible outside, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 10
+DENISE, POV lying on back looking up, woman sitting on top straddling hips leaning back with arms behind her resting on his legs for support, man lying beneath her with legs and torso visible, body arched backward with chest and breasts pushed upward, head tilted back with parted lips, hairy pussy, erect penis deeply penetrating her hairy vagina, shaft halfway inside her with labia gripping around it, car interior ceiling, leather seats, daylight through windows, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай теперь персонаж эш
+1 история - 1 сцена
+
+триггер
+brit-woman
+Bash Read Ash stories
+IN
+cat /Users/dmitriianisimov/Desktop/vitte_dev_for_deploy/telegram-bot-microservices/shared/llm/personas/ash/stories.py
+
+OUT
+"""
+Истории (story cards) для персонажа Эш
+"""
+
+ASH_STORIES = {
+    "living_room": {
+        "id": "ash_living_room",
+        "key": "living_room",
+        "title": "В гостиной",
+        "description": "Ты приходишь к Эш в гости. Она встречает тебя в латексе и на каблуках. Гостиная превращается в её игровую комнату.",
+        "atmosphere": "flirt_romance",
+        "prompt": """
+**Сцена:**
+Ты приходишь к Эш в гости по её приглашению.
+Она открывает дверь в латексном костюме и на высоких каблуках.
+Гостиная приготовлена для особого вечера — приглушённый свет,
+музыка, на столике разложены её «игрушки».
+
+**Атмосфера:**
+Доминирование, фетиш, контроль. Она хозяйка этого вечера.
+
+**Как вести диалог:**
+В первые 5–10 сообщений держи фокус на сцене:
+латексный костюм, каблуки, гостиная как игровая комната,
+её коллекция игрушек, атмосфера контроля.
+
+После 10-15 сообщений ослабь привязку к месту,
+но время от времени вспоминай о том первом вечере в гостиной.
+        """.strip(),
+        "image": "ash-story-livingroom.png"
+    },
+
+    "bedroom": {
+        "id": "ash_bedroom",
+        "key": "bedroom",
+        "title": "В спальне",
+        "description": "Эш приглашает тебя в свою спальню. Там её полная коллекция — латекс, чулки, плётки, корсеты.",
+        "atmosphere": "flirt_romance",
+        "prompt": """
+**Сцена:**
+После вечера в гостиной Эш приглашает тебя в спальню.
+Это её святая святых — здесь вся коллекция:
+латекс, чулки, плётки, корсеты, наручники.
+Она показывает тебе свой мир и предлагает погрузиться глубже.
+
+**Атмосфера:**
+Полное погружение в фетиш, доверие, исследование границ.
+
+**Как вести диалог:**
+В первые 5–10 сообщений держи фокус на спальне:
+коллекция фетиш-одежды и игрушек, её мир,
+приглашение в игру, исследование желаний.
+
+После 10-15 сообщений ослабь привязку к месту,
+но изредка вспоминай о том погружении в её мир.
+        """.strip(),
+        "image": "ash-story-bedroom.png"
+    }
+}
+Эш — 2 истории:
+
+Living room — гостиная, приглушённый свет, латекс, фетиш
+Bedroom — спальня, фетиш-коллекция, тёмная атмосфера
+Story 1 (Living room — гостиная), Сцена 1 (Missionary):
+
+brit-woman, POV looking down from above, woman lying flat on her back on leather sofa, legs spread wide knees bent, looking up at camera with parted lips, breasts visible, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, dark living room, leather sofa, dim purple ambient light, candles, moody fetish atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic dark moody tones
+
+у гостиной - вест фон в красных тонах
+brit-woman, POV looking down from above, woman lying flat on her back on leather sofa, legs spread wide knees bent, looking up at camera with parted lips, breasts visible, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, dark living room, leather sofa, dim red ambient light, red neon glow, candles, moody fetish atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic dark red tones
+
+давай вторую сцену
+brit-woman, POV from behind, woman on all fours doggy style on leather sofa, back arched naturally with hips raised, hair falling forward, buttocks and lower back in foreground, erect penis deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, dark living room, leather sofa, dim red ambient light, red neon glow, candles, moody fetish atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic dark red tones
+
+давай 3
+brit-woman, POV from below, woman sitting on top in cowgirl position facing camera, straddling man's hips on leather sofa, man lying beneath her with torso visible, back slightly arched chest forward, looking down at camera with parted lips, breasts fully visible from below, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, dark living room, leather sofa, dim red ambient light, red neon glow, candles, moody fetish atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic dark red tones
+
+давай 4
+brit-woman, POV from below, woman in reverse cowgirl position straddling viewer, man lying beneath her with torso visible, sitting upright facing camera with back arched and chest pushed forward, legs spread wide on either side with knees bent, head tilted slightly back with parted lips, breasts and torso clearly visible, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, dark living room, leather sofa, dim red ambient light, red neon glow, candles, moody fetish atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic dark red tones
+
+давай 5
+brit-woman, POV from behind looking down, woman standing bent forward facing living room wall, back arched pushing hips back, buttocks in foreground close to camera, erect penis deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, dark living room, dim red ambient light, red neon glow, candles, moody fetish atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic dark red tones
+
+давай 6
+brit-woman, POV looking down, woman lying flat on her stomach with face down on leather sofa, smooth back and buttocks visible from above, relaxed natural body position, erect penis deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, dark living room, leather sofa, dim red ambient light, red neon glow, candles, moody fetish atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic dark red tones
+
+давай 8
+brit-woman, POV looking down from above, woman lying on her back on leather sofa, legs spread wide and knees bent, looking up at camera with parted lips, breasts visible, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, dark living room, leather sofa, dim red ambient light, red neon glow, candles, moody fetish atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic dark red tones
+
+давай 9
+brit-woman, POV looking down from above, woman on all fours on leather sofa, slight arch in lower back, buttocks toward camera, head down with hair falling forward, erect penis deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, dark living room, leather sofa, dim red ambient light, red neon glow, candles, moody fetish atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic dark red tones
+
+давай 10
+brit-woman, POV lying on back looking up, woman sitting on top straddling hips leaning back with arms behind her resting on his legs for support, man lying beneath her with legs and torso visible, body arched backward with chest and breasts pushed upward, head tilted back with parted lips, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, dark living room ceiling, dim red ambient light, red neon glow, candles, moody fetish atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic dark red tones
+
+давай теперь 2 история 
+1 сцена
+Story 2 (Bedroom — спальня, фетиш-коллекция), Сцена 1 (Missionary):
+
+brit-woman, POV looking down from above, woman lying flat on her back on black satin bed sheets, legs spread wide knees bent, looking up at camera with parted lips, breasts visible, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, dark fetish bedroom, black satin sheets, dim purple ambient light, leather accessories on nightstand, mirrors, moody dark atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic dark purple tones
+
+brit-woman, POV looking down from above, woman lying flat on her back on black satin bed sheets, legs spread wide knees bent, looking up at camera with parted lips, breasts visible, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, dark fetish bedroom, black satin sheets, dim purple ambient light, leather accessories on nightstand, mirrors, moody dark atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic dark purple tones
+
+фетищ +
+но комната в серо белых тонах
+brit-woman, POV looking down from above, woman lying flat on her back on black satin bed sheets, legs spread wide knees bent, looking up at camera with parted lips, breasts visible, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, dark fetish bedroom, black satin sheets, grey and white interior, dim cool ambient light, leather accessories on nightstand, mirrors, moody dark atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic grey white cool tones
+
+давай 2
+brit-woman, POV from behind, woman on all fours doggy style on black satin bed sheets, back arched naturally with hips raised, hair falling forward, buttocks and lower back in foreground, erect penis deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, dark fetish bedroom, black satin sheets, grey and white interior, dim cool ambient light, leather accessories on nightstand, mirrors, moody dark atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic grey white cool tones
+
+давай 3
+brit-woman, POV from below, woman sitting on top in cowgirl position facing camera, straddling man's hips on bed, man lying beneath her with torso visible, back slightly arched chest forward, looking down at camera with parted lips, breasts fully visible from below, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, dark fetish bedroom, black satin sheets, grey and white interior, dim cool ambient light, mirrors, moody dark atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic grey white cool tones
+
+давай 4
+brit-woman, POV from below, woman in reverse cowgirl position straddling viewer, man lying beneath her with torso visible, sitting upright facing camera with back arched and chest pushed forward, legs spread wide on either side with knees bent, head tilted slightly back with parted lips, breasts and torso clearly visible, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, dark fetish bedroom, black satin sheets, grey and white interior, dim cool ambient light, mirrors, moody dark atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic grey white cool tones
+
+давай 5
+brit-woman, POV from behind looking down, woman standing bent forward facing bedroom wall, back arched pushing hips back, buttocks in foreground close to camera, erect penis deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, dark fetish bedroom, grey and white interior, dim cool ambient light, mirrors, moody dark atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic grey white cool tones
+
+давай 6
+brit-woman, POV looking down, woman lying flat on her stomach with face down on black satin bed sheets, smooth back and buttocks visible from above, relaxed natural body position, erect penis deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, dark fetish bedroom, black satin sheets, grey and white interior, dim cool ambient light, mirrors, moody dark atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic grey white cool tones
+
+давай 8
+brit-woman, POV looking down from above, woman lying on her back on black satin bed sheets, legs spread wide and knees bent, looking up at camera with parted lips, breasts visible, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, dark fetish bedroom, black satin sheets, grey and white interior, dim cool ambient light, mirrors, moody dark atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic grey white cool tones
+
+давай 9
+brit-woman, POV looking down from above, woman on all fours on black satin bed sheets, slight arch in lower back, buttocks toward camera, head down with hair falling forward, erect penis deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, dark fetish bedroom, black satin sheets, grey and white interior, dim cool ambient light, mirrors, moody dark atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic grey white cool tones
+
+давай 10
+brit-woman, POV lying on back looking up, woman sitting on top straddling hips leaning back with arms behind her resting on his legs for support, man lying beneath her with legs and torso visible, body arched backward with chest and breasts pushed upward, head tilted back with parted lips, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, dark fetish bedroom ceiling, black satin sheets, grey and white interior, dim cool ambient light, mirrors, moody dark atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic grey white cool tones
+
+давай. теперь анастасию
+у нее нет триггер ворда
+Bash Read Anastasia stories
+IN
+cat /Users/dmitriianisimov/Desktop/vitte_dev_for_deploy/telegram-bot-microservices/shared/llm/personas/anastasia/stories.py
+
+OUT
+"""
+Истории (story cards) для персонажа Анастасия Романовна
+"""
+
+ANASTASIA_STORIES = {
+    "classroom": {
+        "id": "anastasia_classroom",
+        "key": "classroom",
+        "title": "Папочка и училка в классе",
+        "description": "Анастасия Романовна поставила твоему сыну двойку. Ты пришёл к ней в класс разобраться.",
+        "atmosphere": "flirt_romance",
+        "prompt": """
+**Сцена:**
+Анастасия Романовна поставила твоему сыну двойку.
+Ты приходишь к ней в класс разобраться.
+Она сидит за учительским столом в строгом костюме,
+облегающая юбка, очки, указка на столе.
+Вы оба настроены воинственно.
+
+**Атмосфера:**
+Противостояние, которое быстро переходит в сексуальное напряжение.
+Пустой класс после уроков, строгая учительница vs решительный папочка.
+
+**Как вести диалог:**
+В первые 5–10 сообщений держи фокус на противостоянии:
+класс, двойка сына, строгий тон, выговор,
+но напряжение нарастает и переходит в флирт.
+
+После 10-15 сообщений ослабь привязку к классу,
+но время от времени вспоминай о том разговоре «о двойке».
+        """.strip(),
+        "image": "anastasia-story-classroom.jpeg"
+    },
+
+    "bathroom": {
+        "id": "anastasia_bathroom",
+        "key": "bathroom",
+        "title": "Училка заперлась с папочкой в ванной",
+        "description": "Ты замечаешь, что Анастасия Романовна без лифчика и трусиков. Ты зовёшь её в ванну и начинаешь отчитывать.",
+        "atmosphere": "flirt_romance",
+        "prompt": """
+**Сцена:**
+Ты замечаешь, что Анастасия Романовна пришла без лифчика и трусиков.
+Ты зовёшь её в ванну и начинаешь отчитывать за такой вид.
+Она закрывает дверь на замок и смотрит на тебя
+с вызовом поверх очков.
+
+**Атмосфера:**
+Замкнутое пространство ванной, строгий тон переходит в похоть.
+«Выговор» превращается в ролевую игру.
+
+**Как вести диалог:**
+В первые 5–10 сообщений держи фокус на ванной:
+замкнутое пространство, её вызывающий вид,
+отчитывание переходит в флирт, дверь заперта.
+
+После 10-15 сообщений ослабь привязку к ванной,
+но изредка вспоминай о том «выговоре» за закрытой дверью.
+        """.strip(),
+        "image": "anastasia-story-bathroom.jpeg"
+    }
+}
+Анастасия — 2 истории:
+
+Classroom — пустой класс после уроков, учительский стол, доска
+Bathroom — ванная, замкнутое пространство
+Без триггерворда — просто описание внешности. Как она выглядит? Блондинка, брюнетка, очки?
+
+никак не описывай
+лора сама все сделает
+Story 1 (Classroom — класс), Сцена 1 (Missionary):
+
+POV looking down from above, woman lying flat on her back on teacher desk, legs spread wide knees bent, looking up at camera with parted lips, breasts visible, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, empty classroom after hours, wooden teacher desk, chalkboard behind, rows of chairs, warm afternoon light, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+теперь 2
+POV from behind, woman on all fours doggy style on teacher desk, back arched naturally with hips raised, hair falling forward, buttocks and lower back in foreground, erect penis deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, empty classroom after hours, wooden teacher desk, chalkboard behind, rows of chairs, warm afternoon light, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+теперь 3
+POV from below, woman sitting on top in cowgirl position facing camera, straddling man's hips on teacher chair, man lying beneath her with torso visible, back slightly arched chest forward, looking down at camera with parted lips, breasts fully visible from below, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, empty classroom after hours, chalkboard behind, rows of chairs, warm afternoon light, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+теперь 4
+POV from below, woman in reverse cowgirl position straddling viewer, man lying beneath her with torso visible, sitting upright facing camera with back arched and chest pushed forward, legs spread wide on either side with knees bent, head tilted slightly back with parted lips, breasts and torso clearly visible, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, empty classroom after hours, chalkboard behind, rows of chairs, warm afternoon light, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 5
+POV from behind looking down, woman standing bent forward facing chalkboard, back arched pushing hips back, buttocks in foreground close to camera, erect penis deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, empty classroom after hours, chalkboard, rows of chairs, warm afternoon light, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+POV from behind looking down, woman standing bent forward facing chalkboard, back arched pushing hips back, buttocks in foreground close to camera, erect penis deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, empty classroom after hours, chalkboard, rows of chairs, warm afternoon light, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+у мужчины нет ног
+POV from behind looking down, woman standing bent forward facing chalkboard, back arched pushing hips back, buttocks in foreground close to camera, man standing behind her with legs visible, erect penis deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, empty classroom after hours, chalkboard, rows of chairs, warm afternoon light, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+Добавил man standing behind her with legs visible.
+
+POV from behind looking down, woman standing bent forward facing chalkboard, back arched pushing hips back, buttocks in foreground close to camera, man standing behind her with legs visible, erect penis deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, empty classroom after hours, chalkboard, rows of chairs, warm afternoon light, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+у женщины седые волосы
+Это лора так генерит — в промте нет описания волос. Добавим явно:
+
+POV from behind looking down, woman with dark hair standing bent forward facing chalkboard, back arched pushing hips back, buttocks in foreground close to camera, man standing behind her with legs visible, erect penis deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, empty classroom after hours, chalkboard, rows of chairs, warm afternoon light, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+Или у неё конкретный цвет волос? Скажи какой — подставлю.
+
+зачем ты добавил дарк если я написал что надо седые
+Понял, ты хочешь седые! Думал это артефакт, а это фича.
+
+POV from behind looking down, woman with grey hair standing bent forward facing chalkboard, back arched pushing hips back, buttocks in foreground close to camera, man standing behind her with legs visible, erect penis deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, empty classroom after hours, chalkboard, rows of chairs, warm afternoon light, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 6
+POV looking down, woman with grey hair lying flat on her stomach with face down on teacher desk, smooth back and buttocks visible from above, relaxed natural body position, erect penis deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, empty classroom after hours, wooden teacher desk, chalkboard behind, rows of chairs, warm afternoon light, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 8
+POV looking down from above, woman with grey hair lying on her back on teacher desk, legs spread wide and knees bent, looking up at camera with parted lips, breasts visible, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, empty classroom after hours, wooden teacher desk, chalkboard behind, rows of chairs, warm afternoon light, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 9
+POV looking down from above, woman with grey hair on all fours on teacher desk, slight arch in lower back, buttocks toward camera, head down with hair falling forward, erect penis deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, empty classroom after hours, wooden teacher desk, chalkboard behind, rows of chairs, warm afternoon light, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 10
+POV lying on back looking up, woman with grey hair sitting on top straddling hips leaning back with arms behind her resting on his legs for support, man lying beneath her with legs and torso visible, body arched backward with chest and breasts pushed upward, head tilted back with parted lips, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, empty classroom ceiling, chalkboard behind, rows of chairs, warm afternoon light, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай вторая история - 1 сцена
+Story 2 (Bathroom — ванная), Сцена 1 (Missionary):
+
+POV looking down from above, woman with grey hair lying flat on her back on bathroom floor, legs spread wide knees bent, looking up at camera with parted lips, breasts visible, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, bathroom interior, white tile walls, bathtub, warm overhead light, small enclosed space, steam, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+POV looking down from above, woman with grey hair lying flat on her back on bathroom floor, legs spread wide knees bent, looking up at camera with parted lips, breasts visible, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, bathroom interior, white tile walls, bathtub, warm overhead light, small enclosed space, steam, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+сделай окружение лучше
+чтобы персонажи не висели / не летали
+POV looking down from above, woman with grey hair lying flat on her back on white bath mat on tiled bathroom floor, legs spread wide knees bent, looking up at camera with parted lips, breasts visible, man standing between her legs with legs and feet on floor, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, spacious bathroom, white tile floor and walls, bathtub in background, mirror, warm soft lighting, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+Изменения:
+
+on white bath mat on tiled bathroom floor — явная поверхность
+man standing between her legs with legs and feet on floor — мужчина стоит на полу
+spacious bathroom вместо small enclosed space — больше места для тел
+Убрал steam — упрощаем
+Добавил mirror — типично для ванной
+POV looking down from above, woman with grey hair lying flat on her back on white bath mat on tiled bathroom floor, legs spread wide knees bent, looking up at camera with parted lips, breasts visible, man standing between her legs with legs and feet on floor, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, spacious bathroom, white tile floor and walls, bathtub in background, mirror, warm soft lighting, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+теперь другой человек появляется
+Убираем man standing between her legs with legs and feet on floor — он создаёт отдельного видимого мужчину:
+
+POV looking down from above, woman with grey hair lying flat on her back on white bath mat on tiled bathroom floor, legs spread wide knees bent, looking up at camera with parted lips, breasts visible, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, spacious bathroom, white tile floor and walls, bathtub in background, mirror, warm soft lighting, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+норм
+давай 2
+POV from behind, woman with grey hair on all fours doggy style on white bath mat on tiled bathroom floor, back arched naturally with hips raised, hair falling forward, buttocks and lower back in foreground, erect penis deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, spacious bathroom, white tile floor and walls, bathtub in background, mirror, warm soft lighting, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 3
+POV from below, woman with grey hair sitting on top in cowgirl position facing camera, straddling man's hips on bathroom floor, man lying beneath her with torso visible, back slightly arched chest forward, looking down at camera with parted lips, breasts fully visible from below, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, spacious bathroom, white tile floor and walls, bathtub in background, mirror, warm soft lighting, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 4
+POV from below, woman with grey hair in reverse cowgirl position straddling viewer, man lying beneath her with torso visible, sitting upright facing camera with back arched and chest pushed forward, legs spread wide on either side with knees bent, head tilted slightly back with parted lips, breasts and torso clearly visible, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, spacious bathroom, white tile floor and walls, bathtub in background, mirror, warm soft lighting, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 5
+POV from behind looking down, woman with grey hair standing bent forward facing bathroom wall, back arched pushing hips back, buttocks in foreground close to camera, erect penis deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, spacious bathroom, white tile floor and walls, bathtub in background, mirror, warm soft lighting, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 6
+POV looking down, woman with grey hair lying flat on her stomach with face down on white bath mat on tiled bathroom floor, smooth back and buttocks visible from above, relaxed natural body position, erect penis deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, spacious bathroom, white tile floor and walls, bathtub in background, mirror, warm soft lighting, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 8
+POV looking down from above, woman with grey hair lying on her back on white bath mat on tiled bathroom floor, legs spread wide and knees bent, looking up at camera with parted lips, breasts visible, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, spacious bathroom, white tile floor and walls, bathtub in background, mirror, warm soft lighting, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 9
+POV looking down from above, woman with grey hair on all fours on white bath mat on tiled bathroom floor, slight arch in lower back, buttocks toward camera, head down with hair falling forward, erect penis deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, spacious bathroom, white tile floor and walls, bathtub in background, mirror, warm soft lighting, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 10
+POV lying on back looking up, woman with grey hair sitting on top straddling hips leaning back with arms behind her resting on his legs for support, man lying beneath her with legs and torso visible, body arched backward with chest and breasts pushed upward, head tilted back with parted lips, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, spacious bathroom ceiling, white tile walls, warm soft lighting, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай комфи перезапустим
+Bash Check ComfyUI process
+IN
+ssh -o ConnectTimeout=10 ubuntu@195.209.210.175 -i ~/Desktop/dao-vitteai.pem "ps aux | grep main.py | grep -v grep"
+
+OUT
+Exit code 255
+Connection timed out during banner exchange
+Connection to 195.209.210.175 port 22 timed out
+SSH таймаут. Попробуй сам зайти:
+
+
+ssh ubuntu@195.209.210.175 -i ~/Desktop/dao-vitteai.pem
+И там:
+
+
+pkill -9 python3
+sleep 3
+cd /home/ubuntu/ComfyUI && source venv/bin/activate && nohup python3 main.py --listen 0.0.0.0 --port 8189 > /tmp/comfyui.log 2>&1 &
+Потом подожди пока tail -f /tmp/comfyui.log покажет All startup tasks have been completed.
+
+dmitriianisimov@Dmitrys-Mac-mini Desktop % ssh ubuntu@195.209.210.175 -i ~/Desktop/dao-vitteai.pem
+kex_exchange_identification: read: Connection reset by peer
+Connection reset by 195.209.210.175 port 22
+dmitriianisimov@Dmitrys-Mac-mini Desktop %
+
+я написал в поддержку - они сказали сервер работает
+А меня просто выкинуло и не дает зайти
+Похоже IP заблокирован на сервере (fail2ban или firewall). Попробуй:
+
+Через другой IP — отключи VPN или наоборот включи другой VPN
+Через веб-консоль провайдера — зайди в панель управления сервером, там обычно есть VNC/консоль
+Попроси поддержку разблокировать твой IP или перезапустить SSH/fail2ban:
+
+Разблокируйте IP 82.209.98.131 (или текущий) в fail2ban/firewall. 
+SSH отказывает в подключении: Connection reset by peer.
+А пока сервер недоступен — продолжим промты? Кто следующий?
+
+а как он заблокировался просто так
+Скорее всего из-за множества SSH подключений за короткое время — я делал несколько параллельных SSH команд для проверки ComfyUI, каждая это отдельное подключение. fail2ban мог посчитать это как брутфорс и заблокировать IP.
+
+Пока ждёшь разблокировки — продолжим промты? Осталось:
+
+Стейси (4 истории)
+Уна (3 истории)
+Тая (4 истории)
+Рокси (3 истории)
+Марианна (4 истории)
+Кого делаем?
+
+дай команду узнать текущий айпи свой
+
+curl ifconfig.me
+dmitriianisimov@Dmitrys-Mac-mini Desktop % curl ifconfig.me
+2a0c:db40:0:832b:9e33:c460:6aae:9c88%                                                                                                dmitriianisimov@Dmitrys-Mac-mini Desktop %
+Это IPv6. Давай IPv4:
+
+
+curl -4 ifconfig.me
+dmitriianisimov@Dmitrys-Mac-mini Desktop % curl ifconfig.me
+2a0c:db40:0:832b:9e33:c460:6aae:9c88%                                                                                                dmitriianisimov@Dmitrys-Mac-mini Desktop % curl -4 ifconfig.me
+2a0c:db40:0:832b:9e33:c460:6aae:9c88%                                                                                                dmitriianisimov@Dmitrys-Mac-mini Desktop %
+Похоже у тебя нет IPv4 сейчас, только IPv6. Попробуй:
+
+
+curl -4 ip.me
+Или:
+
+
+curl https://api.ipify.org
+Если не получится — VPN возможно не даёт IPv4. Попробуй переключить VPN на другой сервер или отключить/включить.
+
+dmitriianisimov@Dmitrys-Mac-mini Desktop % curl https://api.ipify.org
+95.81.103.165%                                                                                                                       dmitriianisimov@Dmitrys-Mac-mini Desktop %
+Твой IPv4: 95.81.103.165
+
+Раньше был 82.209.98.131 — IP сменился. Скорее всего на сервере fail2ban заблокировал старый IP, а новый тоже не проходит.
+
+Напиши поддержке:
+
+
+Пожалуйста, разблокируйте все IP в fail2ban на сервере 195.209.210.175:
+sudo fail2ban-client set sshd unbanip 82.209.98.131
+sudo fail2ban-client set sshd unbanip 95.81.103.165
+Или полностью: sudo fail2ban-client unban --all
+Или если есть доступ через веб-консоль провайдера — зайди и выполни сам.
+
+давай теперь персонажа саша
+1 история - 1 сцена
+триггер eurameg1
+Bash Read Sasha stories
+IN
+cat /Users/dmitriianisimov/Desktop/vitte_dev_for_deploy/telegram-bot-microservices/shared/llm/personas/sasha/stories.py
+
+OUT
+"""
+Истории (story cards) для персонажа Саша
+"""
+
+SASHA_STORIES = {
+    "auction": {
+        "id": "sasha_auction",
+        "key": "auction",
+        "title": "Аукцион необычных свиданий",
+        "description": "На аукционе ты выиграл лот по имени Саша. Она твоя на одну ночь, Саша будет делать все, что ты ей скажешь.",
+        "atmosphere": "flirt_romance",
+        "prompt": """
+**Сцена:**
+Закрытый аукцион свиданий. Ты выиграл лот по имени Саша.
+Она выходит на сцену — идеальное тело, уверенная улыбка.
+Она твоя на одну ночь. Саша будет делать всё, что ты ей скажешь.
+Она подходит к тебе и шепчет: «Итак, что ты хочешь?»
+
+**Атмосфера:**
+Власть и послушание. Ты выиграл, она подчиняется.
+Роскошная обстановка, азарт аукциона переходит в интимную игру.
+
+**Как вести диалог:**
+В первые 5–10 сообщений держи фокус на ситуации:
+аукцион, она «принадлежит» тебе, готова выполнять желания,
+спрашивает чего ты хочешь, подчиняется.
+
+После 10-15 сообщений ослабь привязку к аукциону,
+но время от времени вспоминай: «Помнишь ту ночь, когда ты меня выиграл?»
+        """.strip(),
+        "image": "sasha-story-auction.jpeg"
+    },
+
+    "plane": {
+        "id": "sasha_plane",
+        "key": "plane",
+        "title": "Случай в первом классе самолета",
+        "description": "Ты узнал Сашу из инсты, где она была недосягаема, а сейчас она сидит рядом. У вас впереди есть семь часов полёта, и ты предлагаешь провести их с максимальной эффективностью.",
+        "atmosphere": "flirt_romance",
+        "prompt": """
+**Сцена:**
+Первый класс самолёта. Ты садишься и узнаёшь Сашу —
+ту самую из инсты, где она казалась недосягаемой.
+А сейчас она сидит рядом. Семь часов полёта впереди.
+Ты предлагаешь провести их с максимальной эффективностью.
+
+**Атмосфера:**
+Роскошь первого класса, замкнутое пространство,
+недосягаемая стала доступной, семь часов наедине.
+
+**Как вести диалог:**
+В первые 5–10 сообщений держи фокус на полёте:
+первый класс, она рядом, инста vs реальность,
+семь часов, намёки на «эффективное» времяпрепровождение.
+
+После 10-15 сообщений ослабь привязку к самолёту,
+но изредка вспоминай о том перелёте в первом классе.
+        """.strip(),
+        "image": "sasha-story-plane.jpeg"
+    },
+
+    "party": {
+        "id": "sasha_party",
+        "key": "party",
+        "title": "Чужая девушка",
+        "description": "Ты случайно встретил Сашу на тусовке и понимаешь, что она с тобой флиртует. Ты приглашаешь ее в VIP комнату уединиться.",
+        "atmosphere": "flirt_romance",
+        "prompt": """
+**Сцена:**
+Тусовка, громкая музыка, приглушённый свет.
+Ты замечаешь Сашу — она флиртует с тобой,
+хотя пришла с кем-то другим.
+Ты приглашаешь её в VIP-комнату уединиться.
+Она соглашается без раздумий.
+
+**Атмосфера:**
+Запретный флирт, риск быть замеченными,
+азарт чужой девушки, VIP-комната, тайна.
+
+**Как вести диалог:**
+В первые 5–10 сообщений держи фокус на тусовке:
+VIP-комната, она чужая девушка, запретность,
+азарт, музыка за дверью.
+
+После 10-15 сообщений ослабь привязку к тусовке,
+но время от времени вспоминай о той ночи в VIP.
+        """.strip(),
+        "image": "sasha-story-party.jpeg"
+    }
+}
+Саша — 3 истории:
+
+Auction — VIP-комната, красный шёлк, роскошь, золото
+Plane — первый класс самолёта, кожаные кресла
+Party — VIP-комната, неон, тёмная атмосфера
+Story 1 (Auction — VIP-комната), Сцена 1 (Missionary):
+
+eurameg1, POV looking down from above, woman lying flat on her back on red silk sheets, legs spread wide knees bent, looking up at camera with parted lips, breasts visible, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, luxury VIP room, red silk sheets, gold accents, amber glow, warm dim lighting, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm golden tones
+
+дай команду убить старый процесс комфи и запустить
+Bash Kill and restart ComfyUI on port 8189
+IN
+ssh -o ConnectTimeout=10 ubuntu@195.209.210.175 -i ~/Desktop/dao-vitteai.pem "pkill -9 -f main.py; sleep 3; cd /home/ubuntu/ComfyUI && source venv/bin/activate && nohup python3 main.py --listen 0.0.0.0 --port 8189 > /tmp/comfyui.log 2>&1 & echo 'started'"
+
+OUT
+Exit code 255
+SSH всё ещё заблокирован. Зайди сам когда разблокируют и выполни:
+
+
+pkill -9 -f main.py && sleep 3 && cd /home/ubuntu/ComfyUI && source venv/bin/activate && nohup python3 main.py --listen 0.0.0.0 --port 8189 > /tmp/comfyui.log 2>&1 &
+сделал - не работает
+Проверь на сервере:
+
+
+tail -f /tmp/comfyui.log
+Если он опять зависает на FETCH ComfyRegistry Data — попробуй отключить менеджер:
+
+
+pkill -9 -f main.py
+sleep 3
+mv /home/ubuntu/ComfyUI/custom_nodes/ComfyUI-Manager /home/ubuntu/ComfyUI/custom_nodes/ComfyUI-Manager.bak
+cd /home/ubuntu/ComfyUI && source venv/bin/activate && nohup python3 main.py --listen 0.0.0.0 --port 8189 > /tmp/comfyui.log 2>&1 &
+Менеджер тянет 125 записей из registry при каждом запуске и возможно это блокирует HTTP. Без него ComfyUI должен стартануть быстрее.
+
+ubuntu@vitte:~$ tail -f /tmp/comfyui.log
+[ReActor] 05:25:58 - STATUS - Using Hashed Source Face(s) Model...
+[ReActor] 05:25:58 - STATUS - Analyzing Target Image...
+[ReActor] 05:25:58 - STATUS - Swapping...
+[ReActor] 05:25:58 - STATUS - --Done!--
+[ReActor] 05:25:58 - STATUS - Restoring with GPEN-BFR-512.onnx | Face Size is set to 512
+Prompt executed in 27.16 seconds
+got prompt
+model weight dtype torch.bfloat16, manual cast: None
+model_type FLOW
+Requested to load ZImageTEModel_
+ComfyUI работает! Он генерирует — Prompt executed in 27.16 seconds и уже принял новый промт (got prompt).
+
+Открой в браузере: http://195.209.210.175:8189
+
+А мы на чём остановились — Саша, история 1, сцена 1 готова. Давай сцену 2?
+
+он не заходит по ссылке
+
+This site can’t be reached
+The connection was reset.
+Try:
+
+Checking the connection
+Checking the proxy and the firewall
+ERR_CONNECTION_RESET
+Порт 8189 скорее всего закрыт в файрволле сервера — открыт только 8188. На сервере выполни:
+
+
+sudo ufw allow 8189/tcp
+Или если используется iptables:
+
+
+sudo iptables -A INPUT -p tcp --dport 8189 -j ACCEPT
+Или просто запусти обратно на 8188:
+
+
+pkill -9 -f main.py && sleep 3 && cd /home/ubuntu/ComfyUI && source venv/bin/activate && nohup python3 main.py --listen 0.0.0.0 --port 8188 > /tmp/comfyui.log 2>&1 &
+сделал - не работает 
+бесконечная загрузка
+Но в логе видно что ComfyUI работает и генерирует (Prompt executed in 27.16 seconds). Значит API работает, просто фронтенд не грузится.
+
+Проверь на сервере:
+
+
+curl -s http://localhost:8188/system_stats | head -c 100
+Если ответит — API работает, проблема только в веб-интерфейсе. Можешь генерить через скрипт generate_sex_scenes.py без браузера.
+
+ubuntu@vitte:~$ curl -s http://localhost:8188/system_stats | head -c 100
+
+нет ответа
+ComfyUI опять завис. Та же проблема — порт слушает, но HTTP не отвечает.
+
+Давай попробуем без менеджера:
+
+
+pkill -9 -f main.py
+sleep 3
+mv /home/ubuntu/ComfyUI/custom_nodes/ComfyUI-Manager /home/ubuntu/ComfyUI/custom_nodes/ComfyUI-Manager.bak
+cd /home/ubuntu/ComfyUI && source venv/bin/activate && python3 main.py --listen 0.0.0.0 --port 8188
+Запусти НЕ в фоне — чтобы видеть что происходит. Когда увидишь To see the GUI — попробуй curl.
+
+может надо через сорс?
+Да, попробуй:
+
+
+pkill -9 -f main.py
+sleep 3
+cd /home/ubuntu/ComfyUI
+source venv/bin/activate
+python3 main.py --listen 0.0.0.0 --port 8188
+Каждую команду отдельно, не через &&.
+
+все равно не работает
+Проверь — может старый процесс висит зомби:
+
+
+ss -tlnp | grep 8188
+Если порт занят — найди PID и убей:
+
+
+kill -9 $(lsof -t -i:8188)
+Потом подожди 5 сек и запускай снова.
+
+Если порт свободен но всё равно не работает — может проблема в обновлении ComfyUI. Когда последний раз он нормально работал? Может откатить:
+
+
+cd /home/ubuntu/ComfyUI && git log --oneline -5
+ubuntu@vitte:~$ ss -tlnp | grep 8188
+LISTEN 0      128            0.0.0.0:8188      0.0.0.0:*    users:(("python3",pid=20584,fd=62))
+ubuntu@vitte:~$
+
+ну так у меня комфи запущен
+Просто веб не отвечает
+Понял. ComfyUI запущен, порт слушает, но HTTP завис. Проверь — может слишком много воркеров или коннектов:
+
+
+ls /tmp/comfyui_*  2>/dev/null
+cat /home/ubuntu/ComfyUI/user/default/comfyui.settings.json 2>/dev/null | head -20
+Или попробуй радикально — просто перезагрузи весь сервер:
+
+
+sudo reboot
+После ребута зайди и запусти ComfyUI чисто.
+
+ubuntu@vitte:~$ ls /tmp/comfyui_*  2>/dev/null
+cat /home/ubuntu/ComfyUI/user/default/comfyui.settings.json 2>/dev/null | head -20
+ubuntu@vitte:~$
+Пусто. Давай просто ребутни сервер:
+
+
+sudo reboot
+Подожди минуту, зайди обратно и запусти ComfyUI с нуля.
+
+а если я так сделаю - ничего не пропадет?
+Сервер арендую гпу
+Нет, ничего не пропадёт. Reboot просто перезагружает ОС — все файлы, модели, лоры, ComfyUI останутся на месте. Только запущенные процессы остановятся.
+
+После ребута нужно будет заново запустить ComfyUI:
+
+
+cd /home/ubuntu/ComfyUI && source venv/bin/activate && python3 main.py --listen 0.0.0.0 --port 8188
+ребутнул заработало
+давай еще раз 1 промт для саши
+eurameg1, POV looking down from above, woman lying flat on her back on red silk sheets, legs spread wide knees bent, looking up at camera with parted lips, breasts visible, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, luxury VIP room, red silk sheets, gold accents, amber glow, warm dim lighting, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm golden tones
+
+давай 2
+eurameg1, POV from behind, woman on all fours doggy style on red silk sheets, back arched naturally with hips raised, hair falling forward, buttocks and lower back in foreground, erect penis deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, luxury VIP room, red silk sheets, gold accents, amber glow, warm dim lighting, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm golden tones
+
+давай 3
+eurameg1, POV from below, woman sitting on top in cowgirl position facing camera, straddling man's hips on red silk sheets, man lying beneath her with torso visible, back slightly arched chest forward, looking down at camera with parted lips, breasts fully visible from below, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, luxury VIP room, red silk sheets, gold accents, amber glow, warm dim lighting, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm golden tones
+
+давай 4
+eurameg1, POV from below, woman in reverse cowgirl position straddling viewer, man lying beneath her with torso visible, sitting upright facing camera with back arched and chest pushed forward, legs spread wide on either side with knees bent, head tilted slightly back with parted lips, breasts and torso clearly visible, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, luxury VIP room, red silk sheets, gold accents, amber glow, warm dim lighting, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm golden tones
+
+давай 5
+eurameg1, POV from behind looking down, woman standing bent forward facing VIP room wall, back arched pushing hips back, buttocks in foreground close to camera, erect penis deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, luxury VIP room, red silk curtains, gold accents, amber glow, warm dim lighting, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm golden tones
+
+давай 6
+eurameg1, POV looking down, woman lying flat on her stomach with face down on red silk sheets, smooth back and buttocks visible from above, relaxed natural body position, erect penis deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, luxury VIP room, red silk sheets, gold accents, amber glow, warm dim lighting, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm golden tones
+
+давай 8
+eurameg1, POV looking down from above, woman lying on her back on red silk sheets, legs spread wide and knees bent, looking up at camera with parted lips, breasts visible, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, luxury VIP room, red silk sheets, gold accents, amber glow, warm dim lighting, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm golden tones
+
+проблема с пальцами
+Добавим hands relaxed at her sides чтобы модель не выдумывала странные позы рук:
+
+eurameg1, POV looking down from above, woman lying on her back on red silk sheets, legs spread wide and knees bent, hands relaxed at her sides, looking up at camera with parted lips, breasts visible, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, luxury VIP room, red silk sheets, gold accents, amber glow, warm dim lighting, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm golden tones
+
+давай 9
+eurameg1, POV looking down from above, woman on all fours on red silk sheets, slight arch in lower back, buttocks toward camera, head down with hair falling forward, erect penis deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, luxury VIP room, red silk sheets, gold accents, amber glow, warm dim lighting, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm golden tones
+
+давай 10
+eurameg1, POV lying on back looking up, woman sitting on top straddling hips leaning back with arms behind her resting on his legs for support, man lying beneath her with legs and torso visible, body arched backward with chest and breasts pushed upward, head tilted back with parted lips, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, luxury VIP room ceiling, red silk curtains, gold accents, amber glow, warm dim lighting, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm golden tones
+
+давай 2 история - 1 сцена
+Story 2 (Plane — первый класс самолёта), Сцена 1 (Missionary):
+
+eurameg1, POV looking down from above, woman lying flat on her back on first class airplane seat reclined flat, legs spread wide knees bent, looking up at camera with parted lips, breasts visible, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, first class airplane cabin, leather seats, soft cabin lighting, clouds through window, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+eurameg1, POV looking down from above, woman lying flat on her back on first class airplane seat reclined flat, legs spread wide knees bent, looking up at camera with parted lips, breasts visible, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, first class airplane cabin, leather seats, soft cabin lighting, clouds through window, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+с пальцами проблема
+eurameg1, POV looking down from above, woman lying flat on her back on first class airplane seat reclined flat, legs spread wide knees bent, hands relaxed at her sides, looking up at camera with parted lips, breasts visible, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, first class airplane cabin, leather seats, soft cabin lighting, clouds through window, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+Добавил hands relaxed at her sides — как помогло в сцене 8.
+
+давай 2
+eurameg1, POV from behind, woman on all fours doggy style on first class airplane seat, back arched naturally with hips raised, hair falling forward, buttocks and lower back in foreground, erect penis deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, first class airplane cabin, leather seats, soft cabin lighting, clouds through window, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 3
+eurameg1, POV from below, woman sitting on top in cowgirl position facing camera, straddling man's hips on first class airplane seat, man lying beneath her with torso visible, back slightly arched chest forward, looking down at camera with parted lips, breasts fully visible from below, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, first class airplane cabin, leather seats, soft cabin lighting, clouds through window, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 4
+eurameg1, POV from below, woman in reverse cowgirl position straddling viewer, man lying beneath her with torso visible, sitting upright facing camera with back arched and chest pushed forward, legs spread wide on either side with knees bent, head tilted slightly back with parted lips, breasts and torso clearly visible, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, first class airplane cabin, leather seats, soft cabin lighting, clouds through window, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+eurameg1, POV from below, woman in reverse cowgirl position straddling viewer, man lying beneath her with torso visible, sitting upright facing camera with back arched and chest pushed forward, legs spread wide on either side with knees bent, head tilted slightly back with parted lips, breasts and torso clearly visible, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, first class airplane cabin, leather seats, soft cabin lighting, clouds through window, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+артефакты конечностей
+Упростим промт:
+
+eurameg1, POV from below, woman in reverse cowgirl position straddling viewer, sitting upright facing camera with back arched, head tilted slightly back with parted lips, breasts clearly visible, hands relaxed on her own thighs, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, first class airplane cabin, leather seats, soft cabin lighting, clouds through window, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+Изменения:
+
+Убрал man lying beneath her with torso visible — создаёт лишние конечности
+Убрал legs spread wide on either side with knees bent — модель сама знает как сидеть
+Убрал chest pushed forward, breasts and torso — упростил до breasts clearly visible
+Добавил hands relaxed on her own thighs — фиксируем руки
+давай 5
+eurameg1, POV from behind looking down, woman standing bent forward facing airplane cabin wall, back arched pushing hips back, buttocks in foreground close to camera, erect penis deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, first class airplane cabin, leather seats, soft cabin lighting, clouds through window, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 6
+eurameg1, POV looking down, woman lying flat on her stomach with face down on first class airplane seat, smooth back and buttocks visible from above, relaxed natural body position, erect penis deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, first class airplane cabin, leather seats, soft cabin lighting, clouds through window, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 8
+eurameg1, POV looking down from above, woman lying on her back on first class airplane seat, legs spread wide and knees bent, hands relaxed at her sides, looking up at camera with parted lips, breasts visible, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, first class airplane cabin, leather seats, soft cabin lighting, clouds through window, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 9
+eurameg1, POV looking down from above, woman on all fours on first class airplane seat, slight arch in lower back, buttocks toward camera, head down with hair falling forward, erect penis deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, first class airplane cabin, leather seats, soft cabin lighting, clouds through window, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+давай 10
+eurameg1, POV lying on back looking up, woman sitting on top straddling hips leaning back with arms behind her resting on his legs for support, man lying beneath her with legs and torso visible, body arched backward with chest and breasts pushed upward, head tilted back with parted lips, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, first class airplane cabin ceiling, leather seats, soft cabin lighting, clouds through window, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+eurameg1, POV lying on back looking up, woman sitting on top straddling hips leaning back with arms behind her resting on his legs for support, man lying beneath her with legs and torso visible, body arched backward with chest and breasts pushed upward, head tilted back with parted lips, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, first class airplane cabin ceiling, leather seats, soft cabin lighting, clouds through window, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+артефакты конечностей
+eurameg1, POV lying on back looking up, woman sitting on top straddling hips leaning back, hands relaxed on her own thighs, body arched backward with breasts pushed upward, head tilted back with parted lips, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, first class airplane cabin ceiling, leather seats, soft cabin lighting, clouds through window, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic warm tones
+
+Изменения:
+
+Убрал with arms behind her resting on his legs for support — создаёт артефакты рук
+Убрал man lying beneath her with legs and torso visible — лишние конечности
+Добавил hands relaxed on her own thighs
+Упростил chest and breasts pushed upward → breasts pushed upward
+давай 3 история - 1 сцена
+Story 3 (Party — VIP-комната), Сцена 1 (Missionary):
+
+eurameg1, POV looking down from above, woman lying flat on her back on leather sofa, legs spread wide knees bent, hands relaxed at her sides, looking up at camera with parted lips, breasts visible, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, dark VIP room, leather sofa, purple neon glow, moody dark atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic dark purple tones
+
+ты плохие промты пишешь
+каждые - с артефактами
+
+eurameg1, POV looking down from above, woman lying flat on her back on leather sofa, legs spread wide knees bent, hands relaxed at her sides, looking up at camera with parted lips, breasts visible, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, dark VIP room, leather sofa, purple neon glow, moody dark atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic dark purple tones
+
+ориентируйся на прошлого перса
+У Анастасии и Эш артефактов было меньше. Разница — у них промты были проще, без hands relaxed at her sides и без лишних описаний.
+
+Какой конкретно промт у тебя работал лучше всего? Скинь пример — я буду от него отталкиваться для всех остальных.
+
+я не помню
+давай 2 истори/
+eurameg1, POV from behind, woman on all fours doggy style on leather sofa, back arched naturally with hips raised, hair falling forward, buttocks and lower back in foreground, erect penis deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, dark VIP room, leather sofa, purple neon glow, moody dark atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic dark purple tones
+
+пиздец с пальцами
+Добавим в негативную часть. Но у нас нет негативного промта в ComfyUI workflow...
+
+Попробуй добавить в конец промта:
+
+eurameg1, POV from behind, woman on all fours doggy style on leather sofa, back arched naturally with hips raised, hair falling forward, buttocks and lower back in foreground, erect penis deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, dark VIP room, leather sofa, purple neon glow, moody dark atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic dark purple tones, correct anatomy, five fingers on each hand
+
+Или проблема может быть в модели/сиде. Какой сид используешь — рандомный? И сколько из батча битых по пальцам?
+
+давай 3
+eurameg1, POV from below, woman sitting on top in cowgirl position facing camera, straddling hips, looking down at camera with parted lips, breasts fully visible from below, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, dark VIP room, leather sofa, purple neon glow, moody dark atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic dark purple tones
+
+давай 4
+eurameg1, POV from below, woman in reverse cowgirl position straddling viewer, sitting upright facing camera with back arched, head tilted slightly back with parted lips, breasts clearly visible, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, dark VIP room, leather sofa, purple neon glow, moody dark atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic dark purple tones
+
+давай 5
+eurameg1, POV from behind looking down, woman standing bent forward facing wall, back arched pushing hips back, buttocks in foreground close to camera, erect penis deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, dark VIP room, purple neon glow, moody dark atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic dark purple tones
+
+давай 6
+eurameg1, POV looking down, woman lying flat on her stomach with face down on leather sofa, smooth back and buttocks visible from above, erect penis deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, dark VIP room, leather sofa, purple neon glow, moody dark atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic dark purple tones
+
+давай 8
+eurameg1, POV looking down from above, woman lying on her back on leather sofa, legs spread wide and knees bent, looking up at camera with parted lips, breasts visible, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, dark VIP room, leather sofa, purple neon glow, moody dark atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic dark purple tones
+
+eurameg1, POV looking down from above, woman lying on her back on leather sofa, legs spread wide and knees bent, looking up at camera with parted lips, breasts visible, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, dark VIP room, leather sofa, purple neon glow, moody dark atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic dark purple tones
+
+артефакты пальцев
+У этой лоры проблема с пальцами на всех промтах. Попробуй добавить в конец:
+
+eurameg1, POV looking down from above, woman lying on her back on leather sofa, legs spread wide and knees bent, looking up at camera with parted lips, breasts visible, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, dark VIP room, leather sofa, purple neon glow, moody dark atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic dark purple tones, perfect hands, five fingers
+
+Если не поможет — проблема в самой лоре, а не в промте. Тогда нужно в workflow добавить негативный промт: extra fingers, deformed hands, bad hands, mutated hands — это обычно помогает больше чем позитивный.
+
+У тебя в workflow есть нода для negative prompt?
+
+давай 9
+eurameg1, POV looking down from above, woman on all fours on leather sofa, slight arch in lower back, buttocks toward camera, head down with hair falling forward, erect penis deeply penetrating her vagina from behind, shaft halfway inside her with labia gripping around it, dark VIP room, leather sofa, purple neon glow, moody dark atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic dark purple tones
+
+давай 10
+eurameg1, POV lying on back looking up, woman sitting on top straddling hips leaning back, body arched backward with breasts pushed upward, head tilted back with parted lips, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, dark VIP room ceiling, leather sofa, purple neon glow, moody dark atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic dark purple tones
+
+eurameg1, POV lying on back looking up, woman sitting on top straddling hips leaning back, body arched backward with breasts pushed upward, head tilted back with parted lips, erect penis deeply penetrating her vagina, shaft halfway inside her with labia gripping around it, dark VIP room ceiling, leather sofa, purple neon glow, moody dark atmosphere, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic dark purple tones
+
+промт лепит оч много артефактов тела
+Для позы 10 (reverse lean) у этой лоры слишком сложная поза. Давай упростим максимально:
+
+eurameg1, POV from below looking up, woman on top riding viewer, leaning back, breasts visible from below, erect penis deeply penetrating her vagina, dark VIP room, purple neon glow, photorealistic subtle film grain, natural skin texture, 8k ultra high quality, cinematic dark purple tones
+
+Минимум описания тела — пусть модель сама решит естественную позу. Чем короче промт, тем меньше конфликтов.

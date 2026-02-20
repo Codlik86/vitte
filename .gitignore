@@ -34,7 +34,6 @@ env/
 *.swo
 *~
 .DS_Store
-
 # Environment variables
 .env
 .env.local
@@ -82,3 +81,9 @@ Thumbs.db
 *.bak
 *.swp
 .cache/
+
+#pics
+sex_pics/
+chat-start-pics-prepared/
+new-pics-chat-start/
+Screenshot*.png

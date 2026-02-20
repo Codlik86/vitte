@@ -5,6 +5,7 @@ Run Alembic database migrations
 This script runs pending Alembic migrations.
 Should be executed before starting the application services.
 """
+
 import os
 import sys
 from pathlib import Path
@@ -13,8 +14,8 @@ from pathlib import Path
 project_root = Path(__file__).parent.parent
 sys.path.insert(0, str(project_root))
 
-from alembic.config import Config
 from alembic import command
+from alembic.config import Config
 
 
 def run_migrations():
@@ -25,7 +26,9 @@ def run_migrations():
         print("ERROR: DATABASE_URL environment variable is not set")
         sys.exit(1)
 
-    print(f"Running migrations for database: {database_url.split('@')[1] if '@' in database_url else 'unknown'}")
+    print(
+        f"Running migrations for database: {database_url.split('@')[1] if '@' in database_url else 'unknown'}"
+    )
 
     # Create Alembic config
     alembic_ini_path = project_root / "alembic.ini"
@@ -38,7 +41,7 @@ def run_migrations():
         # Run migrations to head
         print("Applying migrations...")
         command.upgrade(alembic_cfg, "head")
-        print("✅ Migrations completed successfully")
+        print("Migrations completed successfully")
     except Exception as e:
         print(f"❌ Migration failed: {e}")
         sys.exit(1)
