@@ -9,19 +9,19 @@ from app.config import config
 
 # Persona key → Workflow filename mapping
 PERSONA_WORKFLOW_MAP: Dict[str, str] = {
-    "lina": "LINA_PROD_MVP.json",
-    "marianna": "MARRIANA_PROD_MVP.json",
-    "mei": "MAY_PROD_MVP.json",
-    "stacey": "STACY_PROD_MVP.json",
-    "yuna": "UNA_PROD_MVP.json",
-    "taya": "TAYA_PROD_MVP.json",
-    "julie": "JULIE_PROD_MVP.json",
-    "ash": "ASH_PROD_MVP.json",
-    "anastasia": "ANASTASYA_PROD_MVP.json",
-    "sasha": "SASHA_PROD_MVP.json",
-    "roxy": "ROX_PROD_MVP.json",
-    "pai": "PAY_PROD_MVP.json",
-    "hani": "HOONEY_PROD_MVP.json",
+    "lina": "LINA_PROD_MVP_v2.json",
+    "marianna": "MARIANNA_PROD_MVP_v2.json",
+    "mei": "MEI_PROD_MVP_v2.json",
+    "stacey": "STACY_PROD_MVP_v2.json",
+    "taya": "TAYA_PROD_MVP_v2.json",
+    "julie": "JULIE_PROD_MVP_v2.json",
+    "ash": "ASH_PROD_MVP_v2.json",
+    "anastasia": "ANASTASIA_PROD_MVP_v2.json",
+    "sasha": "SASHA_PROD_MVP_v2.json",
+    "roxy": "ROXY_PROD_MVP_v2.json",
+    "pai": "PAI_PROD_MVP_v2.json",
+    "hani": "HANI_PROD_MVP_v2.json",
+    "yuna": "UNA_PROD_MVP_v2.json",
 }
 
 
