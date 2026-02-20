@@ -311,18 +311,21 @@ async def show_main_menu(target, lang: str = "ru", user_id: int = None, is_welco
 
     keyboard = get_main_menu_keyboard_ru() if lang == "ru" else get_main_menu_keyboard_en()
 
+    # Random menu photo (1 of 3)
+    menu_photo_url = f"https://craveme.tech/storage/menu-pics/menu/{random.randint(1, 3):03d}.png"
+
     # Send menu with photo
     if hasattr(target, 'message'):
         # CallbackQuery - send new message with photo
         await target.message.answer_photo(
-            photo=config.menu_image_url,
+            photo=menu_photo_url,
             caption=text,
             reply_markup=keyboard
         )
     else:
         # Message object - send photo
         await target.answer_photo(
-            photo=config.menu_image_url,
+            photo=menu_photo_url,
             caption=text,
             reply_markup=keyboard
         )
