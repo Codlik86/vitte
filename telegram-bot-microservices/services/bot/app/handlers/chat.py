@@ -359,38 +359,7 @@ async def _show_chat_screen(user_id: int, target):
             keyboard = get_dialogs_keyboard_en(dialogs, can_create_new)
         logger.info(f"User {user_id} has {len(dialogs)} active dialog(s)")
 
-        # Get story image for last active dialog
-        last_dialog = dialogs[0]
-        last_persona_key = last_dialog.persona.key if last_dialog.persona else None
-        last_story_id = last_dialog.story_id
-
-        photo_url = config.start_image_url  # fallback
-        if last_persona_key and last_story_id:
-            try:
-                persona_data = PERSONAS.get(last_persona_key)
-                if persona_data:
-                    story = persona_data["stories"].get(last_story_id)
-                    if story and "image" in story:
-                        # Convert original image name to JPEG: "lina-story-support.png" -> "lina-story-support.jpeg"
-                        img_name = story["image"].rsplit(".", 1)[0] + ".jpeg"
-                        photo_url = f"https://craveme.tech/storage/story-dialogs/{img_name}"
-            except Exception:
-                pass
-
-        # Send with photo, fallback to default on error
-        try:
-            await target.answer_photo(
-                photo=photo_url,
-                caption=text,
-                reply_markup=keyboard
-            )
-        except Exception as e:
-            logger.warning(f"Failed to send persona photo ({photo_url}): {e}, falling back to default")
-            await target.answer_photo(
-                photo=config.start_image_url,
-                caption=text,
-                reply_markup=keyboard
-            )
+        await target.answer(text, reply_markup=keyboard, parse_mode="HTML")
     else:
         # No dialogs - show without photo
         if lang == "ru":
