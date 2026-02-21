@@ -430,6 +430,19 @@ async def handle_refresh(callback: CallbackQuery):
             InlineKeyboardButton(text="🔄", callback_data=f"refresh:{result.dialog_id}:{callback.message.message_id}")
         ]])
 
+        # Send image if generated
+        if result.image_url:
+            import httpx
+            from aiogram.types import BufferedInputFile
+            try:
+                async with httpx.AsyncClient(timeout=30) as client:
+                    img_response = await client.get(result.image_url)
+                    if img_response.status_code == 200:
+                        photo_file = BufferedInputFile(img_response.content, filename="image.png")
+                        await callback.message.answer_photo(photo=photo_file)
+            except Exception as e:
+                logger.error(f"Failed to send photo on refresh: {e}")
+
         # Update message with new response
         try:
             await callback.message.edit_text(
