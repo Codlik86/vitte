@@ -501,13 +501,13 @@ class ChatFlow:
             debug_logger.warning(f"Message {idx}: [{role}] {content_preview}")
         debug_logger.warning(f"{'='*80}\n")
 
-        # 9.5. Image generation: sex pool OR ComfyUI
+        # 9.5. Image: ONE trigger → decide sex pool OR ComfyUI
         import asyncio
         from sqlalchemy.orm.attributes import flag_modified
         image_url = None
-        image_celery_task = None  # Celery task object if we triggered ComfyUI
-        sex_image_from_pool = False  # Flag: image came from sex pool (no quota deduction)
-        no_quota_flag = False  # Flag: image was due but user has no quota
+        image_celery_task = None
+        sex_image_from_pool = False
+        no_quota_flag = False
         try:
             service = ImageGenerationService(celery_app)
             current_count = (dialog.message_count or 0) + 2
@@ -515,99 +515,100 @@ class ChatFlow:
                 message_count=current_count,
                 last_generation_at=dialog.last_image_generation_at
             )
-            debug_logger.warning(f"IMG: dialog={dialog.id}, msg_count={dialog.message_count}, current_count={current_count}, should_generate={should_generate}, should_sex={should_send_sex_image(current_count)}")
+            assistant_count = (current_count + 1) // 2
+            debug_logger.warning(f"IMG: dialog={dialog.id}, msg_count={dialog.message_count}, current_count={current_count}, assistant_count={assistant_count}, should_generate={should_generate}")
 
-            # --- Sex image pool check (independent trigger, not tied to ComfyUI schedule) ---
-            sex_pool_used = False
-            if has_sex_images(persona.key) and should_send_sex_image(current_count):
-                debug_logger.warning(f"SEX_IMG: checking sex context for persona={persona.key}, story={story_id or dialog.story_id}")
-                try:
-                    recent_for_detection = [
-                        {"role": m.role, "content": m.content}
-                        for m in deduped_messages[-4:]
-                    ]
-                    # Add current user message to context
-                    recent_for_detection.append({"role": "user", "content": user_message})
-                    scene_name = await detect_sex_scene(recent_for_detection, llm_client)
-                    debug_logger.warning(f"SEX_IMG: detected scene={scene_name}")
+            if should_generate:
+                # Single decision point: sex pool or ComfyUI?
+                use_sex_pool = False
 
-                    if scene_name:
-                        # Get per-scene index from dialog cache
-                        indices = dialog.sex_scene_indices or {}
-                        schene_key = f"schene_{SCENE_MAP[scene_name]}"
-                        current_index = indices.get(schene_key, 0)
-
-                        sex_url = get_sex_image_url(
-                            persona_key=persona.key,
-                            story_key=story_id or dialog.story_id,
-                            scene_name=scene_name,
-                            index=current_index,
-                        )
-                        debug_logger.warning(f"SEX_IMG: url={sex_url}, scene={scene_name}, index={current_index}")
-
-                        if sex_url:
-                            image_url = sex_url
-                            sex_image_from_pool = True
-                            sex_pool_used = True
-                            # Increment index for this scene (cyclic in get_sex_image_url)
-                            indices[schene_key] = current_index + 1
-                            dialog.sex_scene_indices = indices
-                            flag_modified(dialog, "sex_scene_indices")
-                            dialog.last_image_generation_at = current_count
-                            debug_logger.warning(f"SEX_IMG: using pool image, next_index={current_index + 1}")
-                except Exception as sex_err:
-                    debug_logger.warning(f"SEX_IMG ERROR: {sex_err}", exc_info=True)
-
-            if should_generate and not sex_pool_used:
-                # --- ComfyUI generation (only if sex pool was NOT used and ComfyUI schedule hit) ---
-                image_quota = await get_images_remaining(self.db, telegram_id)
-                debug_logger.warning(f"IMG: quota check: can_generate={image_quota.can_generate}, remaining={image_quota.total_remaining}")
-
-                if image_quota.can_generate:
-                    comfy_prompt = None
+                # Sex images only after 9th assistant message
+                if assistant_count >= 9 and has_sex_images(persona.key):
+                    debug_logger.warning(f"IMG: checking sex context for persona={persona.key}, story={story_id or dialog.story_id}")
                     try:
-                        img_recent = [
+                        recent_for_detection = [
                             {"role": m.role, "content": m.content}
                             for m in deduped_messages[-4:]
                         ]
-                        img_messages = build_image_prompt_messages(
-                            persona_key=persona.key,
-                            story_key=story_id or dialog.story_id,
-                            user_message=user_message,
-                            recent_messages=img_recent,
-                        )
-                        raw_prompt = await llm_client.chat_completion(
-                            messages=img_messages,
-                            temperature=0.7,
-                            max_tokens=120,
-                        )
-                        if raw_prompt:
-                            comfy_prompt = assemble_final_prompt(persona.key, raw_prompt)
-                            debug_logger.warning(f"IMG PROMPT: {comfy_prompt}")
-                        else:
-                            debug_logger.warning(f"IMG PROMPT: LLM returned None, using fallback")
-                    except Exception as prompt_err:
-                        debug_logger.warning(f"IMG PROMPT ERROR: {prompt_err}")
+                        recent_for_detection.append({"role": "user", "content": user_message})
+                        scene_name = await detect_sex_scene(recent_for_detection, llm_client)
+                        debug_logger.warning(f"IMG: detected scene={scene_name}")
 
-                    if not comfy_prompt:
-                        from shared.llm.services.image_prompt_builder import PERSONA_TRIGGER_WORDS
-                        tw = PERSONA_TRIGGER_WORDS.get(persona.key, "")
-                        comfy_prompt = f"{tw}, a beautiful woman, soft lighting, realistic photography" if tw else "a beautiful woman, soft lighting, realistic photography"
+                        if scene_name:
+                            # Sex detected → send from pool
+                            indices = dialog.sex_scene_indices or {}
+                            schene_key = f"schene_{SCENE_MAP[scene_name]}"
+                            current_index = indices.get(schene_key, 0)
 
-                    story_seed = get_story_seed(persona.key, story_id or dialog.story_id)
-                    image_celery_task = celery_app.send_task(
-                        'image_generator.generate_image',
-                        args=[persona.key, comfy_prompt, story_seed],
-                        queue='image_generation',
-                    )
-                    dialog.last_image_generation_at = current_count
-                    debug_logger.warning(f"IMG: started parallel generation task_id={image_celery_task.id}")
-                else:
-                    sex_image_from_pool = False  # ensure no pool flag
-                    no_quota_flag = True
-                    debug_logger.warning(f"IMG: skipped - no image quota remaining")
+                            sex_url = get_sex_image_url(
+                                persona_key=persona.key,
+                                story_key=story_id or dialog.story_id,
+                                scene_name=scene_name,
+                                index=current_index,
+                            )
+                            debug_logger.warning(f"IMG: sex pool url={sex_url}, scene={scene_name}, index={current_index}")
+
+                            if sex_url:
+                                image_url = sex_url
+                                sex_image_from_pool = True
+                                use_sex_pool = True
+                                indices[schene_key] = current_index + 1
+                                dialog.sex_scene_indices = indices
+                                flag_modified(dialog, "sex_scene_indices")
+                                dialog.last_image_generation_at = current_count
+                                debug_logger.warning(f"IMG: using sex pool, next_index={current_index + 1}")
+                    except Exception as sex_err:
+                        debug_logger.warning(f"IMG: sex detection error: {sex_err}", exc_info=True)
+
+                if not use_sex_pool:
+                    # No sex → ComfyUI generation
+                    image_quota = await get_images_remaining(self.db, telegram_id)
+                    debug_logger.warning(f"IMG: ComfyUI path, quota: can={image_quota.can_generate}, remaining={image_quota.total_remaining}")
+
+                    if image_quota.can_generate:
+                        comfy_prompt = None
+                        try:
+                            img_recent = [
+                                {"role": m.role, "content": m.content}
+                                for m in deduped_messages[-4:]
+                            ]
+                            img_messages = build_image_prompt_messages(
+                                persona_key=persona.key,
+                                story_key=story_id or dialog.story_id,
+                                user_message=user_message,
+                                recent_messages=img_recent,
+                            )
+                            raw_prompt = await llm_client.chat_completion(
+                                messages=img_messages,
+                                temperature=0.7,
+                                max_tokens=120,
+                            )
+                            if raw_prompt:
+                                comfy_prompt = assemble_final_prompt(persona.key, raw_prompt)
+                                debug_logger.warning(f"IMG PROMPT: {comfy_prompt}")
+                            else:
+                                debug_logger.warning(f"IMG PROMPT: LLM returned None, using fallback")
+                        except Exception as prompt_err:
+                            debug_logger.warning(f"IMG PROMPT ERROR: {prompt_err}")
+
+                        if not comfy_prompt:
+                            from shared.llm.services.image_prompt_builder import PERSONA_TRIGGER_WORDS
+                            tw = PERSONA_TRIGGER_WORDS.get(persona.key, "")
+                            comfy_prompt = f"{tw}, a beautiful woman, soft lighting, realistic photography" if tw else "a beautiful woman, soft lighting, realistic photography"
+
+                        story_seed = get_story_seed(persona.key, story_id or dialog.story_id)
+                        image_celery_task = celery_app.send_task(
+                            'image_generator.generate_image',
+                            args=[persona.key, comfy_prompt, story_seed],
+                            queue='image_generation',
+                        )
+                        dialog.last_image_generation_at = current_count
+                        debug_logger.warning(f"IMG: started ComfyUI task_id={image_celery_task.id}")
+                    else:
+                        no_quota_flag = True
+                        debug_logger.warning(f"IMG: skipped - no image quota remaining")
         except Exception as e:
-            debug_logger.warning(f"IMG ERROR (trigger): {e}", exc_info=True)
+            debug_logger.warning(f"IMG ERROR: {e}", exc_info=True)
 
         # 10. Отправляем в LLM Gateway (runs parallel with ComfyUI if triggered)
         response = await llm_client.chat_completion(

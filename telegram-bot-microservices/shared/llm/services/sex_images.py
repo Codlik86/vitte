@@ -36,7 +36,7 @@ STORY_ORDER_MAP = {
     "ash": ["living_room", "bedroom"],
     "anastasia": ["classroom", "bathroom"],
     "sasha": ["auction", "plane", "party"],
-    "yuna": ["first_evening", "city_lights", "tea_secrets"],
+    "yuna": ["city_lights", "first_evening", "tea_secrets"],
     "roxy": ["hitchhiker", "maid", "beach"],
     "taya": ["bar_back_exit", "gaming_center", "friends_wife", "office_elevator"],
     "marianna": ["support", "cozy", "flirt", "serious"],
@@ -119,6 +119,7 @@ SEX_IMAGE_POOL = {
     "yuna": {
         "first_evening": {"schene_1": 10, "schene_2": 12, "schene_3": 11, "schene_4": 9, "schene_5": 11, "schene_6": 10, "schene_8": 11, "schene_9": 12, "schene_10": 11},
         "city_lights": {"schene_1": 10, "schene_2": 12, "schene_3": 10, "schene_4": 11, "schene_5": 10, "schene_6": 10, "schene_9": 9, "schene_10": 9},
+        "tea_secrets": {"schene_1": 10, "schene_2": 12, "schene_3": 10, "schene_4": 11, "schene_5": 10, "schene_6": 10, "schene_9": 9, "schene_10": 9},
     },
     # taya: no sex images yet
 }
