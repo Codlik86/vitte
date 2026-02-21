@@ -108,23 +108,10 @@ async def cmd_start(message: Message, i18n: I18nContext):
                 has_dialogs = result.scalar_one_or_none() is not None
                 break
 
-            if has_dialogs:
-                # User has dialogs - show welcome back with photo
-                from app.handlers.menu import MAIN_MENU_TEXT_RU, MAIN_MENU_TEXT_EN, get_main_menu_keyboard_ru, get_main_menu_keyboard_en
-
-                lang = (db_user.get("language_code") if isinstance(db_user, dict) else db_user.language_code) or "ru"
-                text = MAIN_MENU_TEXT_RU if lang == "ru" else MAIN_MENU_TEXT_EN
-                keyboard = get_main_menu_keyboard_ru() if lang == "ru" else get_main_menu_keyboard_en()
-
-                await message.answer_photo(
-                    photo=config.start_image_url,
-                    caption=text,
-                    reply_markup=keyboard
-                )
-            else:
-                # User has no dialogs yet - show regular menu without photo
-                from app.handlers.menu import show_main_menu
-                await show_main_menu(message, lang="ru")
+            # Show main menu (with random photo) for both cases
+            from app.handlers.menu import show_main_menu
+            lang = (db_user.get("language_code") if isinstance(db_user, dict) else db_user.language_code) or "ru"
+            await show_main_menu(message, lang=lang, user_id=user.id)
 
         logger.debug(f"Start command processed for user {user.id}, new={is_new_user}")
 
