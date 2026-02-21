@@ -15,15 +15,15 @@ logger = get_logger(__name__)
 # ==================== COMMANDS ====================
 
 COMMANDS_RU = [
-    BotCommand(command="menu", description="📋 Главное меню"),
-    BotCommand(command="chat", description="💕 Начать общение"),
-    BotCommand(command="app", description="💌 Открыть приложение"),
+    BotCommand(command="menu", description="📋Меню"),
+    BotCommand(command="chat", description="💬Начать общение"),
+    BotCommand(command="app", description="💌Открыть приложение"),
 ]
 
 COMMANDS_EN = [
-    BotCommand(command="menu", description="📋 Main Menu"),
-    BotCommand(command="chat", description="💕 Start Chat"),
-    BotCommand(command="app", description="💌 Open App"),
+    BotCommand(command="menu", description="📋Меню"),
+    BotCommand(command="chat", description="💬Начать общение"),
+    BotCommand(command="app", description="💌Открыть приложение"),
 ]
 
 
