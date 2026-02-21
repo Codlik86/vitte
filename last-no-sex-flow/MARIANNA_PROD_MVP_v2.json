@@ -32,8 +32,8 @@
   "13": {
     "inputs": {
       "lora_name": "QGVJNVQBYVJ0S2TRKZ005EF980.safetensors",
-      "strength_model": 0.85,
-      "strength_clip": 0.98,
+      "strength_model": 0.79,
+      "strength_clip": 0.95,
       "model": [
         "11",
         0
