@@ -51,16 +51,18 @@ class ComfyUIClient:
         self,
         workflow: Dict[str, Any],
         prompt: str,
-        seed: Optional[int] = None
+        seed: Optional[int] = None,
+        lora_params: Optional[Dict[str, Any]] = None
     ) -> Dict[str, Any]:
         """
-        Modify workflow with custom prompt and seed.
+        Modify workflow with custom prompt, seed, and per-persona LoRA params.
         Also injects CacheDiT Accelerator node for faster generation.
 
         Args:
             workflow: Base workflow dict
             prompt: Positive prompt text
             seed: Random seed (generated if not provided)
+            lora_params: Dict with lora_name, strength_model, strength_clip, sampler_name
 
         Returns:
             Modified workflow dict
@@ -69,22 +71,36 @@ class ComfyUIClient:
         if seed is None:
             seed = random.randint(0, 2**32 - 1)
 
-        # Find and modify prompt node (usually node "3" or "14")
-        # CLIPTextEncode with title "CLIP Text Encode (Prompt)"
+        # Find and modify prompt nodes
+        # Universal workflow: node "14" = positive, node "15" = negative
+        # Positive prompt is the first CLIPTextEncode encountered
+        first_clip_seen = False
         for node_id, node_data in workflow.items():
             if node_data.get("class_type") == "CLIPTextEncode":
-                # Check if this is positive prompt (not negative)
-                if node_data.get("_meta", {}).get("title") == "CLIP Text Encode (Prompt)":
-                    # Only modify if text is not empty (positive prompt)
-                    if node_data.get("inputs", {}).get("text", ""):
-                        workflow[node_id]["inputs"]["text"] = prompt
-                        logger.debug(f"Updated prompt in node {node_id}")
+                if not first_clip_seen:
+                    # First CLIPTextEncode = positive prompt
+                    workflow[node_id]["inputs"]["text"] = prompt
+                    logger.debug(f"Updated positive prompt in node {node_id}")
+                    first_clip_seen = True
+                # Leave negative prompt as-is (empty string in universal flow)
 
-        # Find and modify KSampler seed
+        # Find and modify KSampler seed and sampler_name
         for node_id, node_data in workflow.items():
             if node_data.get("class_type") == "KSampler":
                 workflow[node_id]["inputs"]["seed"] = seed
                 logger.debug(f"Updated seed to {seed} in node {node_id}")
+                if lora_params and "sampler_name" in lora_params:
+                    workflow[node_id]["inputs"]["sampler_name"] = lora_params["sampler_name"]
+                    logger.debug(f"Updated sampler_name to {lora_params['sampler_name']} in node {node_id}")
+
+        # Find and modify LoraLoader with persona-specific params
+        if lora_params:
+            for node_id, node_data in workflow.items():
+                if node_data.get("class_type") == "LoraLoader":
+                    workflow[node_id]["inputs"]["lora_name"] = lora_params["lora_name"]
+                    workflow[node_id]["inputs"]["strength_model"] = lora_params["strength_model"]
+                    workflow[node_id]["inputs"]["strength_clip"] = lora_params["strength_clip"]
+                    logger.debug(f"Updated LoRA in node {node_id}: {lora_params['lora_name']}")
 
         # Inject CacheDiT Accelerator between model source and KSampler
         workflow = self._inject_cachedit(workflow)
@@ -293,7 +309,8 @@ class ComfyUIClient:
         self,
         workflow_path: Path,
         prompt: str,
-        seed: Optional[int] = None
+        seed: Optional[int] = None,
+        lora_params: Optional[Dict[str, Any]] = None
     ) -> Optional[bytes]:
         """
         Complete image generation pipeline.
@@ -302,6 +319,7 @@ class ComfyUIClient:
             workflow_path: Path to workflow JSON
             prompt: Positive prompt text
             seed: Random seed (optional)
+            lora_params: Per-persona LoRA params (lora_name, strength_model, strength_clip, sampler_name)
 
         Returns:
             Image bytes or None
@@ -311,7 +329,7 @@ class ComfyUIClient:
 
             # Load and modify workflow
             workflow = await self.load_workflow(workflow_path)
-            workflow = self.modify_workflow(workflow, prompt, seed)
+            workflow = self.modify_workflow(workflow, prompt, seed, lora_params)
 
             # Queue prompt
             prompt_id = await self.queue_prompt(workflow)

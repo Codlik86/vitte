@@ -7,21 +7,106 @@ from typing import Dict, Optional
 from app.config import config
 
 
-# Persona key → Workflow filename mapping
+# Universal workflow filename (single JSON for all personas)
+UNIVERSAL_WORKFLOW = "universal_flow.json"
+
+# Persona key → Workflow filename mapping (legacy, kept for reference)
 PERSONA_WORKFLOW_MAP: Dict[str, str] = {
-    "lina": "LINA_PROD_MVP_v2.json",
-    "marianna": "MARIANNA_PROD_MVP_v2.json",
-    "mei": "MEI_PROD_MVP_v2.json",
-    "stacey": "STACY_PROD_MVP_v2.json",
-    "taya": "TAYA_PROD_MVP_v2.json",
-    "julie": "JULIE_PROD_MVP_v2.json",
-    "ash": "ASH_PROD_MVP_v2.json",
-    "anastasia": "ANASTASIA_PROD_MVP_v2.json",
-    "sasha": "SASHA_PROD_MVP_v2.json",
-    "roxy": "ROXY_PROD_MVP_v2.json",
-    "pai": "PAI_PROD_MVP_v2.json",
-    "hani": "HANI_PROD_MVP_v2.json",
-    "yuna": "UNA_PROD_MVP_v2.json",
+    "lina": UNIVERSAL_WORKFLOW,
+    "marianna": UNIVERSAL_WORKFLOW,
+    "mei": UNIVERSAL_WORKFLOW,
+    "stacey": UNIVERSAL_WORKFLOW,
+    "taya": UNIVERSAL_WORKFLOW,
+    "julie": UNIVERSAL_WORKFLOW,
+    "ash": UNIVERSAL_WORKFLOW,
+    "anastasia": UNIVERSAL_WORKFLOW,
+    "sasha": UNIVERSAL_WORKFLOW,
+    "roxy": UNIVERSAL_WORKFLOW,
+    "pai": UNIVERSAL_WORKFLOW,
+    "hani": UNIVERSAL_WORKFLOW,
+    "yuna": UNIVERSAL_WORKFLOW,
+}
+
+# Persona key → LoRA and sampler params for universal workflow injection
+PERSONA_LORA_MAP: Dict[str, Dict] = {
+    "lina": {
+        "lora_name": "ameg2_con_char.safetensors",
+        "strength_model": 0.88,
+        "strength_clip": 0.93,
+        "sampler_name": "res_multistep",
+    },
+    "marianna": {
+        "lora_name": "QGVJNVQBYVJ0S2TRKZ005EF980.safetensors",
+        "strength_model": 0.79,
+        "strength_clip": 0.95,
+        "sampler_name": "euler",
+    },
+    "mei": {
+        "lora_name": "zimg_asig2_conchar.safetensors",
+        "strength_model": 0.81,
+        "strength_clip": 0.95,
+        "sampler_name": "res_multistep",
+    },
+    "stacey": {
+        "lora_name": "woman037-zimage.safetensors",
+        "strength_model": 0.85,
+        "strength_clip": 0.98,
+        "sampler_name": "res_multistep",
+    },
+    "taya": {
+        "lora_name": "Elise_XWMB_zimage.safetensors",
+        "strength_model": 0.95,
+        "strength_clip": 0.98,
+        "sampler_name": "res_multistep",
+    },
+    "julie": {
+        "lora_name": "elaravoss.safetensors",
+        "strength_model": 0.93,
+        "strength_clip": 0.99,
+        "sampler_name": "res_multistep",
+    },
+    "ash": {
+        "lora_name": "GF7184J7K4SJJSTY8VJ0VRBTQ0.safetensors",
+        "strength_model": 0.95,
+        "strength_clip": 0.99,
+        "sampler_name": "res_multistep",
+    },
+    "anastasia": {
+        "lora_name": "ULRIKANB_SYNTH_zimg_v1.safetensors",
+        "strength_model": 0.78,
+        "strength_clip": 0.92,
+        "sampler_name": "res_multistep",
+    },
+    "sasha": {
+        "lora_name": "zimg-eurameg1-refine-con-char.safetensors",
+        "strength_model": 0.85,
+        "strength_clip": 0.92,
+        "sampler_name": "res_multistep",
+    },
+    "roxy": {
+        "lora_name": "ChaseInfinity_ZimageTurbo.safetensors",
+        "strength_model": 0.85,
+        "strength_clip": 0.92,
+        "sampler_name": "res_multistep",
+    },
+    "pai": {
+        "lora_name": "DENISE_SYNTH_zimg_v1.safetensors",
+        "strength_model": 0.75,
+        "strength_clip": 0.87,
+        "sampler_name": "res_multistep",
+    },
+    "hani": {
+        "lora_name": "z-3l34n0r.safetensors",
+        "strength_model": 0.80,
+        "strength_clip": 0.85,
+        "sampler_name": "res_multistep",
+    },
+    "yuna": {
+        "lora_name": "nano_Korean.safetensors",
+        "strength_model": 0.95,
+        "strength_clip": 0.99,
+        "sampler_name": "res_multistep",
+    },
 }
 
 
@@ -77,6 +162,19 @@ def get_trigger_word(persona_key: str) -> str:
     return PERSONA_TRIGGER_MAP.get(persona_key, "")
 
 
+def get_lora_params(persona_key: str) -> Optional[Dict]:
+    """
+    Get LoRA and sampler parameters for a persona.
+
+    Args:
+        persona_key: Persona identifier
+
+    Returns:
+        Dict with lora_name, strength_model, strength_clip, sampler_name or None
+    """
+    return PERSONA_LORA_MAP.get(persona_key)
+
+
 def is_persona_supported(persona_key: str) -> bool:
     """
     Check if persona has a workflow configured.
@@ -91,9 +189,12 @@ def is_persona_supported(persona_key: str) -> bool:
 
 
 __all__ = [
+    "UNIVERSAL_WORKFLOW",
     "PERSONA_WORKFLOW_MAP",
+    "PERSONA_LORA_MAP",
     "PERSONA_TRIGGER_MAP",
     "get_workflow_path",
+    "get_lora_params",
     "get_trigger_word",
     "is_persona_supported",
 ]
