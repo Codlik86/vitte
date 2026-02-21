@@ -355,8 +355,10 @@ async def get_user_language(user_id: int) -> str:
     try:
         async for db in get_db():
             user = await get_user_by_id(db, user_id)
-            if user and user.language_code:
-                return user.language_code
+            if user:
+                lang = user.get("language_code") if isinstance(user, dict) else user.language_code
+                if lang:
+                    return lang
             break
     except Exception as e:
         logger.error(f"Error getting user language: {e}")
