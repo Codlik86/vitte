@@ -13,7 +13,7 @@
   "11": {
     "inputs": {
       "unet_name": "z_image_turbo_bf16.safetensors",
-      "weight_dtype": "default"
+      "weight_dtype": "fp8_e4m3fn_fast"
     },
     "class_type": "UNETLoader",
     "_meta": {
@@ -31,11 +31,11 @@
   },
   "13": {
     "inputs": {
-      "lora_name": "QGVJNVQBYVJ0S2TRKZ005EF980.safetensors",
+      "lora_name": "ameg2_con_char.safetensors",
       "strength_model": 0.79,
       "strength_clip": 0.95,
       "model": [
-        "11",
+        "24",
         0
       ],
       "clip": [
@@ -76,7 +76,7 @@
   },
   "16": {
     "inputs": {
-      "seed": 1051208518617137,
+      "seed": 166095339908982,
       "steps": 8,
       "cfg": 1,
       "sampler_name": "res_multistep",
@@ -142,6 +142,33 @@
     "class_type": "SaveImage",
     "_meta": {
       "title": "Save Image"
+    }
+  },
+  "23": {
+    "inputs": {
+      "unet_name": "moodyPornMix_v7.safetensors",
+      "weight_dtype": "fp8_e4m3fn_fast"
+    },
+    "class_type": "UNETLoader",
+    "_meta": {
+      "title": "Load Diffusion Model"
+    }
+  },
+  "24": {
+    "inputs": {
+      "Input": 1,
+      "model1": [
+        "11",
+        0
+      ],
+      "model2": [
+        "23",
+        0
+      ]
+    },
+    "class_type": "CR Model Input Switch",
+    "_meta": {
+      "title": "🔀 CR Model Input Switch"
     }
   }
 }

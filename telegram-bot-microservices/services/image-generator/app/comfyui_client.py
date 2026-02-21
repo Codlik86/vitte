@@ -102,6 +102,13 @@ class ComfyUIClient:
                     workflow[node_id]["inputs"]["strength_clip"] = lora_params["strength_clip"]
                     logger.debug(f"Updated LoRA in node {node_id}: {lora_params['lora_name']}")
 
+            # Set model switch: 1 = ZIT, 2 = Moody
+            model_index = lora_params.get("model_index", 1)
+            for node_id, node_data in workflow.items():
+                if node_data.get("class_type") == "CR Model Input Switch":
+                    workflow[node_id]["inputs"]["Input"] = model_index
+                    logger.debug(f"Set model switch to {model_index} in node {node_id}")
+
         # Inject CacheDiT Accelerator between model source and KSampler
         workflow = self._inject_cachedit(workflow)
 

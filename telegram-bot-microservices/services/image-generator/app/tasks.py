@@ -131,7 +131,8 @@ def generate_and_send_image(
 def generate_image(
     persona_key: str,
     prompt: str,
-    seed: Optional[int] = None
+    seed: Optional[int] = None,
+    model_override: Optional[int] = None,
 ) -> dict:
     """
     Generate NSFW image and return URL (don't send to Telegram).
@@ -140,12 +141,13 @@ def generate_image(
         persona_key: Persona identifier (lina, julie, ash, etc.)
         prompt: Image generation prompt
         seed: Random seed (optional)
+        model_override: Override model_index (1=ZIT, 2=Moody). If None, uses persona default.
 
     Returns:
         dict with success status and image_url
     """
     try:
-        logger.info(f"Generating image for persona={persona_key}")
+        logger.info(f"Generating image for persona={persona_key}, model_override={model_override}")
 
         # Validate persona
         if not is_persona_supported(persona_key):
@@ -162,6 +164,11 @@ def generate_image(
 
         # Get per-persona LoRA params for universal workflow
         lora_params = get_lora_params(persona_key)
+
+        # Apply model_override if provided (e.g. 2=Moody for nude context)
+        if lora_params and model_override is not None:
+            lora_params = dict(lora_params)  # copy to avoid mutating shared dict
+            lora_params["model_index"] = model_override
 
         # Get ComfyUI URL from pool (worker affinity)
         comfyui_url = comfyui_pool.get_comfyui_url()
