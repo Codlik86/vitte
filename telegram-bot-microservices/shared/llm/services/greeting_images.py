@@ -70,8 +70,8 @@ GREETING_IMAGE_POOL = {
     "stacey": {
         "rooftop_sunset": 16,
         "hints_game": 15,
-        "confession": 20,
         "night_park": 15,
+        "confession": 20,
     },
 }
 
