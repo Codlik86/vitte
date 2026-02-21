@@ -59,12 +59,12 @@ export function CharactersList() {
 
   const renderCards = () => {
     const personasWithCustom: Array<PersonaListItem | CustomPersonaEntry> = [
-      {
-        id: "custom",
-        name: "Свой герой",
-        short_description: "Создай собственного персонажа",
-        isCustomEntry: true,
-      },
+      // {
+      //   id: "custom",
+      //   name: "Свой герой",
+      //   short_description: "Создай собственного персонажа",
+      //   isCustomEntry: true,
+      // },
       ...items.filter((p) => !p.is_custom),
     ];
 
