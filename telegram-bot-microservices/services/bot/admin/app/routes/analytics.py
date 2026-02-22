@@ -438,11 +438,10 @@ async def get_user_card(telegram_id: str):
                 select(Subscription).where(Subscription.user_id == tid)
             )
 
-            # Get payments stats
+            # Get payments stats (total)
             payments_stats = await db.execute(
                 select(
                     func.count(Purchase.id).label('count'),
-                    func.sum(Purchase.amount).label('total'),
                     func.min(Purchase.created_at).label('first'),
                     func.max(Purchase.created_at).label('last')
                 )
@@ -452,6 +451,17 @@ async def get_user_card(telegram_id: str):
                 )
             )
             payments = payments_stats.one()
+
+            # Stars separately
+            payments_stars = await db.scalar(
+                select(func.coalesce(func.sum(Purchase.amount), 0))
+                .where(Purchase.user_id == tid, Purchase.status == 'success', Purchase.currency == 'XTR')
+            )
+            # USDT separately
+            payments_usdt = await db.scalar(
+                select(func.coalesce(func.sum(Purchase.amount), 0))
+                .where(Purchase.user_id == tid, Purchase.status == 'success', Purchase.currency == 'USDT')
+            )
 
             # Get messages stats
             messages_count = await db.scalar(
@@ -512,7 +522,8 @@ async def get_user_card(telegram_id: str):
                 "fantasy_scenes": subscription.fantasy_scenes if subscription else False,
                 # Payments info (flat)
                 "payments_total_count": payments.count or 0,
-                "payments_total_stars": int(payments.total) if payments.total else 0,
+                "payments_total_stars": int(payments_stars or 0),
+                "payments_total_usdt": float(payments_usdt or 0),
                 "first_payment": payments.first.isoformat() if payments.first else "",
                 "last_payment": payments.last.isoformat() if payments.last else "",
                 # Activity info (flat)

@@ -29,6 +29,7 @@ interface UserData {
   fantasy_scenes: boolean
   payments_total_count: number
   payments_total_stars: number
+  payments_total_usdt: number
   first_payment: string
   last_payment: string
   messages_count: number
@@ -286,7 +287,8 @@ export default function UserCardPage() {
       {/* Платежи */}
       <Card title="Платежи">
         <InfoRow label="Всего платежей" value={user.payments_total_count} />
-        <InfoRow label="Потрачено звёзд" value={user.payments_total_stars} />
+        <InfoRow label="Потрачено Stars ⭐" value={user.payments_total_stars} />
+        <InfoRow label="Потрачено крипто (USDT)" value={user.payments_total_usdt > 0 ? `$${user.payments_total_usdt.toFixed(2)}` : '—'} />
         <InfoRow label="Первый платёж" value={formatDate(user.first_payment)} />
         <InfoRow label="Последний платёж" value={formatDate(user.last_payment)} />
       </Card>
