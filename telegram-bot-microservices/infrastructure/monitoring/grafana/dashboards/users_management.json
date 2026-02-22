@@ -370,15 +370,23 @@
       "pluginVersion": "10.0.0",
       "targets": [
         {
+          "columns": [],
           "datasource": {
-            "type": "postgres",
-            "uid": "postgresql"
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "admin-api"
           },
-          "editorMode": "code",
+          "filters": [],
           "format": "table",
-          "rawQuery": true,
-          "rawSql": "SELECT\n  u.id AS telegram_id,\n  COALESCE(u.utm_source, '') AS utm_source,\n  COALESCE(u.first_name, '') AS first_name,\n  COALESCE(u.last_name, '') AS last_name,\n  COALESCE(u.username, '') AS username,\n  COALESCE(u.language_code, '') AS language,\n  u.created_at AS registered_at,\n  COALESCE(p.payments_count, 0) AS payments_count,\n  COALESCE(p.total_stars_spent, 0) AS total_stars_spent,\n  COALESCE(s.plan, 'free') AS subscription_plan,\n  CASE WHEN f.upgrades_count > 0 THEN true ELSE false END AS has_upgrades\nFROM users u\nLEFT JOIN (\n  SELECT user_id, COUNT(*) AS payments_count, SUM(amount) AS total_stars_spent\n  FROM purchases WHERE status = 'success'\n  GROUP BY user_id\n) p ON p.user_id = u.id\nLEFT JOIN subscriptions s ON s.user_id = u.id\nLEFT JOIN (\n  SELECT user_id, COUNT(*) AS upgrades_count\n  FROM feature_unlocks WHERE enabled = true\n  GROUP BY user_id\n) f ON f.user_id = u.id\nWHERE\n  ('${telegram_id}' = '' OR u.id::text = '${telegram_id}')\n  AND ('${utm_source}' = '' OR u.utm_source = '${utm_source}')\nORDER BY u.created_at DESC\nLIMIT 1000",
-          "refId": "A"
+          "global_query_id": "",
+          "refId": "A",
+          "root_selector": "data",
+          "source": "url",
+          "type": "json",
+          "url": "/analytics/users/all?limit=1000&telegram_id=${telegram_id}&utm_source=${utm_source}",
+          "url_options": {
+            "data": "",
+            "method": "GET"
+          }
         }
       ],
       "title": "Все пользователи",
