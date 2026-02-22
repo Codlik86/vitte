@@ -370,37 +370,15 @@
       "pluginVersion": "10.0.0",
       "targets": [
         {
-          "columns": [
-            {"selector": "telegram_id", "text": "telegram_id", "type": "number"},
-            {"selector": "utm_source", "text": "utm_source", "type": "string"},
-            {"selector": "first_name", "text": "first_name", "type": "string"},
-            {"selector": "last_name", "text": "last_name", "type": "string"},
-            {"selector": "username", "text": "username", "type": "string"},
-            {"selector": "language", "text": "language", "type": "string"},
-            {"selector": "registered_at", "text": "registered_at", "type": "string"},
-            {"selector": "is_active", "text": "is_active", "type": "boolean"},
-            {"selector": "is_blocked", "text": "is_blocked", "type": "boolean"},
-            {"selector": "payments_count", "text": "payments_count", "type": "number"},
-            {"selector": "total_stars_spent", "text": "total_stars_spent", "type": "number"},
-            {"selector": "subscription_plan", "text": "subscription_plan", "type": "string"},
-            {"selector": "has_upgrades", "text": "has_upgrades", "type": "boolean"}
-          ],
           "datasource": {
-            "type": "yesoreyeram-infinity-datasource",
-            "uid": "admin-api"
+            "type": "postgres",
+            "uid": "postgresql"
           },
-          "filters": [],
+          "editorMode": "code",
           "format": "table",
-          "global_query_id": "",
-          "refId": "A",
-          "root_selector": "data",
-          "source": "url",
-          "type": "json",
-          "url": "/analytics/users/all?limit=1000&telegram_id=${telegram_id}&utm_source=${utm_source}",
-          "url_options": {
-            "data": "",
-            "method": "GET"
-          }
+          "rawQuery": true,
+          "rawSql": "SELECT\n  u.id AS telegram_id,\n  COALESCE(u.utm_source, '') AS utm_source,\n  COALESCE(u.first_name, '') AS first_name,\n  COALESCE(u.last_name, '') AS last_name,\n  COALESCE(u.username, '') AS username,\n  COALESCE(u.language_code, '') AS language,\n  u.created_at AS registered_at,\n  COALESCE(p.payments_count, 0) AS payments_count,\n  COALESCE(p.total_stars_spent, 0) AS total_stars_spent,\n  COALESCE(s.plan, 'free') AS subscription_plan,\n  CASE WHEN f.upgrades_count > 0 THEN true ELSE false END AS has_upgrades\nFROM users u\nLEFT JOIN (\n  SELECT user_id, COUNT(*) AS payments_count, SUM(amount) AS total_stars_spent\n  FROM purchases WHERE status = 'success'\n  GROUP BY user_id\n) p ON p.user_id = u.id\nLEFT JOIN subscriptions s ON s.user_id = u.id\nLEFT JOIN (\n  SELECT user_id, COUNT(*) AS upgrades_count\n  FROM feature_unlocks WHERE enabled = true\n  GROUP BY user_id\n) f ON f.user_id = u.id\nWHERE\n  ('${telegram_id}' = '' OR u.id::text = '${telegram_id}')\n  AND ('${utm_source}' = '' OR u.utm_source = '${utm_source}')\nORDER BY u.created_at DESC\nLIMIT 1000",
+          "refId": "A"
         }
       ],
       "title": "Все пользователи",
