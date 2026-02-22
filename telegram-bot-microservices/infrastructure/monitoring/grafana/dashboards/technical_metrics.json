@@ -786,6 +786,50 @@
       ],
       "title": "Сообщения (последние 7 дней)",
       "type": "timeseries"
+    },
+    {
+      "datasource": {"type": "yesoreyeram-infinity-datasource", "uid": "admin-api"},
+      "fieldConfig": {"defaults": {"mappings": [], "thresholds": {"mode": "absolute", "steps": [{"color": "purple", "value": null}]}, "unit": "short"}, "overrides": []},
+      "gridPos": {"h": 5, "w": 6, "x": 0, "y": 24},
+      "id": 20,
+      "options": {"colorMode": "value", "graphMode": "none", "justifyMode": "center", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "value_and_name"},
+      "pluginVersion": "10.0.0",
+      "targets": [{"columns": [{"selector": "generations.dialogs_with_comfyui", "text": "Диалогов с ComfyUI", "type": "number"}], "datasource": {"type": "yesoreyeram-infinity-datasource", "uid": "admin-api"}, "filters": [], "format": "table", "global_query_id": "", "refId": "A", "root_selector": "", "source": "url", "type": "json", "url": "/analytics/tech/stats", "url_options": {"data": "", "method": "GET"}}],
+      "title": "Диалогов с генерацией (ComfyUI)",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "yesoreyeram-infinity-datasource", "uid": "admin-api"},
+      "fieldConfig": {"defaults": {"mappings": [], "thresholds": {"mode": "absolute", "steps": [{"color": "red", "value": null}]}, "unit": "short"}, "overrides": []},
+      "gridPos": {"h": 5, "w": 6, "x": 6, "y": 24},
+      "id": 21,
+      "options": {"colorMode": "value", "graphMode": "none", "justifyMode": "center", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "value_and_name"},
+      "pluginVersion": "10.0.0",
+      "targets": [{"columns": [{"selector": "generations.dialogs_with_sex_pool", "text": "Диалогов с sex pool", "type": "number"}], "datasource": {"type": "yesoreyeram-infinity-datasource", "uid": "admin-api"}, "filters": [], "format": "table", "global_query_id": "", "refId": "A", "root_selector": "", "source": "url", "type": "json", "url": "/analytics/tech/stats", "url_options": {"data": "", "method": "GET"}}],
+      "title": "Диалогов с sex pool",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "yesoreyeram-infinity-datasource", "uid": "admin-api"},
+      "fieldConfig": {"defaults": {"mappings": [], "thresholds": {"mode": "absolute", "steps": [{"color": "yellow", "value": null}]}, "unit": "short"}, "overrides": []},
+      "gridPos": {"h": 5, "w": 6, "x": 12, "y": 24},
+      "id": 22,
+      "options": {"colorMode": "value", "graphMode": "none", "justifyMode": "center", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "value_and_name"},
+      "pluginVersion": "10.0.0",
+      "targets": [{"columns": [{"selector": "payments.stars_total", "text": "Платежей Stars (всего)", "type": "number"}], "datasource": {"type": "yesoreyeram-infinity-datasource", "uid": "admin-api"}, "filters": [], "format": "table", "global_query_id": "", "refId": "A", "root_selector": "", "source": "url", "type": "json", "url": "/analytics/tech/stats", "url_options": {"data": "", "method": "GET"}}],
+      "title": "Платежей Stars (всего)",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "yesoreyeram-infinity-datasource", "uid": "admin-api"},
+      "fieldConfig": {"defaults": {"mappings": [], "thresholds": {"mode": "absolute", "steps": [{"color": "teal", "value": null}]}, "unit": "short"}, "overrides": []},
+      "gridPos": {"h": 5, "w": 6, "x": 18, "y": 24},
+      "id": 23,
+      "options": {"colorMode": "value", "graphMode": "none", "justifyMode": "center", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "value_and_name"},
+      "pluginVersion": "10.0.0",
+      "targets": [{"columns": [{"selector": "payments.crypto_total", "text": "Платежей Крипто (всего)", "type": "number"}], "datasource": {"type": "yesoreyeram-infinity-datasource", "uid": "admin-api"}, "filters": [], "format": "table", "global_query_id": "", "refId": "A", "root_selector": "", "source": "url", "type": "json", "url": "/analytics/tech/stats", "url_options": {"data": "", "method": "GET"}}],
+      "title": "Платежей Крипто (всего)",
+      "type": "stat"
     }
   ],
   "refresh": "30s",

@@ -154,9 +154,9 @@ async def get_revenue_summary():
     """
     Сводка по доходам
 
-    - Доход сегодня
-    - Доход за месяц
-    - Доход за все время
+    - Доход сегодня / месяц / всё время по Stars (XTR)
+    - Доход сегодня / месяц / всё время по крипте (USDT)
+    - Количество платежей
     """
     try:
         async for db in get_db():
@@ -164,55 +164,100 @@ async def get_revenue_summary():
             today_start = now.replace(hour=0, minute=0, second=0, microsecond=0)
             month_start = now.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
-            # Revenue today
-            revenue_today = await db.scalar(
+            # Stars (XTR) revenue
+            revenue_today_stars = await db.scalar(
                 select(func.coalesce(func.sum(Purchase.amount), 0))
                 .where(
                     Purchase.status == 'success',
+                    Purchase.currency == 'XTR',
                     Purchase.created_at >= today_start
                 )
             )
-
-            # Revenue this month
-            revenue_month = await db.scalar(
+            revenue_month_stars = await db.scalar(
                 select(func.coalesce(func.sum(Purchase.amount), 0))
                 .where(
                     Purchase.status == 'success',
+                    Purchase.currency == 'XTR',
+                    Purchase.created_at >= month_start
+                )
+            )
+            revenue_total_stars = await db.scalar(
+                select(func.coalesce(func.sum(Purchase.amount), 0))
+                .where(Purchase.status == 'success', Purchase.currency == 'XTR')
+            )
+
+            # Crypto (USDT) revenue
+            revenue_today_usdt = await db.scalar(
+                select(func.coalesce(func.sum(Purchase.amount), 0))
+                .where(
+                    Purchase.status == 'success',
+                    Purchase.currency == 'USDT',
+                    Purchase.created_at >= today_start
+                )
+            )
+            revenue_month_usdt = await db.scalar(
+                select(func.coalesce(func.sum(Purchase.amount), 0))
+                .where(
+                    Purchase.status == 'success',
+                    Purchase.currency == 'USDT',
+                    Purchase.created_at >= month_start
+                )
+            )
+            revenue_total_usdt = await db.scalar(
+                select(func.coalesce(func.sum(Purchase.amount), 0))
+                .where(Purchase.status == 'success', Purchase.currency == 'USDT')
+            )
+
+            # Payments count (Stars)
+            payments_today_stars = await db.scalar(
+                select(func.count(Purchase.id))
+                .where(
+                    Purchase.status == 'success',
+                    Purchase.currency == 'XTR',
+                    Purchase.created_at >= today_start
+                )
+            )
+            payments_month_stars = await db.scalar(
+                select(func.count(Purchase.id))
+                .where(
+                    Purchase.status == 'success',
+                    Purchase.currency == 'XTR',
                     Purchase.created_at >= month_start
                 )
             )
 
-            # Revenue all time
-            revenue_total = await db.scalar(
-                select(func.coalesce(func.sum(Purchase.amount), 0))
-                .where(Purchase.status == 'success')
-            )
-
-            # Payments count today
-            payments_today = await db.scalar(
+            # Payments count (Crypto)
+            payments_today_crypto = await db.scalar(
                 select(func.count(Purchase.id))
                 .where(
                     Purchase.status == 'success',
+                    Purchase.currency == 'USDT',
                     Purchase.created_at >= today_start
                 )
             )
-
-            # Payments count this month
-            payments_month = await db.scalar(
+            payments_month_crypto = await db.scalar(
                 select(func.count(Purchase.id))
                 .where(
                     Purchase.status == 'success',
+                    Purchase.currency == 'USDT',
                     Purchase.created_at >= month_start
                 )
             )
 
             return {
-                "revenue_today_stars": int(revenue_today or 0),
-                "revenue_month_stars": int(revenue_month or 0),
-                "revenue_total_stars": int(revenue_total or 0),
-                "payments_today": payments_today or 0,
-                "payments_month": payments_month or 0,
-                "currency": "XTR"  # Telegram Stars
+                # Stars
+                "revenue_today_stars": int(revenue_today_stars or 0),
+                "revenue_month_stars": int(revenue_month_stars or 0),
+                "revenue_total_stars": int(revenue_total_stars or 0),
+                "payments_today": int(payments_today_stars or 0),
+                "payments_month": int(payments_month_stars or 0),
+                # Crypto
+                "revenue_today_usdt": float(revenue_today_usdt or 0),
+                "revenue_month_usdt": float(revenue_month_usdt or 0),
+                "revenue_total_usdt": float(revenue_total_usdt or 0),
+                "payments_today_crypto": int(payments_today_crypto or 0),
+                "payments_month_crypto": int(payments_month_crypto or 0),
+                "currency": "XTR"
             }
 
     except Exception as e:
@@ -224,7 +269,8 @@ async def get_revenue_summary():
 async def get_recent_payments(
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=1000),
-    telegram_id: Optional[str] = Query(None)
+    telegram_id: Optional[str] = Query(None),
+    provider: Optional[str] = Query(None, description="Filter by provider: telegram_stars or cryptopay")
 ):
     """
     Последние платежи (все транзакции)
@@ -234,9 +280,10 @@ async def get_recent_payments(
     - telegram_id
     - username
     - product_code
-    - amount (stars)
+    - amount
+    - currency (XTR или USDT)
     - status
-    - provider
+    - provider (telegram_stars / cryptopay)
     - created_at
     """
     try:
@@ -265,6 +312,9 @@ async def get_recent_payments(
                     query = query.where(User.id == tid)
                 except ValueError:
                     pass
+
+            if provider and provider.strip():
+                query = query.where(Purchase.provider == provider.strip())
 
             query = query.offset(skip).limit(limit)
 
@@ -491,11 +541,12 @@ async def get_technical_stats():
     """
     Технические метрики системы
 
-    - Общее количество пользователей
-    - Активных за последние 24h
-    - Всего диалогов
-    - Всего сообщений
-    - Среднее сообщений на пользователя
+    - Общее количество пользователей / активных за 24h
+    - Всего диалогов / активных
+    - Всего сообщений / среднее на юзера
+    - Активных подписок
+    - Генерации: диалоги с ComfyUI, диалоги с sex pool
+    - Платежи: Stars vs Crypto (кол-во транзакций)
     """
     try:
         async for db in get_db():
@@ -529,6 +580,47 @@ async def get_technical_stats():
                 .where(Subscription.is_active == True)
             )
 
+            # Dialogs that had at least one ComfyUI generation
+            dialogs_with_comfyui = await db.scalar(
+                select(func.count(Dialog.id))
+                .where(Dialog.last_image_generation_at.isnot(None))
+            )
+
+            # Dialogs that used sex image pool (sex_scene_indices not empty)
+            dialogs_with_sex_pool = await db.scalar(
+                select(func.count(Dialog.id))
+                .where(
+                    Dialog.sex_scene_indices.isnot(None),
+                    func.jsonb_typeof(Dialog.sex_scene_indices.cast(type_=None)) == 'object'
+                )
+            )
+
+            # Payments by provider
+            payments_stars_total = await db.scalar(
+                select(func.count(Purchase.id))
+                .where(Purchase.status == 'success', Purchase.provider == 'telegram_stars')
+            )
+            payments_crypto_total = await db.scalar(
+                select(func.count(Purchase.id))
+                .where(Purchase.status == 'success', Purchase.provider == 'cryptopay')
+            )
+            payments_stars_today = await db.scalar(
+                select(func.count(Purchase.id))
+                .where(
+                    Purchase.status == 'success',
+                    Purchase.provider == 'telegram_stars',
+                    Purchase.created_at >= day_ago
+                )
+            )
+            payments_crypto_today = await db.scalar(
+                select(func.count(Purchase.id))
+                .where(
+                    Purchase.status == 'success',
+                    Purchase.provider == 'cryptopay',
+                    Purchase.created_at >= day_ago
+                )
+            )
+
             return {
                 "users": {
                     "total": total_users or 0,
@@ -544,6 +636,16 @@ async def get_technical_stats():
                 },
                 "subscriptions": {
                     "active": total_subs or 0
+                },
+                "generations": {
+                    "dialogs_with_comfyui": dialogs_with_comfyui or 0,
+                    "dialogs_with_sex_pool": dialogs_with_sex_pool or 0,
+                },
+                "payments": {
+                    "stars_total": payments_stars_total or 0,
+                    "crypto_total": payments_crypto_total or 0,
+                    "stars_today": payments_stars_today or 0,
+                    "crypto_today": payments_crypto_today or 0,
                 }
             }
 

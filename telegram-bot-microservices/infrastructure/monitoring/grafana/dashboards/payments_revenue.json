@@ -223,6 +223,48 @@
       "type": "stat"
     },
     {
+      "datasource": {"type": "yesoreyeram-infinity-datasource", "uid": "admin-api"},
+      "fieldConfig": {
+        "defaults": {"mappings": [], "thresholds": {"mode": "absolute", "steps": [{"color": "teal", "value": null}]}, "unit": "short"},
+        "overrides": []
+      },
+      "gridPos": {"h": 6, "w": 8, "x": 0, "y": 6},
+      "id": 10,
+      "options": {"colorMode": "value", "graphMode": "area", "justifyMode": "center", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "value_and_name"},
+      "pluginVersion": "10.0.0",
+      "targets": [{"columns": [{"selector": "revenue_today_usdt", "text": "Крипто сегодня (USDT)", "type": "number"}], "datasource": {"type": "yesoreyeram-infinity-datasource", "uid": "admin-api"}, "filters": [], "format": "table", "global_query_id": "", "refId": "A", "root_selector": "", "source": "url", "type": "json", "url": "/analytics/revenue/summary", "url_options": {"data": "", "method": "GET"}}],
+      "title": "Крипто сегодня (USDT)",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "yesoreyeram-infinity-datasource", "uid": "admin-api"},
+      "fieldConfig": {
+        "defaults": {"mappings": [], "thresholds": {"mode": "absolute", "steps": [{"color": "teal", "value": null}]}, "unit": "short"},
+        "overrides": []
+      },
+      "gridPos": {"h": 6, "w": 8, "x": 8, "y": 6},
+      "id": 11,
+      "options": {"colorMode": "value", "graphMode": "area", "justifyMode": "center", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "value_and_name"},
+      "pluginVersion": "10.0.0",
+      "targets": [{"columns": [{"selector": "revenue_month_usdt", "text": "Крипто за месяц (USDT)", "type": "number"}], "datasource": {"type": "yesoreyeram-infinity-datasource", "uid": "admin-api"}, "filters": [], "format": "table", "global_query_id": "", "refId": "A", "root_selector": "", "source": "url", "type": "json", "url": "/analytics/revenue/summary", "url_options": {"data": "", "method": "GET"}}],
+      "title": "Крипто за месяц (USDT)",
+      "type": "stat"
+    },
+    {
+      "datasource": {"type": "yesoreyeram-infinity-datasource", "uid": "admin-api"},
+      "fieldConfig": {
+        "defaults": {"mappings": [], "thresholds": {"mode": "absolute", "steps": [{"color": "teal", "value": null}]}, "unit": "short"},
+        "overrides": []
+      },
+      "gridPos": {"h": 6, "w": 8, "x": 16, "y": 6},
+      "id": 12,
+      "options": {"colorMode": "value", "graphMode": "area", "justifyMode": "center", "orientation": "auto", "reduceOptions": {"calcs": ["lastNotNull"], "fields": "", "values": false}, "textMode": "value_and_name"},
+      "pluginVersion": "10.0.0",
+      "targets": [{"columns": [{"selector": "revenue_total_usdt", "text": "Крипто за все время (USDT)", "type": "number"}], "datasource": {"type": "yesoreyeram-infinity-datasource", "uid": "admin-api"}, "filters": [], "format": "table", "global_query_id": "", "refId": "A", "root_selector": "", "source": "url", "type": "json", "url": "/analytics/revenue/summary", "url_options": {"data": "", "method": "GET"}}],
+      "title": "Крипто за все время (USDT)",
+      "type": "stat"
+    },
+    {
       "datasource": {
         "type": "yesoreyeram-infinity-datasource",
         "uid": "admin-api"
@@ -363,7 +405,7 @@
         "h": 12,
         "w": 24,
         "x": 0,
-        "y": 6
+        "y": 12
       },
       "id": 4,
       "options": {
@@ -570,7 +612,7 @@
         "h": 10,
         "w": 24,
         "x": 0,
-        "y": 18
+        "y": 24
       },
       "id": 5,
       "options": {
