@@ -23,7 +23,7 @@
           "showLineNumbers": false,
           "showMiniMap": false
         },
-        "content": "# Карточка пользователя\n\nКарточка пользователя перенесена в Admin Panel.\n\n[Открыть Admin Panel →](http://195.209.210.96/admin-panel/)\n\nВведите Telegram ID на странице Admin Panel для просмотра карточки.\n\nИли перейдите напрямую: `http://195.209.210.96/admin-panel/user/TELEGRAM_ID`",
+        "content": "# Карточка пользователя\n\nКарточка пользователя перенесена в Admin Panel.\n\n[Открыть Admin Panel →](https://craveme.tech/admin-panel/)\n\nВведите Telegram ID на странице Admin Panel для просмотра карточки.\n\nИли перейдите напрямую: `https://craveme.tech/admin-panel/user/TELEGRAM_ID`",
         "mode": "markdown"
       },
       "pluginVersion": "10.0.0",

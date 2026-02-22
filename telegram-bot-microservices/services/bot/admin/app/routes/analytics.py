@@ -597,14 +597,14 @@ async def get_technical_stats():
                 .where(Dialog.last_image_generation_at.isnot(None))
             )
 
-            # Dialogs that used sex image pool (sex_scene_indices not empty)
-            dialogs_with_sex_pool = await db.scalar(
-                select(func.count(Dialog.id))
-                .where(
-                    Dialog.sex_scene_indices.isnot(None),
-                    func.jsonb_typeof(Dialog.sex_scene_indices.cast(type_=None)) == 'object'
+            # Dialogs that used sex image pool (sex_scene_indices not null/empty)
+            try:
+                dialogs_with_sex_pool = await db.scalar(
+                    select(func.count(Dialog.id))
+                    .where(Dialog.sex_scene_indices.isnot(None))
                 )
-            )
+            except Exception:
+                dialogs_with_sex_pool = 0
 
             # Payments by provider
             payments_stars_total = await db.scalar(

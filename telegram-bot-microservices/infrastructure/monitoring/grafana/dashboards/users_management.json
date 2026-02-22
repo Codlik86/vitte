@@ -223,7 +223,7 @@
                 "value": [
                   {
                     "title": "Открыть карточку",
-                    "url": "http://195.209.210.96/admin-panel/user/${__value.raw}",
+                    "url": "https://craveme.tech/admin-panel/user/${__value.raw}",
                     "targetBlank": true
                   }
                 ]
