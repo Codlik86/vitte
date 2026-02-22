@@ -13,7 +13,7 @@ COPY infrastructure/nginx/nginx.conf /etc/nginx/nginx.conf
 RUN mkdir -p /etc/nginx/ssl
 
 # Create htpasswd file for admin areas (login: admin, password: Vitte2024Admin!)
-RUN echo 'admin:$apr1$16S34ZKj$dhbISuC4KAEuUfQ4yfPEc/' > /etc/nginx/.htpasswd
+RUN htpasswd -bc /etc/nginx/.htpasswd admin 'Vitte2024Admin!'
 
 # Set correct permissions
 RUN chown -R nginx:nginx /var/cache/nginx && \
