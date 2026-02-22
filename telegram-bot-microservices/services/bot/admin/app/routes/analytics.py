@@ -122,18 +122,17 @@ async def get_all_users(
                 "data": [
                     {
                         "telegram_id": u.telegram_id,
-                        "utm_source": u.utm_source,
-                        "first_name": u.first_name,
-                        "last_name": u.last_name,
-                        "username": u.username,
-                        "language": u.language_code,
-                        "registered_at": u.created_at.isoformat() if u.created_at else None,
+                        "utm_source": u.utm_source or "",
+                        "first_name": u.first_name or "",
+                        "last_name": u.last_name or "",
+                        "username": u.username or "",
+                        "language": u.language_code or "",
+                        "registered_at": u.created_at.isoformat() if u.created_at else "",
                         "is_active": u.is_active,
                         "is_blocked": u.is_blocked,
                         "payments_count": u.payments_count,
                         "total_stars_spent": int(u.total_stars_spent),
-                        "has_subscription": u.has_subscription,
-                        "subscription_plan": u.subscription_plan,
+                        "subscription_plan": u.subscription_plan or "free",
                         "has_upgrades": u.upgrades_count > 0
                     }
                     for u in users
