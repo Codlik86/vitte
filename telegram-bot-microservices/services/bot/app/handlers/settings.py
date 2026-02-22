@@ -71,19 +71,19 @@ def get_language_select_keyboard(lang: str, current_lang: str) -> InlineKeyboard
     else:
         en_text += " (soon)" if lang == "en" else " (скоро)"
 
-    # Spanish button - in development
+    # Spanish button - coming soon
     es_text = "🇪🇸 Español"
     if current_lang == "es":
         es_text += " ✓"
     else:
-        es_text += " (in development)" if lang == "en" else " (в разработке)"
+        es_text += " (soon)" if lang == "en" else " (скоро)"
 
-    # German button - in development
+    # German button - coming soon
     de_text = "🇩🇪 Deutsch"
     if current_lang == "de":
         de_text += " ✓"
     else:
-        de_text += " (in development)" if lang == "en" else " (в разработке)"
+        de_text += " (soon)" if lang == "en" else " (скоро)"
 
     back_text = "⬅️ Назад" if lang == "ru" else "⬅️ Back"
 

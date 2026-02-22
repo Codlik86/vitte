@@ -21,7 +21,7 @@ from sqlalchemy import select
 from app.config import config
 
 # Константы лимитов для Free подписки
-FREE_IMAGES_BONUS = 10  # Разовый бонус фото при регистрации
+FREE_IMAGES_BONUS = 5  # Разовый бонус фото при регистрации
 from app.handlers.onboarding import get_language_keyboard, WELCOME_TEXT
 
 logger = get_logger(__name__)

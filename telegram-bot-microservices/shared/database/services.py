@@ -188,7 +188,7 @@ async def create_subscription(
     plan: str = "free",
     is_active: bool = True,
     messages_limit: int = 100,
-    images_limit: int = 10
+    images_limit: int = 5
 ) -> Subscription:
     """
     Create new subscription and auto-cache it

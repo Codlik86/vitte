@@ -43,7 +43,7 @@ async def cmd_status(message: Message, i18n: I18nContext):
                 messages_used = subscription.get("messages_used", 0)
                 messages_limit = subscription.get("messages_limit", 100)
                 images_used = subscription.get("images_used", 0)
-                images_limit = subscription.get("images_limit", 10)
+                images_limit = subscription.get("images_limit", 5)
             else:
                 is_active = subscription.is_active
                 plan = subscription.plan

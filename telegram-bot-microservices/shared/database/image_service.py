@@ -2,7 +2,7 @@
 Image Balance Service - управление квотой изображений
 
 Логика:
-- Free: 10 изображений разово (remaining_purchased_images)
+- Free: 5 изображений разово (remaining_purchased_images)
 - Premium: 20 изображений в день (daily_subscription_quota)
 - При новом дне: daily_subscription_used сбрасывается до 0 (НЕ накапливается!)
 - Сначала тратятся ежедневные, потом купленные

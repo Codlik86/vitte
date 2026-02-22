@@ -107,7 +107,7 @@ class Subscription(Base):
     # Limits
     messages_limit = Column(Integer, default=100)
     messages_used = Column(Integer, default=0)
-    images_limit = Column(Integer, default=10)
+    images_limit = Column(Integer, default=5)
     images_used = Column(Integer, default=0)
 
     # Upgrades
