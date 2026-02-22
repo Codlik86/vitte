@@ -91,6 +91,13 @@ async def cmd_start(message: Message, i18n: I18nContext):
                 utm_log = f" | UTM: {utm_source}" if utm_source else ""
                 logger.info(f"New user registered: {user.id} (@{user.username}) with {FREE_IMAGES_BONUS} free images{utm_log}")
 
+            else:
+                # Update user profile data on each /start
+                db_user.first_name = user.first_name
+                db_user.last_name = user.last_name
+                db_user.username = user.username
+                await db.commit()
+
             break
 
         if is_new_user:

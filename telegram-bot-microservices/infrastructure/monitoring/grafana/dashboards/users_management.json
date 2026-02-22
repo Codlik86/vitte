@@ -370,7 +370,19 @@
       "pluginVersion": "10.0.0",
       "targets": [
         {
-          "columns": [],
+          "columns": [
+            {"selector": "telegram_id", "text": "telegram_id", "type": "number"},
+            {"selector": "utm_source", "text": "utm_source", "type": "string"},
+            {"selector": "first_name", "text": "first_name", "type": "string"},
+            {"selector": "last_name", "text": "last_name", "type": "string"},
+            {"selector": "username", "text": "username", "type": "string"},
+            {"selector": "language", "text": "language", "type": "string"},
+            {"selector": "registered_at", "text": "registered_at", "type": "timestamp"},
+            {"selector": "payments_count", "text": "payments_count", "type": "number"},
+            {"selector": "total_stars_spent", "text": "total_stars_spent", "type": "number"},
+            {"selector": "subscription_plan", "text": "subscription_plan", "type": "string"},
+            {"selector": "has_upgrades", "text": "has_upgrades", "type": "boolean"}
+          ],
           "datasource": {
             "type": "yesoreyeram-infinity-datasource",
             "uid": "admin-api"
