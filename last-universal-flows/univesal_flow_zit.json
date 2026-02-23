@@ -13,7 +13,7 @@
   "11": {
     "inputs": {
       "unet_name": "z_image_turbo_bf16.safetensors",
-      "weight_dtype": "fp8_e4m3fn_fast"
+      "weight_dtype": "default"
     },
     "class_type": "UNETLoader",
     "_meta": {
