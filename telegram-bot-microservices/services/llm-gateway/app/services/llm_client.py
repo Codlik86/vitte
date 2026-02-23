@@ -102,8 +102,13 @@ class LLMClient:
 
             content = response.choices[0].message.content
 
-            # DEBUG: Log response to check for repetitions
-            logger.warning(f"DeepSeek response length: {len(content) if content else 0} chars")
+            # Log provider from OpenRouter response
+            provider_name = "unknown"
+            if hasattr(response, '_raw_response') and hasattr(response._raw_response, 'headers'):
+                provider_name = response._raw_response.headers.get('x-served-by', 'unknown')
+            elif hasattr(response, 'model'):
+                provider_name = response.model or "unknown"
+            logger.warning(f"DeepSeek response length: {len(content) if content else 0} chars, provider={provider_name}")
             if content and len(content) > 200:
                 # Check for repetitions of different sizes (50, 100, 150 chars)
                 repetition_found = False
