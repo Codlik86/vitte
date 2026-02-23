@@ -7,8 +7,14 @@ from typing import Dict, Optional
 from app.config import config
 
 
-# Universal workflow filename (single JSON for all personas)
+# Universal workflow filenames
 UNIVERSAL_WORKFLOW = "universal_flow.json"
+ZIT_WORKFLOW = "universal_flow_zit.json"        # Z-Image Turbo — general contexts
+MOODY_WORKFLOW = "universal_flow_moody.json"    # MoodyPornMix — nude/undressing contexts
+
+# ComfyUI instance URLs by model type
+COMFYUI_ZIT_URL = config.COMFYUI_URLS[0] if len(config.COMFYUI_URLS) > 0 else config.COMFYUI_BASE_URL
+COMFYUI_MOODY_URL = config.COMFYUI_URLS[1] if len(config.COMFYUI_URLS) > 1 else config.COMFYUI_BASE_URL
 
 # Persona key → Workflow filename mapping (legacy, kept for reference)
 PERSONA_WORKFLOW_MAP: Dict[str, str] = {
@@ -201,12 +207,41 @@ def is_persona_supported(persona_key: str) -> bool:
     return persona_key in PERSONA_WORKFLOW_MAP
 
 
+def get_workflow_path_for_model(persona_key: str, use_moody: bool = False) -> Optional[Path]:
+    """
+    Get workflow path based on model type.
+    use_moody=True → MoodyPornMix workflow (nude contexts, port 8189)
+    use_moody=False → Z-Image Turbo workflow (general contexts, port 8188)
+    """
+    filename = MOODY_WORKFLOW if use_moody else ZIT_WORKFLOW
+    workflow_path = config.WORKFLOWS_DIR / filename
+    if workflow_path.exists():
+        return workflow_path
+    # Fallback to universal
+    return get_workflow_path(persona_key)
+
+
+def get_comfyui_url_for_model(use_moody: bool = False) -> str:
+    """
+    Get ComfyUI URL based on model type.
+    use_moody=True → port 8189 (MoodyPornMix instance)
+    use_moody=False → port 8188 (Z-Image Turbo instance)
+    """
+    return COMFYUI_MOODY_URL if use_moody else COMFYUI_ZIT_URL
+
+
 __all__ = [
     "UNIVERSAL_WORKFLOW",
+    "ZIT_WORKFLOW",
+    "MOODY_WORKFLOW",
+    "COMFYUI_ZIT_URL",
+    "COMFYUI_MOODY_URL",
     "PERSONA_WORKFLOW_MAP",
     "PERSONA_LORA_MAP",
     "PERSONA_TRIGGER_MAP",
     "get_workflow_path",
+    "get_workflow_path_for_model",
+    "get_comfyui_url_for_model",
     "get_lora_params",
     "get_trigger_word",
     "is_persona_supported",

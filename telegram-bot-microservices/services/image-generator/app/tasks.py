@@ -8,7 +8,7 @@ from celery import Celery
 from app.config import config
 from app.comfyui_client import ComfyUIClient
 from app.comfyui_pool import comfyui_pool
-from app.workflow_mapping import get_workflow_path, get_lora_params, is_persona_supported
+from app.workflow_mapping import get_workflow_path, get_workflow_path_for_model, get_comfyui_url_for_model, get_lora_params, is_persona_supported
 from app.telegram_sender import send_photo_to_telegram
 from shared.utils import get_logger
 
@@ -155,24 +155,20 @@ def generate_image(
             logger.error(error_msg)
             return {"success": False, "error": error_msg}
 
-        # Get workflow path
-        workflow_path = get_workflow_path(persona_key)
-        if not workflow_path:
-            error_msg = f"Workflow not found for persona '{persona_key}'"
-            logger.error(error_msg)
-            return {"success": False, "error": error_msg}
-
         # Get per-persona LoRA params for universal workflow
         lora_params = get_lora_params(persona_key)
 
-        # Apply model_override if provided (e.g. 2=Moody for nude context)
-        if lora_params and model_override is not None:
-            lora_params = dict(lora_params)  # copy to avoid mutating shared dict
-            lora_params["model_index"] = model_override
+        # Determine model type: model_override=2 → Moody (nude), else ZIT (default)
+        use_moody = (model_override == 2)
 
-        # Get ComfyUI URL from pool (worker affinity)
-        comfyui_url = comfyui_pool.get_comfyui_url()
-        logger.info(f"Using ComfyUI instance: {comfyui_url}")
+        # Select workflow and ComfyUI URL based on model type
+        workflow_path = get_workflow_path_for_model(persona_key, use_moody=use_moody)
+        if not workflow_path:
+            error_msg = f"Workflow not found for persona '{persona_key}', moody={use_moody}"
+            logger.error(error_msg)
+            return {"success": False, "error": error_msg}
+        comfyui_url = get_comfyui_url_for_model(use_moody=use_moody)
+        logger.info(f"Using ComfyUI instance: {comfyui_url}, workflow: {workflow_path.name}, moody={use_moody}")
 
         # Create client for this worker's assigned ComfyUI instance
         client = ComfyUIClient(base_url=comfyui_url)
