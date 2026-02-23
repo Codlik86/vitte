@@ -94,7 +94,7 @@ class LLMClient:
                 **params,
                 extra_body={
                     "provider": {
-                        "order": ["NovitaAI", "DeepInfra", "Parasail"],
+                        "order": ["DeepInfra", "NovitaAI", "Parasail"],
                         "allow_fallbacks": True,
                     }
                 },
