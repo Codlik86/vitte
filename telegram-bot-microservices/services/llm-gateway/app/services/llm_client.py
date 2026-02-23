@@ -84,6 +84,14 @@ class LLMClient:
             if frequency_penalty is not None:
                 params["frequency_penalty"] = frequency_penalty
 
+            # OpenRouter provider routing: prefer fastest providers
+            params["extra_body"] = {
+                "provider": {
+                    "order": ["NovitaAI", "DeepInfra", "Parasail"],
+                    "allow_fallbacks": True,
+                }
+            }
+
             # DEBUG: Log exact params sent to DeepSeek
             logger.warning(f"DeepSeek API params: model={params.get('model')}, temp={params.get('temperature')}, "
                           f"max_tokens={params.get('max_tokens')}, presence_penalty={params.get('presence_penalty')}, "
