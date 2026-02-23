@@ -84,20 +84,21 @@ class LLMClient:
             if frequency_penalty is not None:
                 params["frequency_penalty"] = frequency_penalty
 
-            # OpenRouter provider routing: prefer fastest providers
-            params["extra_body"] = {
-                "provider": {
-                    "order": ["NovitaAI", "DeepInfra", "Parasail"],
-                    "allow_fallbacks": True,
-                }
-            }
-
             # DEBUG: Log exact params sent to DeepSeek
             logger.warning(f"DeepSeek API params: model={params.get('model')}, temp={params.get('temperature')}, "
                           f"max_tokens={params.get('max_tokens')}, presence_penalty={params.get('presence_penalty')}, "
                           f"frequency_penalty={params.get('frequency_penalty')}, messages_count={len(params['messages'])}")
 
-            response = await self.client.chat.completions.create(**params)
+            # OpenRouter provider routing: prefer fastest providers
+            response = await self.client.chat.completions.create(
+                **params,
+                extra_body={
+                    "provider": {
+                        "order": ["NovitaAI", "DeepInfra", "Parasail"],
+                        "allow_fallbacks": True,
+                    }
+                },
+            )
 
             content = response.choices[0].message.content
 
