@@ -323,24 +323,24 @@ class ChatFlow:
         Returns:
             ChatResult с ответом или ошибкой
         """
-        # 1. Получаем пользователя
+        import asyncio
+
+        # 1. Safety check (синхронный, мгновенный)
+        safety_result = run_safety_check(user_message)
+
+        # 2. Получаем пользователя
         user = await self.get_user(telegram_id)
         if not user:
             return ChatResult(success=False, error="User not found")
 
-        # 2. Safety check
-        safety_result = run_safety_check(user_message)
         if not safety_result.is_safe:
-            # Получаем имя персонажа для supportive reply
             persona = None
             if persona_id:
                 persona = await self.get_persona(persona_id)
             elif user.active_persona_id:
                 persona = await self.get_persona(user.active_persona_id)
-
             persona_name = persona.name if persona else "Vitte"
             supportive = get_supportive_reply(persona_name, safety_result.reason or "")
-
             return ChatResult(
                 success=True,
                 response=supportive,
@@ -360,7 +360,6 @@ class ChatFlow:
                     has_active_sub = True
 
             if not has_active_sub:
-                # Free user - check daily limit via Redis
                 redis_key = f"user:{telegram_id}:messages:daily"
                 current_count = await redis_client.get(redis_key)
                 if current_count is not None and int(current_count) >= 20:
@@ -368,7 +367,6 @@ class ChatFlow:
                         success=False,
                         error="Дневной лимит сообщений исчерпан (20/день). Оформите подписку для безлимитного общения.",
                     )
-                # Increment counter
                 if current_count is None:
                     now = datetime.utcnow()
                     midnight = datetime(now.year, now.month, now.day, 23, 59, 59)
@@ -382,7 +380,6 @@ class ChatFlow:
         # 3. Определяем персонажа
         if not persona_id:
             persona_id = user.active_persona_id
-
         if not persona_id:
             return ChatResult(success=False, error="No persona selected")
 
@@ -390,7 +387,7 @@ class ChatFlow:
         if not persona:
             return ChatResult(success=False, error="Persona not found")
 
-        # 4. Получаем или создаём диалог
+        # 4. Получаем диалог
         dialog = await self.get_or_create_dialog(
             user=user,
             persona_id=persona_id,
@@ -398,53 +395,60 @@ class ChatFlow:
             atmosphere=atmosphere,
         )
 
-        # 5. Загружаем историю из PostgreSQL
+        # 5. Параллельно: история (DB) + features (Redis) + Qdrant (HTTP)
+        # Эти три запроса идут в РАЗНЫЕ сервисы — безопасно параллелить
+        need_memories = dialog.message_count and dialog.message_count > 5
+
+        async def _search_memories():
+            if not need_memories:
+                return None
+            try:
+                return await embedding_service.search_memories(
+                    user_id=telegram_id,
+                    persona_id=persona_id,
+                    query=user_message,
+                    limit=3,
+                )
+            except Exception as e:
+                debug_logger.warning(f"Qdrant search error: {e}")
+                return None
+
+        # DB query (messages) — sequential, т.к. та же session
         recent_messages = await self.get_recent_messages(dialog.id)
 
-        # DEDUPLICATION: Удаляем последовательные дубликаты (когда assistant отвечает одно и то же подряд)
+        # Redis + Qdrant — параллельно (разные сервисы)
+        features, memories = await asyncio.gather(
+            self.get_user_features(telegram_id),
+            _search_memories(),
+        )
+
+        # 5.1. Deduplication
         deduped_messages = []
         prev_content = None
         for m in recent_messages:
-            # Если это assistant и контент совпадает с предыдущим assistant - пропускаем
             if m.role == "assistant" and m.content == prev_content:
-                debug_logger.warning(f"Skipping duplicate assistant message: {m.content[:100]}")
                 continue
             deduped_messages.append(m)
             if m.role == "assistant":
                 prev_content = m.content
             else:
-                prev_content = None  # Сбрасываем если это user message
+                prev_content = None
 
         prompt_messages = [
             PromptMessage(role=m.role, content=m.content)
             for m in deduped_messages
         ]
-        # DEBUG: Логируем историю сообщений
-        debug_logger.warning(f"Recent messages count: {len(recent_messages)} -> after dedup: {len(deduped_messages)}")
-        debug_logger.warning(f"Recent messages: {[(m.role, m.content[:100]) for m in deduped_messages]}")
 
-        # 6. Поиск релевантных воспоминаний из Qdrant
+        # 6. Memory
         memory_long = None
-        if dialog.message_count and dialog.message_count > 5:
-            memories = await embedding_service.search_memories(
-                user_id=telegram_id,
-                persona_id=persona_id,
-                query=user_message,
-                limit=3,
-            )
-            # DEBUG: Логируем что вернул Qdrant
-            debug_logger.warning(f"Qdrant memories for user {telegram_id}: {len(memories) if memories else 0} items")
-            if memories:
-                debug_logger.warning(f"Qdrant memories content: {memories}")
-                memory_parts = []
-                for m in memories:
-                    role_label = "Ты" if m["role"] == "assistant" else "Пользователь"
-                    memory_parts.append(f"- {role_label}: {m['text'][:200]}")
-                memory_long = "\n".join(memory_parts)
-                debug_logger.warning(f"Memory_long built: {memory_long}")
+        if memories:
+            memory_parts = []
+            for m in memories:
+                role_label = "Ты" if m["role"] == "assistant" else "Пользователь"
+                memory_parts.append(f"- {role_label}: {m['text'][:200]}")
+            memory_long = "\n".join(memory_parts)
 
-        # 7. Проверяем фичи пользователя (любой апгрейд даёт максимальную интимность)
-        features = await self.get_user_features(telegram_id)
+        # 7. Features
         has_intense_mode = "intense_mode" in features
         has_fantasy_scenes = "fantasy_scenes" in features
 
@@ -488,21 +492,10 @@ class ChatFlow:
         # 9. Строим сообщения для LLM
         messages = build_chat_messages(ctx, user_message)
 
-        # DEBUG: Логируем system prompt для отладки
-        system_prompt = messages[0]["content"] if messages and messages[0]["role"] == "system" else "No system prompt"
-        debug_logger.warning(f"\n\n{'='*80}\nSYSTEM PROMPT for {persona.key} (user {telegram_id})\n{'='*80}\n{system_prompt}\n{'='*80}\nUser message: {user_message}\nAllow intimate: {allow_intimate}, Has features: {has_intense_mode or has_fantasy_scenes}\n{'='*80}\n")
-
-        # DEBUG: Логируем все messages которые отправляются в LLM
-        debug_logger.warning(f"\n\n{'='*80}\nFULL MESSAGES ARRAY TO LLM ({len(messages)} messages)\n{'='*80}")
-        for idx, msg in enumerate(messages):
-            role = msg.get("role", "unknown")
-            content = msg.get("content", "")
-            content_preview = content[:200] + "..." if len(content) > 200 else content
-            debug_logger.warning(f"Message {idx}: [{role}] {content_preview}")
-        debug_logger.warning(f"{'='*80}\n")
+        # DEBUG: краткий лог
+        debug_logger.warning(f"LLM: {persona.key} user={telegram_id}, msgs={len(messages)}, intimate={allow_intimate}")
 
         # 9.5. Image: ONE trigger → decide sex pool OR ComfyUI
-        import asyncio
         from sqlalchemy.orm.attributes import flag_modified
         image_url = None
         image_celery_task = None
@@ -678,24 +671,29 @@ class ChatFlow:
         await self.save_message(dialog, "user", user_message)
         await self.save_message(dialog, "assistant", response)
 
-        # 12. Сохраняем в Qdrant (async, не блокируем)
-        try:
-            await embedding_service.store_memory(
-                user_id=telegram_id,
-                dialog_id=dialog.id,
-                persona_id=persona_id,
-                text=user_message,
-                role="user",
-            )
-            await embedding_service.store_memory(
-                user_id=telegram_id,
-                dialog_id=dialog.id,
-                persona_id=persona_id,
-                text=response,
-                role="assistant",
-            )
-        except Exception as e:
-            logger.warning(f"Failed to store memories: {e}")
+        # 12. Сохраняем в Qdrant (fire-and-forget — не блокируем ответ юзеру)
+        async def _store_memories():
+            try:
+                await asyncio.gather(
+                    embedding_service.store_memory(
+                        user_id=telegram_id,
+                        dialog_id=dialog.id,
+                        persona_id=persona_id,
+                        text=user_message,
+                        role="user",
+                    ),
+                    embedding_service.store_memory(
+                        user_id=telegram_id,
+                        dialog_id=dialog.id,
+                        persona_id=persona_id,
+                        text=response,
+                        role="assistant",
+                    ),
+                )
+            except Exception as e:
+                logger.warning(f"Failed to store memories: {e}")
+
+        asyncio.ensure_future(_store_memories())
 
         # 14. Коммитим изменения
         await self.db.commit()
