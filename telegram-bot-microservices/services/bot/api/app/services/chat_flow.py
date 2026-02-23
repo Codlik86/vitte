@@ -508,6 +508,16 @@ class ChatFlow:
         image_celery_task = None
         sex_image_from_pool = False
         no_quota_flag = False
+
+        # Launch main LLM in parallel with image pipeline
+        llm_task = asyncio.ensure_future(llm_client.chat_completion(
+            messages=messages,
+            temperature=0.85,
+            max_tokens=600,
+            presence_penalty=0.3,
+            frequency_penalty=0.4,
+        ))
+
         try:
             service = ImageGenerationService(celery_app)
             current_count = (dialog.message_count or 0) + 2
@@ -628,14 +638,8 @@ class ChatFlow:
         except Exception as e:
             debug_logger.warning(f"IMG ERROR: {e}", exc_info=True)
 
-        # 10. Отправляем в LLM Gateway (runs parallel with ComfyUI if triggered)
-        response = await llm_client.chat_completion(
-            messages=messages,
-            temperature=0.85,
-            max_tokens=600,
-            presence_penalty=0.3,
-            frequency_penalty=0.4,
-        )
+        # 10. Await main LLM (was launched in parallel with image pipeline above)
+        response = await llm_task
 
         # DEBUG: Логируем ответ LLM
         debug_logger.warning(f"\n\n{'='*80}\nLLM RESPONSE for {persona.key}\n{'='*80}\n{response}\n{'='*80}\n")
