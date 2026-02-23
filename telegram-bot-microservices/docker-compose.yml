@@ -375,7 +375,7 @@ services:
       - .env
     environment:
       - ENVIRONMENT=${ENVIRONMENT:-production}
-      - COMFYUI_HOSTS=${COMFYUI_HOSTS:-195.209.210.175:8188,195.209.210.175:8189}
+      - COMFYUI_HOSTS=${COMFYUI_HOSTS:-109.172.100.40:8188,109.172.100.40:8189}
       - REDIS_HOST=redis
       - REDIS_PORT=6379
       - REDIS_BROKER_DB=1
