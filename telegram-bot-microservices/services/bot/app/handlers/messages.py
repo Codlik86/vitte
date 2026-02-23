@@ -55,6 +55,30 @@ LIMIT_CHECK_ERROR_RU = "Ошибка проверки лимита"
 LIMIT_CHECK_ERROR_EN = "Error checking limit"
 
 
+# Emoji for each persona name
+PERSONA_EMOJI = {
+    "Саша": "🔥",
+    "Лина": "💪🏼",
+    "Мей": "🌸",
+    "Пай": "🍑",
+    "Хани": "🍯",
+    "Рокси": "💋",
+    "Джули": "🍒",
+    "Тая": "🫦",
+    "Марианна": "💎",
+    "Стейси": "✨",
+    "Юна": "🎀",
+    "Эш": "⛓️",
+    "Анастасия Романовна": "👑",
+}
+
+
+def get_persona_display_name(name: str) -> str:
+    """Add emoji to persona name for chat display."""
+    emoji = PERSONA_EMOJI.get(name, "")
+    return f"{emoji} {name}" if emoji else name
+
+
 # ==================== HELPER FUNCTIONS ====================
 
 async def get_user_language(user_id: int) -> str:
@@ -239,10 +263,11 @@ async def handle_text_message(message: Message):
         return
 
     persona_name = dialog.persona.name if dialog.persona else ("Персонаж" if lang == "ru" else "Character")
+    display_name = get_persona_display_name(persona_name)
 
     # Send placeholder message with animated dots
     typing_text = TYPING_RU if lang == "ru" else TYPING_EN
-    base_text = typing_text.format(name=persona_name)
+    base_text = typing_text.format(name=display_name)
     placeholder = await message.answer(f"{base_text}.")
 
     # Start animated typing dots (replaces keep_typing)
@@ -318,7 +343,7 @@ async def handle_text_message(message: Message):
 
             try:
                 await message.answer(
-                    f"<b>{persona_name}</b>\n\n{result.response}",
+                    f"<b>{display_name}</b>\n\n{result.response}",
                     parse_mode="HTML",
                     reply_markup=refresh_keyboard
                 )
@@ -329,7 +354,7 @@ async def handle_text_message(message: Message):
             # No image - edit placeholder with text response + refresh button
             try:
                 await placeholder.edit_text(
-                    f"<b>{persona_name}</b>\n\n{result.response}",
+                    f"<b>{display_name}</b>\n\n{result.response}",
                     parse_mode="HTML",
                     reply_markup=refresh_keyboard
                 )
@@ -338,7 +363,7 @@ async def handle_text_message(message: Message):
                 logger.warning(f"Failed to edit placeholder: {e}")
                 await placeholder.delete()
                 await message.answer(
-                    f"<b>{persona_name}</b>\n\n{result.response}",
+                    f"<b>{display_name}</b>\n\n{result.response}",
                     parse_mode="HTML",
                     reply_markup=refresh_keyboard
                 )
@@ -424,11 +449,12 @@ async def handle_refresh(callback: CallbackQuery):
             return
 
         persona_name = dialog.persona.name if dialog.persona else ("Персонаж" if lang == "ru" else "Character")
+        display_name = get_persona_display_name(persona_name)
         break
 
     # Update message to show "regenerating..." state with animated dots
     typing_text = TYPING_RU if lang == "ru" else TYPING_EN
-    base_text = typing_text.format(name=persona_name)
+    base_text = typing_text.format(name=display_name)
     try:
         await callback.message.edit_text(f"{base_text}.")
     except Exception as e:
@@ -478,7 +504,7 @@ async def handle_refresh(callback: CallbackQuery):
         # Update message with new response
         try:
             await callback.message.edit_text(
-                f"<b>{persona_name}</b>\n\n{result.response}",
+                f"<b>{display_name}</b>\n\n{result.response}",
                 parse_mode="HTML",
                 reply_markup=refresh_keyboard
             )
