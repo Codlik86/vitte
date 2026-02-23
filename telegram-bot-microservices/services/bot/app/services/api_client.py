@@ -136,7 +136,7 @@ async def send_chat_message(
 
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.post(url, json=data, timeout=60.0)
+            response = await client.post(url, json=data, timeout=120.0)
 
             if response.status_code == 200:
                 result = response.json()

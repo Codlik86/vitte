@@ -19,7 +19,7 @@ class LLMClient:
 
     def __init__(self):
         self.base_url = config.llm_gateway_url.rstrip("/")
-        self.timeout = 60.0  # LLM responses can be slow
+        self.timeout = 90.0  # Must be > LLM_TIMEOUT (80s) in gateway
 
     async def chat_completion(
         self,
