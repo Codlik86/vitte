@@ -39,8 +39,8 @@ You've used all {limit} free messages for today.
 
 To continue chatting — get a subscription 💎"""
 
-TYPING_RU = "{name} печатает..."
-TYPING_EN = "{name} is typing..."
+TYPING_RU = "{name} печатает"
+TYPING_EN = "{name} is typing"
 
 SAFETY_BLOCK_RU = "Не могу ответить на это сообщение. Попробуй написать что-то другое."
 SAFETY_BLOCK_EN = "I can't respond to that message. Try writing something else."
@@ -79,7 +79,39 @@ async def keep_typing(bot: Bot, chat_id: int, interval: float = 4.0):
             await bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
             await asyncio.sleep(interval)
     except asyncio.CancelledError:
-        # Task was cancelled - this is expected when API response arrives
+        pass
+
+
+async def animate_typing_dots(bot: Bot, chat_id: int, message_id: int, base_text: str):
+    """
+    Animate dots in typing placeholder: . → .. → ... → . → ..
+    Updates message text every 0.5s for realistic typing feel.
+    Also keeps Telegram typing indicator alive.
+    """
+    dots_cycle = [".", "..", "..."]
+    i = 0
+    try:
+        while True:
+            dot = dots_cycle[i % 3]
+            try:
+                await bot.edit_message_text(
+                    chat_id=chat_id,
+                    message_id=message_id,
+                    text=f"{base_text}{dot}",
+                )
+            except Exception:
+                pass  # Ignore edit errors (message already deleted, etc.)
+
+            # Keep Telegram typing indicator alive every 3rd cycle (~4.5s)
+            if i % 3 == 0:
+                try:
+                    await bot.send_chat_action(chat_id=chat_id, action=ChatAction.TYPING)
+                except Exception:
+                    pass
+
+            i += 1
+            await asyncio.sleep(1.5)
+    except asyncio.CancelledError:
         pass
 
 
@@ -208,15 +240,15 @@ async def handle_text_message(message: Message):
 
     persona_name = dialog.persona.name if dialog.persona else ("Персонаж" if lang == "ru" else "Character")
 
-    # Send placeholder message
+    # Send placeholder message with animated dots
     typing_text = TYPING_RU if lang == "ru" else TYPING_EN
-    placeholder = await message.answer(
-        f"<i>{typing_text.format(name=persona_name)}</i>",
-        parse_mode="HTML"
-    )
+    base_text = typing_text.format(name=persona_name)
+    placeholder = await message.answer(f"{base_text}.")
 
-    # Start continuous typing indicator (runs until cancelled)
-    typing_task = asyncio.create_task(keep_typing(message.bot, user_id))
+    # Start animated typing dots (replaces keep_typing)
+    typing_task = asyncio.create_task(
+        animate_typing_dots(message.bot, user_id, placeholder.message_id, base_text)
+    )
 
     try:
         # Call chat API
@@ -394,18 +426,18 @@ async def handle_refresh(callback: CallbackQuery):
         persona_name = dialog.persona.name if dialog.persona else ("Персонаж" if lang == "ru" else "Character")
         break
 
-    # Update message to show "regenerating..." state
+    # Update message to show "regenerating..." state with animated dots
     typing_text = TYPING_RU if lang == "ru" else TYPING_EN
+    base_text = typing_text.format(name=persona_name)
     try:
-        await callback.message.edit_text(
-            f"<i>{typing_text.format(name=persona_name)}</i>",
-            parse_mode="HTML"
-        )
+        await callback.message.edit_text(f"{base_text}.")
     except Exception as e:
         logger.warning(f"Failed to edit message during refresh: {e}")
 
-    # Start continuous typing indicator
-    typing_task = asyncio.create_task(keep_typing(callback.bot, user_id))
+    # Start animated typing dots
+    typing_task = asyncio.create_task(
+        animate_typing_dots(callback.bot, user_id, callback.message.message_id, base_text)
+    )
 
     try:
         # Call chat API with same user message (will generate NEW response)

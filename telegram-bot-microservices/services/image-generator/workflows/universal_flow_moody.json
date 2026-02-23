@@ -137,7 +137,7 @@
   "23": {
     "inputs": {
       "unet_name": "moodyPornMix_v7.safetensors",
-      "weight_dtype": "default"
+      "weight_dtype": "fp8_e4m3fn"
     },
     "class_type": "UNETLoader",
     "_meta": {
