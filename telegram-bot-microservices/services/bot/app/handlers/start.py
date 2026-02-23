@@ -93,10 +93,18 @@ async def cmd_start(message: Message, i18n: I18nContext):
 
             else:
                 # Update user profile data on each /start
-                db_user.first_name = user.first_name
-                db_user.last_name = user.last_name
-                db_user.username = user.username
-                await db.commit()
+                # db_user may be a dict (from Redis cache) or ORM object
+                if isinstance(db_user, dict):
+                    # Re-fetch from DB to get ORM object for update
+                    from sqlalchemy import select as sa_select
+                    from shared.database.models import User as UserModel
+                    result = await db.execute(sa_select(UserModel).where(UserModel.id == user.id))
+                    db_user = result.scalar_one_or_none()
+                if db_user and not isinstance(db_user, dict):
+                    db_user.first_name = user.first_name
+                    db_user.last_name = user.last_name
+                    db_user.username = user.username
+                    await db.commit()
 
             break
 
