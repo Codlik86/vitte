@@ -632,7 +632,7 @@ class ChatFlow:
         response = await llm_client.chat_completion(
             messages=messages,
             temperature=0.85,
-            max_tokens=800,
+            max_tokens=600,
             presence_penalty=0.3,
             frequency_penalty=0.4,
         )
@@ -783,7 +783,7 @@ class ChatFlow:
         response = await llm_client.chat_completion(
             messages=messages,
             temperature=0.9,
-            max_tokens=800,
+            max_tokens=600,
         )
 
         if not response:
