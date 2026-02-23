@@ -522,18 +522,56 @@ class ChatFlow:
                 # Single decision point: sex pool or ComfyUI?
                 use_sex_pool = False
 
-                # Always detect content type (sex pose / nude / none)
-                scene_name = None
-                try:
-                    recent_for_detection = [
-                        {"role": m.role, "content": m.content}
-                        for m in deduped_messages[-4:]
-                    ]
-                    recent_for_detection.append({"role": "user", "content": user_message})
-                    scene_name = await detect_sex_scene(recent_for_detection, llm_client)
-                    debug_logger.warning(f"IMG: detected scene={scene_name}")
-                except Exception as sex_err:
-                    debug_logger.warning(f"IMG: scene detection error: {sex_err}", exc_info=True)
+                # Run detect_sex_scene and build_image_prompt in parallel
+                recent_for_detection = [
+                    {"role": m.role, "content": m.content}
+                    for m in deduped_messages[-4:]
+                ]
+                recent_for_detection.append({"role": "user", "content": user_message})
+
+                img_recent = [
+                    {"role": m.role, "content": m.content}
+                    for m in deduped_messages[-4:]
+                ]
+                img_messages = build_image_prompt_messages(
+                    persona_key=persona.key,
+                    story_key=story_id or dialog.story_id,
+                    user_message=user_message,
+                    recent_messages=img_recent,
+                )
+
+                async def _detect_scene():
+                    try:
+                        result = await detect_sex_scene(recent_for_detection, llm_client)
+                        debug_logger.warning(f"IMG: detected scene={result}")
+                        return result
+                    except Exception as e:
+                        debug_logger.warning(f"IMG: scene detection error: {e}", exc_info=True)
+                        return None
+
+                async def _build_prompt():
+                    try:
+                        raw = await llm_client.chat_completion(
+                            messages=img_messages,
+                            temperature=0.7,
+                            max_tokens=120,
+                        )
+                        if raw:
+                            result = assemble_final_prompt(persona.key, raw)
+                            debug_logger.warning(f"IMG PROMPT: {result}")
+                            return result
+                        debug_logger.warning(f"IMG PROMPT: LLM returned None, using fallback")
+                        return None
+                    except Exception as e:
+                        debug_logger.warning(f"IMG PROMPT ERROR: {e}")
+                        return None
+
+                scene_name, comfy_prompt = await asyncio.gather(_detect_scene(), _build_prompt())
+
+                if not comfy_prompt:
+                    from shared.llm.services.image_prompt_builder import PERSONA_TRIGGER_WORDS
+                    tw = PERSONA_TRIGGER_WORDS.get(persona.key, "")
+                    comfy_prompt = f"{tw}, a beautiful woman, soft lighting, realistic photography" if tw else "a beautiful woman, soft lighting, realistic photography"
 
                 # Sex pool only after 9th assistant message
                 if assistant_count >= 9 and has_sex_images(persona.key) and scene_name and scene_name != "nude":
@@ -575,38 +613,7 @@ class ChatFlow:
                     debug_logger.warning(f"IMG: ComfyUI path (moody={use_moody}), quota: can={image_quota.can_generate}, remaining={image_quota.total_remaining}")
 
                     if image_quota.can_generate:
-                        comfy_prompt = None
-                        try:
-                            img_recent = [
-                                {"role": m.role, "content": m.content}
-                                for m in deduped_messages[-4:]
-                            ]
-                            img_messages = build_image_prompt_messages(
-                                persona_key=persona.key,
-                                story_key=story_id or dialog.story_id,
-                                user_message=user_message,
-                                recent_messages=img_recent,
-                            )
-                            raw_prompt = await llm_client.chat_completion(
-                                messages=img_messages,
-                                temperature=0.7,
-                                max_tokens=120,
-                            )
-                            if raw_prompt:
-                                comfy_prompt = assemble_final_prompt(persona.key, raw_prompt)
-                                debug_logger.warning(f"IMG PROMPT: {comfy_prompt}")
-                            else:
-                                debug_logger.warning(f"IMG PROMPT: LLM returned None, using fallback")
-                        except Exception as prompt_err:
-                            debug_logger.warning(f"IMG PROMPT ERROR: {prompt_err}")
-
-                        if not comfy_prompt:
-                            from shared.llm.services.image_prompt_builder import PERSONA_TRIGGER_WORDS
-                            tw = PERSONA_TRIGGER_WORDS.get(persona.key, "")
-                            comfy_prompt = f"{tw}, a beautiful woman, soft lighting, realistic photography" if tw else "a beautiful woman, soft lighting, realistic photography"
-
                         story_seed = get_story_seed(persona.key, story_id or dialog.story_id)
-                        # Pass model_override=2 for Moody (nude context), 1 for ZIT (default)
                         model_override = 2 if use_moody else None
                         image_celery_task = celery_app.send_task(
                             'image_generator.generate_image',
