@@ -89,16 +89,7 @@ class LLMClient:
                           f"max_tokens={params.get('max_tokens')}, presence_penalty={params.get('presence_penalty')}, "
                           f"frequency_penalty={params.get('frequency_penalty')}, messages_count={len(params['messages'])}")
 
-            # OpenRouter provider routing: prefer fastest providers
-            response = await self.client.chat.completions.create(
-                **params,
-                extra_body={
-                    "provider": {
-                        "order": ["DeepInfra", "NovitaAI", "Parasail"],
-                        "allow_fallbacks": True,
-                    }
-                },
-            )
+            response = await self.client.chat.completions.create(**params)
 
             content = response.choices[0].message.content
 
