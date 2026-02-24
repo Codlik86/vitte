@@ -41,7 +41,7 @@ export function ImageChip({
           e.stopPropagation();
           onImagesClick?.();
         }}
-        className={chipMetricClass}
+        className={`${chipMetricClass} mr-2`}
       >
         <span aria-hidden className={iconClass}>
           📷
