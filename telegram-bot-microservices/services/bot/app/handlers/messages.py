@@ -370,21 +370,41 @@ async def handle_text_message(message: Message):
 
             logger.info(f"User {user_id} got response from {persona_name} (dialog {result.dialog_id})")
 
-        # Notify user if image was due but no quota
+        # Notify user if image was due but no quota — first time immediately, then every 12 assistant messages
         if result.no_image_quota:
+            redis_key = f"user:{user_id}:no_quota_since"
             try:
-                if lang == "ru":
-                    no_quota_text = "🖼 На вашем балансе нет изображений"
-                    buy_btn_text = "🛍 Купить изображения"
+                saved_count = await redis_client.get(redis_key)
+                current_count = result.message_count or 0
+
+                if saved_count is None:
+                    # First time — send immediately and save current count
+                    await redis_client.set(redis_key, str(current_count))
+                    show_notification = True
                 else:
-                    no_quota_text = "🖼 You have no images on your balance"
-                    buy_btn_text = "🛍 Buy Images"
-                no_quota_kb = InlineKeyboardMarkup(inline_keyboard=[
-                    [InlineKeyboardButton(text=buy_btn_text, callback_data="shop:images")]
-                ])
-                await message.answer(no_quota_text, reply_markup=no_quota_kb)
+                    # Already notified before — show every 12 assistant messages since first notification
+                    delta_assistant = (current_count - int(saved_count)) // 2
+                    show_notification = delta_assistant > 0 and delta_assistant % 12 == 0
+
+                if show_notification:
+                    if lang == "ru":
+                        no_quota_text = "🖼 На вашем балансе нет изображений"
+                        buy_btn_text = "🛍 Купить изображения"
+                    else:
+                        no_quota_text = "🖼 You have no images on your balance"
+                        buy_btn_text = "🛍 Buy Images"
+                    no_quota_kb = InlineKeyboardMarkup(inline_keyboard=[
+                        [InlineKeyboardButton(text=buy_btn_text, callback_data="shop:images")]
+                    ])
+                    await message.answer(no_quota_text, reply_markup=no_quota_kb)
             except Exception as e:
                 logger.warning(f"Failed to send no-quota notification: {e}")
+        elif result.image_url:
+            # Image was generated successfully — clear no-quota tracker
+            try:
+                await redis_client.delete(f"user:{user_id}:no_quota_since")
+            except Exception:
+                pass
 
     elif result.is_safety_block:
         safety_text = SAFETY_BLOCK_RU if lang == "ru" else SAFETY_BLOCK_EN
