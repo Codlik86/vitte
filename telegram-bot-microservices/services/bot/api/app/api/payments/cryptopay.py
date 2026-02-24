@@ -185,7 +185,7 @@ async def _process_subscription_payment(
     )
     image_balance = result.scalar_one_or_none()
 
-    PREMIUM_IMAGES_BONUS = 50
+    PREMIUM_IMAGES_BONUS = 40
     if not image_balance:
         image_balance = ImageBalance(
             user_id=user.id,

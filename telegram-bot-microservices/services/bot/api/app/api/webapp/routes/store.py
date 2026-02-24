@@ -29,7 +29,7 @@ SUBSCRIPTION_PLANS = [
         "title": "Неделя",
         "description": "7 дней полного доступа",
         "duration_days": 7,
-        "price_stars": 150,
+        "price_stars": 229,
         "is_most_popular": False
     },
     {
@@ -37,7 +37,7 @@ SUBSCRIPTION_PLANS = [
         "title": "Месяц",
         "description": "30 дней полного доступа",
         "duration_days": 30,
-        "price_stars": 450,
+        "price_stars": 649,
         "is_most_popular": True
     },
     {
@@ -45,16 +45,17 @@ SUBSCRIPTION_PLANS = [
         "title": "Год",
         "description": "365 дней полного доступа",
         "duration_days": 365,
-        "price_stars": 2990,
+        "price_stars": 4990,
         "is_most_popular": False
     }
 ]
 
 # Image packs
 IMAGE_PACKS = [
-    {"code": "pack_10", "images": 10, "price_stars": 50},
-    {"code": "pack_30", "images": 30, "price_stars": 120},
-    {"code": "pack_100", "images": 100, "price_stars": 350}
+    {"code": "pack_20", "images": 20, "price_stars": 99},
+    {"code": "pack_50", "images": 50, "price_stars": 219},
+    {"code": "pack_100", "images": 100, "price_stars": 399},
+    {"code": "pack_200", "images": 200, "price_stars": 699},
 ]
 
 # Emotional features

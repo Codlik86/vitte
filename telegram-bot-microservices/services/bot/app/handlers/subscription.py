@@ -21,7 +21,7 @@ from app.config import config as app_config
 
 # Флаг наличия Premium подписки в ImageBalance (> 0 = есть подписка)
 PREMIUM_DAILY_IMAGES = 1
-PREMIUM_IMAGES_BONUS = 50  # Разовый бонус изображений при оформлении Premium
+PREMIUM_IMAGES_BONUS = 40  # Разовый бонус изображений при оформлении Premium
 
 logger = get_logger(__name__)
 router = Router(name="subscription")
@@ -34,21 +34,21 @@ SUBSCRIPTION_PLANS = {
         "name_ru": "Неделя",
         "name_en": "Week",
         "days": 7,
-        "price_stars": 150,
+        "price_stars": 229,
         "product_code": "vitte_plus_7d"
     },
     "plus_30d": {
         "name_ru": "Месяц",
         "name_en": "Month",
         "days": 30,
-        "price_stars": 450,
+        "price_stars": 649,
         "product_code": "vitte_plus_30d"
     },
     "plus_365d": {
         "name_ru": "Год",
         "name_en": "Year",
         "days": 365,
-        "price_stars": 2990,
+        "price_stars": 4990,
         "product_code": "vitte_plus_365d"
     }
 }
@@ -59,7 +59,7 @@ SUBSCRIPTION_PLANS = {
 SUBSCRIPTION_RU = """💎 <b>CraveMe Premium</b>
 
 • Безлимитные сообщения
-• 50 изображений
+• 40 изображений
 • Самые продвинутые модели ИИ
 • Мгновенные ответы и качественные изображения
 
@@ -68,7 +68,7 @@ SUBSCRIPTION_RU = """💎 <b>CraveMe Premium</b>
 SUBSCRIPTION_EN = """💎 <b>CraveMe Premium</b>
 
 • Unlimited messages
-• 50 images
+• 40 images
 • Most advanced AI models
 • Instant responses and quality images
 
@@ -83,7 +83,7 @@ SUBSCRIPTION_ACTIVE_RU = """✅ <b>Подписка активна</b>
 
 <b>Доступный функционал:</b>
 • Безлимитные сообщения
-• 50 изображений
+• 40 изображений
 • Самые продвинутые модели ИИ
 • Мгновенные ответы"""
 
@@ -94,7 +94,7 @@ SUBSCRIPTION_ACTIVE_EN = """✅ <b>Subscription Active</b>
 
 <b>Available features:</b>
 • Unlimited messages
-• 50 images
+• 40 images
 • Most advanced AI models
 • Instant responses"""
 
@@ -363,9 +363,9 @@ async def on_pay_with_stars(callback: CallbackQuery, bot: Bot):
 
     title = f"💎 {plan_name}"
     description = (
-        "Безлимитные сообщения, 50 изображений, продвинутые модели ИИ"
+        "Безлимитные сообщения, 40 изображений, продвинутые модели ИИ"
         if lang == "ru" else
-        "Unlimited messages, 50 images, advanced AI models"
+        "Unlimited messages, 40 images, advanced AI models"
     )
 
     # Create keyboard with Pay button (must be first!) and Main Menu button
@@ -422,9 +422,9 @@ async def on_pay_with_crypto(callback: CallbackQuery, bot: Bot):
 
     title = f"💎 CraveMe Premium - {plan_name}"
     description = (
-        f"Подписка на {plan['days']} дней: безлимитные сообщения, 50 изображений"
+        f"Подписка на {plan['days']} дней: безлимитные сообщения, 40 изображений"
         if lang == "ru" else
-        f"{plan['days']}-day subscription: unlimited messages, 50 images"
+        f"{plan['days']}-day subscription: unlimited messages, 40 images"
     )
 
     payload = f"sub:{plan_id}:{user_id}"
@@ -607,7 +607,7 @@ async def on_successful_payment(message: Message):
 
 Теперь тебе доступно:
 • Безлимитные сообщения
-• 50 изображений
+• 40 изображений
 • Продвинутые модели ИИ
 
 Подписка активна до: <b>{expires_at.strftime('%d.%m.%Y')}</b>
@@ -620,7 +620,7 @@ You activated <b>{plan_name}</b>
 
 Now you have access to:
 • Unlimited messages
-• 50 images
+• 40 images
 • Advanced AI models
 
 Subscription active until: <b>{expires_at.strftime('%Y-%m-%d')}</b>

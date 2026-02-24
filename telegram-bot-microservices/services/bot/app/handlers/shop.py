@@ -31,28 +31,28 @@ IMAGE_PACKS = {
         "name_ru": "20 изображений",
         "name_en": "20 images",
         "images": 20,
-        "price_stars": 50,
+        "price_stars": 99,
         "product_code": "images_pack_20"
     },
     "pack_50": {
         "name_ru": "50 изображений",
         "name_en": "50 images",
         "images": 50,
-        "price_stars": 120,
+        "price_stars": 219,
         "product_code": "images_pack_50"
     },
     "pack_100": {
         "name_ru": "100 изображений",
         "name_en": "100 images",
         "images": 100,
-        "price_stars": 250,
+        "price_stars": 399,
         "product_code": "images_pack_100"
     },
     "pack_200": {
         "name_ru": "200 изображений",
         "name_en": "200 images",
         "images": 200,
-        "price_stars": 500,
+        "price_stars": 699,
         "product_code": "images_pack_200"
     }
 }
@@ -138,16 +138,16 @@ def get_images_keyboard_ru() -> InlineKeyboardMarkup:
     """Image packs keyboard (Russian)"""
     return InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="20 изображений — 50 ⭐", callback_data="shop:pack_20"),
+            InlineKeyboardButton(text="20 изображений — 99 ⭐", callback_data="shop:pack_20"),
         ],
         [
-            InlineKeyboardButton(text="50 изображений — 120 ⭐", callback_data="shop:pack_50"),
+            InlineKeyboardButton(text="50 изображений — 219 ⭐", callback_data="shop:pack_50"),
         ],
         [
-            InlineKeyboardButton(text="100 изображений — 250 ⭐", callback_data="shop:pack_100"),
+            InlineKeyboardButton(text="100 изображений — 399 ⭐", callback_data="shop:pack_100"),
         ],
         [
-            InlineKeyboardButton(text="200 изображений — 500 ⭐", callback_data="shop:pack_200"),
+            InlineKeyboardButton(text="200 изображений — 699 ⭐", callback_data="shop:pack_200"),
         ],
         [
             InlineKeyboardButton(text="⭐ Купить Stars по СБП", url="https://t.me/tribute/app?startapp=plsg"),
@@ -162,16 +162,16 @@ def get_images_keyboard_en() -> InlineKeyboardMarkup:
     """Image packs keyboard (English)"""
     return InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="20 images — 50 ⭐", callback_data="shop:pack_20"),
+            InlineKeyboardButton(text="20 images — 99 ⭐", callback_data="shop:pack_20"),
         ],
         [
-            InlineKeyboardButton(text="50 images — 120 ⭐", callback_data="shop:pack_50"),
+            InlineKeyboardButton(text="50 images — 219 ⭐", callback_data="shop:pack_50"),
         ],
         [
-            InlineKeyboardButton(text="100 images — 250 ⭐", callback_data="shop:pack_100"),
+            InlineKeyboardButton(text="100 images — 399 ⭐", callback_data="shop:pack_100"),
         ],
         [
-            InlineKeyboardButton(text="200 images — 500 ⭐", callback_data="shop:pack_200"),
+            InlineKeyboardButton(text="200 images — 699 ⭐", callback_data="shop:pack_200"),
         ],
         [
             InlineKeyboardButton(text="⭐ Buy Stars", url="https://t.me/tribute/app?startapp=plsg"),

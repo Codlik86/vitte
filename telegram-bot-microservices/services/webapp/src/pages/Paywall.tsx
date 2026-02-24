@@ -69,7 +69,7 @@ export function Paywall() {
             <h2 className="text-xl font-semibold text-white">CraveMe Premium</h2>
             <ul className="space-y-1 text-sm text-white/80">
               <li>• Безлимитные сообщения</li>
-              <li>• 20 изображений каждый день</li>
+              <li>• 40 изображений</li>
               <li>• Самые продвинутые модели ИИ</li>
               <li>• Мгновенные ответы и качественные изображения</li>
             </ul>

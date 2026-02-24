@@ -99,12 +99,12 @@ async def create_subscription_invoice(
     if lang == "ru":
         description = (
             f"Подписка на {duration_days} дней: безлимитные сообщения, "
-            f"50 изображений, продвинутые модели ИИ"
+            f"40 изображений, продвинутые модели ИИ"
         )
     else:
         description = (
             f"{duration_days}-day subscription: unlimited messages, "
-            f"50 images, advanced AI models"
+            f"40 images, advanced AI models"
         )
 
     payload = f"sub:{plan_code}:{user_id}"
@@ -185,12 +185,12 @@ async def create_cryptopay_subscription_invoice(
     if lang == "ru":
         description = (
             f"Подписка на {duration_days} дней: безлимитные сообщения, "
-            f"50 изображений, продвинутые модели ИИ"
+            f"40 изображений, продвинутые модели ИИ"
         )
     else:
         description = (
             f"{duration_days}-day subscription: unlimited messages, "
-            f"50 images, advanced AI models"
+            f"40 images, advanced AI models"
         )
 
     payload = f"sub:{plan_code}:{user_id}"
