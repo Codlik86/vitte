@@ -4,6 +4,7 @@ Embedding service for vector memory with Qdrant
 Uses OpenRouter API for text-embedding-3-small embeddings
 """
 
+import hashlib
 import httpx
 import logging
 from typing import Optional
@@ -110,6 +111,13 @@ class EmbeddingService:
 
                 if response.status_code in (200, 201):
                     logger.info(f"Created Qdrant collection: {self.collection}")
+                    # Create payload indexes for fast filtering
+                    for field in ["user_id", "persona_id"]:
+                        await client.put(
+                            f"{self.qdrant_url}/collections/{self.collection}/index",
+                            json={"field_name": field, "field_schema": "integer"},
+                            timeout=10.0,
+                        )
                     return True
 
                 logger.error(f"Failed to create collection: {response.text}")
@@ -149,6 +157,7 @@ class EmbeddingService:
         await self.ensure_collection()
 
         point_id = f"{user_id}_{dialog_id}_{datetime.utcnow().timestamp()}"
+        stable_id = int(hashlib.sha256(point_id.encode()).hexdigest()[:16], 16)
 
         payload = {
             "user_id": user_id,
@@ -167,7 +176,7 @@ class EmbeddingService:
                     json={
                         "points": [
                             {
-                                "id": hash(point_id) & 0xFFFFFFFFFFFFFFFF,  # Qdrant needs uint64
+                                "id": stable_id,  # Qdrant needs uint64, sha256-based stable ID
                                 "vector": embedding,
                                 "payload": payload,
                             }
@@ -192,7 +201,7 @@ class EmbeddingService:
         persona_id: int,
         query: str,
         limit: int = 5,
-        min_score: float = 0.5,
+        min_score: float = 0.4,
     ) -> list[dict]:
         """
         Search for relevant memories using semantic similarity.

@@ -73,6 +73,11 @@ GREETING_IMAGE_POOL = {
         "confession": 15,
         "night_park": 20,
     },
+    "yuna": {
+        "city_lights": 10,
+        "first_evening": 10,
+        "tea_secrets": 10,
+    },
 }
 
 # MinIO base path for greeting images

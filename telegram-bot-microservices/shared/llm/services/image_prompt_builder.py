@@ -62,7 +62,11 @@ STORY_SCENE_MAP: Dict[str, Dict[str, str]] = {
         "confession": "walking together after a stroll, evening city, streetlights, emotional moment",
         "night_park": "in an empty park at night, moonlight, park benches, mysterious and adventurous",
     },
-    "yuna": {},
+    "yuna": {
+        "city_lights": "walking through a glowing night cityscape, neon reflections on wet pavement, skyscrapers and bright signs in the background, wearing a sleek black fitted turtleneck and high-waisted wide-leg trousers, hair down, soft city light illuminating her face, cinematic portrait composition",
+        "first_evening": "sitting at a bright loft bar counter, modern industrial interior with exposed brick and Edison bulbs overhead, wearing a cream silk slip dress with thin straps, resting chin on hand, relaxed warm smile, golden bar lighting",
+        "tea_secrets": "sitting cross-legged on floor cushions at a low wooden table in a dim Chinese tea house, traditional paper lanterns overhead, bamboo and dark wood decor, wearing a floral qipao top in deep burgundy with delicate embroidery, holding a small ceramic tea cup with both hands, serene focused expression",
+    },
     "taya": {},
     "julie": {
         "home_tutor": "home study session, desk with books, cozy room, student atmosphere",
@@ -159,6 +163,11 @@ STORY_SEED_MAP: Dict[str, Dict[str, int]] = {
         "photoshoot": 113666949531807,
         "pool": 741201838605907,
         "elevator": 442941847325952,
+    },
+    "yuna": {
+        "city_lights": 0,
+        "first_evening": 0,
+        "tea_secrets": 0,
     },
 }
 
