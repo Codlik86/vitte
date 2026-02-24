@@ -18,9 +18,9 @@ router = APIRouter()
 # ==================== SCHEMAS ====================
 
 class ImagesStatus(BaseModel):
-    remaining_free_today: int
+    remaining_free_today: Optional[int]
     remaining_paid: int
-    total_remaining: int
+    total_remaining: Optional[int]  # None = безлимит (премиум)
 
 
 class AccessStatusResponse(BaseModel):
@@ -75,10 +75,11 @@ async def get_access_status(
     # Get image balance with automatic daily reset
     # Если новый день - сбрасываем daily_subscription_used до 0 (НЕ накапливается!)
     image_quota = await get_images_remaining(db, telegram_id)
+    is_unlimited = image_quota.total_remaining == -1
     images = ImagesStatus(
-        remaining_free_today=image_quota.remaining_daily,
+        remaining_free_today=None if is_unlimited else image_quota.remaining_daily,
         remaining_paid=image_quota.remaining_purchased,
-        total_remaining=image_quota.total_remaining
+        total_remaining=None if is_unlimited else image_quota.total_remaining
     )
 
     return AccessStatusResponse(

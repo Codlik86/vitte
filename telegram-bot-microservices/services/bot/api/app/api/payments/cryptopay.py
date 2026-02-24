@@ -185,18 +185,23 @@ async def _process_subscription_payment(
     )
     image_balance = result.scalar_one_or_none()
 
+    PREMIUM_IMAGES_BONUS = 50
     if not image_balance:
         image_balance = ImageBalance(
             user_id=user.id,
-            daily_subscription_quota=20,
+            total_purchased_images=PREMIUM_IMAGES_BONUS,
+            remaining_purchased_images=PREMIUM_IMAGES_BONUS,
+            daily_subscription_quota=1,  # > 0 = флаг наличия подписки
             daily_subscription_used=0,
             daily_quota_date=now,
         )
         db.add(image_balance)
     else:
-        image_balance.daily_subscription_quota = 20
+        image_balance.daily_subscription_quota = 1  # > 0 = флаг наличия подписки
         image_balance.daily_subscription_used = 0
         image_balance.daily_quota_date = now
+        image_balance.remaining_purchased_images += PREMIUM_IMAGES_BONUS
+        image_balance.total_purchased_images += PREMIUM_IMAGES_BONUS
 
     # Update user access status
     user.access_status = "subscription_active"

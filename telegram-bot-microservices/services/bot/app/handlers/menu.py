@@ -223,7 +223,7 @@ def build_status_block(status: dict, lang: str = "ru") -> str:
         # Free user - show full status with limits (вертикально)
         messages_today = status["messages_today"]
         messages_limit = 20
-        messages_str = f"💬 {messages_today}/{messages_limit}"
+        messages_str = f"💬 {messages_limit - messages_today}/{messages_limit}"
 
         if lang == "ru":
             block = f"""👤 Free

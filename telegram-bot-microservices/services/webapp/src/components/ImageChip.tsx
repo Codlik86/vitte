@@ -32,7 +32,7 @@ export function ImageChip({
 
   return (
     <div
-      className={`inline-flex min-h-9 min-w-[200px] flex-shrink-0 items-center gap-2 rounded-full bg-gradient-to-r from-[#2D1747] via-[#5C2D83] to-[#D64CC1] px-4 py-1 text-white shadow-card transition hover:opacity-95 ${className}`}
+      className={`inline-flex min-h-9 w-[220px] flex-shrink-0 items-center justify-between rounded-full bg-gradient-to-r from-[#2D1747] via-[#5C2D83] to-[#D64CC1] px-3 py-1 text-white shadow-card transition hover:opacity-95 ${className}`}
       style={{ whiteSpace: "nowrap", lineHeight: 1 }}
     >
       <button

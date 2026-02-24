@@ -2,14 +2,12 @@
 Image Balance Service - управление квотой изображений
 
 Логика:
-- Free: 5 изображений разово (remaining_purchased_images)
-- Premium: 20 изображений в день (daily_subscription_quota)
-- При новом дне: daily_subscription_used сбрасывается до 0 (НЕ накапливается!)
-- Сначала тратятся ежедневные, потом купленные
+- Free: 3 изображения разово (remaining_purchased_images)
+- Premium: безлимитная генерация (daily_subscription_quota > 0 = признак подписки)
 """
 
 from datetime import datetime, timezone
-from typing import Optional, Tuple
+from typing import Optional
 from dataclasses import dataclass
 
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -50,17 +48,22 @@ async def check_and_reset_daily_quota(
     if not image_balance:
         return None
 
-    # Проверяем нужен ли сброс ежедневной квоты
-    today = datetime.now(timezone.utc).date()
-
-    if image_balance.daily_quota_date is None:
-        # Первый раз - устанавливаем дату
-        image_balance.daily_quota_date = datetime.now(timezone.utc)
-        image_balance.daily_subscription_used = 0
-    elif image_balance.daily_quota_date.date() != today:
-        # Новый день - СБРАСЫВАЕМ счётчик использованных (не добавляем!)
-        image_balance.daily_subscription_used = 0
-        image_balance.daily_quota_date = datetime.now(timezone.utc)
+    # Если флаг подписки выставлен — проверяем актуальность подписки
+    if image_balance.daily_subscription_quota > 0:
+        now = datetime.now(timezone.utc)
+        sub_result = await db.execute(
+            select(Subscription).where(Subscription.user_id == user_id)
+        )
+        subscription = sub_result.scalar_one_or_none()
+        sub_active = (
+            subscription is not None
+            and subscription.is_active
+            and subscription.expires_at is not None
+            and subscription.expires_at > now
+        )
+        if not sub_active:
+            # Подписка истекла — сбрасываем флаг
+            image_balance.daily_subscription_quota = 0
 
     await db.flush()
     return image_balance
@@ -89,16 +92,12 @@ async def get_images_remaining(
             error="Баланс изображений не найден"
         )
 
-    # Считаем остатки
-    remaining_daily = max(0, image_balance.daily_subscription_quota - image_balance.daily_subscription_used)
     remaining_purchased = image_balance.remaining_purchased_images
-    total = remaining_daily + remaining_purchased
-
     return ImageQuotaResult(
-        can_generate=total > 0,
-        remaining_daily=remaining_daily,
+        can_generate=remaining_purchased > 0,
+        remaining_daily=0,
         remaining_purchased=remaining_purchased,
-        total_remaining=total
+        total_remaining=remaining_purchased
     )
 
 
@@ -128,25 +127,9 @@ async def use_image_quota(
             error="Баланс изображений не найден"
         )
 
-    # Считаем текущие остатки
-    remaining_daily = max(0, image_balance.daily_subscription_quota - image_balance.daily_subscription_used)
     remaining_purchased = image_balance.remaining_purchased_images
 
-    source = None
-
-    # Списываем в порядке приоритета
-    if remaining_daily > 0:
-        # Есть ежедневная квота - списываем оттуда
-        image_balance.daily_subscription_used += 1
-        remaining_daily -= 1
-        source = "daily"
-    elif remaining_purchased > 0:
-        # Ежедневная кончилась - списываем из купленных
-        image_balance.remaining_purchased_images -= 1
-        remaining_purchased -= 1
-        source = "purchased"
-    else:
-        # Нет доступных изображений
+    if remaining_purchased <= 0:
         return ImageQuotaResult(
             can_generate=False,
             remaining_daily=0,
@@ -155,14 +138,16 @@ async def use_image_quota(
             error="Лимит изображений исчерпан"
         )
 
+    image_balance.remaining_purchased_images -= 1
     await db.flush()
 
+    remaining = image_balance.remaining_purchased_images
     return ImageQuotaResult(
         can_generate=True,
-        remaining_daily=remaining_daily,
-        remaining_purchased=remaining_purchased,
-        total_remaining=remaining_daily + remaining_purchased,
-        source=source
+        remaining_daily=0,
+        remaining_purchased=remaining,
+        total_remaining=remaining,
+        source="purchased"
     )
 
 
