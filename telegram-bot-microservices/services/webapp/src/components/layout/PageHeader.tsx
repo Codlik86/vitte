@@ -30,7 +30,7 @@ export function PageHeader({
   };
 
   return (
-    <header className="flex w-full flex-wrap items-center gap-3 min-[420px]:flex-nowrap">
+    <header className="flex w-full flex-nowrap items-center gap-3">
       <div className="flex min-w-0 flex-1 items-center gap-3">
         {showBack && (
           <button
@@ -45,7 +45,7 @@ export function PageHeader({
         <h1 className="truncate text-2xl font-semibold text-white">{title}</h1>
       </div>
       {stats ? (
-        <div className="w-full min-[420px]:w-auto min-[420px]:justify-end flex justify-start">
+        <div className="flex flex-shrink-0 justify-end">
           <ImageChip
             imagesRemaining={stats.images ?? null}
             hasSubscription={stats.hasSubscription}
