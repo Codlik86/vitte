@@ -192,7 +192,7 @@ class EmbeddingService:
         persona_id: int,
         query: str,
         limit: int = 5,
-        min_score: float = 0.7,
+        min_score: float = 0.5,
     ) -> list[dict]:
         """
         Search for relevant memories using semantic similarity.
