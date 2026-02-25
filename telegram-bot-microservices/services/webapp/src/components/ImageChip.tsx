@@ -25,15 +25,16 @@ export function ImageChip({
   className = "",
 }: ImageChipProps) {
   const displayImages = formatCounter(imagesRemaining);
-  const labelText = isPremium || hasSubscription ? "Premium" : "Free";
+  const isPrem = isPremium || hasSubscription;
+  const labelText = isPrem ? "Premium" : "Free";
   const iconClass = "leading-none relative top-[-1px]";
 
   const chipMetricClass = "inline-flex items-center gap-1 text-sm font-semibold text-white/90 tabular-nums leading-none";
 
   return (
     <div
-      className={`inline-flex min-h-9 w-[154px] flex-shrink-0 items-center justify-around rounded-full bg-gradient-to-r from-[#2D1747] via-[#5C2D83] to-[#D64CC1] px-3 py-1 text-white shadow-card transition hover:opacity-95 ${className}`}
-      style={{ whiteSpace: "nowrap", lineHeight: 1 }}
+      className={`inline-flex min-h-9 flex-shrink-0 items-center justify-around rounded-full bg-gradient-to-r from-[#2D1747] via-[#5C2D83] to-[#D64CC1] px-3 py-1 text-white shadow-card transition hover:opacity-95 ${className}`}
+      style={{ whiteSpace: "nowrap", lineHeight: 1, width: isPrem ? "176px" : "154px" }}
     >
       <button
         type="button"
@@ -41,7 +42,7 @@ export function ImageChip({
           e.stopPropagation();
           onImagesClick?.();
         }}
-        className={`${chipMetricClass} mr-2`}
+        className={isPrem ? chipMetricClass : `${chipMetricClass} mr-2`}
       >
         <span aria-hidden className={iconClass}>
           📷
@@ -54,7 +55,7 @@ export function ImageChip({
           e.stopPropagation();
           onBadgeClick?.();
         }}
-        className="flex items-center gap-2 rounded-full bg-white/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-white/90 leading-none"
+        className="flex items-center rounded-full bg-white/15 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-white/90 leading-none"
       >
         {labelText}
       </button>
