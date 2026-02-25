@@ -34,7 +34,7 @@ export function ImageChip({
   return (
     <div
       className={`inline-flex min-h-9 flex-shrink-0 items-center justify-around rounded-full bg-gradient-to-r from-[#2D1747] via-[#5C2D83] to-[#D64CC1] px-3 py-1 text-white shadow-card transition hover:opacity-95 ${className}`}
-      style={{ whiteSpace: "nowrap", lineHeight: 1, width: isPrem ? "176px" : "154px" }}
+      style={{ whiteSpace: "nowrap", lineHeight: 1, width: isPrem ? "192px" : "168px", gap: "6px" }}
     >
       <button
         type="button"
