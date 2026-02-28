@@ -59,7 +59,8 @@ async def get_all_users(
                     User.is_active,
                     User.is_blocked,
                     func.count(Purchase.id).label('payments_count'),
-                    func.coalesce(func.sum(Purchase.amount), 0).label('total_stars_spent'),
+                    func.coalesce(func.sum(case((Purchase.currency == 'XTR', Purchase.amount), else_=0)), 0).label('total_stars_spent'),
+                    func.coalesce(func.sum(case((Purchase.currency == 'USDT', Purchase.amount), else_=0)), 0).label('total_usdt_spent'),
                     case(
                         (Subscription.is_active == True, True),
                         else_=False
@@ -132,6 +133,7 @@ async def get_all_users(
                         "is_blocked": u.is_blocked,
                         "payments_count": u.payments_count,
                         "total_stars_spent": int(u.total_stars_spent),
+                        "total_usdt_spent": float(u.total_usdt_spent),
                         "subscription_plan": u.subscription_plan or "free",
                         "has_upgrades": u.upgrades_count > 0
                     }
@@ -1062,6 +1064,65 @@ async def delete_user_account(telegram_id: str):
         raise
     except Exception as e:
         logger.error(f"Error deleting user: {e}")
+        raise HTTPException(status_code=500, detail=str(e))
+
+
+# ==================== GENERATIONS ====================
+
+@router.get("/generations/recent")
+async def get_recent_generations(
+    limit: int = Query(200, ge=1, le=1000)
+):
+    """
+    Последние генерации изображений (ComfyUI).
+    Возвращает assistant-сообщения с image_url в metadata,
+    отсортированные по времени (новые сверху).
+    """
+    try:
+        async for db in get_db():
+            query = (
+                select(
+                    Message.id.label('message_id'),
+                    Message.created_at,
+                    Dialog.user_id,
+                    Dialog.persona_id,
+                    Dialog.story_id,
+                    Message.metadata,
+                    Message.content
+                )
+                .join(Dialog, Dialog.id == Message.dialog_id)
+                .where(
+                    Message.role == 'assistant',
+                    Message.metadata.isnot(None)
+                )
+                .order_by(desc(Message.created_at))
+                .limit(limit)
+            )
+
+            result = await db.execute(query)
+            rows = result.all()
+
+            data = []
+            for r in rows:
+                meta = r.metadata or {}
+                image_url = meta.get('image_url') or meta.get('comfyui_image_url') or ''
+                if not image_url:
+                    continue
+                prompt = meta.get('prompt') or meta.get('generation_prompt') or ''
+                data.append({
+                    "message_id": r.message_id,
+                    "time": r.created_at.isoformat() if r.created_at else '',
+                    "user_id": r.user_id,
+                    "persona_id": r.persona_id or '',
+                    "story_id": r.story_id or '',
+                    "prompt": prompt[:200] if prompt else '',
+                    "image_url": image_url
+                })
+
+            return {"data": data}
+
+    except Exception as e:
+        logger.error(f"Error getting recent generations: {e}")
         raise HTTPException(status_code=500, detail=str(e))
 
 

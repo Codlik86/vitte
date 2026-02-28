@@ -1069,9 +1069,131 @@
       ],
       "title": "Платежей Крипто (всего)",
       "type": "stat"
+    },
+    {
+      "datasource": {
+        "type": "yesoreyeram-infinity-datasource",
+        "uid": "admin-api"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "custom": {
+            "align": "left",
+            "cellOptions": {"type": "auto"},
+            "inspect": true
+          },
+          "mappings": [],
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [{"color": "green", "value": null}]
+          }
+        },
+        "overrides": [
+          {
+            "matcher": {"id": "byName", "options": "time"},
+            "properties": [
+              {"id": "unit", "value": "dateTimeAsIso"},
+              {"id": "custom.width", "value": 170}
+            ]
+          },
+          {
+            "matcher": {"id": "byName", "options": "user_id"},
+            "properties": [
+              {"id": "custom.width", "value": 110},
+              {
+                "id": "links",
+                "value": [
+                  {
+                    "title": "Карточка юзера",
+                    "url": "https://craveme.tech/admin-panel/user/${__value.raw}",
+                    "targetBlank": true
+                  }
+                ]
+              }
+            ]
+          },
+          {
+            "matcher": {"id": "byName", "options": "persona_id"},
+            "properties": [{"id": "custom.width", "value": 90}]
+          },
+          {
+            "matcher": {"id": "byName", "options": "story_id"},
+            "properties": [{"id": "custom.width", "value": 140}]
+          },
+          {
+            "matcher": {"id": "byName", "options": "prompt"},
+            "properties": [
+              {"id": "custom.width", "value": 350},
+              {"id": "custom.cellOptions", "value": {"type": "auto", "wrapText": false}}
+            ]
+          },
+          {
+            "matcher": {"id": "byName", "options": "image_url"},
+            "properties": [{"id": "custom.width", "value": 200}]
+          }
+        ]
+      },
+      "gridPos": {
+        "h": 24,
+        "w": 24,
+        "x": 0,
+        "y": 23
+      },
+      "id": 30,
+      "options": {
+        "cellHeight": "sm",
+        "footer": {"countRows": true, "fields": "", "reducer": ["count"], "show": true},
+        "showHeader": true,
+        "sortBy": [{"desc": true, "displayName": "time"}]
+      },
+      "pluginVersion": "10.0.0",
+      "targets": [
+        {
+          "columns": [
+            {"selector": "message_id", "text": "message_id", "type": "number"},
+            {"selector": "time", "text": "time", "type": "timestamp"},
+            {"selector": "user_id", "text": "user_id", "type": "number"},
+            {"selector": "persona_id", "text": "persona_id", "type": "number"},
+            {"selector": "story_id", "text": "story_id", "type": "string"},
+            {"selector": "prompt", "text": "prompt", "type": "string"},
+            {"selector": "image_url", "text": "image_url", "type": "string"}
+          ],
+          "datasource": {
+            "type": "yesoreyeram-infinity-datasource",
+            "uid": "admin-api"
+          },
+          "filters": [],
+          "format": "table",
+          "global_query_id": "",
+          "refId": "A",
+          "root_selector": "data",
+          "source": "url",
+          "type": "json",
+          "url": "/analytics/generations/recent?limit=200",
+          "url_options": {"data": "", "method": "GET"}
+        }
+      ],
+      "title": "Реалтайм генерации изображений",
+      "transformations": [
+        {
+          "id": "organize",
+          "options": {
+            "excludeByName": {"message_id": true},
+            "renameByName": {
+              "time": "Время",
+              "user_id": "User ID",
+              "persona_id": "Персонаж",
+              "story_id": "История",
+              "prompt": "Промт",
+              "image_url": "URL изображения"
+            }
+          }
+        }
+      ],
+      "type": "table"
     }
   ],
-  "refresh": "30s",
+  "refresh": "10s",
   "schemaVersion": 38,
   "style": "dark",
   "tags": [

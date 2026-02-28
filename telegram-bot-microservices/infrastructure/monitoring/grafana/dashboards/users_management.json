@@ -315,6 +315,22 @@
           {
             "matcher": {
               "id": "byName",
+              "options": "total_usdt_spent"
+            },
+            "properties": [
+              {
+                "id": "custom.width",
+                "value": 120
+              },
+              {
+                "id": "unit",
+                "value": "currencyUSD"
+              }
+            ]
+          },
+          {
+            "matcher": {
+              "id": "byName",
               "options": "has_upgrades"
             },
             "properties": [
@@ -380,6 +396,7 @@
             {"selector": "registered_at", "text": "registered_at", "type": "timestamp"},
             {"selector": "payments_count", "text": "payments_count", "type": "number"},
             {"selector": "total_stars_spent", "text": "total_stars_spent", "type": "number"},
+            {"selector": "total_usdt_spent", "text": "total_usdt_spent", "type": "number"},
             {"selector": "subscription_plan", "text": "subscription_plan", "type": "string"},
             {"selector": "has_upgrades", "text": "has_upgrades", "type": "boolean"}
           ],
@@ -421,7 +438,8 @@
               "registered_at": 6,
               "payments_count": 7,
               "total_stars_spent": 8,
-              "subscription_plan": 9,
+              "total_usdt_spent": 9,
+              "subscription_plan": 10,
               "has_upgrades": 10
             },
             "renameByName": {
@@ -434,6 +452,7 @@
               "registered_at": "Регистрация",
               "payments_count": "Платежей",
               "total_stars_spent": "Потрачено ⭐",
+              "total_usdt_spent": "Потрачено $",
               "subscription_plan": "План",
               "has_upgrades": "Улучшения"
             }
