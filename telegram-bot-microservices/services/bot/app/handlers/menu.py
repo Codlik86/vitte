@@ -4,6 +4,7 @@ Main menu handler
 This is where users land after onboarding or when returning to the bot.
 Contains main menu text and webapp button.
 """
+import random
 from aiogram import Router, F
 from aiogram.types import Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton, WebAppInfo, InputMediaPhoto
 from aiogram.filters import Command
