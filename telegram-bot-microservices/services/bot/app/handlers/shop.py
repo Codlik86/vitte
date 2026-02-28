@@ -4,7 +4,6 @@ Shop handler - Image packs store
 Handles shop button from main menu.
 Shows available image packs with Telegram Stars pricing.
 """
-import random
 from aiogram import Router, F, Bot
 from aiogram.types import (
     Message, CallbackQuery, InlineKeyboardMarkup, InlineKeyboardButton,
@@ -253,8 +252,7 @@ async def _show_shop_hub(user_id: int, target):
         text = SHOP_HUB_EN
         keyboard = get_shop_hub_keyboard_en()
 
-    # Random shop photo (1 of 3)
-    shop_photo_url = f"https://craveme.tech/storage/menu-pics/shop/{random.randint(1, 3):03d}.png"
+    shop_photo_url = "https://craveme.tech/storage/menu-pics/craveme-cover-shop.jpg"
 
     # Send shop hub with photo
     await target.answer_photo(
