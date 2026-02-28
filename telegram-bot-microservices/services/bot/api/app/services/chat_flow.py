@@ -669,7 +669,8 @@ class ChatFlow:
 
         # 11. Сохраняем сообщения в PostgreSQL
         await self.save_message(dialog, "user", user_message)
-        await self.save_message(dialog, "assistant", response)
+        await self.save_message(dialog, "assistant", response,
+                                extra_data={"image_url": image_url} if image_url else None)
 
         # 12. Сохраняем в Qdrant (fire-and-forget — не блокируем ответ юзеру)
         async def _store_memories():

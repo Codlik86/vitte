@@ -1080,44 +1080,38 @@ async def get_recent_generations(
     """
     try:
         async for db in get_db():
+            from sqlalchemy import text as sa_text
             query = (
-                select(
-                    Message.id.label('message_id'),
-                    Message.created_at,
-                    Dialog.user_id,
-                    Dialog.persona_id,
-                    Dialog.story_id,
-                    Message.metadata,
-                    Message.content
-                )
+                select(Message, Dialog.user_id, Dialog.persona_id, Dialog.story_id)
                 .join(Dialog, Dialog.id == Message.dialog_id)
                 .where(
                     Message.role == 'assistant',
-                    Message.metadata.isnot(None)
                 )
                 .order_by(desc(Message.created_at))
-                .limit(limit)
+                .limit(limit * 3)  # fetch more since we filter by image_url
             )
 
             result = await db.execute(query)
             rows = result.all()
 
             data = []
-            for r in rows:
-                meta = r.metadata or {}
+            for msg, user_id, persona_id, story_id in rows:
+                meta = msg.extra_data or {}
                 image_url = meta.get('image_url') or meta.get('comfyui_image_url') or ''
                 if not image_url:
                     continue
                 prompt = meta.get('prompt') or meta.get('generation_prompt') or ''
                 data.append({
-                    "message_id": r.message_id,
-                    "time": r.created_at.isoformat() if r.created_at else '',
-                    "user_id": r.user_id,
-                    "persona_id": r.persona_id or '',
-                    "story_id": r.story_id or '',
+                    "message_id": msg.id,
+                    "time": msg.created_at.isoformat() if msg.created_at else '',
+                    "user_id": user_id,
+                    "persona_id": persona_id or '',
+                    "story_id": story_id or '',
                     "prompt": prompt[:200] if prompt else '',
                     "image_url": image_url
                 })
+                if len(data) >= limit:
+                    break
 
             return {"data": data}
 
