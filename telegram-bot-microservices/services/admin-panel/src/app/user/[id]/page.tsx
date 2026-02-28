@@ -258,8 +258,8 @@ export default function UserCardPage() {
         </div>
       </Card>
 
-      {/* Улучшения */}
-      <Card title="Улучшения">
+      {/* Улучшения — временно скрыто */}
+      {/* <Card title="Улучшения">
         <div className="mb-3">
           {user.features_unlocked.length > 0 ? (
             <div className="flex flex-wrap gap-2">
@@ -279,7 +279,7 @@ export default function UserCardPage() {
             loading={actionLoading === 'feat_intense_revoke'}
             onClick={() => doAction('/features', { action: 'revoke', feature_code: 'intense_mode' }, 'feat_intense_revoke')} />
         </div>
-      </Card>
+      </Card> */}
 
       {/* Платежи */}
       <Card title="Платежи">
