@@ -13,6 +13,7 @@ from shared.database import (
     FeatureUnlock, ImageBalance, get_db
 )
 from shared.utils import get_logger
+from shared.utils.redis import redis_client
 
 logger = get_logger(__name__)
 router = APIRouter(prefix="/analytics", tags=["analytics"])
@@ -499,6 +500,14 @@ async def get_user_card(telegram_id: str):
                 select(ImageBalance).where(ImageBalance.user_id == tid)
             )
 
+            # Get free messages used from Redis (actual counter, DB field is not updated)
+            messages_limit = user.free_messages_limit or 20
+            try:
+                redis_val = await redis_client.get(f"user:{tid}:messages:daily")
+                messages_used = int(redis_val) if redis_val else 0
+            except Exception:
+                messages_used = 0
+
             # Return flat structure for Grafana Infinity plugin with UQL parser
             # NOTE: UQL doesn't handle null/boolean well, so convert to strings/defaults
             return {
@@ -512,9 +521,8 @@ async def get_user_card(telegram_id: str):
                 "is_active": user.is_active,
                 "is_blocked": user.is_blocked,
                 "is_admin": user.is_admin,
-                "access_status": user.access_status or "",
-                "free_messages_used": user.free_messages_used,
-                "free_messages_limit": user.free_messages_limit,
+                "free_messages_used": messages_used,
+                "free_messages_limit": messages_limit,
                 "created_at": user.created_at.isoformat() if user.created_at else "",
                 "last_interaction": user.last_interaction.isoformat() if user.last_interaction else "",
                 # Subscription info (flat) - convert boolean to string for UQL

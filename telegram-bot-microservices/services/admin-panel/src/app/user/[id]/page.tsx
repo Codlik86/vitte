@@ -15,7 +15,6 @@ interface UserData {
   is_active: boolean
   is_blocked: boolean
   is_admin: boolean
-  access_status: string
   free_messages_used: number
   free_messages_limit: number
   created_at: string
@@ -211,8 +210,7 @@ export default function UserCardPage() {
         <InfoRow label="Фамилия" value={user.last_name} />
         <InfoRow label="Язык" value={user.language} />
         <InfoRow label="UTM метка" value={user.utm_source} />
-        <InfoRow label="Статус доступа" value={user.access_status} />
-        <InfoRow label="Бесплатные сообщения" value={`${user.free_messages_used} / ${user.free_messages_limit}`} />
+        <InfoRow label="Бесплатные сообщения" value={`${user.free_messages_limit - user.free_messages_used} / ${user.free_messages_limit}`} />
         <InfoRow label="Дата регистрации" value={formatDate(user.created_at)} />
         <InfoRow label="Последняя активность" value={formatDate(user.last_interaction)} />
       </Card>
@@ -244,7 +242,6 @@ export default function UserCardPage() {
       <Card title="Изображения">
         <InfoRow label="Куплено всего" value={user.images_total_purchased} />
         <InfoRow label="Осталось" value={user.images_remaining} />
-        <InfoRow label="Дневная квота" value={`${user.images_daily_used} / ${user.images_daily_quota}`} />
         <div className="flex flex-wrap gap-2 mt-4">
           <ActionBtn label="+10" variant="success"
             loading={actionLoading === 'img10'}
