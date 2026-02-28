@@ -66,7 +66,8 @@ async def get_all_users(
                         else_=False
                     ).label('has_subscription'),
                     Subscription.plan.label('subscription_plan'),
-                    func.count(FeatureUnlock.id).label('upgrades_count')
+                    func.count(FeatureUnlock.id).label('upgrades_count'),
+                    func.coalesce(ImageBalance.remaining_purchased_images, 0).label('images_balance')
                 )
                 .outerjoin(Purchase, and_(
                     Purchase.user_id == User.id,
@@ -77,6 +78,7 @@ async def get_all_users(
                     FeatureUnlock.user_id == User.id,
                     FeatureUnlock.enabled == True
                 ))
+                .outerjoin(ImageBalance, ImageBalance.user_id == User.id)
                 .group_by(
                     User.id,
                     User.utm_source,
@@ -88,7 +90,8 @@ async def get_all_users(
                     User.is_active,
                     User.is_blocked,
                     Subscription.is_active,
-                    Subscription.plan
+                    Subscription.plan,
+                    ImageBalance.remaining_purchased_images
                 )
                 .order_by(desc(User.created_at))
             )
@@ -135,7 +138,8 @@ async def get_all_users(
                         "total_stars_spent": int(u.total_stars_spent),
                         "total_usdt_spent": float(u.total_usdt_spent),
                         "subscription_plan": u.subscription_plan or "free",
-                        "has_upgrades": u.upgrades_count > 0
+                        "has_upgrades": u.upgrades_count > 0,
+                        "images_balance": int(u.images_balance)
                     }
                     for u in users
                 ],
