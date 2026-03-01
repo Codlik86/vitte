@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { fetchStoreConfig, fetchStoreStatus } from "../api/client";
 import type { StoreConfig, StoreStatus } from "../api/types";
 
@@ -11,6 +12,7 @@ type StoreData = {
 };
 
 export function useStoreData(auto = true): StoreData {
+  const { t } = useTranslation();
   const [config, setConfig] = useState<StoreConfig | null>(null);
   const [status, setStatus] = useState<StoreStatus | null>(null);
   const [loading, setLoading] = useState<boolean>(auto);
@@ -31,11 +33,11 @@ export function useStoreData(auto = true): StoreData {
         });
       }
     } catch (e: any) {
-      setError(e.message ?? "Не удалось загрузить магазин");
+      setError(e.message ?? t("store_load_error"));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (auto) {

@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { fetchDialogs, clearDialog } from "../api/client";
 import type { DialogInfo } from "../api/types";
 import { PageHeader } from "../components/layout/PageHeader";
@@ -9,6 +10,7 @@ import { getAvatarPaths } from "../lib/avatars";
 
 export function Dialogs() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { data: accessStatus } = useAccessStatus();
   const { imagesLeft } = useImagesLeft();
   const [dialogs, setDialogs] = useState<DialogInfo[]>([]);
@@ -29,7 +31,7 @@ export function Dialogs() {
       const data = await fetchDialogs();
       setDialogs(data.dialogs);
     } catch (e: any) {
-      setError(e.message ?? "Ошибка загрузки");
+      setError(e.message ?? t("load_error"));
     } finally {
       setLoading(false);
     }
@@ -56,7 +58,7 @@ export function Dialogs() {
       await clearDialog(dialogId);
       setDialogs((prev) => prev.filter((d) => d.dialog_id !== dialogId));
     } catch (e: any) {
-      setError(e.message ?? "Ошибка удаления");
+      setError(e.message ?? t("delete_error"));
     } finally {
       setDeletingId(null);
     }
@@ -72,7 +74,7 @@ export function Dialogs() {
     <div className="min-h-dvh bg-bg-dark text-text-main pt-6">
       <div className="mx-auto flex min-h-dvh w-full max-w-screen-md flex-col px-4 pb-16 sm:px-5">
         <PageHeader
-          title="Диалоги"
+          title={t("dialogs_title")}
           showBack
           onBack={() => navigate(-1)}
           stats={{ images: imagesLeft, hasSubscription }}
@@ -101,10 +103,10 @@ export function Dialogs() {
                 >
                   <path strokeLinecap="round" strokeLinejoin="round" d="M12 4.5v15m7.5-7.5h-15" />
                 </svg>
-                Начать новый диалог
+                {t("start_new_dialog")}
               </span>
             ) : (
-              <span>Максимум 3 диалога. Удали один, чтобы начать новый.</span>
+              <span>{t("max_dialogs")}</span>
             )}
           </button>
 
@@ -136,7 +138,7 @@ export function Dialogs() {
                 onClick={loadDialogs}
                 className="ml-2 underline hover:no-underline"
               >
-                Повторить
+                {t("retry")}
               </button>
             </div>
           )}
@@ -144,9 +146,9 @@ export function Dialogs() {
           {/* Empty state */}
           {!loading && !error && dialogs.length === 0 && (
             <div className="text-center py-12">
-              <p className="text-white/50">Нет активных диалогов</p>
+              <p className="text-white/50">{t("no_dialogs")}</p>
               <p className="mt-2 text-sm text-white/30">
-                Выбери персонажа и начни общение
+                {t("choose_character")}
               </p>
             </div>
           )}
@@ -179,7 +181,7 @@ export function Dialogs() {
                               {dialog.persona_name}
                             </h3>
                             <span className="shrink-0 rounded-full bg-white/10 px-2 py-0.5 text-[10px] text-white/50">
-                              Слот {dialog.slot_number}
+                              {t("slot", { number: dialog.slot_number })}
                             </span>
                           </div>
                           {dialog.last_message && (
@@ -188,7 +190,7 @@ export function Dialogs() {
                             </p>
                           )}
                           <p className="mt-1 text-xs text-white/30">
-                            {dialog.message_count} сообщений
+                            {t("messages_count", { count: dialog.message_count })}
                           </p>
                         </div>
                         <svg

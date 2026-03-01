@@ -1,4 +1,5 @@
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { ImageChip } from "../ImageChip";
 
 export type PageHeaderStats = {
@@ -21,6 +22,7 @@ export function PageHeader({
   stats,
 }: PageHeaderProps) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const handleBack = () => {
     if (onBack) {
       onBack();
@@ -37,7 +39,7 @@ export function PageHeader({
             type="button"
             onClick={handleBack}
             className="inline-flex items-center text-2xl font-medium text-white/80 transition hover:text-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/30"
-            aria-label="Назад"
+            aria-label={t("back_aria")}
           >
             <span className="leading-none">←</span>
           </button>

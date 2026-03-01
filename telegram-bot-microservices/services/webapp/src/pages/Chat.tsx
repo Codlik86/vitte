@@ -1,5 +1,6 @@
 import { useEffect, useState, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { sendChatMessage, getGreeting } from "../api/client";
 import { getAvatarPaths } from "../lib/avatars";
 
@@ -24,6 +25,7 @@ type LocationState = {
 export function Chat() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const state = (location.state as LocationState) ?? {};
 
   const [messages, setMessages] = useState<Message[]>([]);
@@ -33,7 +35,7 @@ export function Chat() {
   const [loadingGreeting, setLoadingGreeting] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
-  const personaName = state.personaName ?? "Персонаж";
+  const personaName = state.personaName ?? t("character_fallback");
   const personaKey = state.personaKey ?? "";
   const avatarUrl = personaKey ? getAvatarPaths(personaKey, false).chat : undefined;
 
@@ -79,7 +81,7 @@ export function Chat() {
             ]);
           }
         } catch (e: any) {
-          setError(e.message ?? "Ошибка загрузки");
+          setError(e.message ?? t("load_error"));
         } finally {
           setLoadingGreeting(false);
         }
@@ -123,7 +125,7 @@ export function Chat() {
         setError(result.error);
       }
     } catch (e: any) {
-      setError(e.message ?? "Ошибка отправки");
+      setError(e.message ?? t("send_error"));
     } finally {
       setSending(false);
     }
@@ -165,7 +167,7 @@ export function Chat() {
           )}
           <div className="flex-1">
             <h1 className="text-base font-semibold text-white">{personaName}</h1>
-            <p className="text-xs text-white/50">онлайн</p>
+            <p className="text-xs text-white/50">{t("online")}</p>
           </div>
           <button
             onClick={() => navigate("/dialogs")}
@@ -248,7 +250,7 @@ export function Chat() {
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Напиши сообщение..."
+            placeholder={t("message_placeholder")}
             rows={1}
             className="flex-1 resize-none rounded-2xl bg-white/10 px-4 py-3 text-sm text-white placeholder-white/40 outline-none focus:ring-1 focus:ring-white/20"
             style={{ minHeight: "44px", maxHeight: "120px" }}

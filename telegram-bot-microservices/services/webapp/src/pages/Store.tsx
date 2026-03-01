@@ -1,5 +1,7 @@
+import { useTranslation } from "react-i18next";
 import { StoreLayout } from "../components/store/StoreLayout";
 
 export function Store() {
-  return <StoreLayout title="Магазин" showBack />;
+  const { t } = useTranslation();
+  return <StoreLayout title={t("store_title")} showBack />;
 }

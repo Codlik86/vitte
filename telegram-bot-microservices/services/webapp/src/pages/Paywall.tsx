@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { PageHeader } from "../components/layout/PageHeader";
 import { useStoreData } from "../hooks/useStoreData";
 import { useAccessStatus } from "../hooks/useAccessStatus";
@@ -9,14 +10,16 @@ import { tg, type InvoiceStatus } from "../lib/telegram";
 
 export function Paywall() {
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
   const { status, config, loading, reload } = useStoreData();
   const { data: accessStatus, reload: reloadAccess } = useAccessStatus();
   const { imagesLeft } = useImagesLeft();
   const [busyCode, setBusyCode] = useState<string | null>(null);
 
   const hasSubscription = Boolean(status?.has_active_subscription || accessStatus?.has_subscription);
+  const dateLocale = i18n.language === "ru" ? "ru-RU" : "en-US";
   const endDate = status?.subscription_ends_at
-    ? new Date(status.subscription_ends_at).toLocaleDateString("ru-RU")
+    ? new Date(status.subscription_ends_at).toLocaleDateString(dateLocale)
     : null;
   const plans = config?.subscription_plans ?? [];
   const imagesAvailable = imagesLeft;
@@ -35,7 +38,7 @@ export function Paywall() {
     try {
       const res = await buySubscription(code);
       if (!res.invoice_url) {
-        alert("Не удалось создать счёт. Попробуй позже.");
+        alert(t("invoice_error"));
         return;
       }
 
@@ -54,7 +57,7 @@ export function Paywall() {
         tg?.close?.();
       }
     } catch (e: any) {
-      alert(e.message ?? "Не удалось оформить подписку");
+      alert(e.message ?? t("subscription_buy_error"));
       setBusyCode(null);
     }
   };
@@ -62,20 +65,22 @@ export function Paywall() {
   return (
     <div className="min-h-dvh bg-bg-dark text-text-main pt-6">
       <div className="mx-auto w-full max-w-screen-sm space-y-6 px-4 pb-16">
-        <PageHeader title="Подписка" showBack onBack={() => navigate(-1)} stats={headerStats} />
+        <PageHeader title={t("subscription_title")} showBack onBack={() => navigate(-1)} stats={headerStats} />
 
         <section className="space-y-3 rounded-3xl border border-white/10 bg-card-elevated/80 px-5 py-5 shadow-card">
           <div className="space-y-1">
             <h2 className="text-xl font-semibold text-white">CraveMe Premium</h2>
             <ul className="space-y-1 text-sm text-white/80">
-              <li>• Безлимитные сообщения</li>
-              <li>• 40 изображений</li>
-              <li>• Самые продвинутые модели ИИ</li>
-              <li>• Мгновенные ответы и качественные изображения</li>
+              <li>• {t("feature_unlimited_messages")}</li>
+              <li>• {t("feature_40_images")}</li>
+              <li>• {t("feature_advanced_ai")}</li>
+              <li>• {t("feature_quality")}</li>
             </ul>
             {hasSubscription && (
               <p className="text-sm text-emerald-200">
-                Подписка активна {endDate ? `до ${endDate}` : "без даты окончания"}. Спасибо, что остаёшься 💛
+                {endDate
+                  ? t("subscription_active", { date: endDate })
+                  : t("subscription_active_no_date")}
               </p>
             )}
           </div>
@@ -99,12 +104,12 @@ export function Paywall() {
                     >
                       <div className="min-w-0 pr-3">
                         <p className="text-sm font-semibold text-white">{plan.title}</p>
-                        <p className="text-xs text-white/60 leading-snug">{plan.duration_days} дней</p>
+                        <p className="text-xs text-white/60 leading-snug">{plan.duration_days} {t("days")}</p>
                       </div>
                       <div className="flex-shrink-0 text-right">
                         <p className="text-lg font-semibold text-white whitespace-nowrap">{plan.price_stars} ⭐</p>
                         {busyCode === plan.code && (
-                          <p className="text-[11px] text-white/60">Оформляем...</p>
+                          <p className="text-[11px] text-white/60">{t("processing")}</p>
                         )}
                       </div>
                     </button>

@@ -83,6 +83,7 @@ export type AccessStatusResponse = {
     remaining_paid: number;
     total_remaining: number;
   };
+  language_code?: string;
 };
 
 export type ChatResponse = {

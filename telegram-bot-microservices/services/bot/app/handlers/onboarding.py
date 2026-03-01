@@ -34,11 +34,12 @@ def get_language_keyboard() -> InlineKeyboardMarkup:
     ])
 
 
-def get_age_verification_keyboard() -> InlineKeyboardMarkup:
+def get_age_verification_keyboard(lang: str = "ru") -> InlineKeyboardMarkup:
     """Age verification keyboard (18+)"""
+    text = "Yes, I'm 18+" if lang == "en" else "Да, мне 18+"
     return InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="Да, мне 18+ ", callback_data="age:confirmed"),
+            InlineKeyboardButton(text=text, callback_data="age:confirmed"),
         ]
     ])
 
@@ -95,7 +96,7 @@ async def on_language_russian(callback: CallbackQuery):
     # Edit message to show age verification
     await callback.message.edit_text(
         AGE_VERIFICATION_RU,
-        reply_markup=get_age_verification_keyboard(),
+        reply_markup=get_age_verification_keyboard(lang="ru"),
         parse_mode="HTML"
     )
 
@@ -125,7 +126,7 @@ async def on_language_english(callback: CallbackQuery):
     # Show age verification in English
     await callback.message.edit_text(
         AGE_VERIFICATION_EN,
-        reply_markup=get_age_verification_keyboard(),
+        reply_markup=get_age_verification_keyboard(lang="en"),
         parse_mode="HTML"
     )
 

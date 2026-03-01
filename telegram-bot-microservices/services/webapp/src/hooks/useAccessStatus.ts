@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { AccessStatusResponse } from "../api/types";
 import { fetchAccessStatus } from "../api/client";
 
@@ -12,6 +13,7 @@ type UseAccessStatusResult = {
 let cachedAccessStatus: AccessStatusResponse | null = null;
 
 export function useAccessStatus(auto = true): UseAccessStatusResult {
+  const { t } = useTranslation();
   const [data, setData] = useState<AccessStatusResponse | null>(() => cachedAccessStatus);
   const [loading, setLoading] = useState<boolean>(auto && !cachedAccessStatus);
   const [error, setError] = useState<string | null>(null);
@@ -24,11 +26,11 @@ export function useAccessStatus(auto = true): UseAccessStatusResult {
       cachedAccessStatus = response;
       setData(response);
     } catch (e: any) {
-      setError(e.message ?? "Не удалось получить статус доступа");
+      setError(e.message ?? t("access_status_error"));
     } finally {
       setLoading(false);
     }
-  }, []);
+  }, [t]);
 
   useEffect(() => {
     if (auto) {

@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+
 type ImageChipProps = {
   imagesRemaining: number | null;
   hasSubscription?: boolean;
@@ -24,6 +26,7 @@ export function ImageChip({
   onSettingsClick,
   className = "",
 }: ImageChipProps) {
+  const { t } = useTranslation();
   const displayImages = formatCounter(imagesRemaining);
   const isPrem = isPremium || hasSubscription;
   const labelText = isPrem ? "Premium" : "Free";
@@ -66,7 +69,7 @@ export function ImageChip({
           onSettingsClick?.();
         }}
         className="flex h-8 w-8 items-center justify-center rounded-full bg-white/18 text-white transition hover:bg-white/28 active:scale-95 disabled:opacity-60"
-        aria-label="Открыть настройки"
+        aria-label={t("open_settings_aria")}
       >
         <svg viewBox="0 0 24 24" aria-hidden="true" className="h-5 w-5 shrink-0">
           <path

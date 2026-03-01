@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { buyFeature, buyImagePack } from "../../api/client";
 import type { StoreConfig, StoreStatus } from "../../api/types";
 import { useAccessStatus } from "../../hooks/useAccessStatus";
@@ -17,6 +18,7 @@ type StoreLayoutProps = {
 
 export function StoreLayout({ title, showBack = true }: StoreLayoutProps) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { data: accessStatus, reload: reloadAccess } = useAccessStatus();
   const { config, status, loading, error, reload } = useStoreData();
   const [busy, setBusy] = useState<BusyMap>({});
@@ -49,7 +51,7 @@ export function StoreLayout({ title, showBack = true }: StoreLayoutProps) {
     try {
       const res = await buyImagePack(code);
       if (!res.invoice_url) {
-        alert("Не удалось создать счёт. Попробуй позже.");
+        alert(t("invoice_error"));
         setBusyFlag(code, false);
         return;
       }
@@ -66,7 +68,7 @@ export function StoreLayout({ title, showBack = true }: StoreLayoutProps) {
         tg?.close?.();
       }
     } catch (e: any) {
-      alert(e.message ?? "Не удалось купить пакет изображений");
+      alert(e.message ?? t("pack_buy_error"));
       setBusyFlag(code, false);
     }
   };
@@ -76,7 +78,7 @@ export function StoreLayout({ title, showBack = true }: StoreLayoutProps) {
     try {
       const res = await buyFeature(code);
       if (!res.invoice_url) {
-        alert("Не удалось создать счёт. Попробуй позже.");
+        alert(t("invoice_error"));
         setBusyFlag(code, false);
         return;
       }
@@ -93,7 +95,7 @@ export function StoreLayout({ title, showBack = true }: StoreLayoutProps) {
         tg?.close?.();
       }
     } catch (e: any) {
-      alert(e.message ?? "Не удалось разблокировать улучшение");
+      alert(e.message ?? t("feature_buy_error"));
       setBusyFlag(code, false);
     }
   };
@@ -144,6 +146,7 @@ function StoreImagesAndFeaturesSection({
   onBuyPack: (code: string) => void;
   onBuyFeature: (code: string) => void;
 }) {
+  const { t } = useTranslation();
   const packs = config?.image_packs ?? [];
   // const features = config?.emotional_features ?? [];  // ОТКЛЮЧЕНО
   // const unlocked = new Set(status?.unlocked_features ?? []);  // ОТКЛЮЧЕНО
@@ -152,9 +155,9 @@ function StoreImagesAndFeaturesSection({
   return (
     <section className="space-y-4 rounded-3xl border border-white/10 bg-card-elevated/75 px-5 py-5 shadow-card">
       <div className="space-y-1">
-        <h2 className="text-lg font-semibold text-white">Изображения</h2>
+        <h2 className="text-lg font-semibold text-white">{t("images_section")}</h2>
         <p className="text-sm text-white/70">
-          У вас {imagesAvailable} изображений. Докупите ещё — выберите нужный пакет ниже.
+          {t("images_count_description", { count: imagesAvailable })}
         </p>
       </div>
 
@@ -173,67 +176,21 @@ function StoreImagesAndFeaturesSection({
                   key={pack.code}
                   className="flex items-center justify-between rounded-3xl border border-white/10 bg-card-dark/40 px-4 py-3"
                 >
-                  <p className="text-sm font-semibold text-white">{pack.images} изображений</p>
+                  <p className="text-sm font-semibold text-white">
+                    {t("images_in_pack", { count: pack.images })}
+                  </p>
                   <button
                     type="button"
                     onClick={() => onBuyPack(pack.code)}
                     disabled={isBusy}
                     className="rounded-full bg-gradient-to-r from-[#2c1a52] via-[#5a2b80] to-[#c23ba7] px-4 py-2 text-sm font-semibold text-white shadow-card transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
                   >
-                    {isBusy ? "Покупаем..." : `${pack.price_stars} ⭐`}
+                    {isBusy ? t("buying") : `${pack.price_stars} ⭐`}
                   </button>
                 </div>
               );
             })}
       </div>
-
-      {/* ОТКЛЮЧЕНО - больше нет улучшений */}
-      {/* <div className="space-y-3">
-        {loading
-          ? Array.from({ length: 2 }).map((_, i) => (
-              <div
-                key={`feat-skeleton-${i}`}
-                className="h-16 rounded-3xl border border-white/10 bg-white/5 animate-pulse"
-              />
-            ))
-          : features.map((feature) => {
-              const isUnlocked = unlocked.has(feature.code);
-              const isBusy = busy[feature.code];
-              return (
-                <div
-                  key={feature.code}
-                  className="flex flex-col gap-2 rounded-3xl border border-white/10 bg-card-dark/35 px-4 py-3"
-                >
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="space-y-1 min-w-0">
-                      <p className="text-sm font-semibold text-white">{feature.title}</p>
-                      <p className="text-xs text-white/70 line-clamp-2">{feature.description}</p>
-                    </div>
-                    <span
-                      className={`rounded-full px-3 py-1 text-[11px] font-semibold uppercase tracking-wide ${
-                        isUnlocked
-                          ? "bg-emerald-400/15 text-emerald-100"
-                          : "bg-white/10 text-white/80"
-                      }`}
-                      style={{ whiteSpace: "nowrap", flexShrink: 0, minWidth: "fit-content" }}
-                    >
-                      {isUnlocked ? "Активировано" : `${feature.price_stars} ⭐`}
-                    </span>
-                  </div>
-                  {!isUnlocked && (
-                    <button
-                      type="button"
-                      onClick={() => onBuyFeature(feature.code)}
-                      disabled={isBusy}
-                      className="self-start rounded-full bg-gradient-to-r from-[#7B4DF0] to-[#E44CC6] px-4 py-2 text-sm font-semibold text-white shadow-card transition active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
-                    >
-                      {isBusy ? "Оформляем..." : "Разблокировать"}
-                    </button>
-                  )}
-                </div>
-              );
-            })}
-      </div> */}
     </section>
   );
 }

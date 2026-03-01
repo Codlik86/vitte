@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useNavigate, useParams, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import type { PersonaDetails, StoryCard } from "../api/types";
 import { fetchPersona, selectPersonaAndGreet } from "../api/client";
 import { PageHeader } from "../components/layout/PageHeader";
@@ -12,8 +13,9 @@ import { tg } from "../lib/telegram";
 export function CharacterDetails() {
   const { id } = useParams();
   const location = useLocation();
+  const { t } = useTranslation();
   const locationState = (location.state as { name?: string } | null) ?? null;
-  const fallbackTitle = locationState?.name ?? "Персонаж";
+  const fallbackTitle = locationState?.name ?? t("character_fallback");
   const navigate = useNavigate();
   const { data: accessStatus } = useAccessStatus();
    const { imagesLeft } = useImagesLeft();
@@ -46,7 +48,7 @@ export function CharacterDetails() {
         setTitle(data.name);
         setSelectedStoryId(null);
       } catch (e: any) {
-        setError(e.message ?? "Ошибка загрузки");
+        setError(e.message ?? t("load_error"));
       } finally {
         setLoading(false);
       }
@@ -57,7 +59,7 @@ export function CharacterDetails() {
   const handleSelect = async () => {
     if (!persona) return;
     if (!selectedStoryId) {
-      setSelectError("Сначала выбери историю");
+      setSelectError(t("select_story_first"));
       return;
     }
     const hasHistory = Boolean(persona.has_history);
@@ -82,7 +84,7 @@ export function CharacterDetails() {
         tg.close();
       }
     } catch (e: any) {
-      setSelectError(e.message ?? "Не удалось выбрать персонажа");
+      setSelectError(e.message ?? t("select_persona_error"));
     } finally {
       setBusy(false);
     }
@@ -106,9 +108,9 @@ export function CharacterDetails() {
   const hasHistory = Boolean(persona?.has_history);
   const actionLabel = selectedStoryId
     ? hasHistory
-      ? "Обновить и продолжить"
-      : "Начать разговор"
-    : "Выбери историю";
+      ? t("update_and_continue")
+      : t("start_chat")
+    : t("select_story");
 
   return (
     <div className="min-h-dvh bg-bg-dark text-text-main pt-6">
@@ -129,7 +131,7 @@ export function CharacterDetails() {
           </div>
         ) : error || !persona ? (
           <div className="mt-6 rounded-3xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-100">
-            {error ?? "Персонаж не найден"}
+            {error ?? t("character_not_found")}
           </div>
         ) : (
           <section className="mt-6 flex flex-1 flex-col space-y-6">
@@ -152,13 +154,7 @@ export function CharacterDetails() {
               )}
             </div>
 
-            <InfoBlock title="О персонаже" text={persona.legend_full ?? persona.long_description} />
-
-            {/* <FeelBlock
-              emotions={persona.emotions_full}
-              positive={persona.triggers_positive}
-              negative={persona.triggers_negative}
-            /> */}
+            <InfoBlock title={t("about_character")} text={persona.legend_full ?? persona.long_description} />
 
             {storyCards && storyCards.length > 0 && (
               <StoriesBlock stories={storyCards} selectedId={selectedStoryId} onSelect={setSelectedStoryId} />
@@ -172,7 +168,7 @@ export function CharacterDetails() {
               >
                 {busy ? (
                   <span className="inline-flex items-center gap-1 leading-none">
-                    Всего несколько секунд
+                    {t("loading_moments")}
                     <span className="loading-dots" aria-hidden>
                       <span />
                       <span />
@@ -187,7 +183,7 @@ export function CharacterDetails() {
                 className="mt-3 w-full rounded-full bg-gradient-to-r from-[#2c1a52] via-[#5a2b80] to-[#c23ba7] px-4 py-4 text-base font-semibold text-white shadow-card transition active:scale-[0.98]"
                 onClick={() => navigate("/store")}
               >
-                Сделать общение лучше
+                {t("make_chat_better")}
               </button>
               {selectError && (
                 <p className="mt-2 rounded-2xl border border-red-500/30 bg-red-500/10 px-3 py-2 text-sm text-red-100">
@@ -221,10 +217,11 @@ function StoriesBlock({
   selectedId: string | null;
   onSelect: (id: string | null) => void;
 }) {
+  const { t } = useTranslation();
   if (!stories || stories.length === 0) return null;
   return (
     <div className="space-y-3">
-      <p className="text-sm font-semibold text-white">Истории</p>
+      <p className="text-sm font-semibold text-white">{t("stories")}</p>
       <div className="space-y-3">
         {stories.map((card) => {
           const active = selectedId === card.key;
@@ -253,7 +250,7 @@ function StoriesBlock({
                 <span
                   className="inline-flex max-w-full items-center justify-start truncate rounded-full bg-white/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wide text-white/80 md:px-4 md:text-xs"
                 >
-                  {mapAtmosphere(card.atmosphere)}
+                  {mapAtmosphere(card.atmosphere, t)}
                 </span>
                 <p className="w-full text-base font-semibold leading-tight text-white sm:text-lg">
                   {card.title}
@@ -268,12 +265,12 @@ function StoriesBlock({
   );
 }
 
-function mapAtmosphere(value: string) {
+function mapAtmosphere(value: string, t: (key: string) => string): string {
   const map: Record<string, string> = {
-    flirt_romance: "Флирт и романтика",
-    support: "Поддержка",
-    cozy_evening: "Уютный вечер",
-    serious_talk: "Серьёзный разговор",
+    flirt_romance: t("atm_flirt_romance"),
+    support: t("atm_support"),
+    cozy_evening: t("atm_cozy_evening"),
+    serious_talk: t("atm_serious_talk"),
   };
   return map[value] ?? value;
 }

@@ -34,6 +34,7 @@ class AccessStatusResponse(BaseModel):
     plan_code: Optional[str] = None
     premium_until: Optional[datetime] = None
     images: Optional[ImagesStatus] = None
+    language_code: str = "ru"
 
 
 # ==================== ROUTES ====================
@@ -92,5 +93,6 @@ async def get_access_status(
         has_subscription=has_subscription,
         plan_code=subscription.plan if subscription else None,
         premium_until=subscription.expires_at if subscription else None,
-        images=images
+        images=images,
+        language_code=user_with_rels.language_code or "ru"
     )

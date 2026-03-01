@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import type { PersonaListItem } from "../api/types";
 import { fetchPersonas } from "../api/client";
 import { PageHeader } from "../components/layout/PageHeader";
@@ -18,6 +19,7 @@ type CustomPersonaEntry = {
 
 export function CharactersList() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { data: accessStatus } = useAccessStatus();
   const { imagesLeft } = useImagesLeft();
   const debugMiniapp = import.meta.env.VITE_DEBUG_MINIAPP === "1";
@@ -47,7 +49,7 @@ export function CharactersList() {
         });
       }
     } catch (e: any) {
-      setError(e.message ?? "Не удалось загрузить персонажей");
+      setError(e.message ?? t("load_error_characters"));
     } finally {
       setLoading(false);
     }
@@ -131,7 +133,7 @@ export function CharactersList() {
   return (
     <div className="min-h-dvh bg-bg-dark text-text-main pt-6">
       <div className="mx-auto w-full max-w-[640px] px-4 pb-16 space-y-6">
-        <PageHeader title="Персонажи" showBack={false} stats={headerStats} />
+        <PageHeader title={t("characters_title")} showBack={false} stats={headerStats} />
         <div className="space-y-6">
           <DebugTelegramBanner />
           {renderCards()}
@@ -142,19 +144,19 @@ export function CharactersList() {
             to="/paywall"
             className="inline-flex w-full items-center justify-center rounded-full bg-gradient-to-r from-[#7B4DF0] to-[#E44CC6] px-4 py-4 text-base font-semibold text-white shadow-card active:scale-[0.99]"
           >
-            Перейти к подписке
+            {t("go_to_subscription")}
           </Link>
           <Link
             to="/store"
             className="inline-flex w-full items-center justify-center rounded-full border border-white/10 bg-card-dark/80 px-4 py-4 text-base font-medium text-white/90 transition hover:bg-card-dark"
           >
-            Магазин
+            {t("store_link")}
           </Link>
           <Link
             to="/settings"
             className="inline-flex w-full items-center justify-center rounded-full border border-white/10 bg-card-dark/80 px-4 py-4 text-base font-medium text-white/90 transition hover:bg-card-dark"
           >
-            Настройки
+            {t("settings_link")}
           </Link>
         </div>
       </div>

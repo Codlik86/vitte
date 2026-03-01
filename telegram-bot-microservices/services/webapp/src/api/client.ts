@@ -1,3 +1,4 @@
+import i18next from "i18next";
 import type {
   PersonasListResponse,
   PersonaDetails,
@@ -54,7 +55,7 @@ export async function fetchPersonas(): Promise<PersonasListResponse> {
   const url = buildUrlWithTelegramId(`${BASE_URL}/api/personas`, telegramId);
   const res = await fetch(url, { headers: buildHeaders() });
   if (!res.ok) {
-    throw new Error("Не удалось загрузить персонажей");
+    throw new Error(i18next.t("load_error_characters"));
   }
   return (await res.json()) as PersonasListResponse;
 }
@@ -70,7 +71,7 @@ export async function selectPersona(personaId: number): Promise<PersonaDetails> 
     headers: buildHeaders(),
   });
   if (!res.ok) {
-    throw new Error("Не удалось выбрать персонажа");
+    throw new Error(i18next.t("select_persona_error"));
   }
   return (await res.json()) as PersonaDetails;
 }
@@ -106,7 +107,7 @@ export async function selectPersonaAndGreet({
   });
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(text || "Не удалось выбрать персонажа");
+    throw new Error(text || i18next.t("select_persona_error"));
   }
   return (await res.json()) as PersonaSelectResponse;
 }
@@ -133,10 +134,10 @@ export async function createCustomPersona(payload: {
     const contentType = res.headers.get("Content-Type") || "";
     if (contentType.includes("application/json")) {
       const data = await res.json();
-      throw new Error(data.detail || "Не удалось создать персонажа");
+      throw new Error(data.detail || i18next.t("custom_save_error"));
     }
     const text = await res.text();
-    throw new Error(text || "Не удалось создать персонажа");
+    throw new Error(text || i18next.t("custom_save_error"));
   }
   return (await res.json()) as PersonaDetails;
 }
@@ -146,7 +147,7 @@ export async function fetchPersona(id: number): Promise<PersonaDetails> {
   const url = buildUrlWithTelegramId(`${BASE_URL}/api/personas/${id}`, telegramId);
   const res = await fetch(url, { headers: buildHeaders() });
   if (!res.ok) {
-    throw new Error("Не удалось загрузить персонажа");
+    throw new Error(i18next.t("load_error"));
   }
   return (await res.json()) as PersonaDetails;
 }
@@ -156,7 +157,7 @@ export async function fetchAccessStatus(): Promise<AccessStatusResponse> {
   const url = buildUrlWithTelegramId(`${BASE_URL}/api/access/status`, telegramId);
   const res = await fetch(url, { headers: buildHeaders() });
   if (!res.ok) {
-    throw new Error("Не удалось загрузить статус доступа");
+    throw new Error(i18next.t("access_status_error"));
   }
   return (await res.json()) as AccessStatusResponse;
 }
@@ -170,7 +171,7 @@ export async function triggerBotPay(): Promise<void> {
   });
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(text || "Не удалось открыть оплату");
+    throw new Error(text || i18next.t("invoice_error"));
   }
 }
 
@@ -210,7 +211,7 @@ export async function logMiniAppOpen(startParam?: string | null): Promise<void> 
 export async function fetchStoreConfig(): Promise<StoreConfig> {
   const res = await fetch(`${BASE_URL}/api/store/config`, { headers: buildHeaders() });
   if (!res.ok) {
-    throw new Error("Не удалось загрузить конфигурацию магазина");
+    throw new Error(i18next.t("store_load_error"));
   }
   return (await res.json()) as StoreConfig;
 }
@@ -221,7 +222,7 @@ export async function fetchStoreStatus(): Promise<StoreStatus> {
     if (import.meta.env.VITE_DEBUG_MINIAPP === "1") {
       console.info("[Vitte][DEBUG_MINIAPP][api] fetchStoreStatus skipped: no telegramId");
     }
-    throw new Error("Не удалось определить Telegram ID");
+    throw new Error(i18next.t("custom_id_error"));
   }
   const url = buildUrlWithTelegramId(`${BASE_URL}/api/store/status`, telegramId);
   if (import.meta.env.VITE_DEBUG_MINIAPP === "1") {
@@ -229,7 +230,7 @@ export async function fetchStoreStatus(): Promise<StoreStatus> {
   }
   const res = await fetch(url, { headers: buildHeaders() });
   if (!res.ok) {
-    throw new Error("Не удалось загрузить статус магазина");
+    throw new Error(i18next.t("store_load_error"));
   }
   return (await res.json()) as StoreStatus;
 }
@@ -243,7 +244,7 @@ export async function buySubscription(planCode: string): Promise<StoreBuyRespons
   });
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(text || "Не удалось оформить подписку");
+    throw new Error(text || i18next.t("subscription_buy_error"));
   }
   return (await res.json()) as StoreBuyResponse;
 }
@@ -257,7 +258,7 @@ export async function buyImagePack(packCode: string): Promise<StoreBuyResponse> 
   });
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(text || "Не удалось купить пакет изображений");
+    throw new Error(text || i18next.t("pack_buy_error"));
   }
   return (await res.json()) as StoreBuyResponse;
 }
@@ -271,7 +272,7 @@ export async function buyFeature(featureCode: string): Promise<StoreBuyResponse>
   });
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(text || "Не удалось разблокировать улучшение");
+    throw new Error(text || i18next.t("feature_buy_error"));
   }
   return (await res.json()) as StoreBuyResponse;
 }
@@ -298,7 +299,7 @@ export async function sendChatMessage(payload: {
   });
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(text || "Не удалось отправить сообщение");
+    throw new Error(text || i18next.t("send_error"));
   }
   return (await res.json()) as ChatResponse;
 }
@@ -308,7 +309,7 @@ export async function fetchFeaturesStatus(): Promise<FeatureStatusResponse> {
   const url = buildUrlWithTelegramId(`${BASE_URL}/api/features/status`, telegramId);
   const res = await fetch(url, { headers: buildHeaders() });
   if (!res.ok) {
-    throw new Error("Не удалось загрузить статус улучшений");
+    throw new Error(i18next.t("store_load_error"));
   }
   return (await res.json()) as FeatureStatusResponse;
 }
@@ -325,7 +326,7 @@ export async function toggleFeature(featureCode: string, enabled: boolean): Prom
     }),
   });
   if (!res.ok) {
-    throw new Error("Не удалось обновить настройку");
+    throw new Error(i18next.t("store_load_error"));
   }
   const data = await res.json();
   return { features: [data.feature] };
@@ -363,12 +364,12 @@ export async function deleteAccount(): Promise<void> {
 export async function fetchDialogs(): Promise<DialogsListResponse> {
   const telegramId = await getTelegramIdOptional();
   if (!telegramId) {
-    throw new Error("Не удалось определить Telegram ID");
+    throw new Error(i18next.t("custom_id_error"));
   }
   const url = buildUrlWithTelegramId(`${BASE_URL}/api/chat/dialogs`, telegramId);
   const res = await fetch(url, { headers: buildHeaders() });
   if (!res.ok) {
-    throw new Error("Не удалось загрузить диалоги");
+    throw new Error(i18next.t("load_error"));
   }
   return (await res.json()) as DialogsListResponse;
 }
@@ -381,7 +382,7 @@ export async function getGreeting(payload: {
 }): Promise<ChatGreetingResponse> {
   const telegramId = await getTelegramIdOptional();
   if (!telegramId) {
-    throw new Error("Не удалось определить Telegram ID");
+    throw new Error(i18next.t("custom_id_error"));
   }
   const res = await fetch(`${BASE_URL}/api/chat/greeting`, {
     method: "POST",
@@ -396,7 +397,7 @@ export async function getGreeting(payload: {
   });
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(text || "Не удалось получить приветствие");
+    throw new Error(text || i18next.t("load_error"));
   }
   return (await res.json()) as ChatGreetingResponse;
 }
@@ -404,7 +405,7 @@ export async function getGreeting(payload: {
 export async function clearDialog(dialogId: number): Promise<void> {
   const telegramId = await getTelegramIdOptional();
   if (!telegramId) {
-    throw new Error("Не удалось определить Telegram ID");
+    throw new Error(i18next.t("custom_id_error"));
   }
   const url = buildUrlWithTelegramId(
     `${BASE_URL}/api/chat/dialogs/${dialogId}`,
@@ -416,6 +417,6 @@ export async function clearDialog(dialogId: number): Promise<void> {
   });
   if (!res.ok) {
     const text = await res.text();
-    throw new Error(text || "Не удалось очистить диалог");
+    throw new Error(text || i18next.t("delete_error"));
   }
 }

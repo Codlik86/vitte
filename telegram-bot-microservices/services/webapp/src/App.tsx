@@ -1,5 +1,7 @@
 import { useEffect } from "react";
 import { Routes, Route, Link, useLocation, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
+import { useAccessStatus } from "./hooks/useAccessStatus";
 import { Paywall } from "./pages/Paywall";
 import { CharactersList } from "./pages/CharactersList";
 import { CharacterDetails } from "./pages/CharacterDetails";
@@ -14,7 +16,17 @@ import { useTrackMiniAppOpen } from "./hooks/useTrackMiniAppOpen";
 function App() {
   const location = useLocation();
   const navigate = useNavigate();
+  const { t, i18n } = useTranslation();
+  const { data: accessStatus } = useAccessStatus();
   useTrackMiniAppOpen();
+
+  // Sync language from bot DB
+  useEffect(() => {
+    const lang = accessStatus?.language_code;
+    if (lang && (lang === "ru" || lang === "en") && lang !== i18n.language) {
+      i18n.changeLanguage(lang);
+    }
+  }, [accessStatus?.language_code]);
 
   useEffect(() => {
     tg?.expand?.();
@@ -60,12 +72,12 @@ function App() {
           element={
             <div className="min-h-screen flex items-center justify-center bg-slate-950 text-white">
               <div className="text-center space-y-2">
-                <p className="text-sm text-white/60">Страница не найдена</p>
+                <p className="text-sm text-white/60">{t("not_found")}</p>
                 <Link
                   to="/"
                   className="inline-flex px-4 py-2 rounded-2xl bg-white text-slate-950 text-sm"
                 >
-                  На главную
+                  {t("go_home")}
                 </Link>
               </div>
             </div>

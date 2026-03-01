@@ -7,6 +7,7 @@ type TelegramBackButton = {
 
 type TelegramUser = {
   id?: number | string;
+  language_code?: string;
 };
 
 type TelegramInitData = {
