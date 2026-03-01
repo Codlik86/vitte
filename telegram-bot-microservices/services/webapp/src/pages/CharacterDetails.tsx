@@ -139,7 +139,7 @@ export function CharacterDetails() {
           <section className="mt-6 flex flex-1 flex-col space-y-6">
             <div className="relative w-full overflow-hidden rounded-3xl pb-[100%]">
               <img
-                src={persona.avatar_chat_url ?? getAvatarPaths(persona.name, persona.is_custom).chat}
+                src={persona.avatar_chat_url ?? getAvatarPaths(persona.key ?? persona.name, persona.is_custom).chat}
                 alt={persona.name}
                 className="absolute inset-0 h-full w-full rounded-3xl object-cover object-[50%_0%]"
               />
