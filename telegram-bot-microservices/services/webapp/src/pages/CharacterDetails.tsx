@@ -9,11 +9,12 @@ import { useImagesLeft } from "../hooks/useImagesLeft";
 import { getAvatarPaths } from "../lib/avatars";
 import { pub } from "../lib/pub";
 import { tg } from "../lib/telegram";
+import { localizePersona } from "../lib/personaLocale";
 
 export function CharacterDetails() {
   const { id } = useParams();
   const location = useLocation();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const locationState = (location.state as { name?: string } | null) ?? null;
   const fallbackTitle = locationState?.name ?? t("character_fallback");
   const navigate = useNavigate();
@@ -43,7 +44,8 @@ export function CharacterDetails() {
     const load = async () => {
       if (!id) return;
       try {
-        const data = await fetchPersona(Number(id));
+        const raw = await fetchPersona(Number(id));
+        const data = localizePersona(raw, i18n.language);
         setPersona(data);
         setTitle(data.name);
         setSelectedStoryId(null);
@@ -154,7 +156,7 @@ export function CharacterDetails() {
               )}
             </div>
 
-            <InfoBlock title={t("about_character")} text={persona.legend_full ?? persona.long_description} />
+            <InfoBlock title={t("about_character")} text={persona.legend_full ?? persona.description_long ?? persona.long_description} />
 
             {storyCards && storyCards.length > 0 && (
               <StoriesBlock stories={storyCards} selectedId={selectedStoryId} onSelect={setSelectedStoryId} />

@@ -12,10 +12,12 @@ export type PersonaListItem = {
   avatar_card_url?: string | null;
   gender?: string | null;
   kind?: string | null;
+  key?: string | null;
 };
 
 export type PersonaDetails = PersonaListItem & {
   long_description?: string | null;
+  description_long?: string | null;
   archetype?: string | null;
   legend_full?: string | null;
   emotions_full?: string | null;

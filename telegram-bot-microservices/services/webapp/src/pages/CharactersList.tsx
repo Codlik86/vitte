@@ -9,6 +9,7 @@ import { useImagesLeft } from "../hooks/useImagesLeft";
 import { PersonaCard } from "../components/PersonaCard";
 import { DebugTelegramBanner } from "../components/DebugTelegramBanner";
 import { getAvatarPaths } from "../lib/avatars";
+import { localizePersonaListItem } from "../lib/personaLocale";
 
 type CustomPersonaEntry = {
   id: "custom";
@@ -19,7 +20,7 @@ type CustomPersonaEntry = {
 
 export function CharactersList() {
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { data: accessStatus } = useAccessStatus();
   const { imagesLeft } = useImagesLeft();
   const debugMiniapp = import.meta.env.VITE_DEBUG_MINIAPP === "1";
@@ -111,6 +112,7 @@ export function CharactersList() {
             );
           }
 
+          const localized = localizePersonaListItem(p, i18n.language);
           const avatar = {
             card: p.avatar_card_url ?? getAvatarPaths(p.name, p.is_custom).card,
             chat: p.avatar_chat_url ?? getAvatarPaths(p.name, p.is_custom).chat,
@@ -118,11 +120,11 @@ export function CharactersList() {
           return (
             <PersonaCard
               key={p.id}
-              title={p.name}
-              description={p.short_description}
+              title={localized.name}
+              description={localized.short_description}
               gradientVariant="default"
               avatarUrl={avatar.card}
-              onClick={() => navigate(`/characters/${p.id}`, { state: { name: p.name } })}
+              onClick={() => navigate(`/characters/${p.id}`, { state: { name: localized.name } })}
             />
           );
         })}

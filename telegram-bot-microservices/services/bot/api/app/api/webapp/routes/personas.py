@@ -40,6 +40,7 @@ class PersonaListItem(BaseModel):
     avatar_card_url: Optional[str] = None
     gender: Optional[str] = None
     kind: Optional[str] = None
+    key: Optional[str] = None
 
 
 class PersonasListResponse(BaseModel):
@@ -62,6 +63,7 @@ class PersonaDetailResponse(BaseModel):
     avatar_card_url: Optional[str] = None
     gender: Optional[str] = None
     kind: Optional[str] = None
+    key: Optional[str] = None
     story_cards: list[StoryCard] = []
 
 
@@ -133,7 +135,8 @@ async def get_personas(
             avatar_chat_url=None,
             avatar_card_url=None,
             gender=p.gender,
-            kind=p.kind.value if p.kind else None
+            kind=p.kind.value if p.kind else None,
+            key=p.key
         ))
 
     return PersonasListResponse(items=items)
@@ -191,6 +194,7 @@ async def get_persona(
         avatar_card_url=None,
         gender=persona.gender,
         kind=persona.kind.value if persona.kind else None,
+        key=persona.key,
         story_cards=story_cards
     )
 
