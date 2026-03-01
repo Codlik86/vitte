@@ -275,9 +275,11 @@ async def select_persona_and_greet(
                 greeting_image_index = dialog.greeting_image_index or 0
 
             # Send greeting to Telegram
+            lang = user.language_code if user.language_code else "ru"
+            greeting_persona_name = persona.key.capitalize() if (lang == "en" and persona.key) else persona.name
             await send_greeting(
                 chat_id=tg_id,
-                persona_name=persona.name,
+                persona_name=greeting_persona_name,
                 greeting_text=greeting,
                 persona_key=persona.key,
                 story_key=request.story_id or (dialog.story_id if dialog else None),

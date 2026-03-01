@@ -18,6 +18,7 @@ from shared.database.services import get_user_by_id
 from shared.utils import get_logger
 from shared.utils.redis import redis_client
 from shared.llm.personas import PERSONAS
+from app.handlers.messages import PERSONA_KEY_TO_EN_NAME
 
 logger = get_logger(__name__)
 router = Router(name="chat")
@@ -67,6 +68,83 @@ def format_dialog_date(dt: datetime | None) -> str:
     if dt.date() == now.date():
         return dt.strftime("%H:%M")
     return dt.strftime("%d.%m")
+
+
+STORY_TITLES_EN = {
+    "lina": {
+        "sauna_support": "Sauna After Workout",
+        "shower_flirt": "The Broken Shower",
+        "gym_late": "Late Night at the Gym",
+        "competition_prep": "Competition Prep",
+    },
+    "marianna": {
+        "support": "Night Echo",
+        "cozy": "A Game of Trust",
+        "flirt": "Secret Getaway",
+        "serious": "Adults-Only Hotel",
+    },
+    "mei": {
+        "mall_bench": "Meeting at the Mall",
+        "car_ride": "Car Ride",
+        "home_visit": "At Your Place",
+        "regular_visits": "Regular Visits",
+    },
+    "stacey": {
+        "rooftop_sunset": "Evening on the Rooftop",
+        "hints_game": "The Game of Hints and Riddles",
+        "confession": "Unexpected Confession After a Walk",
+        "night_park": "Night Adventure in the Empty Park",
+    },
+    "yuna": {
+        "first_evening": "First Evening",
+        "city_lights": "Walk Through the City Lights",
+        "tea_secrets": "Tea and Secrets",
+    },
+    "taya": {
+        "bar_back_exit": "Bar's Back Exit",
+        "gaming_center": "Gaming Center",
+        "friends_wife": "Alone with a Friend's Wife",
+        "office_elevator": "Office Story",
+    },
+    "julie": {
+        "home_tutor": "Home Tutor",
+        "teacher_punishment": "Teacher Disciplines After Class",
+        "bus_fun": "Fun on the Bus",
+    },
+    "ash": {
+        "living_room": "In the Living Room",
+        "bedroom": "In the Bedroom",
+    },
+    "anastasia": {
+        "classroom": "Daddy and the Teacher in Classroom",
+        "bathroom": "Teacher Locked Herself with Daddy in the Bathroom",
+    },
+    "sasha": {
+        "auction": "Unusual Dates Auction",
+        "plane": "Incident in First Class",
+        "party": "Someone Else's Girl",
+    },
+    "roxy": {
+        "hitchhiker": "Hitchhiker",
+        "maid": "The Maid",
+        "beach": "On the Beach",
+    },
+    "pai": {
+        "dinner": "Dinner with More to Come",
+        "window": "By the Bedroom Window",
+        "car": "Payment in Kind",
+    },
+    "hani": {
+        "photoshoot": "Photo Session",
+        "pool": "Alone in the Pool",
+        "elevator": "Meeting in the Elevator",
+    },
+}
+
+
+def get_story_title_en(persona_key: str, story_key: str) -> str | None:
+    """Get English story title"""
+    return STORY_TITLES_EN.get(persona_key, {}).get(story_key)
 
 
 def get_story_title(persona_key: str, story_key: str) -> str | None:
@@ -177,7 +255,7 @@ def get_dialogs_keyboard_en(dialogs: list[Dialog], can_create_new: bool = True) 
     for dialog in dialogs:
         persona_name = "Character"
         if dialog.persona:
-            persona_name = dialog.persona.name
+            persona_name = PERSONA_KEY_TO_EN_NAME.get(dialog.persona.key, dialog.persona.name) if dialog.persona.key else dialog.persona.name
 
         date_str = format_dialog_date(dialog.updated_at or dialog.created_at)
 
@@ -188,7 +266,7 @@ def get_dialogs_keyboard_en(dialogs: list[Dialog], can_create_new: bool = True) 
 
         # Add story title if exists
         if dialog.story_id and dialog.persona:
-            story_title = get_story_title(dialog.persona.key, dialog.story_id)
+            story_title = get_story_title_en(dialog.persona.key, dialog.story_id)
             if story_title:
                 # Truncate to first 15 chars + "..."
                 truncated = story_title[:15] + "..." if len(story_title) > 15 else story_title

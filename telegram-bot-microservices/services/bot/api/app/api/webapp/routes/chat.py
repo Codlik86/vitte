@@ -144,9 +144,14 @@ async def get_greeting(
 
     # Send to Telegram if requested
     if result.success and result.response and request.send_to_telegram:
-        from shared.database import Dialog
+        from shared.database import Dialog, User
         persona = await db.get(Persona, request.persona_id)
-        persona_name = persona.name if persona else "Персонаж"
+        db_user = await db.get(User, request.telegram_id)
+        lang = db_user.language_code if db_user else "ru"
+        if lang == "en" and persona and persona.key:
+            persona_name = persona.key.capitalize()
+        else:
+            persona_name = persona.name if persona else "Персонаж"
         persona_key = persona.key if persona else None
         story_key = request.story_id
 

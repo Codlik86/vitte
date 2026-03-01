@@ -55,8 +55,9 @@ LIMIT_CHECK_ERROR_RU = "Ошибка проверки лимита"
 LIMIT_CHECK_ERROR_EN = "Error checking limit"
 
 
-# Emoji for each persona name
+# Emoji for each persona name (RU and EN keys)
 PERSONA_EMOJI = {
+    # Russian names
     "Саша": "🔥",
     "Лина": "💪🏼",
     "Мей": "🌸",
@@ -70,6 +71,37 @@ PERSONA_EMOJI = {
     "Юна": "🎀",
     "Эш": "⛓️",
     "Анастасия Романовна": "👑",
+    # English names
+    "Sasha": "🔥",
+    "Lina": "💪🏼",
+    "Mei": "🌸",
+    "Pai": "🍑",
+    "Hani": "🍯",
+    "Roxy": "💋",
+    "Julie": "🍒",
+    "Taya": "🫦",
+    "Marianna": "💎",
+    "Stacey": "✨",
+    "Yuna": "🎀",
+    "Ash": "⛓️",
+    "Anastasia": "👑",
+}
+
+# Mapping from persona key → English display name
+PERSONA_KEY_TO_EN_NAME = {
+    "lina": "Lina",
+    "marianna": "Marianna",
+    "anastasia": "Anastasia",
+    "sasha": "Sasha",
+    "taya": "Taya",
+    "roxy": "Roxy",
+    "julie": "Julie",
+    "stacey": "Stacey",
+    "ash": "Ash",
+    "mei": "Mei",
+    "pai": "Pai",
+    "yuna": "Yuna",
+    "hani": "Hani",
 }
 
 
@@ -262,7 +294,13 @@ async def handle_text_message(message: Message):
         logger.info(f"User {user_id} reached daily message limit")
         return
 
-    persona_name = dialog.persona.name if dialog.persona else ("Персонаж" if lang == "ru" else "Character")
+    if dialog.persona:
+        if lang == "en" and dialog.persona.key:
+            persona_name = PERSONA_KEY_TO_EN_NAME.get(dialog.persona.key, dialog.persona.name)
+        else:
+            persona_name = dialog.persona.name
+    else:
+        persona_name = "Персонаж" if lang == "ru" else "Character"
     display_name = get_persona_display_name(persona_name)
 
     # Send placeholder message with animated dots
