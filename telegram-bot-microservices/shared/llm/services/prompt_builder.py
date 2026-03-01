@@ -17,10 +17,27 @@ from dataclasses import dataclass, field
 from typing import List, Optional, Dict, Any, Set
 
 from ..personas import get_persona
-from ..constants.modes import get_mode_description
-from ..constants.atmospheres import get_atmosphere_description
-from .safety import SAFETY_INSTRUCTION
-from .intimacy import get_intimacy_instruction
+from ..constants.modes import get_mode_description, get_mode_description_en
+from ..constants.atmospheres import get_atmosphere_description, get_atmosphere_description_en
+from .safety import SAFETY_INSTRUCTION, SAFETY_INSTRUCTION_EN, get_supportive_reply
+from .intimacy import get_intimacy_instruction, get_intimacy_instruction_en
+
+# English names for personas (used in dialogue history block)
+_PERSONA_EN_NAMES = {
+    "lina": "Lina",
+    "marianna": "Marianna",
+    "anastasia": "Anastasia",
+    "sasha": "Sasha",
+    "taya": "Taya",
+    "roxy": "Roxy",
+    "julie": "Julie",
+    "stacey": "Stacey",
+    "ash": "Ash",
+    "mei": "Mei",
+    "pai": "Pai",
+    "yuna": "Yuna",
+    "hani": "Hani",
+}
 
 
 @dataclass
@@ -56,6 +73,9 @@ class ChatPromptContext:
     feature_instruction: Optional[str] = None
     voice_enabled: bool = False
 
+    # Язык интерфейса
+    language: str = "ru"
+
 
 class PromptBuilder:
     """Конструктор промптов."""
@@ -64,7 +84,11 @@ class PromptBuilder:
         self.ctx = ctx
         self.persona_data = get_persona(ctx.persona_key)
         self.metadata = self.persona_data["metadata"]
-        self.base_prompt = self.persona_data["base_prompt"]
+        lang = ctx.language or "ru"
+        if lang == "en" and "base_prompt_en" in self.persona_data:
+            self.base_prompt = self.persona_data["base_prompt_en"]
+        else:
+            self.base_prompt = self.persona_data["base_prompt"]
         self.stories = self.persona_data["stories"]
 
     def _build_persona_block(self) -> str:
@@ -77,19 +101,26 @@ class PromptBuilder:
             return ""
 
         story = self.stories[self.ctx.story_key]
-        return f"""
-**История/сцена: {story['title']}**
-
-{story['prompt']}
-        """.strip()
+        if self.ctx.language == "en":
+            header = f"**Story/scene: {story['title']}**"
+        else:
+            header = f"**История/сцена: {story['title']}**"
+        return f"{header}\n\n{story['prompt']}"
 
     def _build_safety_block(self) -> str:
         """Блок безопасности."""
+        if self.ctx.language == "en":
+            return SAFETY_INSTRUCTION_EN
         return SAFETY_INSTRUCTION
 
     def _build_intimacy_block(self) -> str:
         """Блок интимности."""
         # ВСЕГДА включаем полный интимный контент для всех пользователей
+        if self.ctx.language == "en":
+            return get_intimacy_instruction_en(
+                allow_intimate=True,
+                soft_block=False
+            )
         return get_intimacy_instruction(
             allow_intimate=True,  # Всегда True
             soft_block=False  # Всегда False
@@ -97,23 +128,20 @@ class PromptBuilder:
 
     def _build_mode_block(self) -> str:
         """Блок режима диалога."""
-        mode_desc = get_mode_description(self.ctx.mode)
-
-        result = f"""
-**Режим диалога:**
-{mode_desc}
-        """.strip()
-
-        # Добавляем атмосферу если указана
-        if self.ctx.atmosphere:
-            atm_desc = get_atmosphere_description(self.ctx.atmosphere)
-            if atm_desc:
-                result += f"""
-
-**Атмосфера:**
-{atm_desc}
-                """.strip()
-
+        if self.ctx.language == "en":
+            mode_desc = get_mode_description_en(self.ctx.mode)
+            result = f"**Dialogue mode:**\n{mode_desc}"
+            if self.ctx.atmosphere:
+                atm_desc = get_atmosphere_description_en(self.ctx.atmosphere)
+                if atm_desc:
+                    result += f"\n\n**Atmosphere:**\n{atm_desc}"
+        else:
+            mode_desc = get_mode_description(self.ctx.mode)
+            result = f"**Режим диалога:**\n{mode_desc}"
+            if self.ctx.atmosphere:
+                atm_desc = get_atmosphere_description(self.ctx.atmosphere)
+                if atm_desc:
+                    result += f"\n\n**Атмосфера:**\n{atm_desc}"
         return result
 
     def _build_recent_dialogue_block(self) -> str:
@@ -124,9 +152,15 @@ class PromptBuilder:
         # Берём последние 12 сообщений
         recent = self.ctx.recent_messages[-12:]
 
+        is_en = self.ctx.language == "en"
+        persona_name = (
+            _PERSONA_EN_NAMES.get(self.ctx.persona_key, self.ctx.persona_key.capitalize())
+            if is_en else self.metadata["name"]
+        )
+
         lines = []
         for msg in recent:
-            role = "Пользователь" if msg.role == "user" else self.metadata["name"]
+            role = ("User" if is_en else "Пользователь") if msg.role == "user" else persona_name
             # Ограничиваем длину сообщения
             content = msg.content[:500]
             if len(msg.content) > 500:
@@ -135,34 +169,28 @@ class PromptBuilder:
 
         dialogue_text = "\n".join(lines)
 
-        return f"""
-**Последние сообщения диалога:**
-(Используй их чтобы продолжить разговор естественно)
-
-{dialogue_text}
-        """.strip()
+        if is_en:
+            return f"**Recent dialogue:**\n(Use it to continue the conversation naturally)\n\n{dialogue_text}"
+        return f"**Последние сообщения диалога:**\n(Используй их чтобы продолжить разговор естественно)\n\n{dialogue_text}"
 
     def _build_memory_block(self) -> str:
         """Блок памяти (краткая + долгая)."""
         parts = []
+        is_en = self.ctx.language == "en"
 
         if self.ctx.memory_short:
-            parts.append(f"""
-**Краткая память:**
-{self.ctx.memory_short}
-            """.strip())
+            label = "Short memory:" if is_en else "Краткая память:"
+            parts.append(f"**{label}**\n{self.ctx.memory_short}")
 
         if self.ctx.memory_long:
-            parts.append(f"""
-**Долгая память (факты о пользователе):**
-{self.ctx.memory_long}
-            """.strip())
+            label = "Long memory (facts about the user):" if is_en else "Долгая память (факты о пользователе):"
+            parts.append(f"**{label}**\n{self.ctx.memory_long}")
 
         if not parts:
-            parts.append("""
-**Память:**
-Нет особых воспоминаний, но ты открыта к новым разговорам и готова узнать собеседника лучше.
-            """.strip())
+            if is_en:
+                parts.append("**Memory:**\nNo special memories yet, but you're open to new conversations and ready to get to know your partner better.")
+            else:
+                parts.append("**Память:**\nНет особых воспоминаний, но ты открыта к новым разговорам и готова узнать собеседника лучше.")
 
         return "\n\n".join(parts)
 
@@ -171,18 +199,15 @@ class PromptBuilder:
         if not self.ctx.feature_instruction:
             return ""
 
-        result = f"""
-**Режим улучшений:**
-{self.ctx.feature_instruction}
-        """.strip()
+        is_en = self.ctx.language == "en"
+        label = "Enhancements mode:" if is_en else "Режим улучшений:"
+        result = f"**{label}**\n{self.ctx.feature_instruction}"
 
         if self.ctx.voice_enabled:
-            result += """
-
-**Голосовой режим:**
-Твои ответы будут озвучены. Пиши более разговорно,
-избегай сложных конструкций и длинных предложений.
-            """.strip()
+            if is_en:
+                result += "\n\n**Voice mode:**\nYour responses will be read aloud. Write conversationally, avoid complex constructions and long sentences."
+            else:
+                result += "\n\n**Голосовой режим:**\nТвои ответы будут озвучены. Пиши более разговорно, избегай сложных конструкций и длинных предложений."
 
         return result
 
@@ -227,8 +252,23 @@ class PromptBuilder:
 
     def _build_no_repetition_block(self) -> str:
         """Блок против повторений (усиленная версия с динамическими запретами)."""
-        base_instruction = """
-**КРИТИЧЕСКИ ВАЖНО - Запрет на повторения:**
+        is_en = self.ctx.language == "en"
+
+        if is_en:
+            base_instruction = """**CRITICALLY IMPORTANT — No repetition:**
+
+ABSOLUTE BAN on repeating:
+- Identical sentences within one response
+- Phrases you've already used in previous messages
+- Descriptions of actions you've already done (if you already "smiled" — use a different action)
+- Template expressions like "I feel...", "Mmm...", "Oh..." — vary your wording
+
+Every response must be UNIQUE and develop the situation in a new way.
+Use varied vocabulary, different sentence structures, new descriptions.
+
+If you don't know what to write — it's BETTER to write a short but unique response than to repeat what's already been said."""
+        else:
+            base_instruction = """**КРИТИЧЕСКИ ВАЖНО - Запрет на повторения:**
 
 АБСОЛЮТНЫЙ ЗАПРЕТ на повторение:
 - Одинаковых предложений в одном ответе
@@ -239,22 +279,18 @@ class PromptBuilder:
 Каждый твой ответ должен быть УНИКАЛЬНЫМ и развивать ситуацию новым способом.
 Используй разнообразный словарный запас, различные конструкции предложений, новые описания.
 
-Если не знаешь что написать - ЛУЧШЕ написать короткий но уникальный ответ, чем повторить уже сказанное.
-        """.strip()
+Если не знаешь что написать - ЛУЧШЕ написать короткий но уникальный ответ, чем повторить уже сказанное."""
 
         # Добавляем динамический список запрещённых фраз
         forbidden_phrases = self._extract_phrases_from_history()
 
         if forbidden_phrases:
-            phrases_list = "\n".join([f"- {phrase}" for phrase in list(forbidden_phrases)[:10]])  # Ограничиваем 10 фразами
-            dynamic_block = f"""
-
-**ЗАПРЕЩЁННЫЕ ФРАЗЫ (ты уже использовала их, НЕ повторяй):**
-{phrases_list}
-
-Придумай НОВЫЕ способы выражения мыслей и действий!
-            """.strip()
-            return base_instruction + "\n\n" + dynamic_block
+            phrases_list = "\n".join([f"- {phrase}" for phrase in list(forbidden_phrases)[:10]])
+            if is_en:
+                dynamic_block = f"\n\n**FORBIDDEN PHRASES (you've already used these, DO NOT repeat):**\n{phrases_list}\n\nFind NEW ways to express thoughts and actions!"
+            else:
+                dynamic_block = f"\n\n**ЗАПРЕЩЁННЫЕ ФРАЗЫ (ты уже использовала их, НЕ повторяй):**\n{phrases_list}\n\nПридумай НОВЫЕ способы выражения мыслей и действий!"
+            return base_instruction + dynamic_block
 
         return base_instruction
 

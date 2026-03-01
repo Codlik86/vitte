@@ -18,84 +18,110 @@
 """
 
 from .lina import LINA_METADATA, LINA_BASE_PROMPT, LINA_STORIES
+from .lina.base_prompt import LINA_BASE_PROMPT_EN
 from .marianna import MARIANNA_METADATA, MARIANNA_BASE_PROMPT, MARIANNA_STORIES
+from .marianna.base_prompt import MARIANNA_BASE_PROMPT_EN
 from .mei import MEI_METADATA, MEI_BASE_PROMPT, MEI_STORIES
+from .mei.base_prompt import MEI_BASE_PROMPT_EN
 from .stacey import STACEY_METADATA, STACEY_BASE_PROMPT, STACEY_STORIES
+from .stacey.base_prompt import STACEY_BASE_PROMPT_EN
 from .yuna import YUNA_METADATA, YUNA_BASE_PROMPT, YUNA_STORIES
+from .yuna.base_prompt import YUNA_BASE_PROMPT_EN
 from .taya import TAYA_METADATA, TAYA_BASE_PROMPT, TAYA_STORIES
+from .taya.base_prompt import TAYA_BASE_PROMPT_EN
 from .julie import JULIE_METADATA, JULIE_BASE_PROMPT, JULIE_STORIES
+from .julie.base_prompt import JULIE_BASE_PROMPT_EN
 from .ash import ASH_METADATA, ASH_BASE_PROMPT, ASH_STORIES
+from .ash.base_prompt import ASH_BASE_PROMPT_EN
 from .anastasia import ANASTASIA_METADATA, ANASTASIA_BASE_PROMPT, ANASTASIA_STORIES
+from .anastasia.base_prompt import ANASTASIA_BASE_PROMPT_EN
 from .sasha import SASHA_METADATA, SASHA_BASE_PROMPT, SASHA_STORIES
+from .sasha.base_prompt import SASHA_BASE_PROMPT_EN
 from .roxy import ROXY_METADATA, ROXY_BASE_PROMPT, ROXY_STORIES
+from .roxy.base_prompt import ROXY_BASE_PROMPT_EN
 from .pai import PAI_METADATA, PAI_BASE_PROMPT, PAI_STORIES
+from .pai.base_prompt import PAI_BASE_PROMPT_EN
 from .hani import HANI_METADATA, HANI_BASE_PROMPT, HANI_STORIES
+from .hani.base_prompt import HANI_BASE_PROMPT_EN
 
 # Словарь всех персонажей для быстрого доступа по ключу
 PERSONAS = {
     "lina": {
         "metadata": LINA_METADATA,
         "base_prompt": LINA_BASE_PROMPT,
+        "base_prompt_en": LINA_BASE_PROMPT_EN,
         "stories": LINA_STORIES,
     },
     "marianna": {
         "metadata": MARIANNA_METADATA,
         "base_prompt": MARIANNA_BASE_PROMPT,
+        "base_prompt_en": MARIANNA_BASE_PROMPT_EN,
         "stories": MARIANNA_STORIES,
     },
     "mei": {
         "metadata": MEI_METADATA,
         "base_prompt": MEI_BASE_PROMPT,
+        "base_prompt_en": MEI_BASE_PROMPT_EN,
         "stories": MEI_STORIES,
     },
     "stacey": {
         "metadata": STACEY_METADATA,
         "base_prompt": STACEY_BASE_PROMPT,
+        "base_prompt_en": STACEY_BASE_PROMPT_EN,
         "stories": STACEY_STORIES,
     },
     "yuna": {
         "metadata": YUNA_METADATA,
         "base_prompt": YUNA_BASE_PROMPT,
+        "base_prompt_en": YUNA_BASE_PROMPT_EN,
         "stories": YUNA_STORIES,
     },
     "taya": {
         "metadata": TAYA_METADATA,
         "base_prompt": TAYA_BASE_PROMPT,
+        "base_prompt_en": TAYA_BASE_PROMPT_EN,
         "stories": TAYA_STORIES,
     },
     "julie": {
         "metadata": JULIE_METADATA,
         "base_prompt": JULIE_BASE_PROMPT,
+        "base_prompt_en": JULIE_BASE_PROMPT_EN,
         "stories": JULIE_STORIES,
     },
     "ash": {
         "metadata": ASH_METADATA,
         "base_prompt": ASH_BASE_PROMPT,
+        "base_prompt_en": ASH_BASE_PROMPT_EN,
         "stories": ASH_STORIES,
     },
     "anastasia": {
         "metadata": ANASTASIA_METADATA,
         "base_prompt": ANASTASIA_BASE_PROMPT,
+        "base_prompt_en": ANASTASIA_BASE_PROMPT_EN,
         "stories": ANASTASIA_STORIES,
     },
     "sasha": {
         "metadata": SASHA_METADATA,
         "base_prompt": SASHA_BASE_PROMPT,
+        "base_prompt_en": SASHA_BASE_PROMPT_EN,
         "stories": SASHA_STORIES,
     },
     "roxy": {
         "metadata": ROXY_METADATA,
         "base_prompt": ROXY_BASE_PROMPT,
+        "base_prompt_en": ROXY_BASE_PROMPT_EN,
         "stories": ROXY_STORIES,
     },
     "pai": {
         "metadata": PAI_METADATA,
         "base_prompt": PAI_BASE_PROMPT,
+        "base_prompt_en": PAI_BASE_PROMPT_EN,
         "stories": PAI_STORIES,
     },
     "hani": {
         "metadata": HANI_METADATA,
         "base_prompt": HANI_BASE_PROMPT,
+        "base_prompt_en": HANI_BASE_PROMPT_EN,
         "stories": HANI_STORIES,
     },
 }

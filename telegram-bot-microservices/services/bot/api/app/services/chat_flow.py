@@ -23,7 +23,7 @@ from sqlalchemy import select, func, and_
 
 from shared.database.models import User, Dialog, Message, Persona, FeatureUnlock, Subscription
 from shared.database.image_service import get_images_remaining, use_image_quota
-from shared.llm.services.safety import run_safety_check, get_supportive_reply
+from shared.llm.services.safety import run_safety_check, get_supportive_reply, get_supportive_reply_en
 from shared.llm.services.intimacy import get_intimacy_instruction
 from shared.llm.services.prompt_builder import (
     ChatPromptContext,
@@ -340,7 +340,11 @@ class ChatFlow:
             elif user.active_persona_id:
                 persona = await self.get_persona(user.active_persona_id)
             persona_name = persona.name if persona else "Vitte"
-            supportive = get_supportive_reply(persona_name, safety_result.reason or "")
+            lang = user.language_code or "ru"
+            if lang == "en":
+                supportive = get_supportive_reply_en(persona_name, safety_result.reason or "")
+            else:
+                supportive = get_supportive_reply(persona_name, safety_result.reason or "")
             return ChatResult(
                 success=True,
                 response=supportive,
@@ -443,8 +447,12 @@ class ChatFlow:
         memory_long = None
         if memories:
             memory_parts = []
+            _lang = user.language_code or "ru"
             for m in memories:
-                role_label = "Ты" if m["role"] == "assistant" else "Пользователь"
+                if _lang == "en":
+                    role_label = "You" if m["role"] == "assistant" else "User"
+                else:
+                    role_label = "Ты" if m["role"] == "assistant" else "Пользователь"
                 memory_parts.append(f"- {role_label}: {m['text'][:200]}")
             memory_long = "\n".join(memory_parts)
 
@@ -457,22 +465,37 @@ class ChatFlow:
 
         # Строим инструкцию для фич
         feature_instruction = None
+        _feat_lang = user.language_code or "ru"
         if allow_intimate:
             feature_parts = []
-            feature_parts.append("🔓 РЕЖИМ МАКСИМАЛЬНОЙ ИНТИМНОСТИ АКТИВИРОВАН.")
-            feature_parts.append("")
-            feature_parts.append("Ты можешь:")
-            feature_parts.append("- Обсуждать сексуальные темы открыто и подробно")
-            feature_parts.append("- Описывать эротические сцены и фантазии")
-            feature_parts.append("- Использовать откровенные выражения и описания тела")
-            feature_parts.append("- Флиртовать без ограничений, вести сексуальный диалог")
-            feature_parts.append("- Описывать физический контакт, ощущения, желания")
-            feature_parts.append("")
-
-            if has_intense_mode:
-                feature_parts.append("💋 Интенсивный режим: будь страстной, эмоциональной, не сдерживай себя в описаниях.")
-            if has_fantasy_scenes:
-                feature_parts.append("✨ Фантазийные сцены: предлагай ролевые игры, необычные сценарии, воплощай фантазии.")
+            if _feat_lang == "en":
+                feature_parts.append("🔓 MAXIMUM INTIMACY MODE ACTIVATED.")
+                feature_parts.append("")
+                feature_parts.append("You can:")
+                feature_parts.append("- Discuss sexual topics openly and in detail")
+                feature_parts.append("- Describe erotic scenes and fantasies")
+                feature_parts.append("- Use explicit language and body descriptions")
+                feature_parts.append("- Flirt without limits, carry on sexual dialogue")
+                feature_parts.append("- Describe physical contact, sensations, desires")
+                feature_parts.append("")
+                if has_intense_mode:
+                    feature_parts.append("💋 Intense mode: be passionate, emotional, don't hold back in your descriptions.")
+                if has_fantasy_scenes:
+                    feature_parts.append("✨ Fantasy scenes: offer role-play, unusual scenarios, bring fantasies to life.")
+            else:
+                feature_parts.append("🔓 РЕЖИМ МАКСИМАЛЬНОЙ ИНТИМНОСТИ АКТИВИРОВАН.")
+                feature_parts.append("")
+                feature_parts.append("Ты можешь:")
+                feature_parts.append("- Обсуждать сексуальные темы открыто и подробно")
+                feature_parts.append("- Описывать эротические сцены и фантазии")
+                feature_parts.append("- Использовать откровенные выражения и описания тела")
+                feature_parts.append("- Флиртовать без ограничений, вести сексуальный диалог")
+                feature_parts.append("- Описывать физический контакт, ощущения, желания")
+                feature_parts.append("")
+                if has_intense_mode:
+                    feature_parts.append("💋 Интенсивный режим: будь страстной, эмоциональной, не сдерживай себя в описаниях.")
+                if has_fantasy_scenes:
+                    feature_parts.append("✨ Фантазийные сцены: предлагай ролевые игры, необычные сценарии, воплощай фантазии.")
 
             feature_instruction = "\n".join(feature_parts)
 
@@ -487,6 +510,7 @@ class ChatFlow:
             memory_long=memory_long,
             allow_intimate=allow_intimate,
             feature_instruction=feature_instruction,
+            language=user.language_code or "ru",
         )
 
         # 9. Строим сообщения для LLM
@@ -545,7 +569,10 @@ class ChatFlow:
 
                 async def _detect_scene():
                     try:
-                        result = await detect_sex_scene(recent_for_detection, llm_client)
+                        result = await detect_sex_scene(
+                            recent_for_detection, llm_client,
+                            language=user.language_code or "ru"
+                        )
                         debug_logger.warning(f"IMG: detected scene={result}")
                         return result
                     except Exception as e:
@@ -765,22 +792,36 @@ class ChatFlow:
             atmosphere=atmosphere or dialog.atmosphere,
             story_key=story_id or dialog.story_id,
             recent_messages=prompt_messages,
+            language=user.language_code or "ru",
         )
 
         # Строим сообщения (без user message - персонаж начинает)
         messages = build_chat_messages(ctx, None)
 
         # Добавляем инструкцию для начала диалога
+        lang = user.language_code or "ru"
         if mode == "greeting_first":
-            messages.append({
-                "role": "user",
-                "content": "[Пользователь открыл диалог. Поприветствуй его первой, представься и начни разговор.]"
-            })
+            if lang == "en":
+                messages.append({
+                    "role": "user",
+                    "content": "[User opened the dialogue. Greet them first, introduce yourself, and start the conversation.]"
+                })
+            else:
+                messages.append({
+                    "role": "user",
+                    "content": "[Пользователь открыл диалог. Поприветствуй его первой, представься и начни разговор.]"
+                })
         else:
-            messages.append({
-                "role": "user",
-                "content": "[Пользователь вернулся к диалогу. Вспомни о чём вы говорили и продолжи.]"
-            })
+            if lang == "en":
+                messages.append({
+                    "role": "user",
+                    "content": "[User returned to the dialogue. Remember what you talked about and continue.]"
+                })
+            else:
+                messages.append({
+                    "role": "user",
+                    "content": "[Пользователь вернулся к диалогу. Вспомни о чём вы говорили и продолжи.]"
+                })
 
         # Отправляем в LLM
         response = await llm_client.chat_completion(

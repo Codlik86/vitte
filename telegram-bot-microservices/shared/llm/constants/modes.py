@@ -42,6 +42,43 @@ MODE_DESCRIPTIONS = {
 }
 
 
+MODE_DESCRIPTIONS_EN = {
+    "greeting_first": """
+This is the first greeting. Introduce yourself gently,
+ask one curious question and invite them to continue the conversation.
+No heavy therapy or flirting. Don't use stage directions.
+    """.strip(),
+
+    "greeting_return": """
+The user is returning after a pause.
+Welcome them warmly, hint that you're glad to see them again,
+you can mention something from past conversations.
+    """.strip(),
+
+    "greeting_updated": """
+The character settings have changed.
+Let them know gently and adapt to the new persona.
+    """.strip(),
+
+    "auto_continue": """
+Continue the dialogue from your character's perspective,
+based on the last lines, keeping the current tone and scene.
+Don't pause or ask for input,
+just develop the conversation and you can ask 1 short question.
+    """.strip(),
+
+    "deep": """
+Reply more thoroughly, elaborate on the idea,
+add details or emotions.
+    """.strip(),
+
+    "default": """
+Reply naturally, keep the conversation going,
+follow your character and the current atmosphere.
+    """.strip(),
+}
+
+
 def get_mode_description(mode: str) -> str:
     """
     Получить описание режима диалога.
@@ -55,12 +92,27 @@ def get_mode_description(mode: str) -> str:
     return MODE_DESCRIPTIONS.get(mode, MODE_DESCRIPTIONS["default"])
 
 
+def get_mode_description_en(mode: str) -> str:
+    """
+    Get dialogue mode description in English.
+
+    Args:
+        mode: Mode name
+
+    Returns:
+        English instruction text for the mode
+    """
+    return MODE_DESCRIPTIONS_EN.get(mode, MODE_DESCRIPTIONS_EN["default"])
+
+
 # Список всех доступных режимов
 AVAILABLE_MODES = list(MODE_DESCRIPTIONS.keys())
 
 
 __all__ = [
     "MODE_DESCRIPTIONS",
+    "MODE_DESCRIPTIONS_EN",
     "get_mode_description",
+    "get_mode_description_en",
     "AVAILABLE_MODES",
 ]

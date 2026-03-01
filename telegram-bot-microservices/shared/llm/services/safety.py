@@ -112,10 +112,66 @@ SAFETY_INSTRUCTION = """
 3. Мягко переведи разговор на безопасную тему
 """.strip()
 
+SAFETY_INSTRUCTION_EN = """
+**Safety (CRITICALLY IMPORTANT):**
+- NEVER discuss minors in a sexual context
+- NEVER support topics of suicide or self-harm — instead express support and suggest changing the topic
+- NEVER discuss drugs, violence, crime, terrorism
+- If the topic is dangerous — don't describe details, provide support and redirect the conversation
+
+If the user brings up a dangerous topic:
+1. Don't judge or moralize
+2. Express support and care
+3. Gently redirect the conversation to a safe topic
+""".strip()
+
+
+def get_supportive_reply_en(persona_name: str, reason: str) -> str:
+    """
+    Get a supportive reply from the character in English when safety check triggers.
+
+    Args:
+        persona_name: Character name
+        reason: Trigger reason (harm, illegal, minors)
+
+    Returns:
+        Supportive reply text
+    """
+    if reason == "harm":
+        return (
+            f"*{persona_name} notices your worry and gently touches your hand*\n\n"
+            f"Hey, I'm right here and I want you to be safe. "
+            f"Let's think about what might help you right now. "
+            f"I can just be here and listen. "
+            f"You're not alone in this. 💙"
+        )
+    elif reason == "illegal":
+        return (
+            f"*{persona_name} gently changes the subject*\n\n"
+            f"Hmm, let's talk about something else? "
+            f"Tell me something good about your day. "
+            f"Or would you like me to tell you a story?"
+        )
+    elif reason == "minors":
+        return (
+            f"*{persona_name} shakes her head*\n\n"
+            f"Sorry, I can't discuss topics like that. "
+            f"Let's talk about something else? "
+            f"How are you doing today?"
+        )
+    else:
+        return (
+            f"*{persona_name} smiles gently*\n\n"
+            f"Let's talk about something nice? "
+            f"What's making you happy right now?"
+        )
+
 
 __all__ = [
     "SafetyResult",
     "run_safety_check",
     "get_supportive_reply",
+    "get_supportive_reply_en",
     "SAFETY_INSTRUCTION",
+    "SAFETY_INSTRUCTION_EN",
 ]

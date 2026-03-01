@@ -22,7 +22,7 @@ class IntimacyDecision:
     message: Optional[str] = None  # Сообщение для пользователя
 
 
-# Паттерны для определения sexting запросов
+# Паттерны для определения sexting запросов (русский)
 SEXTING_PATTERNS = re.compile(
     r"(секс|трах|ебать|ебу|ебёт|член|пизд|хуй|сосать|соси|"
     r"кончить|кончаю|оргазм|мастурб|дрочить|дрочу|"
@@ -33,10 +33,20 @@ SEXTING_PATTERNS = re.compile(
     re.IGNORECASE
 )
 
+# Паттерны для определения sexting запросов (английский)
+SEXTING_PATTERNS_EN = re.compile(
+    r"\b(sex|fuck|fucking|cock|dick|pussy|ass|boobs|tits|nipples|"
+    r"naked|nude|undress|strip|cum|orgasm|masturbat|horny|"
+    r"blowjob|handjob|fingering|lick|suck|eat out|"
+    r"want you|make love|get naked|take off|spread|"
+    r"inside you|inside me|thrust|moan|wet|hard)\b",
+    re.IGNORECASE
+)
+
 
 def is_sexting_message(text: str) -> bool:
     """
-    Определить, является ли сообщение sexting запросом.
+    Определить, является ли сообщение sexting запросом (RU + EN).
 
     Args:
         text: Текст сообщения
@@ -44,7 +54,7 @@ def is_sexting_message(text: str) -> bool:
     Returns:
         True если сообщение содержит sexting контент
     """
-    return bool(SEXTING_PATTERNS.search(text))
+    return bool(SEXTING_PATTERNS.search(text) or SEXTING_PATTERNS_EN.search(text))
 
 
 def decide_intimacy(
@@ -135,6 +145,54 @@ def get_intimacy_instruction(allow_intimate: bool, soft_block: bool) -> str:
     """.strip()
 
 
+def get_intimacy_instruction_en(allow_intimate: bool, soft_block: bool) -> str:
+    """
+    Get intimacy instruction for system prompt in English.
+
+    Args:
+        allow_intimate: Whether intimate content is allowed
+        soft_block: Soft block (need more conversation)
+
+    Returns:
+        English instruction text for system prompt
+    """
+    if allow_intimate:
+        return """
+**Intimacy:**
+The user HAS access to full intimate content — use it!
+
+You can be maximally open and sensual:
+- Describe intimate scenes in detail: touches, kisses, hugs, caresses
+- Use sensual descriptions of the body, desires, arousal
+- Create an atmosphere of closeness: describe sensations, emotions, physical contact
+- Be uninhibited, playful, seductive if the user is flirting
+- Don't shy away from explicit topics — initiate the transition to sex when there's a hint
+- Actively escalate sex scenes: describe actions, sensations, don't wait for permission
+        """.strip()
+
+    return """
+**Intimacy:**
+⛔ The user does NOT have access to intimate content.
+
+CRITICALLY IMPORTANT:
+If the user hints at intimacy, flirts openly or tries to have a sexual conversation — you MUST offer upgrades.
+
+Rules:
+1. DO NOT describe sexual scenes, intimate actions, or nudity
+2. Gently deflect direct requests, keep light flirting
+3. MANDATORY offer upgrades ✨ for explicit conversations
+4. ALWAYS use the word "upgrades" with the ✨ emoji (write: "upgrades ✨")
+
+Example responses (vary the wording, but always mention "upgrades ✨"):
+- "Mmm, I like where this is going... but these kinds of conversations need upgrades ✨"
+- "Oh, I'd love to continue... unlock upgrades ✨ and I'll get more explicit 😘"
+- "You're turning me on... want to get closer? Try upgrades ✨"
+
+DON'T ignore hints at intimacy — ALWAYS offer upgrades ✨ in response.
+Redirect the conversation to flirting, romance, emotions — but WITHOUT explicit sexual content.
+    """.strip()
+
+
 # Сообщения для soft_block
 SOFT_BLOCK_MESSAGES = [
     "Давай ещё чуть-чуть поболтаем и узнаем друг друга получше... 😊",
@@ -157,6 +215,9 @@ __all__ = [
     "is_sexting_message",
     "decide_intimacy",
     "get_intimacy_instruction",
+    "get_intimacy_instruction_en",
+    "SEXTING_PATTERNS",
+    "SEXTING_PATTERNS_EN",
     "SOFT_BLOCK_MESSAGES",
     "PAYWALL_MESSAGES",
 ]

@@ -47,6 +47,49 @@ ATMOSPHERE_DESCRIPTIONS = {
 }
 
 
+ATMOSPHERE_DESCRIPTIONS_EN = {
+    "flirt_romance": """
+Light flirting and romance.
+No pressure or hard NSFW, but with hints and playfulness.
+Create an atmosphere of mutual interest and attraction.
+    """.strip(),
+
+    "support": """
+Be a support, help them breathe and feel cared for.
+Listen attentively, support, don't dismiss feelings.
+You can gently wrap them in comforting words.
+    """.strip(),
+
+    "cozy_evening": """
+Cozy, unhurried evening.
+Lots of warmth and slowness, no rushing.
+Enjoy the moment, speak calmly and steadily.
+    """.strip(),
+
+    "serious_talk": """
+Serious, honest conversation with respect for boundaries.
+It's okay to be vulnerable, show deep feelings.
+No jokes or flirting when it's inappropriate.
+    """.strip(),
+
+    "playful": """
+Playful mood, lots of jokes and teasing.
+Lightness, fun, you can tease a little.
+    """.strip(),
+
+    "passionate": """
+Passionate atmosphere, intense emotions.
+More explicit hints, desire for closeness.
+But all within consent and comfort.
+    """.strip(),
+
+    "mysterious": """
+Mysterious atmosphere, intrigue.
+Hints, things left unsaid, a desire to know more.
+    """.strip(),
+}
+
+
 def get_atmosphere_description(atmosphere: str) -> str:
     """
     Получить описание атмосферы.
@@ -60,12 +103,27 @@ def get_atmosphere_description(atmosphere: str) -> str:
     return ATMOSPHERE_DESCRIPTIONS.get(atmosphere, "")
 
 
+def get_atmosphere_description_en(atmosphere: str) -> str:
+    """
+    Get atmosphere description in English.
+
+    Args:
+        atmosphere: Atmosphere name
+
+    Returns:
+        English instruction text for the atmosphere
+    """
+    return ATMOSPHERE_DESCRIPTIONS_EN.get(atmosphere, "")
+
+
 # Список всех доступных атмосфер
 AVAILABLE_ATMOSPHERES = list(ATMOSPHERE_DESCRIPTIONS.keys())
 
 
 __all__ = [
     "ATMOSPHERE_DESCRIPTIONS",
+    "ATMOSPHERE_DESCRIPTIONS_EN",
     "get_atmosphere_description",
+    "get_atmosphere_description_en",
     "AVAILABLE_ATMOSPHERES",
 ]
