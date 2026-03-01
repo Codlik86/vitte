@@ -64,12 +64,10 @@ def get_language_select_keyboard(lang: str, current_lang: str) -> InlineKeyboard
     if current_lang == "ru":
         ru_text += " ✓"
 
-    # English button - in development
+    # English button
     en_text = "🇬🇧 English"
     if current_lang == "en":
         en_text += " ✓"
-    else:
-        en_text += " (soon)" if lang == "en" else " (скоро)"
 
     # Spanish button - coming soon
     es_text = "🇪🇸 Español"
@@ -183,9 +181,22 @@ async def on_select_russian(callback: CallbackQuery):
         # Update language in DB
         async for db in get_db():
             await update_user(db, user_id, language_code="ru")
+
+        # Invalidate locale cache
+        from app.locales.locales_manager import invalidate_locale_cache
+        invalidate_locale_cache(user_id)
+
+        # Set Russian bot commands for this user
+        from app.commands import COMMANDS_RU
+        from aiogram.types import BotCommandScopeChat
+        await callback.bot.set_my_commands(
+            commands=COMMANDS_RU,
+            scope=BotCommandScopeChat(chat_id=user_id)
+        )
+
         await callback.answer("🇷🇺 Язык изменён на Русский", show_alert=True)
 
-        # Refresh language selection screen
+        # Refresh language selection screen in Russian
         text = LANGUAGE_SELECT_RU
         keyboard = get_language_select_keyboard(lang="ru", current_lang="ru")
         await callback.message.answer(text, reply_markup=keyboard, parse_mode="HTML")
@@ -195,15 +206,37 @@ async def on_select_russian(callback: CallbackQuery):
 
 @router.callback_query(F.data == "settings:lang_en")
 async def on_select_english(callback: CallbackQuery):
-    """Handle English language selection - in development"""
-    lang = await get_user_language(callback.from_user.id)
+    """Handle English language selection"""
+    user_id = callback.from_user.id
+    current_lang = await get_user_language(user_id)
 
-    if lang == "ru":
-        await callback.answer("🚧 Английский язык в разработке", show_alert=True)
+    if current_lang == "en":
+        await callback.answer("🇬🇧 English is already selected", show_alert=False)
     else:
-        await callback.answer("🚧 English is coming soon", show_alert=True)
+        # Update language in DB
+        async for db in get_db():
+            await update_user(db, user_id, language_code="en")
 
-    logger.info(f"User {callback.from_user.id} tried to select English (in development)")
+        # Invalidate locale cache
+        from app.locales.locales_manager import invalidate_locale_cache
+        invalidate_locale_cache(user_id)
+
+        # Set English bot commands for this user
+        from app.commands import COMMANDS_EN
+        from aiogram.types import BotCommandScopeChat
+        await callback.bot.set_my_commands(
+            commands=COMMANDS_EN,
+            scope=BotCommandScopeChat(chat_id=user_id)
+        )
+
+        await callback.answer("🇬🇧 Language changed to English", show_alert=True)
+
+        # Refresh language selection screen in English
+        text = LANGUAGE_SELECT_EN
+        keyboard = get_language_select_keyboard(lang="en", current_lang="en")
+        await callback.message.answer(text, reply_markup=keyboard, parse_mode="HTML")
+
+    logger.info(f"User {user_id} selected English language")
 
 
 @router.callback_query(F.data == "settings:lang_es")

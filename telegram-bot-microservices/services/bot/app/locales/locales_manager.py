@@ -43,14 +43,20 @@ async def get_user_locale(event_from_user: User, **kwargs) -> str:
     if user_id in _locale_cache:
         return _locale_cache[user_id]
 
-    # TODO: Fetch from database when User model has language_code field
-    # from shared.database import get_user_by_id, get_db
-    # async for db in get_db():
-    #     user = await get_user_by_id(db, user_id)
-    #     if user and user.language_code:
-    #         _locale_cache[user_id] = user.language_code
-    #         return user.language_code
-    #     break
+    # Fetch from database (user's explicit language choice)
+    try:
+        from shared.database import get_db
+        from shared.database.services import get_user_by_id
+        async for db in get_db():
+            user = await get_user_by_id(db, user_id)
+            if user:
+                lang = user.get("language_code") if isinstance(user, dict) else user.language_code
+                if lang and lang in ["ru", "en"]:
+                    _locale_cache[user_id] = lang
+                    return lang
+            break
+    except Exception:
+        pass
 
     # Fallback to Telegram language or default
     locale = event_from_user.language_code or "ru"

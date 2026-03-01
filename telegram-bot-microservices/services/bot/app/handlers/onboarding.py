@@ -104,13 +104,17 @@ async def on_language_russian(callback: CallbackQuery):
 
 @router.callback_query(F.data == "lang:en")
 async def on_language_english(callback: CallbackQuery):
-    """Handle English language selection - WIP"""
-    await callback.answer(ENGLISH_WIP, show_alert=True)
+    """Handle English language selection"""
+    await callback.answer()
     user_id = callback.from_user.id
 
-    # Save language to DB (for future when EN is ready)
+    # Save language to DB
     async for db in get_db():
         await update_user(db, user_id, language_code="en")
+
+    # Invalidate locale cache so i18n picks up new language
+    from app.locales.locales_manager import invalidate_locale_cache
+    invalidate_locale_cache(user_id)
 
     # Set English commands for this user
     await callback.bot.set_my_commands(
@@ -118,7 +122,14 @@ async def on_language_english(callback: CallbackQuery):
         scope=BotCommandScopeChat(chat_id=user_id)
     )
 
-    logger.info(f"User {user_id} tried English (WIP), commands set")
+    # Show age verification in English
+    await callback.message.edit_text(
+        AGE_VERIFICATION_EN,
+        reply_markup=get_age_verification_keyboard(),
+        parse_mode="HTML"
+    )
+
+    logger.info(f"User {user_id} selected English, commands set")
 
 
 @router.callback_query(F.data == "lang:es")
@@ -143,7 +154,19 @@ async def on_age_confirmed(callback: CallbackQuery):
     # Import here to avoid circular imports
     from app.handlers.menu import show_main_menu
 
-    # Show welcome menu for first-time users
-    await show_main_menu(callback, lang="ru", is_welcome=True)
+    # Get user's selected language from DB
+    user_id = callback.from_user.id
+    async for db in get_db():
+        from shared.database.services import get_user_by_id as _get_user
+        user = await _get_user(db, user_id)
+        lang = "ru"
+        if user:
+            lang_code = user.get("language_code") if isinstance(user, dict) else user.language_code
+            if lang_code in ["ru", "en"]:
+                lang = lang_code
+        break
 
-    logger.info(f"User {callback.from_user.id} confirmed 18+ -> welcome menu")
+    # Show welcome menu for first-time users
+    await show_main_menu(callback, lang=lang, is_welcome=True)
+
+    logger.info(f"User {user_id} confirmed 18+ -> welcome menu (lang={lang})")
