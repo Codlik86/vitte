@@ -15,14 +15,14 @@ class Config:
 
     # ComfyUI - Multiple hosts support for parallel processing
     # Format: "host1:port1,host2:port2" or single "host:port"
-    COMFYUI_HOSTS = os.getenv("COMFYUI_HOSTS", "109.172.100.40:8188,109.172.100.40:8189")
+    COMFYUI_HOSTS = os.getenv("COMFYUI_HOSTS", "87.228.124.214:8188,87.228.124.214:8189")
 
     # Parse hosts list
     _hosts_list = [h.strip() for h in COMFYUI_HOSTS.split(",") if h.strip()]
     COMFYUI_URLS = [f"http://{host}" for host in _hosts_list]
 
     # Backwards compatibility - primary host
-    COMFYUI_BASE_URL = COMFYUI_URLS[0] if COMFYUI_URLS else "http://109.172.100.40:8188"
+    COMFYUI_BASE_URL = COMFYUI_URLS[0] if COMFYUI_URLS else "http://87.228.124.214:8188"
 
     # Workflows directory
     BASE_DIR = Path(__file__).parent.parent
