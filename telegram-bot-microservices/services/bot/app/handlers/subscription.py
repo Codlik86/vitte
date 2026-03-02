@@ -120,13 +120,13 @@ def get_subscription_keyboard_ru() -> InlineKeyboardMarkup:
     """Subscription plans keyboard (Russian)"""
     return InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="Неделя · 7 дней — 150 ⭐", callback_data="sub:plus_7d"),
+            InlineKeyboardButton(text="Неделя · 7 дней — 229 ⭐", callback_data="sub:plus_7d"),
         ],
         [
-            InlineKeyboardButton(text="Месяц · 30 дней — 450 ⭐", callback_data="sub:plus_30d"),
+            InlineKeyboardButton(text="Месяц · 30 дней — 649 ⭐", callback_data="sub:plus_30d"),
         ],
         [
-            InlineKeyboardButton(text="Год · 365 дней — 2990 ⭐", callback_data="sub:plus_365d"),
+            InlineKeyboardButton(text="Год · 365 дней — 4990 ⭐", callback_data="sub:plus_365d"),
         ],
         [
             InlineKeyboardButton(text="⭐ Купить Stars по СБП", url="https://t.me/tribute/app?startapp=plsg"),
@@ -141,13 +141,13 @@ def get_subscription_keyboard_en() -> InlineKeyboardMarkup:
     """Subscription plans keyboard (English)"""
     return InlineKeyboardMarkup(inline_keyboard=[
         [
-            InlineKeyboardButton(text="Week · 7 days — 150 ⭐", callback_data="sub:plus_7d"),
+            InlineKeyboardButton(text="Week · 7 days — 229 ⭐", callback_data="sub:plus_7d"),
         ],
         [
-            InlineKeyboardButton(text="Month · 30 days — 450 ⭐", callback_data="sub:plus_30d"),
+            InlineKeyboardButton(text="Month · 30 days — 649 ⭐", callback_data="sub:plus_30d"),
         ],
         [
-            InlineKeyboardButton(text="Year · 365 days — 2990 ⭐", callback_data="sub:plus_365d"),
+            InlineKeyboardButton(text="Year · 365 days — 4990 ⭐", callback_data="sub:plus_365d"),
         ],
         [
             InlineKeyboardButton(text="⭐ Buy Stars", url="https://t.me/tribute/app?startapp=plsg"),
@@ -603,7 +603,7 @@ async def on_successful_payment(message: Message):
     if lang == "ru":
         success_text = f"""🎉 <b>Оплата прошла успешно!</b>
 
-Ты активировал <b>{plan_name}</b>
+Ты активировал план <b>{plan_name}</b>
 
 Теперь тебе доступно:
 • Безлимитные сообщения
@@ -616,7 +616,7 @@ async def on_successful_payment(message: Message):
     else:
         success_text = f"""🎉 <b>Payment successful!</b>
 
-You activated <b>{plan_name}</b>
+You activated plan <b>{plan_name}</b>
 
 Now you have access to:
 • Unlimited messages
