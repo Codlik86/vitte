@@ -510,6 +510,17 @@ async def on_successful_payment(message: Message):
             logger.error(f"User {user_id} not found for payment")
             return
 
+        # Защита от дублей — проверяем telegram_payment_charge_id
+        charge_id = payment.telegram_payment_charge_id
+        dup_result = await db.execute(
+            select(Purchase).where(
+                Purchase.meta["telegram_payment_charge_id"].astext == charge_id
+            )
+        )
+        if dup_result.scalar_one_or_none():
+            logger.warning(f"Duplicate payment ignored: charge_id={charge_id}, user={user_id}")
+            return
+
         # Get or create subscription
         result = await db.execute(
             select(Subscription).where(Subscription.user_id == user_id)
