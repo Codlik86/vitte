@@ -132,7 +132,7 @@ async def create_image_pack_invoice(
         title = f"{images_count} images"
         description = f"Pack of {images_count} images for generation"
 
-    payload = f"img:{pack_code}:{user_id}"
+    payload = f"images:{pack_code}:{user_id}"
 
     return await create_invoice_link(
         title=title,
