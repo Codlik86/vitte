@@ -812,8 +812,30 @@ async def manage_user_subscription(telegram_id: str, body: SubscriptionAction):
                     db.add(sub)
 
                 user.access_status = "subscription_active"
+
+                # Update ImageBalance - add 40 bonus images and set Premium flag
+                image_balance = await db.scalar(
+                    select(ImageBalance).where(ImageBalance.user_id == tid)
+                )
+                if image_balance:
+                    image_balance.total_purchased_images += 40
+                    image_balance.remaining_purchased_images += 40
+                    image_balance.daily_subscription_quota = 1
+                    image_balance.daily_subscription_used = 0
+                    image_balance.daily_quota_date = now
+                else:
+                    image_balance = ImageBalance(
+                        user_id=tid,
+                        total_purchased_images=40,
+                        remaining_purchased_images=40,
+                        daily_subscription_quota=1,
+                        daily_subscription_used=0,
+                        daily_quota_date=now
+                    )
+                    db.add(image_balance)
+
                 await db.commit()
-                return {"status": "ok", "message": f"Premium granted for {body.days} days"}
+                return {"status": "ok", "message": f"Premium granted for {body.days} days + 40 images"}
 
             elif body.action == "revoke":
                 if sub:
