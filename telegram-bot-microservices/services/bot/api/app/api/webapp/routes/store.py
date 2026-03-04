@@ -25,7 +25,7 @@ router = APIRouter()
 # Subscription plans
 SUBSCRIPTION_PLANS = [
     {
-        "code": "weekly",
+        "code": "plus_7d",
         "title": "Неделя",
         "description": "7 дней полного доступа",
         "duration_days": 7,
@@ -33,7 +33,7 @@ SUBSCRIPTION_PLANS = [
         "is_most_popular": False
     },
     {
-        "code": "monthly",
+        "code": "plus_30d",
         "title": "Месяц",
         "description": "30 дней полного доступа",
         "duration_days": 30,
@@ -41,7 +41,7 @@ SUBSCRIPTION_PLANS = [
         "is_most_popular": True
     },
     {
-        "code": "yearly",
+        "code": "plus_365d",
         "title": "Год",
         "description": "365 дней полного доступа",
         "duration_days": 365,

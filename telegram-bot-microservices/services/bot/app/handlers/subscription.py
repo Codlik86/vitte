@@ -514,7 +514,7 @@ async def on_successful_payment(message: Message):
         charge_id = payment.telegram_payment_charge_id
         dup_result = await db.execute(
             select(Purchase).where(
-                Purchase.meta["telegram_payment_charge_id"].astext == charge_id
+                Purchase.meta.op('->>')('telegram_payment_charge_id') == charge_id
             )
         )
         if dup_result.scalar_one_or_none():
