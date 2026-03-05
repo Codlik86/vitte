@@ -487,6 +487,10 @@ async def on_successful_payment(message: Message):
     payment = message.successful_payment
     user_id = message.from_user.id
 
+    # Check if this is a subscription purchase
+    if not payment.invoice_payload.startswith("sub:"):
+        return  # Let other handlers process it
+
     # Parse payload
     payload_parts = payment.invoice_payload.split(":")
     if len(payload_parts) < 2:
